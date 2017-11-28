@@ -24,6 +24,8 @@ int main(int argc, char** argv)
 	// clean signal test
     auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn1fakePatterns_snnTest_200reps_10msInterval.txt");
 	
+    
+	
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "test.bin";
 	baal::Logger logger(filename);
@@ -31,7 +33,7 @@ int main(int argc, char** argv)
 	
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data[0].back()+1;
-	float timestep = 0.5;
+	float timestep = 0.1;
 	
 	float decayCurrent = 10;
 	float potentialDecay = 20;
@@ -42,7 +44,7 @@ int main(int argc, char** argv)
     int inputNeurons = 27;
     int layer1Neurons = 27;
 	
-    float weight = 0.5;
+    float weight = 0.009;
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
@@ -57,9 +59,9 @@ int main(int argc, char** argv)
 	
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
-	network.setTimeWindow(runtime);
+	network.setTimeWindow(1000);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(27);
+	network.trackNeuron(44);
 	
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);

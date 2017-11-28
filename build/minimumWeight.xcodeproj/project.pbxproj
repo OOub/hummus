@@ -1,0 +1,308 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3E4219592FDC23385855498D /* minimumWeight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F934B02140C3D16251A5A3A /* minimumWeight.cpp */; };
+		5F6A4F840A31253E0A1108C7 /* inputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F9A53A24E8F2AD733D30B18 /* inputViewer.cpp */; };
+		7D637EF73FFF02C846FD2C83 /* outputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53F73924001F053F73915B4A /* outputViewer.cpp */; };
+		607E12CA21CC647E313F4BEB /* potentialViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 04BE768879CB1C4D231C328B /* potentialViewer.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		4F934B02140C3D16251A5A3A /* minimumWeight.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "minimumWeight.cpp"; path = "../applications/minimumWeight.cpp"; sourceTree = "<group>"; };
+		2F9A53A24E8F2AD733D30B18 /* inputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "inputViewer.cpp"; path = "inputViewer.cpp"; sourceTree = "<group>"; };
+		53F73924001F053F73915B4A /* outputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "outputViewer.cpp"; path = "outputViewer.cpp"; sourceTree = "<group>"; };
+		04BE768879CB1C4D231C328B /* potentialViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "potentialViewer.cpp"; path = "potentialViewer.cpp"; sourceTree = "<group>"; };
+		44AB4E0D6D0B6DA9199060B2 /* dataParser.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "dataParser.hpp"; path = "../source/dataParser.hpp"; sourceTree = "<group>"; };
+		52D128DE3F7408F07DDC13AC /* display.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "display.hpp"; path = "../source/display.hpp"; sourceTree = "<group>"; };
+		07F7702876A844F412B7576B /* gui.qml */ = {isa = PBXFileReference; lastKnownFileType = text; name = "gui.qml"; path = "../source/gui.qml"; sourceTree = "<group>"; };
+		48994920677943C827766A12 /* inputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "inputViewer.hpp"; path = "../source/inputViewer.hpp"; sourceTree = "<group>"; };
+		6C7730D3212B30173EB975CE /* logger.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "logger.hpp"; path = "../source/logger.hpp"; sourceTree = "<group>"; };
+		40CA197210AC1B8E14A311CB /* network.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "network.hpp"; path = "../source/network.hpp"; sourceTree = "<group>"; };
+		3BF64870485D74A06F00182B /* neuron.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "neuron.hpp"; path = "../source/neuron.hpp"; sourceTree = "<group>"; };
+		58E6223168EC098A45123F80 /* outputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "outputViewer.hpp"; path = "../source/outputViewer.hpp"; sourceTree = "<group>"; };
+		706E0546444F5CA833487B06 /* potentialViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "potentialViewer.hpp"; path = "../source/potentialViewer.hpp"; sourceTree = "<group>"; };
+		3ED86BE47D570BCF68742FCA /* minimumWeight */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "minimumWeight"; path = "minimumWeight"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		230219411EA455C26B7F073B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		68A275284B663EFE36160486 /* minimumWeight */ = {
+			isa = PBXGroup;
+			children = (
+				7CA8146B34351606254C2460 /* applications */,
+				034769F8536534925FD53D41 /* moc */,
+				6C371E970AA236CC380F7CE7 /* source */,
+				703948A23F1922341CE253C0 /* Products */,
+			);
+			name = "minimumWeight";
+			sourceTree = "<group>";
+		};
+		7CA8146B34351606254C2460 /* applications */ = {
+			isa = PBXGroup;
+			children = (
+				4F934B02140C3D16251A5A3A /* minimumWeight.cpp */,
+			);
+			name = "applications";
+			sourceTree = "<group>";
+		};
+		034769F8536534925FD53D41 /* moc */ = {
+			isa = PBXGroup;
+			children = (
+				2F9A53A24E8F2AD733D30B18 /* inputViewer.cpp */,
+				53F73924001F053F73915B4A /* outputViewer.cpp */,
+				04BE768879CB1C4D231C328B /* potentialViewer.cpp */,
+			);
+			name = "moc";
+			path = "moc";
+			sourceTree = "<group>";
+		};
+		6C371E970AA236CC380F7CE7 /* source */ = {
+			isa = PBXGroup;
+			children = (
+				44AB4E0D6D0B6DA9199060B2 /* dataParser.hpp */,
+				52D128DE3F7408F07DDC13AC /* display.hpp */,
+				07F7702876A844F412B7576B /* gui.qml */,
+				48994920677943C827766A12 /* inputViewer.hpp */,
+				6C7730D3212B30173EB975CE /* logger.hpp */,
+				40CA197210AC1B8E14A311CB /* network.hpp */,
+				3BF64870485D74A06F00182B /* neuron.hpp */,
+				58E6223168EC098A45123F80 /* outputViewer.hpp */,
+				706E0546444F5CA833487B06 /* potentialViewer.hpp */,
+			);
+			name = "source";
+			sourceTree = "<group>";
+		};
+		703948A23F1922341CE253C0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3ED86BE47D570BCF68742FCA /* minimumWeight */,
+			);
+			name = "Products";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2F76240C389966766A2D5785 /* minimumWeight */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1E1E6EA65BDD0B505679548A /* Build configuration list for PBXNativeTarget "minimumWeight" */;
+			buildPhases = (
+				71721057496605A078276AF9 /* Resources */,
+				1049436C1745631C71BD58EE /* Sources */,
+				230219411EA455C26B7F073B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "minimumWeight";
+			productInstallPath = "$(HOME)/bin";
+			productName = "minimumWeight";
+			productReference = 3ED86BE47D570BCF68742FCA /* minimumWeight */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "minimumWeight" */;
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 1;
+			mainGroup = 68A275284B663EFE36160486 /* minimumWeight */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2F76240C389966766A2D5785 /* minimumWeight */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		71721057496605A078276AF9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1049436C1745631C71BD58EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E4219592FDC23385855498D /* minimumWeight.cpp in Sources */,
+				5F6A4F840A31253E0A1108C7 /* inputViewer.cpp in Sources */,
+				7D637EF73FFF02C846FD2C83 /* outputViewer.cpp in Sources */,
+				607E12CA21CC647E313F4BEB /* potentialViewer.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		214803A707E1785145F232CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "minimumWeight";
+			};
+			name = "Release";
+		};
+		5B3710FC1CBE2757526B2A88 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "minimumWeight";
+			};
+			name = "Debug";
+		};
+		5B8B0F911926334261F72199 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"/usr/local/opt/qt/include",
+					"/usr/local/opt/qt/include/QtQml",
+					"/usr/local/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"/usr/local/opt/qt/lib",
+					"/usr/local/lib",
+				);
+				OBJROOT = "obj/Release/minimumWeight";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				OTHER_LDFLAGS = (
+					"-F/usr/local/opt/qt/lib",
+					"-framework QtCore",
+					"-framework QtGui",
+					"-framework QtQml",
+					"-framework QtQuick",
+					"-framework QtWidgets",
+					"-framework QtQuickControls2",
+					"-framework QtCharts",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				SYMROOT = "release";
+			};
+			name = "Release";
+		};
+		57F87ACB312922CD4C266CAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"/usr/local/opt/qt/include",
+					"/usr/local/opt/qt/include/QtQml",
+					"/usr/local/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"/usr/local/opt/qt/lib",
+					"/usr/local/lib",
+				);
+				OBJROOT = "obj/Debug/minimumWeight";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				OTHER_LDFLAGS = (
+					"-F/usr/local/opt/qt/lib",
+					"-framework QtCore",
+					"-framework QtGui",
+					"-framework QtQml",
+					"-framework QtQuick",
+					"-framework QtWidgets",
+					"-framework QtQuickControls2",
+					"-framework QtCharts",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				SYMROOT = "debug";
+			};
+			name = "Debug";
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1E1E6EA65BDD0B505679548A /* Build configuration list for PBXNativeTarget "minimumWeight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				214803A707E1785145F232CD /* Release */,
+				5B3710FC1CBE2757526B2A88 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "minimumWeight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B8B0F911926334261F72199 /* Release */,
+				57F87ACB312922CD4C266CAB /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

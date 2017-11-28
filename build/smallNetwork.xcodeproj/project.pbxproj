@@ -7,31 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		12AA0DED47F14B7263DF7E07 /* inputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F3C47E049611C8923235393 /* inputViewer.cpp */; };
-		2CE5277B3BD749984AB16431 /* potentialViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 55B01CDE6D7941960E842D35 /* potentialViewer.cpp */; };
-		4C09660E3CC741F40E970976 /* smallNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 439F067631A2038D4DC20177 /* smallNetwork.cpp */; };
-		596D2F106E9D28C2744831F7 /* outputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13B220E41052055F2DB76E8A /* outputViewer.cpp */; };
+		0AF17CBF1D3F41FE4AAC0962 /* inputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 63234F2E57883D8C51DF300C /* inputViewer.cpp */; };
+		1AB5046B40DC37366B621585 /* smallNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 278349DF66F836A8065E063D /* smallNetwork.cpp */; };
+		363823CA4639570476C707D6 /* outputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 281B32584F2252ED55FB6DCB /* outputViewer.cpp */; };
+		3C2017D013A81B2F3C8E2613 /* potentialViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A06292A226732E42DB40A54 /* potentialViewer.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		02933C7669E27AB3371F54B9 /* display.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = display.hpp; path = ../source/display.hpp; sourceTree = "<group>"; };
-		13B220E41052055F2DB76E8A /* outputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = outputViewer.cpp; sourceTree = "<group>"; };
-		1F3C47E049611C8923235393 /* inputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = inputViewer.cpp; sourceTree = "<group>"; };
-		232E2FF66C110BDA15B92968 /* potentialViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = potentialViewer.hpp; path = ../source/potentialViewer.hpp; sourceTree = "<group>"; };
-		357D405D36AB561E5FFB741F /* outputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = outputViewer.hpp; path = ../source/outputViewer.hpp; sourceTree = "<group>"; };
-		358A0CC91713666D2A3065EE /* smallNetwork */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = smallNetwork; sourceTree = BUILT_PRODUCTS_DIR; };
-		37DF11AE652E503226051298 /* network.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = network.hpp; path = ../source/network.hpp; sourceTree = "<group>"; };
-		439F067631A2038D4DC20177 /* smallNetwork.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = smallNetwork.cpp; path = ../applications/smallNetwork.cpp; sourceTree = "<group>"; };
-		524F446D5F7879DA0D8A1344 /* inputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = inputViewer.hpp; path = ../source/inputViewer.hpp; sourceTree = "<group>"; };
-		55B01CDE6D7941960E842D35 /* potentialViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = potentialViewer.cpp; sourceTree = "<group>"; };
-		5DBD24DA043575277723294B /* logger.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = logger.hpp; path = ../source/logger.hpp; sourceTree = "<group>"; };
-		75865F1A37637D9977BA05A5 /* gui.qml */ = {isa = PBXFileReference; lastKnownFileType = text; name = gui.qml; path = ../source/gui.qml; sourceTree = "<group>"; };
-		7A0C43525D2C32DA2B333D47 /* neuron.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = neuron.hpp; path = ../source/neuron.hpp; sourceTree = "<group>"; };
-		7F4326404722173C23B20DFB /* dataParser.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = dataParser.hpp; path = ../source/dataParser.hpp; sourceTree = "<group>"; };
+		0D9F4D21653535767ED372D0 /* potentialViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = potentialViewer.hpp; path = ../source/potentialViewer.hpp; sourceTree = "<group>"; };
+		146234BE32441E0F1D351F6C /* neuron.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = neuron.hpp; path = ../source/neuron.hpp; sourceTree = "<group>"; };
+		278349DF66F836A8065E063D /* smallNetwork.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = smallNetwork.cpp; path = ../applications/smallNetwork.cpp; sourceTree = "<group>"; };
+		281B32584F2252ED55FB6DCB /* outputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = outputViewer.cpp; sourceTree = "<group>"; };
+		28443EA15CF3659C0D19791D /* logger.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = logger.hpp; path = ../source/logger.hpp; sourceTree = "<group>"; };
+		2A06292A226732E42DB40A54 /* potentialViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = potentialViewer.cpp; sourceTree = "<group>"; };
+		3D76267E40EA671939F929AC /* smallNetwork */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = smallNetwork; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A7E2FD7071D060B710101BE /* dataParser.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = dataParser.hpp; path = ../source/dataParser.hpp; sourceTree = "<group>"; };
+		63234F2E57883D8C51DF300C /* inputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = inputViewer.cpp; sourceTree = "<group>"; };
+		744379A82F477FF0267D5D2A /* display.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = display.hpp; path = ../source/display.hpp; sourceTree = "<group>"; };
+		74850574324B12255081749F /* network.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = network.hpp; path = ../source/network.hpp; sourceTree = "<group>"; };
+		771106C71E8D4EDB1399536E /* gui.qml */ = {isa = PBXFileReference; lastKnownFileType = text; name = gui.qml; path = ../source/gui.qml; sourceTree = "<group>"; };
+		7720094D33D0540928DD6B4D /* outputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = outputViewer.hpp; path = ../source/outputViewer.hpp; sourceTree = "<group>"; };
+		7C536BEE0A142D26302A1576 /* inputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = inputViewer.hpp; path = ../source/inputViewer.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		4E723584706D34BE5E575135 /* Frameworks */ = {
+		59F01ED97144332B4FB5312D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -41,55 +41,55 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		04DA16C3001500351FA53BFD /* source */ = {
+		2A5F525F6EDD73AA2A5B5D28 /* smallNetwork */ = {
 			isa = PBXGroup;
 			children = (
-				7F4326404722173C23B20DFB /* dataParser.hpp */,
-				02933C7669E27AB3371F54B9 /* display.hpp */,
-				75865F1A37637D9977BA05A5 /* gui.qml */,
-				524F446D5F7879DA0D8A1344 /* inputViewer.hpp */,
-				5DBD24DA043575277723294B /* logger.hpp */,
-				37DF11AE652E503226051298 /* network.hpp */,
-				7A0C43525D2C32DA2B333D47 /* neuron.hpp */,
-				357D405D36AB561E5FFB741F /* outputViewer.hpp */,
-				232E2FF66C110BDA15B92968 /* potentialViewer.hpp */,
-			);
-			name = source;
-			sourceTree = "<group>";
-		};
-		0D5C462B599A4A8A488B30CA /* smallNetwork */ = {
-			isa = PBXGroup;
-			children = (
-				421572E54C7B37E2156326F5 /* applications */,
-				2ACC703003BF7EDD7B882E19 /* moc */,
-				04DA16C3001500351FA53BFD /* source */,
-				1B605E9600415A9771966786 /* Products */,
+				751809E33F19371F6EE0397A /* applications */,
+				6603660576BC70314F881C15 /* moc */,
+				44765FE622A706FE36C750B7 /* source */,
+				6A26160F6F8E0BBB3D615DE3 /* Products */,
 			);
 			name = smallNetwork;
 			sourceTree = "<group>";
 		};
-		1B605E9600415A9771966786 /* Products */ = {
+		44765FE622A706FE36C750B7 /* source */ = {
 			isa = PBXGroup;
 			children = (
-				358A0CC91713666D2A3065EE /* smallNetwork */,
+				4A7E2FD7071D060B710101BE /* dataParser.hpp */,
+				744379A82F477FF0267D5D2A /* display.hpp */,
+				771106C71E8D4EDB1399536E /* gui.qml */,
+				7C536BEE0A142D26302A1576 /* inputViewer.hpp */,
+				28443EA15CF3659C0D19791D /* logger.hpp */,
+				74850574324B12255081749F /* network.hpp */,
+				146234BE32441E0F1D351F6C /* neuron.hpp */,
+				7720094D33D0540928DD6B4D /* outputViewer.hpp */,
+				0D9F4D21653535767ED372D0 /* potentialViewer.hpp */,
 			);
-			name = Products;
+			name = source;
 			sourceTree = "<group>";
 		};
-		2ACC703003BF7EDD7B882E19 /* moc */ = {
+		6603660576BC70314F881C15 /* moc */ = {
 			isa = PBXGroup;
 			children = (
-				1F3C47E049611C8923235393 /* inputViewer.cpp */,
-				13B220E41052055F2DB76E8A /* outputViewer.cpp */,
-				55B01CDE6D7941960E842D35 /* potentialViewer.cpp */,
+				63234F2E57883D8C51DF300C /* inputViewer.cpp */,
+				281B32584F2252ED55FB6DCB /* outputViewer.cpp */,
+				2A06292A226732E42DB40A54 /* potentialViewer.cpp */,
 			);
 			path = moc;
 			sourceTree = "<group>";
 		};
-		421572E54C7B37E2156326F5 /* applications */ = {
+		6A26160F6F8E0BBB3D615DE3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				439F067631A2038D4DC20177 /* smallNetwork.cpp */,
+				3D76267E40EA671939F929AC /* smallNetwork */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		751809E33F19371F6EE0397A /* applications */ = {
+			isa = PBXGroup;
+			children = (
+				278349DF66F836A8065E063D /* smallNetwork.cpp */,
 			);
 			name = applications;
 			sourceTree = "<group>";
@@ -97,13 +97,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		714446A51F2A2FE106324A22 /* smallNetwork */ = {
+		74F501CE0F4A767664330FDA /* smallNetwork */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3786540A7A16438628D94A27 /* Build configuration list for PBXNativeTarget "smallNetwork" */;
+			buildConfigurationList = 21E61AE76AC822D9580405A1 /* Build configuration list for PBXNativeTarget "smallNetwork" */;
 			buildPhases = (
-				7AE17C5E1D141B17126E2257 /* Resources */,
-				08E4680B54155E46630C5B3C /* Sources */,
-				4E723584706D34BE5E575135 /* Frameworks */,
+				1D0414E57229779779AD0468 /* Resources */,
+				04A8478102E603642CA713AB /* Sources */,
+				59F01ED97144332B4FB5312D /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -112,7 +112,7 @@
 			name = smallNetwork;
 			productInstallPath = "$(HOME)/bin";
 			productName = smallNetwork;
-			productReference = 358A0CC91713666D2A3065EE /* smallNetwork */;
+			productReference = 3D76267E40EA671939F929AC /* smallNetwork */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -130,17 +130,17 @@
 			knownRegions = (
 				en,
 			);
-			mainGroup = 0D5C462B599A4A8A488B30CA /* smallNetwork */;
+			mainGroup = 2A5F525F6EDD73AA2A5B5D28 /* smallNetwork */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				714446A51F2A2FE106324A22 /* smallNetwork */,
+				74F501CE0F4A767664330FDA /* smallNetwork */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		7AE17C5E1D141B17126E2257 /* Resources */ = {
+		1D0414E57229779779AD0468 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -150,33 +150,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		08E4680B54155E46630C5B3C /* Sources */ = {
+		04A8478102E603642CA713AB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4C09660E3CC741F40E970976 /* smallNetwork.cpp in Sources */,
-				12AA0DED47F14B7263DF7E07 /* inputViewer.cpp in Sources */,
-				596D2F106E9D28C2744831F7 /* outputViewer.cpp in Sources */,
-				2CE5277B3BD749984AB16431 /* potentialViewer.cpp in Sources */,
+				1AB5046B40DC37366B621585 /* smallNetwork.cpp in Sources */,
+				0AF17CBF1D3F41FE4AAC0962 /* inputViewer.cpp in Sources */,
+				363823CA4639570476C707D6 /* outputViewer.cpp in Sources */,
+				3C2017D013A81B2F3C8E2613 /* potentialViewer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		006971F05C4573570BEB2DD8 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CONFIGURATION_BUILD_DIR = debug;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_MODEL_TUNING = G5;
-				INSTALL_PATH = /usr/local/bin;
-				PRODUCT_NAME = smallNetwork;
-			};
-			name = Debug;
-		};
-		26296EC1623A7B4F3DBB5F72 /* Release */ = {
+		014D1F04696E571C133B31C5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -189,7 +177,19 @@
 			};
 			name = Release;
 		};
-		38AD07C80A4F5D1F4A66726D /* Release */ = {
+		0F31188F6A0A771C76BF7CC4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = smallNetwork;
+			};
+			name = Debug;
+		};
+		284837C167381E48113548BF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -230,7 +230,7 @@
 					/usr/local/opt/qt/lib,
 					/usr/local/lib,
 				);
-				OBJROOT = obj/Release;
+				OBJROOT = obj/Release/smallNetwork;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-fPIC",
@@ -260,7 +260,7 @@
 			};
 			name = Release;
 		};
-		46DF68E67B6139BE726D00F5 /* Debug */ = {
+		54AB44A46D59173010DA0220 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
@@ -304,7 +304,7 @@
 					/usr/local/opt/qt/lib,
 					/usr/local/lib,
 				);
-				OBJROOT = obj/Debug;
+				OBJROOT = obj/Debug/smallNetwork;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-fPIC",
@@ -340,17 +340,17 @@
 		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "smallNetwork" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				38AD07C80A4F5D1F4A66726D /* Release */,
-				46DF68E67B6139BE726D00F5 /* Debug */,
+				284837C167381E48113548BF /* Release */,
+				54AB44A46D59173010DA0220 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3786540A7A16438628D94A27 /* Build configuration list for PBXNativeTarget "smallNetwork" */ = {
+		21E61AE76AC822D9580405A1 /* Build configuration list for PBXNativeTarget "smallNetwork" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				26296EC1623A7B4F3DBB5F72 /* Release */,
-				006971F05C4573570BEB2DD8 /* Debug */,
+				014D1F04696E571C133B31C5 /* Release */,
+				0F31188F6A0A771C76BF7CC4 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

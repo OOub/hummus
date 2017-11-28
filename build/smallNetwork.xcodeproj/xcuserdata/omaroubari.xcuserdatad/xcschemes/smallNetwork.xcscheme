@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "714446A51F2A2FE106324A22"
+               BlueprintIdentifier = "74F501CE0F4A767664330FDA"
                BuildableName = "smallNetwork"
                BlueprintName = "smallNetwork"
                ReferencedContainer = "container:smallNetwork.xcodeproj">
@@ -33,7 +33,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "714446A51F2A2FE106324A22"
+            BlueprintIdentifier = "74F501CE0F4A767664330FDA"
             BuildableName = "smallNetwork"
             BlueprintName = "smallNetwork"
             ReferencedContainer = "container:smallNetwork.xcodeproj">
@@ -58,7 +58,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "714446A51F2A2FE106324A22"
+            BlueprintIdentifier = "74F501CE0F4A767664330FDA"
             BuildableName = "smallNetwork"
             BlueprintName = "smallNetwork"
             ReferencedContainer = "container:smallNetwork.xcodeproj">
@@ -77,7 +77,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "714446A51F2A2FE106324A22"
+            BlueprintIdentifier = "74F501CE0F4A767664330FDA"
             BuildableName = "smallNetwork"
             BlueprintName = "smallNetwork"
             ReferencedContainer = "container:smallNetwork.xcodeproj">

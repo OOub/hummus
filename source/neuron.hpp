@@ -46,7 +46,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1e-10, float _currentBurnout=3.1e-9) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=4e-10, float _currentBurnout=3.1e-9) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -121,36 +121,29 @@ namespace baal
             {
                 activity = false;
             }
-
-			// potential decay equation
-			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential); // omar equation
-//			potential += (restingPotential - potential)*(timestep/decayPotential); // fabian equation
 			
-			// neuron inactive during refractory period
+			// potential decay equation
+			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
+			
 			if (current > currentBurnout)
 			{
 				current = currentBurnout;
 			}
 			
+			// neuron inactive during refractory period
 			if (!activity)
 			{
-				potential += inputResistance*current; // omar equation
-//				potential += inputResistance*current*(timestep/decayPotential); // fabian equation
+				potential += inputResistance*current;
 			}
-			
+			float injection = 0;
 			if (s.postProjection)
 			{
-				current += externalCurrent*s.postProjection->weight; // omar equation
-//				current += (-current+externalCurrent)*s.postProjection->weight*(timestep/decayCurrent); // fabian equation
+				injection = externalCurrent*s.postProjection->weight;
 				activeProjection = *s.postProjection;
 			}
-			current *= std::exp(-timestep/decayCurrent); // omar equation
-//			else // fabian equation
-//			{
-//				current += -current*(timestep/decayCurrent);
-//			}
+			current = (current+injection)*std::exp(-timestep/decayCurrent);
+			
 			previousTimestamp = timestamp;
-
 		
 			if (s.postProjection)
 			{
@@ -194,7 +187,6 @@ namespace baal
 				}
 				
 				delayLearning(network);
-				
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				current = 0;
@@ -254,70 +246,59 @@ namespace baal
         	return current;
 		}
 		
+		float getExternalCurrent() const
+		{
+			return externalCurrent;
+		}
+		
+		void setExternalCurrent(float newCurrent)
+		{
+			externalCurrent = newCurrent;
+		}
 		
     	// ----- PROTECTED NEURON METHODS -----
     	template<typename Network>
 		void delayLearning(Network* network)
 		{
-			if (!network->getPlasticNeurons().empty())
+			if (layerID != 0)
 			{
-				if (layerID != 0)
+				std::vector<float> timeDifferences;
+				float tMax = *std::max_element(network->getPlasticTime().begin(), network->getPlasticTime().end());
+
+				#ifndef NDEBUG
+				std::cout << "patterns contains " << network->getInputSpikeCounter() << " spikes" << std::endl;
+				std::cout << "max time is: " << tMax << std::endl;
+				#endif
+
+				// looping through presynaptic neurons belonging to the pattern
+				int cpt = 0;
+				for (auto& plasticNeurons: network->getPlasticNeurons())
 				{
-					std::vector<float> timeDifferences;
-					float tMax = *std::max_element(network->getPlasticTime().begin(), network->getPlasticTime().end());
-
-					#ifndef NDEBUG
-					std::cout << "patterns contains " << network->getInputSpikeCounter() << " spikes" << std::endl;
-					std::cout << "max time is: " << tMax << std::endl;
-					#endif
-
-					// looping through presynaptic neurons belonging to the pattern
-					int cpt = 0;
-					for (auto& plasticNeurons: network->getPlasticNeurons())
+					// looping through each presynaptic neuron's projections
+					for (auto& plasticProjections: plasticNeurons->postProjections)
 					{
-						// looping through each presynaptic neuron's projections
-						for (auto& plasticProjections: plasticNeurons->postProjections)
+						// checking if it's the winner postNeuron
+						if (plasticProjections->postNeuron->getNeuronID() == this->getNeuronID())
 						{
-							// checking if it's the winner postNeuron
-							if (plasticProjections->postNeuron->getNeuronID() == this->getNeuronID())
-							{
-								timeDifferences.push_back(tMax - network->getPlasticTime().at(cpt) - plasticProjections->delay);
-								// std::cout << "ts: " << network->getPlasticTime().at(cpt) << " tdif: " << timeDifferences.back() << std::endl;
-								// delay learning rule
-								if (timeDifferences.back() > 0)
-								{
-									plasticProjections->delay += ((inputResistance*plasticProjections->weight)/decayPotential) * std::exp(-timeDifferences.back()/decayPotential) * (synapticEfficacy *(-std::exp(-std::pow(timeDifferences.back(),2)) + 1));
-									#ifndef NDEBUG
-									std::cout << "time diff: " << timeDifferences.back() << " delay change: " << (-(inputResistance*plasticProjections->weight)/decayPotential) * std::exp(-timeDifferences.back()/decayPotential) * - synapticEfficacy << std::endl;
-									#endif
-									std::cout << plasticProjections->delay << std::endl;
-								}
-								else if (timeDifferences.back() < 0)
-								{
-									plasticProjections->delay += (-(inputResistance*plasticProjections->weight)/decayPotential) * std::exp(timeDifferences.back()/decayPotential) * (synapticEfficacy *(-std::exp(-std::pow(timeDifferences.back(),2)) + 1));
-									#ifndef NDEBUG
-									std::cout << "time diff: " << timeDifferences.back() << " delay change: " << (-(inputResistance*plasticProjections->weight)/decayPotential) * std::exp(-timeDifferences.back()/decayPotential) * synapticEfficacy << std::endl;
-									#endif
-	//								std::cout << plasticProjections->delay << std::endl;
-								}
-								else
-								{
-									plasticProjections->delay += (inputResistance*plasticProjections->weight) * (synapticEfficacy *(-std::exp(-std::pow(timeDifferences.back(),2)) + 1));
-	//								std::cout << plasticProjections->delay << std::endl;
-								}
-							}
+							timeDifferences.push_back(tMax - network->getPlasticTime().at(cpt) - plasticProjections->delay);
+							
+							// delay learning rule
+							float change = 0.1*timeDifferences.back()*std::exp(-std::pow(timeDifferences.back(),2)/100);
+							plasticProjections->delay += change;
+							#ifndef NDEBUG
+							std::cout << "time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+							#endif
 						}
-						cpt++;
 					}
-
-					if (decaySynapticEfficacy > 0)
-					{
-						synapticEfficacy *= std::exp(-1/decaySynapticEfficacy);
-					}
-				
-					resetAfterLearning(network);
-				
+					cpt++;
 				}
+
+				if (decaySynapticEfficacy > 0)
+				{
+					synapticEfficacy *= std::exp(-1/decaySynapticEfficacy);
+				}
+				resetAfterLearning(network);
+			
 			}
 		}
 		
@@ -330,6 +311,13 @@ namespace baal
 			{
 				network->getGeneratedSpikes().clear();
 			}
+			
+			// lateral inhibition
+            for (auto& projReset: this->preProjections[0]->preNeuron->postProjections)
+            {
+				projReset->postNeuron->setPotential(restingPotential);
+            }
+
 			network->setInputSpikeCounter(0);
         }
 		
