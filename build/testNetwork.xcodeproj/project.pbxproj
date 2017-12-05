@@ -1,0 +1,361 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1A5A29AD20D2438B06EC30A9 /* inputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 012A7487539F13D7227D51EE /* inputViewer.cpp */; };
+		4D6A21130ABC7CD733990F68 /* testNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0F4D092016CB208A6F3139AD /* testNetwork.cpp */; };
+		5FA83B9D5130314A1BC325E8 /* potentialViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 13E66DE55D444C6E02930FA6 /* potentialViewer.cpp */; };
+		7A0E64E3123A363A372316E3 /* outputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43B93C423BDC04191B7325D7 /* outputViewer.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		012A7487539F13D7227D51EE /* inputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = inputViewer.cpp; sourceTree = "<group>"; };
+		015B0C65419538F7035753FF /* neuron.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = neuron.hpp; path = ../source/neuron.hpp; sourceTree = "<group>"; };
+		0F4D092016CB208A6F3139AD /* testNetwork.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = testNetwork.cpp; path = ../applications/testNetwork.cpp; sourceTree = "<group>"; };
+		13E66DE55D444C6E02930FA6 /* potentialViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = potentialViewer.cpp; sourceTree = "<group>"; };
+		1DA639F1037650032F477A51 /* dataParser.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = dataParser.hpp; path = ../source/dataParser.hpp; sourceTree = "<group>"; };
+		29580B340DBF29F542145745 /* inputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = inputViewer.hpp; path = ../source/inputViewer.hpp; sourceTree = "<group>"; };
+		33C7762C6BF6674101552F70 /* potentialViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = potentialViewer.hpp; path = ../source/potentialViewer.hpp; sourceTree = "<group>"; };
+		42CA60D07E3D609F0D135D04 /* testNetwork */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testNetwork; sourceTree = BUILT_PRODUCTS_DIR; };
+		43B93C423BDC04191B7325D7 /* outputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = outputViewer.cpp; sourceTree = "<group>"; };
+		4B29129D3AF07C965E330FFB /* outputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = outputViewer.hpp; path = ../source/outputViewer.hpp; sourceTree = "<group>"; };
+		57BD616B45211F7F4C1D1276 /* gui.qml */ = {isa = PBXFileReference; lastKnownFileType = text; name = gui.qml; path = ../source/gui.qml; sourceTree = "<group>"; };
+		755B4C78070D0EF06D2B4DB2 /* logger.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = logger.hpp; path = ../source/logger.hpp; sourceTree = "<group>"; };
+		7D265B285B26342E4E114D51 /* network.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = network.hpp; path = ../source/network.hpp; sourceTree = "<group>"; };
+		7D5241F1437550B31C4246FE /* display.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = display.hpp; path = ../source/display.hpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2EC674BE0F775DC35DFE6006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		13E25B7C513C5689544F3A3F /* moc */ = {
+			isa = PBXGroup;
+			children = (
+				012A7487539F13D7227D51EE /* inputViewer.cpp */,
+				43B93C423BDC04191B7325D7 /* outputViewer.cpp */,
+				13E66DE55D444C6E02930FA6 /* potentialViewer.cpp */,
+			);
+			path = moc;
+			sourceTree = "<group>";
+		};
+		1B6C66D547376C8F54075009 /* applications */ = {
+			isa = PBXGroup;
+			children = (
+				0F4D092016CB208A6F3139AD /* testNetwork.cpp */,
+			);
+			name = applications;
+			sourceTree = "<group>";
+		};
+		3D5322A1050713C05F643DD9 /* testNetwork */ = {
+			isa = PBXGroup;
+			children = (
+				1B6C66D547376C8F54075009 /* applications */,
+				13E25B7C513C5689544F3A3F /* moc */,
+				638001EF28B66C3F4B947B1A /* source */,
+				737F32FC60D34A88641D5BE4 /* Products */,
+			);
+			name = testNetwork;
+			sourceTree = "<group>";
+		};
+		638001EF28B66C3F4B947B1A /* source */ = {
+			isa = PBXGroup;
+			children = (
+				1DA639F1037650032F477A51 /* dataParser.hpp */,
+				7D5241F1437550B31C4246FE /* display.hpp */,
+				57BD616B45211F7F4C1D1276 /* gui.qml */,
+				29580B340DBF29F542145745 /* inputViewer.hpp */,
+				755B4C78070D0EF06D2B4DB2 /* logger.hpp */,
+				7D265B285B26342E4E114D51 /* network.hpp */,
+				015B0C65419538F7035753FF /* neuron.hpp */,
+				4B29129D3AF07C965E330FFB /* outputViewer.hpp */,
+				33C7762C6BF6674101552F70 /* potentialViewer.hpp */,
+			);
+			name = source;
+			sourceTree = "<group>";
+		};
+		737F32FC60D34A88641D5BE4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				42CA60D07E3D609F0D135D04 /* testNetwork */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6F1E3AC964052C6F3DDB3387 /* testNetwork */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0A961C67574A639B78DF0EE9 /* Build configuration list for PBXNativeTarget "testNetwork" */;
+			buildPhases = (
+				08240B3826F944AA2A6F1424 /* Resources */,
+				08552D2C5FE162D458F611DE /* Sources */,
+				2EC674BE0F775DC35DFE6006 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = testNetwork;
+			productInstallPath = "$(HOME)/bin";
+			productName = testNetwork;
+			productReference = 42CA60D07E3D609F0D135D04 /* testNetwork */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0920;
+			};
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "testNetwork" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 3D5322A1050713C05F643DD9 /* testNetwork */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6F1E3AC964052C6F3DDB3387 /* testNetwork */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		08240B3826F944AA2A6F1424 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		08552D2C5FE162D458F611DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D6A21130ABC7CD733990F68 /* testNetwork.cpp in Sources */,
+				1A5A29AD20D2438B06EC30A9 /* inputViewer.cpp in Sources */,
+				7A0E64E3123A363A372316E3 /* outputViewer.cpp in Sources */,
+				5FA83B9D5130314A1BC325E8 /* potentialViewer.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		182C196C2D2F6C7467F60184 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/opt/qt/include,
+					/usr/local/opt/qt/include/QtQml,
+					/usr/local/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/opt/qt/lib,
+					/usr/local/lib,
+				);
+				OBJROOT = obj/Release/testNetwork;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				OTHER_LDFLAGS = (
+					"-F/usr/local/opt/qt/lib",
+					"-framework",
+					QtCore,
+					"-framework",
+					QtGui,
+					"-framework",
+					QtQml,
+					"-framework",
+					QtQuick,
+					"-framework",
+					QtWidgets,
+					"-framework",
+					QtQuickControls2,
+					"-framework",
+					QtCharts,
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				SYMROOT = release;
+			};
+			name = Release;
+		};
+		1C1476C92E10540B36430050 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = testNetwork;
+			};
+			name = Debug;
+		};
+		43F258AC24DC6CCB19404EBE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = DEBUG;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/opt/qt/include,
+					/usr/local/opt/qt/include/QtQml,
+					/usr/local/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/opt/qt/lib,
+					/usr/local/lib,
+				);
+				OBJROOT = obj/Debug/testNetwork;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				OTHER_LDFLAGS = (
+					"-F/usr/local/opt/qt/lib",
+					"-framework",
+					QtCore,
+					"-framework",
+					QtGui,
+					"-framework",
+					QtQml,
+					"-framework",
+					QtQuick,
+					"-framework",
+					QtWidgets,
+					"-framework",
+					QtQuickControls2,
+					"-framework",
+					QtCharts,
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				SYMROOT = debug;
+			};
+			name = Debug;
+		};
+		5B6C22005B913882687A2D79 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = release;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = testNetwork;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0A961C67574A639B78DF0EE9 /* Build configuration list for PBXNativeTarget "testNetwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B6C22005B913882687A2D79 /* Release */,
+				1C1476C92E10540B36430050 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "testNetwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				182C196C2D2F6C7467F60184 /* Release */,
+				43F258AC24DC6CCB19404EBE /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

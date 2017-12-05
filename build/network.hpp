@@ -47,7 +47,7 @@ namespace baal
 		{}
 		
 		// ----- PUBLIC NETWORK METHODS -----
-		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1e-10, float _currentBurnout=3.1e-9)
+		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=4e-10, float _currentBurnout=3.1e-9)
         {
         	unsigned long shift = 0;
         	if (!neurons.empty())
@@ -192,7 +192,7 @@ namespace baal
 			}
 			else
 			{
-				neuron->update(time, timestep, spike({time, nullptr}), this);
+				neuron->update(time, timestep, spike({time, nullptr}), this); //if both are empty
 			}
 		}
 		
@@ -212,8 +212,12 @@ namespace baal
 
 					if (listSelector == 0)
 					{
-						generatedSpikes.pop_front();
+						if (!generatedSpikes.empty())
+						{
+							generatedSpikes.pop_front();
+						}
 					}
+					
 					else if (listSelector == 1)
 					{
 						initialSpikes.pop_front();

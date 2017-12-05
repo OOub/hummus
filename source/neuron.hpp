@@ -186,7 +186,7 @@ namespace baal
 					}
 				}
 				
-				delayLearning(network);
+				delayLearning(s, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				current = 0;
@@ -258,59 +258,59 @@ namespace baal
 		
     	// ----- PROTECTED NEURON METHODS -----
     	template<typename Network>
-		void delayLearning(Network* network)
+		void delayLearning(spike s, Network* network)
 		{
-			if (layerID != 0)
+			if (network->getInputSpikeCounter() != 0)
 			{
-				std::vector<float> timeDifferences;
-				float tMax = *std::max_element(network->getPlasticTime().begin(), network->getPlasticTime().end());
-
-				#ifndef NDEBUG
-				std::cout << "patterns contains " << network->getInputSpikeCounter() << " spikes" << std::endl;
-				std::cout << "max time is: " << tMax << std::endl;
-				#endif
-
-				// looping through presynaptic neurons belonging to the pattern
-				int cpt = 0;
-				for (auto& plasticNeurons: network->getPlasticNeurons())
+				if (layerID != 0)
 				{
-					// looping through each presynaptic neuron's projections
-					for (auto& plasticProjections: plasticNeurons->postProjections)
+					std::vector<float> timeDifferences;
+					float tMax = *std::max_element(network->getPlasticTime().begin(), network->getPlasticTime().end());
+
+					#ifndef NDEBUG
+					std::cout << "patterns contains " << network->getInputSpikeCounter() << " spikes" << std::endl;
+					std::cout << "max time is: " << tMax << std::endl;
+					#endif
+
+					// looping through presynaptic neurons belonging to the pattern
+					int cpt = 0;
+					for (auto& plasticNeurons: network->getPlasticNeurons())
 					{
-						// checking if it's the winner postNeuron
-						if (plasticProjections->postNeuron->getNeuronID() == this->getNeuronID())
+						// looping through each presynaptic neuron's projections
+						for (auto& plasticProjections: plasticNeurons->postProjections)
 						{
-							timeDifferences.push_back(tMax - network->getPlasticTime().at(cpt) - plasticProjections->delay);
-							
-							// delay learning rule
-							float change = 0.1*timeDifferences.back()*std::exp(-std::pow(timeDifferences.back(),2)/100);
-							plasticProjections->delay += change;
-							#ifndef NDEBUG
-							std::cout << "time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-							#endif
+							// checking if it's the winner postNeuron
+							if (plasticProjections->postNeuron->getNeuronID() == this->getNeuronID())
+							{
+								timeDifferences.push_back(tMax - network->getPlasticTime().at(cpt) - plasticProjections->delay);
+								
+								// delay learning rule
+								float change = 0.01*timeDifferences.back()*std::exp(-std::pow(timeDifferences.back(),2)/100) * synapticEfficacy;
+								plasticProjections->delay += change;
+								#ifndef NDEBUG
+								std::cout << "time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+								#endif
+							}
 						}
+						cpt++;
 					}
-					cpt++;
-				}
 
-				if (decaySynapticEfficacy > 0)
-				{
-					synapticEfficacy *= std::exp(-1/decaySynapticEfficacy);
+					if (decaySynapticEfficacy > 0)
+					{
+						synapticEfficacy *= std::exp(-1/decaySynapticEfficacy);
+					}
+					resetAfterLearning(s, network);
+				
 				}
-				resetAfterLearning(network);
-			
 			}
 		}
 		
 		template <typename Network>
-        void resetAfterLearning(Network* network)
+        void resetAfterLearning(spike s, Network* network)
         {
 			network->getPlasticTime().clear();
 			network->getPlasticNeurons().clear();
-			if (!network->getGeneratedSpikes().empty())
-			{
-				network->getGeneratedSpikes().clear();
-			}
+			network->getGeneratedSpikes().clear();
 			
 			// lateral inhibition
             for (auto& projReset: this->preProjections[0]->preNeuron->postProjections)

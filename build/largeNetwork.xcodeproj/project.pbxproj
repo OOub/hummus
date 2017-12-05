@@ -1,0 +1,308 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		29910EF060F128F049022C48 /* largeNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 681B4F604C164E2A668468BA /* largeNetwork.cpp */; };
+		606E0328440330EB33ED4647 /* inputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20623E6B76665E7D12195796 /* inputViewer.cpp */; };
+		733C204B1D056D300D9D7B84 /* outputViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C7A613E31E15DAC48097C54 /* outputViewer.cpp */; };
+		38913F137DF319F4775925AF /* potentialViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 44F200FB1C92710338BF3F4C /* potentialViewer.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		681B4F604C164E2A668468BA /* largeNetwork.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "largeNetwork.cpp"; path = "../applications/largeNetwork.cpp"; sourceTree = "<group>"; };
+		20623E6B76665E7D12195796 /* inputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "inputViewer.cpp"; path = "inputViewer.cpp"; sourceTree = "<group>"; };
+		7C7A613E31E15DAC48097C54 /* outputViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "outputViewer.cpp"; path = "outputViewer.cpp"; sourceTree = "<group>"; };
+		44F200FB1C92710338BF3F4C /* potentialViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = "potentialViewer.cpp"; path = "potentialViewer.cpp"; sourceTree = "<group>"; };
+		292B627D21DB5921271D1818 /* dataParser.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "dataParser.hpp"; path = "../source/dataParser.hpp"; sourceTree = "<group>"; };
+		54BF5E911CC90D1033FB2819 /* display.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "display.hpp"; path = "../source/display.hpp"; sourceTree = "<group>"; };
+		2FB74EF35E3E43BA120E02C1 /* gui.qml */ = {isa = PBXFileReference; lastKnownFileType = text; name = "gui.qml"; path = "../source/gui.qml"; sourceTree = "<group>"; };
+		6CC7270A12A65B467651416B /* inputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "inputViewer.hpp"; path = "../source/inputViewer.hpp"; sourceTree = "<group>"; };
+		61D51A171B6B490B715C541A /* logger.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "logger.hpp"; path = "../source/logger.hpp"; sourceTree = "<group>"; };
+		28D018B95B0A077C0CB02B3A /* network.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "network.hpp"; path = "../source/network.hpp"; sourceTree = "<group>"; };
+		7C556ED319B201667D3E110D /* neuron.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "neuron.hpp"; path = "../source/neuron.hpp"; sourceTree = "<group>"; };
+		16E13D701D03599D70AA3D34 /* outputViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "outputViewer.hpp"; path = "../source/outputViewer.hpp"; sourceTree = "<group>"; };
+		34B43BDB58244CB86C3326CB /* potentialViewer.hpp */ = {isa = PBXFileReference; lastKnownFileType = text; name = "potentialViewer.hpp"; path = "../source/potentialViewer.hpp"; sourceTree = "<group>"; };
+		1FA92AE727A76DA248942753 /* largeNetwork */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = "largeNetwork"; path = "largeNetwork"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1DCF17D348AA526705862A63 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		55891E024C1A79514EBE56F9 /* largeNetwork */ = {
+			isa = PBXGroup;
+			children = (
+				36AC08DA2CBF643D13786B5A /* applications */,
+				690E1D683D1B5E98704A0D67 /* moc */,
+				23B567344573166008155638 /* source */,
+				0380535B19991A34016C59AC /* Products */,
+			);
+			name = "largeNetwork";
+			sourceTree = "<group>";
+		};
+		36AC08DA2CBF643D13786B5A /* applications */ = {
+			isa = PBXGroup;
+			children = (
+				681B4F604C164E2A668468BA /* largeNetwork.cpp */,
+			);
+			name = "applications";
+			sourceTree = "<group>";
+		};
+		690E1D683D1B5E98704A0D67 /* moc */ = {
+			isa = PBXGroup;
+			children = (
+				20623E6B76665E7D12195796 /* inputViewer.cpp */,
+				7C7A613E31E15DAC48097C54 /* outputViewer.cpp */,
+				44F200FB1C92710338BF3F4C /* potentialViewer.cpp */,
+			);
+			name = "moc";
+			path = "moc";
+			sourceTree = "<group>";
+		};
+		23B567344573166008155638 /* source */ = {
+			isa = PBXGroup;
+			children = (
+				292B627D21DB5921271D1818 /* dataParser.hpp */,
+				54BF5E911CC90D1033FB2819 /* display.hpp */,
+				2FB74EF35E3E43BA120E02C1 /* gui.qml */,
+				6CC7270A12A65B467651416B /* inputViewer.hpp */,
+				61D51A171B6B490B715C541A /* logger.hpp */,
+				28D018B95B0A077C0CB02B3A /* network.hpp */,
+				7C556ED319B201667D3E110D /* neuron.hpp */,
+				16E13D701D03599D70AA3D34 /* outputViewer.hpp */,
+				34B43BDB58244CB86C3326CB /* potentialViewer.hpp */,
+			);
+			name = "source";
+			sourceTree = "<group>";
+		};
+		0380535B19991A34016C59AC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1FA92AE727A76DA248942753 /* largeNetwork */,
+			);
+			name = "Products";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		51715DC964D018B066907E27 /* largeNetwork */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 46F663773FF508532A9347F7 /* Build configuration list for PBXNativeTarget "largeNetwork" */;
+			buildPhases = (
+				62F36D376FC328166C5C483A /* Resources */,
+				72F150125E1001395CF649A7 /* Sources */,
+				1DCF17D348AA526705862A63 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "largeNetwork";
+			productInstallPath = "$(HOME)/bin";
+			productName = "largeNetwork";
+			productReference = 1FA92AE727A76DA248942753 /* largeNetwork */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "largeNetwork" */;
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 1;
+			mainGroup = 55891E024C1A79514EBE56F9 /* largeNetwork */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				51715DC964D018B066907E27 /* largeNetwork */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		62F36D376FC328166C5C483A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		72F150125E1001395CF649A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				29910EF060F128F049022C48 /* largeNetwork.cpp in Sources */,
+				606E0328440330EB33ED4647 /* inputViewer.cpp in Sources */,
+				733C204B1D056D300D9D7B84 /* outputViewer.cpp in Sources */,
+				38913F137DF319F4775925AF /* potentialViewer.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		7CCC52B2398B738D419217CB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CONFIGURATION_BUILD_DIR = release;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "largeNetwork";
+			};
+			name = "Release";
+		};
+		46523E0B4456053F7DB73A1F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = debug;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = "largeNetwork";
+			};
+			name = "Debug";
+		};
+		165469E02473252347060791 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"/usr/local/opt/qt/include",
+					"/usr/local/opt/qt/include/QtQml",
+					"/usr/local/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"/usr/local/opt/qt/lib",
+					"/usr/local/lib",
+				);
+				OBJROOT = "obj/Release/largeNetwork";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				OTHER_LDFLAGS = (
+					"-F/usr/local/opt/qt/lib",
+					"-framework QtCore",
+					"-framework QtGui",
+					"-framework QtQml",
+					"-framework QtQuick",
+					"-framework QtWidgets",
+					"-framework QtQuickControls2",
+					"-framework QtCharts",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				SYMROOT = "release";
+			};
+			name = "Release";
+		};
+		62E8047D3FB242131AF64D73 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"/usr/local/opt/qt/include",
+					"/usr/local/opt/qt/include/QtQml",
+					"/usr/local/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"/usr/local/opt/qt/lib",
+					"/usr/local/lib",
+				);
+				OBJROOT = "obj/Debug/largeNetwork";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-fPIC",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				OTHER_LDFLAGS = (
+					"-F/usr/local/opt/qt/lib",
+					"-framework QtCore",
+					"-framework QtGui",
+					"-framework QtQml",
+					"-framework QtQuick",
+					"-framework QtWidgets",
+					"-framework QtQuickControls2",
+					"-framework QtCharts",
+					"-std=c++11",
+					"-stdlib=libc++",
+				);
+				SYMROOT = "debug";
+			};
+			name = "Debug";
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		46F663773FF508532A9347F7 /* Build configuration list for PBXNativeTarget "largeNetwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7CCC52B2398B738D419217CB /* Release */,
+				46523E0B4456053F7DB73A1F /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "largeNetwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				165469E02473252347060791 /* Release */,
+				62E8047D3FB242131AF64D73 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

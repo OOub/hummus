@@ -192,7 +192,7 @@ namespace baal
 			}
 			else
 			{
-				neuron->update(time, timestep, spike({time, nullptr}), this);
+				neuron->update(time, timestep, spike({time, nullptr}), this); //if both are empty
 			}
 		}
 		
@@ -212,8 +212,12 @@ namespace baal
 
 					if (listSelector == 0)
 					{
-						generatedSpikes.pop_front();
+						if (!generatedSpikes.empty())
+						{
+							generatedSpikes.pop_front();
+						}
 					}
+					
 					else if (listSelector == 1)
 					{
 						initialSpikes.pop_front();
