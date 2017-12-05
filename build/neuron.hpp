@@ -46,11 +46,11 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=4e-10, float _currentBurnout=3.1e-9) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=4.5e-10, float _currentBurnout=3.1e-9) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
-			decayPotential(_decayCurrent),
+			decayPotential(_decayPotential),
 			refractoryPeriod(_refractoryPeriod),
 			decaySynapticEfficacy(_decaySynapticEfficacy),
 			synapticEfficacy(_synapticEfficacy),
@@ -67,7 +67,6 @@ namespace baal
 			fireCounter(0),
             timeStart(0),
             timeEnd(0),
-            previousTimestamp(0),
             lastSpikeTime(0)
     	{
 			if (decayCurrent == 0)
@@ -122,12 +121,20 @@ namespace baal
                 activity = false;
             }
 			
-			// potential decay equation
-			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
+//			current decay
+			current *= std::exp(-timestep/decayCurrent);
 			
-			if (current > currentBurnout)
+			// potential decay
+			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
+
+			if (s.postProjection)
 			{
-				current = currentBurnout;
+				current += externalCurrent*s.postProjection->weight;
+				if (current > currentBurnout)
+				{
+					current = currentBurnout;
+				}
+				activeProjection = *s.postProjection;
 			}
 			
 			// neuron inactive during refractory period
@@ -135,16 +142,7 @@ namespace baal
 			{
 				potential += inputResistance*current;
 			}
-			float injection = 0;
-			if (s.postProjection)
-			{
-				injection = externalCurrent*s.postProjection->weight;
-				activeProjection = *s.postProjection;
-			}
-			current = (current+injection)*std::exp(-timestep/decayCurrent);
 			
-			previousTimestamp = timestamp;
-		
 			if (s.postProjection)
 			{
 				#ifndef NDEBUG
@@ -186,7 +184,7 @@ namespace baal
 					}
 				}
 				
-				delayLearning(s, network);
+//				delayLearning(s, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				current = 0;
@@ -348,7 +346,6 @@ namespace baal
         float                                    timeStart;
         float                                    timeEnd;
         std::unique_ptr<std::ofstream>           counterLog;
-        float                                    previousTimestamp;
         float                                    lastSpikeTime;
     };
 }

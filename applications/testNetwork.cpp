@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	baal::Display network({&logger});
 	
 //  ----- INITIALISING THE NETWORK -----
-	float runtime = 100;
+	float runtime = 1000;
 	float timestep = 0.1;
 	
 	float decayCurrent = 10;
@@ -33,23 +33,23 @@ int main(int argc, char** argv)
     float efficacyDecay = 0;
     float efficacy = 1;
 	
-    int inputNeurons = 5;
-    int layer1Neurons = 5;
+    int inputNeurons = 1;
+    int layer1Neurons = 1;
 	
-    float weight = 1;
+    float weight = 1./4;
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], weight, true, 20);
 
-	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(5));
+	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(1));
 	
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(runtime);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(0);
+	network.trackNeuron(1);
 	
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);

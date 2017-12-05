@@ -81,7 +81,7 @@ namespace baal
         }
 		
 		// ----- NETWORK CLASS WRAPPERS -----
-		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=4e-10, float _currentBurnout=3.1e-9)
+		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=17e-10, float _currentBurnout=3.1e-9)
 		{
 			network.addNeurons(_numberOfNeurons,_decayCurrent,_decayPotential,_refractoryPeriod,_decaySynapticEfficacy,
 				_synapticEfficacy,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent, _currentBurnout);

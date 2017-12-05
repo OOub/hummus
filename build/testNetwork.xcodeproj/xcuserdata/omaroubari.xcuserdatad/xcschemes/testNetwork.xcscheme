@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6F1E3AC964052C6F3DDB3387"
+               BlueprintIdentifier = "1D1370E177254BFC2704195A"
                BuildableName = "testNetwork"
                BlueprintName = "testNetwork"
                ReferencedContainer = "container:testNetwork.xcodeproj">
@@ -33,7 +33,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "6F1E3AC964052C6F3DDB3387"
+            BlueprintIdentifier = "1D1370E177254BFC2704195A"
             BuildableName = "testNetwork"
             BlueprintName = "testNetwork"
             ReferencedContainer = "container:testNetwork.xcodeproj">
@@ -43,7 +43,7 @@
       </AdditionalOptions>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       disableMainThreadChecker = "YES"
@@ -58,7 +58,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "6F1E3AC964052C6F3DDB3387"
+            BlueprintIdentifier = "1D1370E177254BFC2704195A"
             BuildableName = "testNetwork"
             BlueprintName = "testNetwork"
             ReferencedContainer = "container:testNetwork.xcodeproj">
@@ -77,7 +77,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "6F1E3AC964052C6F3DDB3387"
+            BlueprintIdentifier = "1D1370E177254BFC2704195A"
             BuildableName = "testNetwork"
             BlueprintName = "testNetwork"
             ReferencedContainer = "container:testNetwork.xcodeproj">
