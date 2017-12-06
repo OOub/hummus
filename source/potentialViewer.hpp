@@ -49,6 +49,7 @@ namespace baal
 			minY(20),
             maxY(-70),
             potential(0),
+            threshold(-50),
             neuronTracker(-1)
         {
             atomicGuard.clear(std::memory_order_release);
@@ -67,7 +68,9 @@ namespace baal
 					if (!isClosed)
 					{
 						potential = p->postNeuron->getPotential();
+						threshold = p->postNeuron->getThreshold();
 						points.append(QPointF(timestamp, potential));
+						thresPoints.append(QPointF(timestamp, threshold));
 						minY = std::min(minY, static_cast<float>(potential));
 						maxY = std::max(maxY, static_cast<float>(potential));
 					}
@@ -87,12 +90,14 @@ namespace baal
 					{
 						potential = postNeuron->getPotential();
 						points.append(QPointF(timestamp, potential));
+						thresPoints.append(QPointF(timestamp, threshold));
 						minY = std::min(minY, static_cast<float>(potential));
 						maxY = std::max(maxY, static_cast<float>(potential));
 					}
 					else
 					{
 						points.clear();
+						thresPoints.clear();
 					}
 					atomicGuard.clear(std::memory_order_release);
 				}
@@ -132,7 +137,7 @@ namespace baal
             atomicGuard.clear(std::memory_order_release);
         }
     
-        void update(QtCharts::QValueAxis *axisX, QtCharts::QValueAxis *axisY, QtCharts::QAbstractSeries *series)
+        void update(QtCharts::QValueAxis *axisX, QtCharts::QValueAxis *axisY, QtCharts::QAbstractSeries *series,  int seriesType)
         {
             if (!isClosed)
             {
@@ -143,18 +148,34 @@ namespace baal
                     {
                         series->setUseOpenGL(true);
                     }
-                    
-                    axisX->setRange(maxX - timeWindow, maxX+1);
-                    if (!points.isEmpty())
+					
+                    if (seriesType == 0)
                     {
-                        auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](float timestamp, const QPointF& point) {
-                            return timestamp < point.x();
-                        });
-                        points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
-            
-                        static_cast<QtCharts::QXYSeries *>(series)->replace(points);
-                        axisY->setRange(minY-1,maxY+1);
+						axisX->setRange(maxX - timeWindow, maxX+1);
+						if (!points.isEmpty())
+						{
+							auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](float timestamp, const QPointF& point) {
+								return timestamp < point.x();
+							});
+							points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
+				
+							static_cast<QtCharts::QXYSeries *>(series)->replace(points);
+							axisY->setRange(minY-1,maxY+1);
+						}
                     }
+                    else if (seriesType == 1)
+                    {
+						if (!points.isEmpty())
+						{
+							auto firstToKeep = std::upper_bound(thresPoints.begin(), thresPoints.end(), thresPoints.back().x() - timeWindow, [](float timestamp, const QPointF& thresPoints) {
+								return timestamp < thresPoints.x();
+							});
+							thresPoints.remove(0, static_cast<int>(std::distance(thresPoints.begin(), firstToKeep)));
+				
+							static_cast<QtCharts::QXYSeries *>(series)->replace(thresPoints);
+						}
+					}
+					
                     atomicGuard.clear(std::memory_order_release);
                 }
             }
@@ -167,11 +188,13 @@ namespace baal
         bool                  openGL;
         float                 timeWindow;
         QVector<QPointF>      points;
+        QVector<QPointF>      thresPoints;
         float                 maxX;
         float                 minY;
         float                 maxY;
         std::atomic_flag      atomicGuard;
         float                 potential;
+        float                 threshold;
         int                   neuronTracker;
     };
 }

@@ -29,6 +29,9 @@ ApplicationWindow
 	minimumWidth: 450
 	property int refresh: 1
 
+	property int a: 0
+	property int b: 1
+
 	ColumnLayout
 	{
 		id: mainGrid
@@ -214,6 +217,13 @@ ApplicationWindow
 					axisY: mY
 				}
 
+				LineSeries 
+				{
+					id: threshold
+					axisX: mX
+					axisY: mY
+				}
+
 				Timer
 				{
 					id: refreshTimer3
@@ -222,7 +232,8 @@ ApplicationWindow
 					repeat: true
 					onTriggered:
 					{
-						potentialViewer.update(mX, mY, membraneChart.series(0));
+						potentialViewer.update(mX, mY, membraneChart.series(0),a);
+						potentialViewer.update(mX, mY, membraneChart.series(1),b);
 					}
 				}
 

@@ -81,10 +81,10 @@ namespace baal
         }
 		
 		// ----- NETWORK CLASS WRAPPERS -----
-		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=17e-10, float _currentBurnout=3.1e-9)
+		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=40e-10)
 		{
 			network.addNeurons(_numberOfNeurons,_decayCurrent,_decayPotential,_refractoryPeriod,_decaySynapticEfficacy,
-				_synapticEfficacy,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent, _currentBurnout);
+				_synapticEfficacy,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent);
 		}
 		
 		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, float weight, bool randomDelays, int _delay=0)
@@ -101,6 +101,11 @@ namespace baal
 		{
 			return network.getNeuronPopulations();
 		}
+		
+		void injectTeacher(std::vector<std::vector<float>>* _teacher)
+        {
+            network.injectTeacher(_teacher);
+        }
 		
 		// ----- SETTERS -----
 		void useHardwareAcceleration(bool accelerate)
