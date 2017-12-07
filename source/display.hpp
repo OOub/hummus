@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 21/11/2017
+ * Last Version: 6/12/2017
  *
  * Information: Add-on to the Network class, used to display a GUI of the spiking neural network output
  */
