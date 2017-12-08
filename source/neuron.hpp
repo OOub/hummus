@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 6/12/2017
+ * Last Version: 8/12/2017
  *
  * Information:
  */
@@ -46,7 +46,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100e-10) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100e-10, float _decayCalcium=10) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -59,7 +59,17 @@ namespace baal
 			resetPotential(_resetPotential),
 			inputResistance(_inputResistance),
 			externalCurrent(_externalCurrent),
+			decayCalcium(_decayCalcium),
+			ltpUpperbound(1),
+			ltpLowerbound(0.7),
+			ltdUpperbound(0.3),
+			ltdLowerbound(0),
+			minWeight(0),
+			maxWeight(1),
+			tauWeight(0.2),
+			tauPotential(-60),
 			current(0),
+			calciumCurrent(0),
 			potential(_restingPotential),
 			activity(false),
 			initialProjection{nullptr, nullptr, 1., 0, true},
@@ -156,9 +166,18 @@ namespace baal
 				}
 			}
 			
+			//calcium current decay
+			calciumCurrent *= std::exp(-timestep/decayCalcium);
+			if (s.postProjection)
+			{
+				voltageGatedSTDP(s, timestep, network);
+			}
+			
 			if (potential >= threshold)
 			{
-			
+				// calcium current increasing when postSynaptic neuron fires
+				calciumCurrent += 1;
+				
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
@@ -166,18 +185,6 @@ namespace baal
 				{
 					delegate->getArrivingSpike(timestamp, &activeProjection, true, false, network, this);
 				}
-				
-//				// lateral inhibition
-//				if (layerID != 0)
-//				{
-//					for (auto& projReset: preProjections[0]->preNeuron->postProjections)
-//					{
-//						if (projReset->postNeuron->neuronID != neuronID)
-//						{
-//							projReset->postNeuron->setPotential(restingPotential);
-//						}
-//					}
-//				}
 			
 				for (auto& p : postProjections)
 				{
@@ -192,7 +199,7 @@ namespace baal
 					}
 				}
 				
-				delayLearning(network);
+//				delayLearning(network);
 				if (!network->getTeacher()->empty())
 				{
 					thresholdLearning(timestamp, network);
@@ -274,6 +281,51 @@ namespace baal
 	protected:
 	
     	// ----- PROTECTED NEURON METHODS -----
+		
+		template <typename Network>
+		void voltageGatedSTDP(spike s, float timestep, Network* network)
+		{
+			if (layerID != 0)
+			{
+				if (calciumCurrent >= ltpLowerbound && calciumCurrent < ltpUpperbound && potential > tauPotential)
+				{
+					s.postProjection->weight += 0.01;
+					if (s.postProjection->weight > maxWeight)
+					{
+						s.postProjection->weight = maxWeight;
+					}
+				}
+				else if (calciumCurrent >= ltdLowerbound && calciumCurrent < ltdUpperbound && potential <= tauPotential)
+				{
+					s.postProjection->weight -= 0.01;
+					if (s.postProjection->weight < minWeight)
+					{
+						s.postProjection->weight = minWeight;
+					}
+				}
+				else
+				{
+					// relax back to either wmin or wmax depending on tauWeight
+					if (s.postProjection->weight > tauWeight)
+					{
+						s.postProjection->weight += 0.01;
+						if (s.postProjection->weight > maxWeight)
+						{
+							s.postProjection->weight = maxWeight;
+						}
+					}
+					else if (s.postProjection->weight <= tauWeight)
+					{
+						s.postProjection->weight -= 0.01;
+						if (s.postProjection->weight < minWeight)
+						{
+							s.postProjection->weight = minWeight;
+						}
+					}
+				}
+				std::cout << s.postProjection->weight << std::endl;
+			}
+		}
 		
     	template <typename Network>
     	void thresholdLearning(float timestamp, Network* network)
@@ -366,7 +418,18 @@ namespace baal
 			network->getPlasticNeurons().clear();
 			network->getGeneratedSpikes().clear();
 			network->setInputSpikeCounter(0);
-		
+			
+			// lateral inhibition
+			if (layerID != 0)
+			{
+				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
+				{
+					if (projReset->postNeuron->neuronID != neuronID)
+					{
+						projReset->postNeuron->setPotential(restingPotential);
+					}
+				}
+			}
         }
 		
 		// ----- NEURON PARAMETERS -----
@@ -385,6 +448,16 @@ namespace baal
         bool                                     activity;
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
+		float                                    calciumCurrent;
+		float                                    decayCalcium;
+		float                                    ltpUpperbound;
+		float                                    ltpLowerbound;
+		float                                    ltdUpperbound;
+		float                                    ltdLowerbound;
+		float                                    tauWeight;
+		float                                    tauPotential;
+		float     							     minWeight;
+		float                                    maxWeight;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		projection                               activeProjection;

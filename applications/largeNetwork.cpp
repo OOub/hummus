@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     int inputNeurons = 27;
     int layer1Neurons = 27;
 	
-    float weight = 1./3.8;
+    float weight = 1./3;
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
