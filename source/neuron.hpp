@@ -46,7 +46,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100e-10, float _decayCalcium=10) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=40e-10, float _decayCalcium=100) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -61,13 +61,13 @@ namespace baal
 			externalCurrent(_externalCurrent),
 			decayCalcium(_decayCalcium),
 			ltpUpperbound(1),
-			ltpLowerbound(0.7),
+			ltpLowerbound(0.8),
 			ltdUpperbound(0.3),
 			ltdLowerbound(0),
 			minWeight(0),
-			maxWeight(1),
+			maxWeight(0.33),
 			tauWeight(0.2),
-			tauPotential(-60),
+			tauPotential(-50),
 			current(0),
 			calciumCurrent(0),
 			potential(_restingPotential),
@@ -167,7 +167,9 @@ namespace baal
 			}
 			
 			//calcium current decay
+//			std::cout << "calcium: " << calciumCurrent << std::endl;
 			calciumCurrent *= std::exp(-timestep/decayCalcium);
+			
 			if (s.postProjection)
 			{
 				voltageGatedSTDP(s, timestep, network);
@@ -199,11 +201,11 @@ namespace baal
 					}
 				}
 				
-//				delayLearning(network);
-				if (!network->getTeacher()->empty())
-				{
-					thresholdLearning(timestamp, network);
-				}
+				delayLearning(network);
+//				if (!network->getTeacher()->empty())
+//				{
+//					thresholdLearning(timestamp, network);
+//				}
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				current = 0;
@@ -323,7 +325,6 @@ namespace baal
 						}
 					}
 				}
-				std::cout << s.postProjection->weight << std::endl;
 			}
 		}
 		
