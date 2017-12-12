@@ -22,13 +22,13 @@ int main(int argc, char** argv)
 	baal::DataParser dataParser;
 	
 	// clean signal test
-//  	auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+  	auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 	// time jitter test
 //	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 
     // additive noise test
-	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+//	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 	// supervised learning test
 //	auto data = dataParser.read1D("../../data/thresholdAdaptationTest.txt");
