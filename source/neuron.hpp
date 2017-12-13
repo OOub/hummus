@@ -59,17 +59,7 @@ namespace baal
 			resetPotential(_resetPotential),
 			inputResistance(_inputResistance),
 			externalCurrent(_externalCurrent),
-			decayCalcium(_decayCalcium),
-			ltpUpperbound(1),
-			ltpLowerbound(0.8),
-			ltdUpperbound(0.3),
-			ltdLowerbound(0),
-			minWeight(0),
-			maxWeight(0.33),
-			tauWeight(0.2),
-			tauPotential(-50),
 			current(0),
-			calciumCurrent(0),
 			potential(_restingPotential),
 			activity(false),
 			initialProjection{nullptr, nullptr, 1., 0, true},
@@ -166,20 +156,8 @@ namespace baal
 				}
 			}
 			
-			//calcium current decay
-//			std::cout << "calcium: " << calciumCurrent << std::endl;
-			calciumCurrent *= std::exp(-timestep/decayCalcium);
-			
-			if (s.postProjection)
-			{
-				voltageGatedSTDP(s, timestep, network);
-			}
-			
 			if (potential >= threshold)
 			{
-				// calcium current increasing when postSynaptic neuron fires
-				calciumCurrent += 1;
-				
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
@@ -202,10 +180,6 @@ namespace baal
 				}
 				
 				delayLearning(network);
-//				if (!network->getTeacher()->empty())
-//				{
-//					thresholdLearning(timestamp, network);
-//				}
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				current = 0;
@@ -283,69 +257,6 @@ namespace baal
 	protected:
 	
     	// ----- PROTECTED NEURON METHODS -----
-		
-		template <typename Network>
-		void voltageGatedSTDP(spike s, float timestep, Network* network)
-		{
-			if (layerID != 0)
-			{
-				if (calciumCurrent >= ltpLowerbound && calciumCurrent < ltpUpperbound && potential > tauPotential)
-				{
-					s.postProjection->weight += 0.01;
-					if (s.postProjection->weight > maxWeight)
-					{
-						s.postProjection->weight = maxWeight;
-					}
-				}
-				else if (calciumCurrent >= ltdLowerbound && calciumCurrent < ltdUpperbound && potential <= tauPotential)
-				{
-					s.postProjection->weight -= 0.01;
-					if (s.postProjection->weight < minWeight)
-					{
-						s.postProjection->weight = minWeight;
-					}
-				}
-				else
-				{
-					// relax back to either wmin or wmax depending on tauWeight
-					if (s.postProjection->weight > tauWeight)
-					{
-						s.postProjection->weight += 0.01;
-						if (s.postProjection->weight > maxWeight)
-						{
-							s.postProjection->weight = maxWeight;
-						}
-					}
-					else if (s.postProjection->weight <= tauWeight)
-					{
-						s.postProjection->weight -= 0.01;
-						if (s.postProjection->weight < minWeight)
-						{
-							s.postProjection->weight = minWeight;
-						}
-					}
-				}
-			}
-		}
-		
-    	template <typename Network>
-    	void thresholdLearning(float timestamp, Network* network)
-    	{
-    	    if (layerID != 0)
-			{
-//			    if (neuronID == network->getTeacher()->at(1)[counter])
-//    	        {
-				float error = timestamp - network->getTeacher()->at(0)[counter];
-				std::cout << "teacher: " << network->getTeacher()->at(0)[counter] << " ts: " << timestamp << std::endl;
-
-				float changeThres = threshold - error * std::exp(-0.001*std::pow(error,2));
-
-				std::cout << "error: " << error << " changeThres: " << changeThres << std::endl;
-				setThreshold(changeThres);
-				counter++;
-//    	        }
-    	    }
-    	}
 
     	template<typename Network>
 		void delayLearning(Network* network)
@@ -406,6 +317,7 @@ namespace baal
 					{
 						synapticEfficacy *= std::exp(-1/decaySynapticEfficacy);
 					}
+					weightReinforcement(network);
 					resetAfterLearning(network);
 				
 				}
@@ -433,6 +345,39 @@ namespace baal
 			}
         }
 		
+		template <typename Network>
+        void weightReinforcement(Network* network)
+        {
+            std::vector<int> plasticID;
+            for (auto& plasticNeurons: network->getPlasticNeurons())
+            {
+                plasticID.push_back(plasticNeurons->getNeuronID());
+            }
+
+            // looping through all projections from the winner
+            for (auto& allProjections: this->preProjections)
+            {
+                int16_t ID = allProjections->preNeuron->getNeuronID();
+                // if the projection is not plastic
+                if (std::find(plasticID.begin(), plasticID.end(), ID) == plasticID.end())
+                {
+                    if (allProjections->weight >= allProjections->weight/100)
+                    {
+                        // negative reinforcement
+                        allProjections->weight -= (allProjections->weight/100);
+                    }
+                }
+                else
+                {
+                	// positive reinforcement
+					if (allProjections->weight <= 1./3.3)
+                    {
+                    	allProjections->weight += (allProjections->weight/100);
+                    }
+				}
+            }
+        }
+
 		// ----- NEURON PARAMETERS -----
 		int16_t                                  neuronID;
 		int16_t                                  layerID;
@@ -449,16 +394,6 @@ namespace baal
         bool                                     activity;
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
-		float                                    calciumCurrent;
-		float                                    decayCalcium;
-		float                                    ltpUpperbound;
-		float                                    ltpLowerbound;
-		float                                    ltdUpperbound;
-		float                                    ltdLowerbound;
-		float                                    tauWeight;
-		float                                    tauPotential;
-		float     							     minWeight;
-		float                                    maxWeight;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		projection                               activeProjection;

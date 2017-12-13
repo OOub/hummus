@@ -22,17 +22,13 @@ int main(int argc, char** argv)
 	baal::DataParser dataParser;
 	
 	// clean signal test
-  	auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+//  	auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 	// time jitter test
-//	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-
+	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+	
     // additive noise test
 //	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-	
-	// supervised learning test
-//	auto data = dataParser.read1D("../../data/thresholdAdaptationTest.txt");
-//	auto teacher = dataParser.read1D("../../data/teacherSignalDecelerate.txt");
 	
 //  ----- NETWORK PARAMETERS -----
 	
@@ -65,9 +61,6 @@ int main(int argc, char** argv)
 	{
 		network.injectSpike(network.getNeuronPopulations()[0][data[1][idx]].prepareInitialSpike(data[0][idx]));
     }
-	
-	// injecting the teacher signal for supervised threshold learning
-//	network.injectTeacher(&teacher);
 	
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);

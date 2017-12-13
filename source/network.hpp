@@ -1,4 +1,4 @@
-/*
+/* 
  * network.hpp
  * Baal - clock-driven spiking neural network simulator
  *
