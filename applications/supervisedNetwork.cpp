@@ -25,14 +25,19 @@ int main(int argc, char** argv)
 //  	auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 	// time jitter test
-	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+//	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
     // additive noise test
-//	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
+	// supervised learning
+	auto teacher = dataParser.read1D("../../data/teacherSignal.txt");
+
 //  ----- NETWORK PARAMETERS -----
 	
-//	std::string filename = "ThresholdDecelerate.bin";
+//	std::string filename = "supervisedLearning_clean.bin";
+//	std::string filename = "supervisedLearning_jitter.bin";
+//	std::string filename = "supervisedLearning_additive.bin";
 //	baal::Logger logger(filename);
 	baal::Display network;
 	
@@ -40,16 +45,17 @@ int main(int argc, char** argv)
 	float runtime = data[0].back()+1;
 	float timestep = 0.1;
 	
-	float decayCurrent = 3;
+	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
-    float efficacyDecay = 500;
+    float efficacyDecay = 2000;
     float efficacy = 1;
 	
     int inputNeurons = 27;
     int layer1Neurons = 27;
 	
-    float weight = 1./4;
+//    float weight = 19e-10/10; //very low weight for supervised
+	float weight = 19e-10/4; //weight dependent on feature size
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
@@ -62,11 +68,14 @@ int main(int argc, char** argv)
 		network.injectSpike(network.getNeuronPopulations()[0][data[1][idx]].prepareInitialSpike(data[0][idx]));
     }
 	
+	// injecting the teacher signal for supervised threshold learning
+  	network.injectTeacher(&teacher);
+	
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(1000);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(32);
+	network.trackNeuron(30);
 	
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);

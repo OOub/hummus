@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	baal::Display network({&logger});
 	
 //  ----- INITIALISING THE NETWORK -----
-	float runtime = 100;
+	float runtime = 50;
 	float timestep = 0.1;
 	
 	float decayCurrent = 10;
@@ -34,19 +34,19 @@ int main(int argc, char** argv)
     float efficacy = 1;
 	
     int inputNeurons = 4;
-    int layer1Neurons = 4;
+    int layer1Neurons = 2;
 	
-    float weight = 1.5;
+    float weight = 19e-10/4;
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], weight, true, 20);
+	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], weight, false, 0);
 
 	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(5));
-	network.injectSpike(network.getNeuronPopulations()[0][1].prepareInitialSpike(10));
-	network.injectSpike(network.getNeuronPopulations()[0][2].prepareInitialSpike(12));
-	network.injectSpike(network.getNeuronPopulations()[0][3].prepareInitialSpike(24));
+	network.injectSpike(network.getNeuronPopulations()[0][1].prepareInitialSpike(5));
+	network.injectSpike(network.getNeuronPopulations()[0][2].prepareInitialSpike(5));
+	network.injectSpike(network.getNeuronPopulations()[0][3].prepareInitialSpike(5));
 	
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);

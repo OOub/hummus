@@ -42,12 +42,14 @@ namespace baal
 		// ----- CONSTRUCTOR AND DESTRUCTOR ------
         Network(std::vector<NetworkDelegate*> _delegates = {}) :
             delegates(_delegates),
+            teacher(nullptr),
 			layerCounter(0),
-			inputSpikeCounter(0)
+			inputSpikeCounter(0),
+			teacherIterator(0)
 		{}
 		
 		// ----- PUBLIC NETWORK METHODS -----
-		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=40e-10, float _decayCalcium=100)
+		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, float _decayCalcium=100)
         {
         	unsigned long shift = 0;
         	if (!neurons.empty())
@@ -163,13 +165,23 @@ namespace baal
             inputSpikeCounter = resetValue;
         }
 		
+		int getTeacherIterator() const
+        {
+            return teacherIterator;
+        }
+		
+		void setTeacherIterator(int increment)
+        {
+            teacherIterator = increment;
+        }
+		
 		// ----- SUPERVISED LEARNING METHOD -----
         void injectTeacher(std::vector<std::vector<float>>* _teacher)
         {
             teacher = _teacher;
         }
 		
-        std::vector<std::vector<float>>* getTeacher()
+        std::vector<std::vector<float>>* getTeacher() const
         {
             return teacher;
         }
@@ -255,6 +267,7 @@ namespace baal
 		std::vector<std::vector<Neuron>> neurons;
 		int                              layerCounter;
 		int                              inputSpikeCounter;
+		int                              teacherIterator;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
         std::vector<std::vector<float>>* teacher;
