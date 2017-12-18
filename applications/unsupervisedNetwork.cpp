@@ -25,31 +25,34 @@ int main(int argc, char** argv)
 //  	auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 	// time jitter test
-	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+//	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
-    // additive noise test
-//	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+	// additive noise test
+	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 //  ----- NETWORK PARAMETERS -----
 	
-//	std::string filename = "ThresholdDecelerate.bin";
-//	baal::Logger logger(filename);
-	baal::Display network;
+//	std::string filename = "unsupervisedLearning_clean.bin";
+//	std::string filename = "unsupervisedLearning_jitter.bin";
+	std::string filename = "unsupervisedLearning_additive.bin";
+	
+	baal::Logger logger(filename);
+	baal::Display network({&logger});
 	
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data[0].back()+1;
 	float timestep = 0.1;
 	
-	float decayCurrent = 3;
+	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
-    float efficacyDecay = 500;
+    float efficacyDecay = 2000;
     float efficacy = 1;
 	
     int inputNeurons = 27;
     int layer1Neurons = 27;
 	
-    float weight = 1./4;
+    float weight = 19e-10/4; //weight dependent on feature size
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);

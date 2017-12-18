@@ -45,6 +45,7 @@ namespace baal
             teacher(nullptr),
 			layerCounter(0),
 			inputSpikeCounter(0),
+			teachingProgress(false),
 			teacherIterator(0)
 		{}
 		
@@ -66,9 +67,10 @@ namespace baal
 			layerCounter++;
         }
 		
-    	void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, float weight, bool randomDelays, int _delay=0)
+    	void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0)
     	{
     		int delay = 0;
+    		float weight = 0;
     		for (auto& pre: *presynapticLayer)
     		{
     			for (auto& post: *postsynapticLayer)
@@ -80,6 +82,15 @@ namespace baal
 					else
 					{
     					delay = _delay;
+					}
+					
+					if (randomWeights)
+					{
+						weight = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/_weight));
+					}
+					else
+					{
+						weight = _weight;
 					}
 					pre.addProjection(&post, weight, delay);
 				}
@@ -108,6 +119,7 @@ namespace baal
 			{
 				for (float i=0; i<_runtime; i+=_timestep)
 				{
+//					std::cout << "it: " << teacherIterator << " sz: " << teacher->at(0).size() << std::endl;
 					for (auto& pop: neurons)
 					{
 						for (auto& neuron: pop)
@@ -175,10 +187,21 @@ namespace baal
             teacherIterator = increment;
         }
 		
+		int getTeachingProgress() const
+        {
+            return teachingProgress;
+        }
+		
+		void setTeachingProgress(bool status)
+        {
+            teachingProgress = status;
+        }
+		
 		// ----- SUPERVISED LEARNING METHOD -----
         void injectTeacher(std::vector<std::vector<float>>* _teacher)
         {
             teacher = _teacher;
+            teachingProgress = true;
         }
 		
         std::vector<std::vector<float>>* getTeacher() const
@@ -268,6 +291,7 @@ namespace baal
 		int                              layerCounter;
 		int                              inputSpikeCounter;
 		int                              teacherIterator;
+		bool                             teachingProgress;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
         std::vector<std::vector<float>>* teacher;

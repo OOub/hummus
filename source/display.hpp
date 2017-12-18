@@ -87,9 +87,9 @@ namespace baal
 				_synapticEfficacy,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent);
 		}
 		
-		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, float weight, bool randomDelays, int _delay=0)
+		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0)
 		{
-			network.allToallConnectivity(presynapticLayer,postsynapticLayer,weight,randomDelays,_delay);
+			network.allToallConnectivity(presynapticLayer,postsynapticLayer,randomWeights,_weight,randomDelays,_delay);
 		}
 		
 		void injectSpike(spike s)
