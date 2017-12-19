@@ -46,7 +46,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, float _decayCalcium=100) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _decaySynapticEfficacy=1, float _synapticEfficacy=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -61,6 +61,7 @@ namespace baal
 			externalCurrent(_externalCurrent),
 			current(0),
 			potential(_restingPotential),
+			supervisedPotential(_restingPotential),
 			activity(false),
 			initialProjection{nullptr, nullptr, 1000e-10, 0, true},
 			fireCounter(0),
@@ -132,9 +133,13 @@ namespace baal
 				if (s.postProjection)
 				{
 					current += externalCurrent*s.postProjection->weight;
+//					std::cout << neuronID << " " << current << std::endl;
 					activeProjection = *s.postProjection;
 				}
-				
+				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
+				supervisedPotential = potential;
+			}
+			
 			// impose spiking when using supervised learning
 			if (network->getTeacher())
 			{
@@ -144,7 +149,9 @@ namespace baal
 					{
 						if (std::abs(network->getTeacher()->at(0)[network->getTeacherIterator()] - timestamp) < 1e-1)
 						{
+//							std::cout << "potential " << neuronID << " " << supervisedPotential << std::endl;
 							current = 19e-10;
+							potential = threshold;
 							network->setTeacherIterator(network->getTeacherIterator()+1);
 						}
 					}
@@ -153,9 +160,6 @@ namespace baal
 				{
 					network->setTeachingProgress(false);
 				}
-			}
-			
-				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 			}
 			
 			if (s.postProjection)
@@ -201,6 +205,7 @@ namespace baal
 				delayLearning(timestamp, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
+				supervisedPotential = resetPotential;
 				current = 0;
 				activity = true;
 			}
@@ -290,10 +295,6 @@ namespace baal
 					if (network->getTeacher())
 					{
 						tMax = timestamp;
-						if (!network->getTeachingProgress())
-						{
-							return;
-						}
 					}
 					// if there is no supervised signal
 					else
@@ -351,6 +352,10 @@ namespace baal
 					if (decaySynapticEfficacy > 0)
 					{
 						synapticEfficacy *= std::exp(-1/decaySynapticEfficacy);
+						if (synapticEfficacy < 1e-5)
+						{
+							synapticEfficacy = 0;
+						}
 					}
 					weightReinforcement(network);
 					resetAfterLearning(network);
@@ -367,15 +372,18 @@ namespace baal
 			network->getGeneratedSpikes().clear();
 			network->setInputSpikeCounter(0);
 			
-			// lateral inhibition
-			if (layerID != 0)
+			if (!network->getTeacher())
 			{
-				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
+				// lateral inhibition
+				if (layerID != 0)
 				{
-					if (projReset->postNeuron->neuronID != neuronID)
+					for (auto& projReset: preProjections[0]->preNeuron->postProjections)
 					{
-						projReset->postNeuron->setPotential(restingPotential);
-						projReset->postNeuron->setCurrent(0);
+						if (projReset->postNeuron->neuronID != neuronID)
+						{
+							projReset->postNeuron->setPotential(restingPotential);
+							projReset->postNeuron->setCurrent(0);
+						}
 					}
 				}
 			}
@@ -387,6 +395,7 @@ namespace baal
             std::vector<int> plasticID;
             for (auto& plasticNeurons: network->getPlasticNeurons())
             {
+            
                 plasticID.push_back(plasticNeurons->getNeuronID());
             }
 			
@@ -397,18 +406,18 @@ namespace baal
                 // if the projection is not plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) == plasticID.end())
                 {
-                    if (allProjections->weight > 1e-10)
+                    if (allProjections->weight > 19e-10/10)
                     {
                         // negative reinforcement
-                        allProjections->weight -= (allProjections->weight/100)*synapticEfficacy;
+                        allProjections->weight -= 19e-10/10;
                     }
                 }
                 else
                 {
                 	// positive reinforcement
-					if (allProjections->weight < 5e-10) //add a minimum and a maximum weight value
+					if (supervisedPotential < threshold && allProjections->weight < 19e-10/plasticID.size())
                     {
-                    	allProjections->weight += (allProjections->weight/100)*synapticEfficacy;
+                    	allProjections->weight +=  19e-10/10;
                     }
 				}
             }
@@ -441,5 +450,6 @@ namespace baal
         float                                    timeEnd;
         std::unique_ptr<std::ofstream>           counterLog;
         float                                    lastSpikeTime;
+        float                                    supervisedPotential;
     };
 }
