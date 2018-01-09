@@ -5,16 +5,18 @@ close all
 addpath('../src');
 
 %% FEATURES
+createTeacher = 1; % 1 to create a teacher signal
 timeJitter = 1; % 0 to turn off time jitter and 1 to add time jitter
 additiveNoise = 0; % percentage of background noise
 neuronalNoise = 0; % percentage of neural noise
 randomizePatternOccurence = 0; % 0 to turn off and 1 to randomize
+numberOfNeurons = 27; 
 
 %% PARAMETERS
 numberOfPatterns = 4;
-repetitions = 20000;
+repetitions = 2000;
 timeBetweenIntervals = 10;
-timejitterInterval = [0,1.5]; %standard deviation for the jitter
+timejitterInterval = [0,9.5]; %standard deviation for the jitter
 
 %% PATTERN CREATION
 pattern1 = [0;1;2;3];
@@ -57,6 +59,27 @@ for i = 1:length(time)
         shift = time(i) + timeBetweenIntervals;
     end
 end
+
+%% CREATING TEACHER SIGNAL FORCING SNN TO SPIKE AFTER EVERY PATTERN (SUPERVISED LEARNING)
+if (createTeacher == 1)
+    teacherSignal = [];
+    responseNeurons = [28,30,32,34];
+    cnt = 1;
+    for i = 4:4:size(time)
+        teacherSignal(end+1,1) = time(i)+1;
+        teacherSignal(end,2) = responseNeurons(cnt);
+        cnt = cnt+1;
+        if (cnt > 4)
+            cnt = 1;
+        end
+    end
+    if (timeJitter == 1)
+        dlmwrite(strcat(num2str(timejitterInterval(2)),'teacherSignal.txt'),teacherSignal, 'delimiter', ' ','precision','%f');
+    else
+        dlmwrite(strcat('clean_','teacherSignal.txt'),teacherSignal, 'delimiter', ' ','precision','%f');
+    end
+end
+
 clear i pattern1 pattern2 pattern3 pattern4 time1 time2 time3 time4 shift
 
 %% ADDING NEURONAL NOISE
@@ -69,16 +92,23 @@ if (numberNeuronalNoise > 0)
 end
 
 %% ADDING BACKGROUND NOISE
-numberNoiseInsertion = floor(length(data)*additiveNoise);
+
+numberNoiseInsertion = floor(length(data)*additiveNoise/100);
 if (numberNoiseInsertion > 0)
     insertionIndex = randi(length(data),numberNoiseInsertion,1);
     for i = 1:length(insertionIndex)
-        neuronNoise = randi(max(data));
+        neuronNoise = randi(numberOfNeurons);
         tmin = time(insertionIndex(i));
         tmax = time(insertionIndex(i)+1);
         timeNoise=tmin+rand(1,1)*(tmax-tmin);
-        data = insertrows(data,neuronNoise,insertionIndex(i));
-        time = insertrows(time,timeNoise,insertionIndex(i));
+        
+        tp = data(insertionIndex(i):end,:);
+        data(insertionIndex(i),:) = neuronNoise;
+        data(insertionIndex(i)+1:end+1,:) = tp;
+
+        tp1 = time(insertionIndex(i):end,:);
+        time(insertionIndex(i),:) = timeNoise;
+        time(insertionIndex(i)+1:end+1,:) = tp1;
     end
 end
 
