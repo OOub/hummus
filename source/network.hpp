@@ -140,7 +140,17 @@ namespace baal
             #endif
 		}
 		
+		void learningLogger(std::string filename)
+		{
+			learningLog.reset(new std::ofstream(filename));
+		}
+		
 		// ----- SETTERS AND GETTERS -----
+		std::unique_ptr<std::ofstream>& getLearningLog()
+		{
+			return learningLog;
+		}
+		
 		std::vector<std::vector<Neuron>>& getNeuronPopulations()
 		{
 			return neurons;
@@ -291,6 +301,7 @@ namespace baal
 		int                              inputSpikeCounter;
 		int                              teacherIterator;
 		bool                             teachingProgress;
+		std::unique_ptr<std::ofstream>   learningLog;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
         std::vector<std::vector<float>>* teacher;

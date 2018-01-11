@@ -107,6 +107,11 @@ namespace baal
             network.injectTeacher(_teacher);
         }
 		
+		void learningLogger(std::string filename)
+		{
+			network.learningLogger(filename);
+		}
+		
 		// ----- SETTERS -----
 		void useHardwareAcceleration(bool accelerate)
         {

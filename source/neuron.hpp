@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 8/12/2017
+ * Last Version: 09/01/2018
  *
  * Information:
  */
@@ -142,14 +142,12 @@ namespace baal
 			// impose spiking when using supervised learning
 			if (network->getTeacher())
 			{
-//				if (network->getTeacherIterator() < network->getTeacher()->at(0).size())
 				if (network->getTeacherIterator() < network->getTeacher()->size())
 				{
 					if (network->getTeacher()->at(1)[network->getTeacherIterator()] == neuronID)
 					{
 						if (std::abs(network->getTeacher()->at(0)[network->getTeacherIterator()] - timestamp) < 1e-1)
 						{
-//							std::cout << "potential " << neuronID << " " << supervisedPotential << std::endl;
 							current = 19e-10;
 							potential = threshold;
 							network->setTeacherIterator(network->getTeacherIterator()+1);
@@ -162,6 +160,11 @@ namespace baal
 				}
 			}
 			
+			if (potentialLog)
+			{
+				*potentialLog << timestamp << " " << potential << "\n";
+			}
+			
 			if (s.postProjection)
 			{
 				#ifndef NDEBUG
@@ -172,6 +175,7 @@ namespace baal
 					delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this);
 				}
 			}
+			
 			else
 			{
 				for (auto delegate: network->getDelegates())
@@ -225,6 +229,12 @@ namespace baal
             timeStart = _timeStart;
             timeEnd = _timeEnd;
             counterLog.reset(new std::ofstream(filename));
+        }
+		
+        void potentialLogger(std::string filename)
+        {
+        	std::cout << "logging the potential of neuron " << neuronID << std::endl;
+        	potentialLog.reset(new std::ofstream(filename));
         }
 		
     	// ----- SETTERS AND GETTERS -----
@@ -289,10 +299,12 @@ namespace baal
 			{
 				if (layerID != 0)
 				{
+					#ifndef NDEBUG
 					if (network->getTeachingProgress())
 					{
 						std::cout << "learning epoch" << std::endl;
 					}
+					#endif
 					std::vector<float> timeDifferences;
 					float tMax = 0;
 					// if there is a supervised signal
@@ -331,26 +343,38 @@ namespace baal
 										{
 											float change = (inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-timeDifferences.back()/decayCurrent) - std::exp(-timeDifferences.back()/decayPotential))*synapticEfficacy;
 											plasticProjections->delay += change;
-		//									#ifndef NDEBUG
+											#ifndef NDEBUG
 											std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-		//									#endif
+											#endif
+											if (network->getLearningLog())
+											{
+												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+											}
 										}
 
 										else if (timeDifferences.back() < 0)
 										{
 											float change = -((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(timeDifferences.back()/decayCurrent) - std::exp(timeDifferences.back()/decayPotential)))*synapticEfficacy;
 											plasticProjections->delay += change;
-		//									#ifndef NDEBUG
+											#ifndef NDEBUG
 											std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-		//									#endif
+											#endif
+											if (network->getLearningLog())
+											{
+												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+											}
 										}
 
 										else
 										{
 											plasticProjections->delay += 0;
-		//									#ifndef NDEBUG
+											#ifndef NDEBUG
 											std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << 0 << std::endl;
-		//									#endif
+											#endif
+											if (network->getLearningLog())
+											{
+												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << 0 << "\n";
+											}
 										}
 									}
 								}
@@ -361,26 +385,38 @@ namespace baal
 									{
 										float change = (inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-timeDifferences.back()/decayCurrent) - std::exp(-timeDifferences.back()/decayPotential))*synapticEfficacy;
 										plasticProjections->delay += change;
-	//									#ifndef NDEBUG
+										#ifndef NDEBUG
 										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-	//									#endif
+										#endif
+										if (network->getLearningLog())
+										{
+											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+										}
 									}
 
 									else if (timeDifferences.back() < 0)
 									{
 										float change = -((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(timeDifferences.back()/decayCurrent) - std::exp(timeDifferences.back()/decayPotential)))*synapticEfficacy;
 										plasticProjections->delay += change;
-	//									#ifndef NDEBUG
+										#ifndef NDEBUG
 										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-	//									#endif
+										#endif
+										if (network->getLearningLog())
+										{
+											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+										}
 									}
 
 									else
 									{
 										plasticProjections->delay += 0;
-	//									#ifndef NDEBUG
+										#ifndef NDEBUG
 										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << 0 << std::endl;
-	//									#endif
+										#endif
+										if (network->getLearningLog())
+										{
+											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " <<  0 <<  "\n";
+										}
 									}
 								}
 							}
@@ -489,6 +525,7 @@ namespace baal
         float                                    timeStart;
         float                                    timeEnd;
         std::unique_ptr<std::ofstream>           counterLog;
+        std::unique_ptr<std::ofstream>           potentialLog;
         float                                    lastSpikeTime;
         float                                    supervisedPotential;
     };

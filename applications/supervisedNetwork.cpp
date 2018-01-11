@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 6/12/2017
+ * Last Version: 09/01/2018
  *
  * Information: Example of a basic spiking neural network.
  */
@@ -56,6 +56,8 @@ int main(int argc, char** argv)
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
 	
+	network.learningLogger("learningLog.txt");
+	
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data[0].back()+1;
 	float timestep = 0.1;
@@ -76,6 +78,8 @@ int main(int argc, char** argv)
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 
+	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog.txt");
+	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)
 	{
