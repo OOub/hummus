@@ -22,34 +22,19 @@ int main(int argc, char** argv)
 	int repeatsInTeacher = 200;
 	baal::DataParser dataParser;
 	
-	// clean signal test
-//    auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-	
 	// time jitter test
 	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-//	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-//	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/5.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-//	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/7.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-//	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/9.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 	// supervised learning
-//	auto teacher = dataParser.read1D("../../data/generatedPatterns/cleanSignal/clean_teacherSignal.txt");
 	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5teacherSignal.txt");
-//	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/3.5teacherSignal.txt");
-//	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/5.5teacherSignal.txt");
-//	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/7.5teacherSignal.txt");
-//	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/9.5teacherSignal.txt");
 
 	teacher.resize(repeatsInTeacher);
 	
 //  ----- NETWORK PARAMETERS -----
-	
-//	std::string filename = "supervisedLearning_clean.bin";
 	std::string filename = "supervisedLearning_1.5jitter.bin";
+	
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
-	
-	network.learningLogger("learningLog_1.5jitter.txt");
 	
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data[0].back()+100;
@@ -71,6 +56,8 @@ int main(int argc, char** argv)
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 
+	// starting the loggers
+	network.learningLogger("learningLog_1.5jitter.txt");
 	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog_9.5jitter.txt");
 	
 	// injecting spikes in the input layer

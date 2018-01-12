@@ -4,33 +4,22 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 17/11/2017
+ * Last Version: 12/01/2018
  *
  * Information: Example of a basic spiking neural network.
  */
 
 #include <iostream>
 
-#include "../source/dataParser.hpp"
 #include "../source/network.hpp"
 #include "../source/display.hpp"
 #include "../source/logger.hpp"
 
 int main(int argc, char** argv)
 {
-//  ----- READING DATA FROM FILE -----
-	baal::DataParser dataParser;
-	
-	// one neuron test
-    auto data = dataParser.read1D("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-	
-	// supervised learning
-	auto teacher = dataParser.read1D("../../data/teacherSignal.txt");
 	
 //  ----- NETWORK PARAMETERS -----
-	std::string filename = "test.bin";
-	baal::Logger logger(filename);
-	baal::Display network({&logger});
+	baal::Display network;
 	
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = 100;
@@ -42,29 +31,28 @@ int main(int argc, char** argv)
     float efficacyDecay = 0;
     float efficacy = 1;
 	
-    int inputNeurons = 4;
+    int inputNeurons = 1;
     int layer1Neurons = 1;
 	
-    float weight = 19e-10/10;
+    float weight = 19e-10/2;
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
+	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, false, 0); // the bool refers to whether or not we want to randomize the weights and delays
 	
 	// injecting spikes in the input layer
-	for (auto idx=0; idx<data[0].size(); idx++)
-	{
-		network.injectSpike(network.getNeuronPopulations()[0][data[1][idx]].prepareInitialSpike(data[0][idx]));
-    }
-	
-	network.injectTeacher(&teacher);
+	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(10));
+	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(11));
+	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(13));
+	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(15));
+	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(25));
 	
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(runtime);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(4);
+	network.trackNeuron(1);
 	
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);

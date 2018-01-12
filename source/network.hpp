@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 6/12/2017
  *
- * Information:
+ * Information: the network class acts as a spike manager.
  */
 
 #pragma once

@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 09/01/2018
  *
- * Information:
+ * Information: the neuron class defines a neuron and the learning rules dictating its behavior.
  */
 
 #pragma once
