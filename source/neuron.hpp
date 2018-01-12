@@ -481,10 +481,10 @@ namespace baal
                 // if the projection is not plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) == plasticID.end())
                 {
-                    if (allProjections->weight > 19e-10/10)
+                    if (allProjections->weight > 19e-10/100)
                     {
                         // negative reinforcement
-                        allProjections->weight -= 19e-10/10;
+                        allProjections->weight -= 19e-10/100;
                     }
                 }
 				
@@ -493,7 +493,7 @@ namespace baal
                 	// positive reinforcement
 					if (supervisedPotential < threshold && allProjections->weight <= 19e-10/(plasticID.size() - 0.5))
                     {
-                     	allProjections->weight +=  19e-10/10;
+                     	allProjections->weight +=  19e-10/100;
                     }
 				}
             }

@@ -19,7 +19,7 @@
 int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
-	int repeatsInTeacher = 50;
+	int repeatsInTeacher = 200;
 	baal::DataParser dataParser;
 	
 	// clean signal test
@@ -51,15 +51,15 @@ int main(int argc, char** argv)
 //  ----- NETWORK PARAMETERS -----
 	
 //	std::string filename = "supervisedLearning_clean.bin";
-	std::string filename = "supervisedLearning_jitter.bin";
+	std::string filename = "supervisedLearning_1.5jitter.bin";
 //	std::string filename = "supervisedLearning_additive.bin";
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
 	
-	network.learningLogger("learningLog.txt");
+	network.learningLogger("learningLog_1.5jitter.txt");
 	
 //  ----- INITIALISING THE NETWORK -----
-	float runtime = data[0].back()+1;
+	float runtime = data[0].back()+100;
 	float timestep = 0.1;
 	
 	float decayCurrent = 10;
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 
-	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog.txt");
+	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog_9.5jitter.txt");
 	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(1000);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(30);
+	network.trackNeuron(28);
 	
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
