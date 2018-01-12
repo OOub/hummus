@@ -1,0 +1,122 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf200
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\froman\fcharset0 Times-Roman;\f2\fnil\fcharset0 LucidaGrande;
+}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf0 # Baal: clock-based spiking neural network simulator
+\f1 \
+
+\f0 \
+## Dependencies\
+\
+### Homebrew is used to install the dependencies on macOS:\
+\
+Run *\expnd0\expndtw0\kerning0
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master install)"* to install homebrew\
+\kerning1\expnd0\expndtw0 \
+### Premake4 is used to build this project\
+
+\f1 \
+
+\f0 **On macOS:**run *brew install premake*
+\f1 \
+
+\f0 **On Linux Debian:** run *sudo apt-get install premake4*
+\f1 \
+
+\f0 \
+\
+### If the Display Class is being used:\
+\
+\pard\tx1660\tx2160\tx2573\tx3140\tx3707\tx4274\tx4841\tx5408\tx5975\tx6542\tx7109\tx7676\tx8243\pardeftab720\li720\fi-720\ri-6\partightenfactor0
+\ls1\ilvl0\cf0 Install Qt 5.7+ and make sure the Qt Charts add-on is installed
+\f1 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\partightenfactor0
+
+\f0 \cf0 \
+**On macOS:**
+\f1 \
+
+\f0 \
+**option 1**\
+run *brew install qt5*
+\f1 \
+
+\f0 \
+**option 2**\
+download directly from: *https://www.qt.io/download/*
+\f1 \
+
+\f0 \
+**On Linux Debian:**
+\f1 \
+
+\f0 \
+**option 1**
+\f1 \
+
+\f0 1. download directly from: *https://www.qt.io/download/ *\
+
+\f1 \
+
+\f0 2. permanently add the Qt dynamic lib path to the LD_LIBRARY_PATH by opening the .bashrc file in your home directory and adding at the end the lines: \
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+*LD_LIBRARY_PATH=[path the Qt dynamic lib path]*\
+*export LD_LIBRARY_PATH*\kerning1\expnd0\expndtw0 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\partightenfactor0
+
+\f1 \cf0 \
+
+\f0 3. modify the include and library paths of Qt in the premake4 file
+\f1 \
+
+\f0 \
+**option 2**\
+
+\f1 \
+
+\f0 1. run *sudo apt-get install qtbase5-dev qtdeclarative5-dev*\
+
+\f1 \
+
+\f0 2. follow instructions from this website to build the Qt Charts add-on from source: *https://github.com/qt/qtcharts*\
+
+\f1 \
+
+\f0 3. make sure QT Charts libraries are in the same folder as the rest of Qt libraries
+\f1 \
+
+\f0 \
+## Installation
+\f1 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\qc\partightenfactor0
+
+\f0 \cf0 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\partightenfactor0
+\cf0 **Installation:** *premake4 install*
+\f1 \
+
+\f0 \
+**Uninstallation:** *premake4 uninstall*
+\f1 \
+
+\f0 \
+## Testing
+\f1 \
+
+\f0 \
+\pard\tx1660\tx2160\tx2573\tx3140\tx3707\tx4274\tx4841\tx5408\tx5975\tx6542\tx7109\tx7676\tx8243\pardeftab720\li720\fi-720\ri-6\partightenfactor0
+\ls2\ilvl0\cf0 1. Go to the baal directory and run *premake4 gmake && cd build && make*
+\f1 \
+\ls2\ilvl0
+\f0 2. Run the executable release/testNetwork 
+\f2 (you need to be in the level of the executable to correctly run the display)}
