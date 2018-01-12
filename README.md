@@ -1,4 +1,4 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf100
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf200
 {\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\froman\fcharset0 Times-Roman;\f2\froman\fcharset0 TimesNewRomanPSMT;
 \f3\fnil\fcharset0 LucidaGrande;}
 {\colortbl;\red255\green255\blue255;}
@@ -10,7 +10,7 @@
 \deftab720
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\qc\partightenfactor0
 
-\f0\fs24 \cf0 ===== CPP_SNN: a flexible event-based spiking neural network simulator =====
+\f0\fs24 \cf0 ===== Baal: clock-based spiking neural network simulator =====
 \f1 \
 
 \f0 \
@@ -98,8 +98,8 @@
 \
 \pard\pardeftab720\partightenfactor0
 \cf0 \expnd0\expndtw0\kerning0
-LD_LIBRARY_PATH=*path the Qt dynamic lib path*\
-export LD_LIBRARY_PATH\kerning1\expnd0\expndtw0 \
+                                    LD_LIBRARY_PATH=*path the Qt dynamic lib path*\
+                                    export LD_LIBRARY_PATH\kerning1\expnd0\expndtw0 \
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\partightenfactor0
 
 \f1 \cf0 \
@@ -154,7 +154,7 @@ Testing:
 \f2 \cf0  
 \f3 \uc0\u8259 
 \f2 	
-\f0 Go to the cpp_snn directory and run # premake4 gmake && cd build && make #
+\f0 Go to the baal directory and run # premake4 gmake && cd build && make #
 \f1 \
 \ls2\ilvl0
 \f2  
