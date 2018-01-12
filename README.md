@@ -1,19 +1,20 @@
 # Baal: clock-based spiking neural network simulator
 
 ## Dependencies
+==========================
 
 ### Homebrew is used to install the dependencies on macOS:
 
-in the terminal run *[/usr/bin/ruby -e \"\$(curl -fsSL
+in the terminal run */usr/bin/ruby -e \"\$(curl -fsSL
 https://raw.githubusercontent.com/Homebrew/install/master install)\"*
-to install homebrew]
+to install homebrew
 
 ### Premake4 is used to build this project
 
-**On macOS** 
+**On macOS** ..
 in the terminal run *brew install premake*
 
-**On Linux Debian** 
+**On Linux Debian** ..
 in the terminal run *sudo apt-get install premake4*
 
 ### If the Display Class is being used:
@@ -38,9 +39,10 @@ download directly from: *https://www.qt.io/download/*
 opening the .bashrc file in your home directory and adding at the end
 the lines:
 
-	*LD\_LIBRARY\_PATH=\[path the Qt dynamic lib path\]*
 
-	*export LD\_LIBRARY\_PATH*
+*LD\_LIBRARY\_PATH=\[path the Qt dynamic lib path\]*
+*export LD\_LIBRARY\_PATH*
+
 
 3. modify the include and library paths of Qt in the premake4 file
 
@@ -55,15 +57,17 @@ from source: *https://github.com/qt/qtcharts*
 Qt libraries
 
 ## Installation
+==========================
 
-**Installation** 
+**Installation** ..
 in the terminal run *premake4 install*
 
 
-**Uninstallation**
+**Uninstallation** ..
 in the terminal run *premake4 uninstall*
 
 ## Testing
+==========================
 
 1. Go to the baal directory and run *premake4 gmake && cd build &&
     make*
@@ -73,6 +77,7 @@ in the terminal run *premake4 uninstall*
 3. Run the executable testNetwork
 
 ## Using the simulator
+==========================
 
 **Applications**
 
