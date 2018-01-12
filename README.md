@@ -11,27 +11,27 @@ to install homebrew
 
 ### Premake4 is used to build this project
 
-**On macOS**  
+##### On macOS
 in the terminal run *brew install premake*
 
-**On Linux Debian**  
+##### On Linux Debian 
 in the terminal run *sudo apt-get install premake4*
 
 ### If the Display Class is being used:
 
 Install Qt 5.7+ and make sure the Qt Charts add-on is installed
 
-**On macOS:**
+##### On macOS
 
-##### option 1
+**option 1**  
 in the terminal run *brew install qt5*
 
-##### option 2
+**option 2**  
 download directly from: *https://www.qt.io/download/*
 
-**On Linux Debian:**
+##### On Linux Debian
 
-##### option 1
+**option 1**
 
 1. download directly from: *https://www.qt.io/download/*
 
@@ -39,14 +39,12 @@ download directly from: *https://www.qt.io/download/*
 opening the .bashrc file in your home directory and adding at the end
 the lines:
 
-
-*LD\_LIBRARY\_PATH=\[path the Qt dynamic lib path\]*
-*export LD\_LIBRARY\_PATH*
-
+*LD\_LIBRARY\_PATH=\[path the Qt dynamic lib path\]*  
+*export LD\_LIBRARY\_PATH*  
 
 3. modify the include and library paths of Qt in the premake4 file
 
-##### option 2
+**option 2**
 
 1. in the terminal run *sudo apt-get install qtbase5-dev qtdeclarative5-dev*
 
@@ -59,11 +57,10 @@ Qt libraries
 ## Installation
 ==========================
 
-**Installation**  
+##### Installation 
 in the terminal run *premake4 install*
 
-
-**Uninstallation**  
+##### Uninstallation  
 in the terminal run *premake4 uninstall*
 
 ## Testing
@@ -79,14 +76,14 @@ in the terminal run *premake4 uninstall*
 ## Using the simulator
 ==========================
 
-**Applications**
+##### Applications
 
-##### so far there are three applications build using the simulator:
+**so far there are three applications build using the simulator:**
 
 1. a test neural network made to understand how the simulator works
 2. a neural network that uses unsupervised learning to learn basic patterns
 3. a neural network that uses supervised learning to learn basic patterns
 
-**Classes**
+##### Classes
 
 the simulator is a header-only library with 8 classes. However, only the **Neuron.hpp** class contains the learning algorithms. 
