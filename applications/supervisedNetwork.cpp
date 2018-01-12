@@ -32,12 +32,6 @@ int main(int argc, char** argv)
 //	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/7.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 //	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/9.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
-	// additive noise test
-//	auto data = dataParser.read1D("../../data/generatedPatterns/additiveNoise/10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-	
-	// noisy signal
-//	auto data = dataParser.read1D("../../data/generatedPatterns/noisySignal/1.5timeJitter10bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-	
 	// supervised learning
 //	auto teacher = dataParser.read1D("../../data/generatedPatterns/cleanSignal/clean_teacherSignal.txt");
 	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5teacherSignal.txt");
@@ -52,7 +46,6 @@ int main(int argc, char** argv)
 	
 //	std::string filename = "supervisedLearning_clean.bin";
 	std::string filename = "supervisedLearning_1.5jitter.bin";
-//	std::string filename = "supervisedLearning_additive.bin";
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
 	
