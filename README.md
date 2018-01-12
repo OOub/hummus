@@ -1,14 +1,11 @@
-\# Baal: clock-based spiking neural network simulator
+# Baal: clock-based spiking neural network simulator
 
-\
 
-\#\# Dependencies
+## Dependencies
 
-\
 
-\#\#\# Homebrew is used to install the dependencies on macOS:
+### Homebrew is used to install the dependencies on macOS:
 
-\
 
 Run \*[/usr/bin/ruby -e \"\$(curl -fsSL
 https://raw.githubusercontent.com/Homebrew/install/master install)\"\*
