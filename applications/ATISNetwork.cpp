@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     int inputNeurons = 788;
     int layer1Neurons = 788;
 
-    float weight = 19e-10/800;
+    float weight = 19e-10/100;
 
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(5000);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(787);
+	network.trackNeuron(788);
 
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
