@@ -32,7 +32,7 @@ namespace baal
             std::vector<std::vector<float>> data(2);
             std::vector<float> columns(2);
             
-            std::cout << "Reading data..." << std::endl;
+            std::cout << "Reading " << filename << std::endl;
             dataFile.open(filename);
             
             if (dataFile.good())
@@ -48,8 +48,8 @@ namespace baal
                 throw std::runtime_error("the file could not be opened");
             }
             dataFile.close();
-            
-            std::cout << "the data contains " << *std::max_element(data[1].begin(),data[1].end())+1 << " input neurons." << std::endl;
+			
+            std::cout << "the largest neuron ID is " << *std::max_element(data[1].begin(),data[1].end())+1 << std::endl;
             std::cout << "Done." << std::endl;
             return data;
         }

@@ -19,7 +19,7 @@
 int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
-	int repeatsInTeacher = 200;
+	int repeatsInTeacher = 2000;
 	baal::DataParser dataParser;
 	
 	// time jitter test
@@ -27,9 +27,12 @@ int main(int argc, char** argv)
 	
 	// supervised learning
 	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5teacherSignal.txt");
-
-	teacher.resize(repeatsInTeacher);
 	
+	for (auto idx=0; idx<teacher.size(); idx++)
+	{
+		teacher[idx].resize(repeatsInTeacher);
+	}
+
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "supervisedLearning_1.5jitter.bin";
 	
@@ -57,8 +60,8 @@ int main(int argc, char** argv)
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 
 	// starting the loggers
-	network.learningLogger("learningLog_1.5jitter.txt");
-	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog_9.5jitter.txt");
+//	network.learningLogger("learningLog_1.5jitter.txt");
+//	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog_9.5jitter.txt");
 	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)

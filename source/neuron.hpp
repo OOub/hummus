@@ -142,11 +142,11 @@ namespace baal
 			// impose spiking when using supervised learning
 			if (network->getTeacher())
 			{
-				if (network->getTeacherIterator() < network->getTeacher()->size())
+				if (network->getTeacherIterator() < (*network->getTeacher())[0].size())
 				{
-					if (network->getTeacher()->at(1)[network->getTeacherIterator()] == neuronID)
+					if ((*network->getTeacher())[1][network->getTeacherIterator()] == neuronID)
 					{
-						if (std::abs(network->getTeacher()->at(0)[network->getTeacherIterator()] - timestamp) < 1e-1)
+						if (std::abs((*network->getTeacher())[0][network->getTeacherIterator()] - timestamp) < 1e-1)
 						{
 							current = 19e-10;
 							potential = threshold;
@@ -156,7 +156,11 @@ namespace baal
 				}
 				else
 				{
-					network->setTeachingProgress(false);
+					if (network->getTeachingProgress())
+					{
+						network->setTeachingProgress(false);
+						std::cout << "learning stopped at t=" << timestamp << std::endl;
+					}
 				}
 			}
 			
