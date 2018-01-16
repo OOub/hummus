@@ -63,6 +63,7 @@ namespace baal
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)
 					{
+						p->postNeuron->getNeuronID()
 						points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
 						maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
 					}

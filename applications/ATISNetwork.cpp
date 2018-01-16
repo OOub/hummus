@@ -26,12 +26,10 @@ int main(int argc, char** argv)
 	
 	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/teacher4pips_1type_2000reps.txt");
 
-	std::cout << "teacher size before resizing: " << teacher[0].size() << std::endl;
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
 		teacher[idx].resize(repeatsInTeacher);
 	}
-	std::cout << "teacher size after resizing: " << teacher[0].size() << std::endl;
 	
 //  ----- NETWORK PARAMETERS -----
 	baal::Display network;
@@ -46,10 +44,10 @@ int main(int argc, char** argv)
     float efficacyDecay = 1000;
     float efficacy = 1;
 
-    int inputNeurons = 787;
-    int layer1Neurons = 787;
+    int inputNeurons = 788;
+    int layer1Neurons = 788;
 
-    float weight = 19e-10/10;
+    float weight = 19e-10/800;
 
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);

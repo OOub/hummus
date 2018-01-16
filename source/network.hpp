@@ -111,7 +111,7 @@ namespace baal
 		
         void run(float _runtime, float _timestep)
         {
-        	std::cout << "Running the network...\n";
+        	std::cout << "Running the network..." << std::endl;
 			#ifndef NDEBUG
             std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
             #endif
@@ -133,10 +133,10 @@ namespace baal
 				throw std::runtime_error("add neurons to the network before running it");
 			}
 			
-			std::cout << "Done.\n";
+			std::cout << "Done." << std::endl;
             #ifndef NDEBUG
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
-            std::cout << "it took " << elapsed_seconds.count() << "s to run.\n";
+            std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
             #endif
 		}
 		
