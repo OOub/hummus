@@ -56,11 +56,7 @@ int main(int argc, char** argv)
 
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 
-	// starting the loggers
-//	network.learningLogger("learningLog_1.5jitter.txt");
-//	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog_9.5jitter.txt");
-
-	 injecting spikes in the input layer
+	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)
 	{
 		network.injectSpike(network.getNeuronPopulations()[0][data[1][idx]].prepareInitialSpike(data[0][idx]));
