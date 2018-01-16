@@ -1,10 +1,12 @@
+R""(
+
 /*
  * gui.qml
  * Baal - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 6/12/2017
+ * Last Version: 16/01/2018
  *
  * Information: QML file that defines the GUI.
  */
@@ -252,3 +254,4 @@ ApplicationWindow
     	potentialViewer.disable();
 	}
 }
+)""

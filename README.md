@@ -69,9 +69,7 @@ in the terminal run *premake4 uninstall*
 1. Go to the baal directory and run *premake4 gmake && cd build &&
     make*
 
-2. Go the the level of the executable via *cd release* 
-
-3. Run the executable testNetwork
+2. Run the executable testNetwork
 
 ## Using the simulator
 ==========================

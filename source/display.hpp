@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 6/12/2017
+ * Last Version: 16/01/2018
  *
  * Information: Add-on to the Network class, used to display a GUI of the spiking neural network output
  */
@@ -46,9 +46,13 @@ namespace baal
             qmlRegisterType<OutputViewer>("OutputViewer", 1, 0, "OutputViewer");
             qmlRegisterType<PotentialViewer>("PotentialViewer", 1, 0, "PotentialViewer");
 			
-            engine.reset(new QQmlApplicationEngine("../../source/gui.qml"));
-            auto window = (QQuickWindow*) engine->rootObjects().first();
+			engine = new QQmlApplicationEngine();
+            engine->loadData(
+				#include "gui.qml"
+            );
+            auto window = qobject_cast<QQuickWindow*>(engine->rootObjects().first());
 			
+			QSurfaceFormat format;
             format.setDepthBufferSize(24);
             format.setStencilBufferSize(8);
             format.setVersion(3, 3);
@@ -146,8 +150,7 @@ namespace baal
 		
 		// ----- IMPLEMENTATION VARIABLES -----
         std::unique_ptr<QApplication>          app;
-        std::unique_ptr<QQmlApplicationEngine> engine;
-        QSurfaceFormat                         format;
+        QQmlApplicationEngine*                 engine; // this should be a unique pointer but there's a double free error because of the usage of qml and the engine
         Network                                network;
         InputViewer*                           inputviewer;
         OutputViewer*                          outputviewer;

@@ -1,5 +1,5 @@
 /*
- * smallNetwork.cpp
+ * testNetwork.cpp
  * Baal - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
