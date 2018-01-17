@@ -22,9 +22,9 @@ int main(int argc, char** argv)
 	int repeatsInTeacher = 8000;
 	baal::DataParser dataParser;
 	
-	auto data = dataParser.read1D("../../data/pip/1rec_4pips/4pips_1type_2000reps.txt");
+	auto data = dataParser.read1D("../../data/pip/1rec_4pips/short4pips_1type_2000reps.txt");
 	
-	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/teacher4pips_1type_2000reps.txt");
+	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/shortteacher4pips_1type_2000reps.txt");
 
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     int inputNeurons = 788;
     int layer1Neurons = 788;
 
-    float weight = 19e-10/100;
+    float weight = 19e-10/50;
 
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
