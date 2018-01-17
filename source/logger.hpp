@@ -35,22 +35,25 @@ namespace baal
         }
 		
 		// ----- PUBLIC LOGGER METHODS -----
-        void getArrivingSpike(float timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
+        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
         {
         	if (!empty)
         	{
 				potential = p->postNeuron->getPotential();
 				
-				float threshold = p->postNeuron->getThreshold();
+//				float threshold = p->postNeuron->getThreshold();
 				int16_t preN = (p->preNeuron ? p->preNeuron->getNeuronID() : -1);
 				int16_t postN = p->postNeuron->getNeuronID();
 				
 				for (auto i=0; i<=4; i++)
 				{
+//					packet[i] = *(reinterpret_cast<char*>(&timestamp) + i);
+//					packet[i+4] = *(reinterpret_cast<char*>(&p->delay) + i);
+//					packet[i+8] = *(reinterpret_cast<char*>(&potential) + i);
+//					packet[i+12] = *(reinterpret_cast<char*>(&threshold) + i);
 					packet[i] = *(reinterpret_cast<char*>(&timestamp) + i);
-					packet[i+4] = *(reinterpret_cast<char*>(&p->delay) + i);
-					packet[i+8] = *(reinterpret_cast<char*>(&potential) + i);
-					packet[i+12] = *(reinterpret_cast<char*>(&threshold) + i);
+					packet[i+8] = *(reinterpret_cast<char*>(&p->delay) + i);
+					packet[i+12] = *(reinterpret_cast<char*>(&potential) + i);
 				}
 				
 				for (auto i=16, j=0; i<=17; i++,j++)

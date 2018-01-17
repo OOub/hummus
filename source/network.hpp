@@ -32,7 +32,7 @@ namespace baal
     	virtual ~NetworkDelegate(){}
 		
     	// ----- PURE VIRTUAL METHOD -----
-        virtual void getArrivingSpike(float timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) = 0;
+        virtual void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) = 0;
     };
     
     class Network
@@ -109,7 +109,7 @@ namespace baal
                 s);
         }
 		
-        void run(float _runtime, float _timestep)
+        void run(double _runtime, float _timestep)
         {
         	std::cout << "Running the network..." << std::endl;
 			#ifndef NDEBUG
@@ -166,7 +166,7 @@ namespace baal
             return plasticNeurons;
         }
 		
-        std::vector<float>& getPlasticTime()
+        std::vector<double>& getPlasticTime()
         {
             return plasticTime;
         }
@@ -207,13 +207,13 @@ namespace baal
         }
 		
 		// ----- SUPERVISED LEARNING METHOD -----
-        void injectTeacher(std::vector<std::vector<float>>* _teacher)
+        void injectTeacher(std::vector<std::vector<double>>* _teacher)
         {
             teacher = _teacher;
             teachingProgress = true;
         }
 		
-        std::vector<std::vector<float>>* getTeacher() const
+        std::vector<std::vector<double>>* getTeacher() const
         {
             return teacher;
         }
@@ -221,7 +221,7 @@ namespace baal
     protected:
     
 		// -----PROTECTED NETWORK METHODS -----
-		void update(Neuron* neuron, float time, float timestep)
+		void update(Neuron* neuron, double time, float timestep)
 		{
 			if (generatedSpikes.empty() && !initialSpikes.empty())
 			{
@@ -252,7 +252,7 @@ namespace baal
 			}
 		}
 		
-		void updateHelper(spike s, Neuron* neuron, float time, float timestep, int listSelector)
+		void updateHelper(spike s, Neuron* neuron, double time, float timestep, int listSelector)
 		{
 			if (s.postProjection->postNeuron->getNeuronID() == neuron->getNeuronID())
 			{
@@ -291,7 +291,7 @@ namespace baal
 		}
 		
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::vector<float>               plasticTime;
+		std::vector<double>              plasticTime;
         std::vector<Neuron*>             plasticNeurons;
 		std::deque<spike>                initialSpikes;
         std::deque<spike>                generatedSpikes;
@@ -304,6 +304,6 @@ namespace baal
 		std::unique_ptr<std::ofstream>   learningLog;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
-        std::vector<std::vector<float>>* teacher;
+        std::vector<std::vector<double>>* teacher;
     };
 }

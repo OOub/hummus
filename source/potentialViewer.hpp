@@ -58,7 +58,7 @@ namespace baal
         virtual ~PotentialViewer(){}
 		
     	// ----- PUBLIC POTENTIALVIEWER METHODS -----
-        void handleData(float timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron)
+        void handleData(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron)
         {
         	if (!empty)
         	{
@@ -106,7 +106,7 @@ namespace baal
         }
 		
 		// ----- SETTERS -----
-		void setTimeWindow(float newWindow)
+		void setTimeWindow(double newWindow)
         {
             timeWindow = newWindow;
         }
@@ -154,7 +154,7 @@ namespace baal
 						axisX->setRange(maxX - timeWindow, maxX+1);
 						if (!points.isEmpty())
 						{
-							auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](float timestamp, const QPointF& point) {
+							auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](double timestamp, const QPointF& point) {
 								return timestamp < point.x();
 							});
 							points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
@@ -167,7 +167,7 @@ namespace baal
                     {
 						if (!points.isEmpty())
 						{
-							auto firstToKeep = std::upper_bound(thresPoints.begin(), thresPoints.end(), thresPoints.back().x() - timeWindow, [](float timestamp, const QPointF& thresPoints) {
+							auto firstToKeep = std::upper_bound(thresPoints.begin(), thresPoints.end(), thresPoints.back().x() - timeWindow, [](double timestamp, const QPointF& thresPoints) {
 								return timestamp < thresPoints.x();
 							});
 							thresPoints.remove(0, static_cast<int>(std::distance(thresPoints.begin(), firstToKeep)));
@@ -186,10 +186,10 @@ namespace baal
         // ----- IMPLEMENTATION VARIABLES -----
         bool                  isClosed;
         bool                  openGL;
-        float                 timeWindow;
+        double                timeWindow;
         QVector<QPointF>      points;
         QVector<QPointF>      thresPoints;
-        float                 maxX;
+        double                maxX;
         float                 minY;
         float                 maxY;
         std::atomic_flag      atomicGuard;

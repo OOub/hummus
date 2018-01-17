@@ -27,10 +27,10 @@ namespace baal
         DataParser(){}
 		
 		// reading one dimentional data
-        std::vector<std::vector<float>> read1D(std::string filename)
+        std::vector<std::vector<double>> read1D(std::string filename)
         {
-            std::vector<std::vector<float>> data(2);
-            std::vector<float> columns(2);
+            std::vector<std::vector<double>> data(2);
+            std::vector<double> columns(2);
             
             std::cout << "Reading " << filename << std::endl;
             dataFile.open(filename);

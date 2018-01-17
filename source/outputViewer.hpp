@@ -54,7 +54,7 @@ namespace baal
         virtual ~OutputViewer(){}
 		
     	// ----- PUBLIC OUTPUTVIEWER METHODS -----
-        void handleData(float timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron)
+        void handleData(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron)
         {
         	if (!empty)
         	{
@@ -117,7 +117,7 @@ namespace baal
                     axisX->setRange(input - timeWindow, input+1);
                     if (!points.isEmpty())
                     {
-                        auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](float timestamp, const QPointF& point) {
+                        auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](double timestamp, const QPointF& point) {
                             return timestamp < point.x();
                         });
                         points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
@@ -135,7 +135,7 @@ namespace baal
     	// ----- IMPLEMENTATION VARIABLES -----
         bool                  openGL;
         bool                  isClosed;
-        float                 timeWindow;
+        double                 timeWindow;
         QVector<QPointF>      points;
         float                 input;
         int                   minY;

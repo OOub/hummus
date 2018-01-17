@@ -37,7 +37,7 @@ namespace baal
 	
 	struct spike
     {
-        float       timestamp;
+        double      timestamp;
         projection* postProjection;
     };
 	
@@ -108,7 +108,7 @@ namespace baal
         }
 		
 		template<typename Network>
-		void update(float timestamp, float timestep, spike s, Network* network)
+		void update(double timestamp, float timestep, spike s, Network* network)
 		{
 			if (s.postProjection && s.postProjection->isInitial)
             {
@@ -219,7 +219,7 @@ namespace baal
 			}
 		}
 		
-		spike prepareInitialSpike(float timestamp)
+		spike prepareInitialSpike(double timestamp)
         {
             if (!initialProjection.postNeuron)
             {
@@ -228,7 +228,7 @@ namespace baal
             return spike{timestamp, &initialProjection};
         }
 		
-        void spikeCountLogger(float _timeStart, float _timeEnd, std::string filename)
+        void spikeCountLogger(double _timeStart, double _timeEnd, std::string filename)
         {
             timeStart = _timeStart;
             timeEnd = _timeEnd;
@@ -297,7 +297,7 @@ namespace baal
     	// ----- PROTECTED NEURON METHODS -----
 
     	template<typename Network>
-		void delayLearning(float timestamp, Network* network)
+		void delayLearning(double timestamp, Network* network)
 		{
 			if (network->getInputSpikeCounter() != 0)
 			{
@@ -309,7 +309,7 @@ namespace baal
 						std::cout << "learning epoch" << std::endl;
 					}
 					#endif
-					std::vector<float> timeDifferences;
+					std::vector<double> timeDifferences;
 					float tMax = 0;
 					// if there is a supervised signal
 					if (network->getTeacher())
@@ -526,11 +526,11 @@ namespace baal
         std::vector<projection*>                 preProjections;
         projection                               initialProjection;
 		int                                      fireCounter;
-        float                                    timeStart;
-        float                                    timeEnd;
+        double                                   timeStart;
+        double                                   timeEnd;
         std::unique_ptr<std::ofstream>           counterLog;
         std::unique_ptr<std::ofstream>           potentialLog;
-        float                                    lastSpikeTime;
+        double                                   lastSpikeTime;
         float                                    supervisedPotential;
     };
 }

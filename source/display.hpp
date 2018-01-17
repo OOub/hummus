@@ -67,14 +67,14 @@ namespace baal
         }
 		
     	// ----- PUBLIC DISPLAY METHODS -----
-        void getArrivingSpike(float timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
+        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
         {
             inputviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
             outputviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
             potentialviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
         }
 		
-		int run(float _runtime, float _timestep)
+		int run(double _runtime, float _timestep)
         {
             std::thread spikeManager([this, _runtime, _timestep]{
                 network.run(_runtime, _timestep);
@@ -106,7 +106,7 @@ namespace baal
 			return network.getNeuronPopulations();
 		}
 		
-		void injectTeacher(std::vector<std::vector<float>>* _teacher)
+		void injectTeacher(std::vector<std::vector<double>>* _teacher)
         {
             network.injectTeacher(_teacher);
         }
@@ -129,7 +129,7 @@ namespace baal
             potentialviewer->trackNeuron(neuronToTrack);
         }
 		
-		void setTimeWindow(float newWindow)
+		void setTimeWindow(double newWindow)
         {
             inputviewer->setTimeWindow(newWindow);
             outputviewer->setTimeWindow(newWindow);
