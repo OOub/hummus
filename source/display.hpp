@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 16/01/2018
+ * Last Version: 17/01/2018
  *
  * Information: Add-on to the Network class, used to display a GUI of the spiking neural network output
  */
@@ -67,7 +67,7 @@ namespace baal
         }
 		
     	// ----- PUBLIC DISPLAY METHODS -----
-		Mode getMode() override
+		Mode getMode() const override
 		{
 			return NetworkDelegate::Mode::display;
 		}

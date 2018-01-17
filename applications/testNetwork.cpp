@@ -50,9 +50,9 @@ int main(int argc, char** argv)
 	
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
-	network.setTimeWindow(1000);
+	network.setTimeWindow(runtime);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(-1);
+	network.trackNeuron(1);
 	
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);

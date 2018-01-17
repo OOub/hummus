@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 6/12/2017
+ * Last Version: 17/01/2018
  *
  * Information: the network class acts as a spike manager.
  */
@@ -19,29 +19,10 @@
 #include <deque>
 
 #include "neuron.hpp"
+#include "networkDelegate.hpp"
 
 namespace baal
 {
-	class Network;
-	// polymorphic class for add-ons
-    class NetworkDelegate
-    {
-    public:
-    	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	NetworkDelegate() = default;
-    	virtual ~NetworkDelegate(){}
-		
-		enum class Mode
-        {
-        	display,
-        	logger
-		};
-		
-    	// ----- PURE VIRTUAL METHOD -----
-        virtual void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) = 0;
-        virtual Mode getMode() = 0;
-    };
-    
     class Network
     {
     public:

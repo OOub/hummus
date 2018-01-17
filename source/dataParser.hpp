@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 24/11/2017
+ * Last Version: 17/01/2018
  *
  * Information: The DataParser class is used to input data from files into a vector.
  */

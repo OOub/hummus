@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 6/12/2017
+ * Last Version: 17/01/2018
  *
  * Information: The PotentialViewer class is used by the Display class to show a specified neuron's approximate potential. It is only an approximation because this GUI element works in an even-based fashion.
  */
@@ -44,8 +44,6 @@ namespace baal
             openGL(false),
             isClosed(false),
             maxX(1),
-//            minY(-70),
-//            maxY(-50),
 			minY(20),
             maxY(-70),
             potential(0),

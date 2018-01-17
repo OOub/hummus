@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 21/11/2017
+ * Last Version: 17/01/2018
  *
  * Information: Add-on to the Network class, used to write the spiking neural network output into a log binary file.
  */
@@ -35,7 +35,7 @@ namespace baal
         }
 		
 		// ----- PUBLIC LOGGER METHODS -----
-		Mode getMode() override
+		Mode getMode() const override
 		{
 			return NetworkDelegate::Mode::logger;
 		}

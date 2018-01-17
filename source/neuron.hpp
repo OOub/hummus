@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 09/01/2018
+ * Last Version: 17/01/2018
  *
  * Information: the neuron class defines a neuron and the learning rules dictating its behavior.
  */
@@ -21,6 +21,8 @@
 #include <vector>
 #include <cmath>
 #include <memory>
+
+#include "networkDelegate.hpp"
 
 namespace baal
 {
@@ -176,7 +178,10 @@ namespace baal
 				#endif
 				for (auto delegate: network->getDelegates())
 				{
+//					if (delegate->getMode() == NetworkDelegate::Mode::display)
+//					{
 					delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this);
+//					}
 				}
 			}
 			
@@ -184,7 +189,10 @@ namespace baal
 			{
 				for (auto delegate: network->getDelegates())
 				{
+//					if (delegate->getMode() == NetworkDelegate::Mode::display)
+//					{
 					delegate->getArrivingSpike(timestamp, nullptr, false, true, network, this);
+//					}
 				}
 			}
 			
@@ -195,7 +203,10 @@ namespace baal
 				#endif
 				for (auto delegate: network->getDelegates())
 				{
+//					if (delegate->getMode() == NetworkDelegate::Mode::display)
+//					{
 					delegate->getArrivingSpike(timestamp, &activeProjection, true, false, network, this);
+//					}
 				}
 			
 				for (auto& p : postProjections)
