@@ -67,6 +67,11 @@ namespace baal
         }
 		
     	// ----- PUBLIC DISPLAY METHODS -----
+		Mode getMode() override
+		{
+			return NetworkDelegate::Mode::display;
+		}
+		
         void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
         {
             inputviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);

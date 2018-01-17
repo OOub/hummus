@@ -35,6 +35,11 @@ namespace baal
         }
 		
 		// ----- PUBLIC LOGGER METHODS -----
+		Mode getMode() override
+		{
+			return NetworkDelegate::Mode::logger;
+		}
+		
         void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
         {
         	if (!empty)

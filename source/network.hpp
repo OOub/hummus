@@ -31,8 +31,15 @@ namespace baal
     	NetworkDelegate() = default;
     	virtual ~NetworkDelegate(){}
 		
+		enum class Mode
+        {
+        	display,
+        	logger
+		};
+		
     	// ----- PURE VIRTUAL METHOD -----
         virtual void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) = 0;
+        virtual Mode getMode() = 0;
     };
     
     class Network
@@ -117,7 +124,7 @@ namespace baal
             #endif
 			if (!neurons.empty())
 			{
-				for (float i=0; i<_runtime; i+=_timestep)
+				for (double i=0; i<_runtime; i+=_timestep)
 				{
 					for (auto& pop: neurons)
 					{
