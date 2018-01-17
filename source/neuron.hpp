@@ -178,10 +178,10 @@ namespace baal
 				#endif
 				for (auto delegate: network->getDelegates())
 				{
-//					if (delegate->getMode() == NetworkDelegate::Mode::display)
-//					{
-					delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this);
-//					}
+					if (delegate->getMode() == NetworkDelegate::Mode::display)
+					{
+						delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this);
+					}
 				}
 			}
 			
@@ -189,10 +189,10 @@ namespace baal
 			{
 				for (auto delegate: network->getDelegates())
 				{
-//					if (delegate->getMode() == NetworkDelegate::Mode::display)
-//					{
-					delegate->getArrivingSpike(timestamp, nullptr, false, true, network, this);
-//					}
+					if (delegate->getMode() == NetworkDelegate::Mode::display)
+					{
+						delegate->getArrivingSpike(timestamp, nullptr, false, true, network, this);
+					}
 				}
 			}
 			
@@ -203,10 +203,7 @@ namespace baal
 				#endif
 				for (auto delegate: network->getDelegates())
 				{
-//					if (delegate->getMode() == NetworkDelegate::Mode::display)
-//					{
 					delegate->getArrivingSpike(timestamp, &activeProjection, true, false, network, this);
-//					}
 				}
 			
 				for (auto& p : postProjections)

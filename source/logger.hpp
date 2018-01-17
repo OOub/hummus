@@ -46,19 +46,18 @@ namespace baal
         	{
 				potential = p->postNeuron->getPotential();
 				
-//				float threshold = p->postNeuron->getThreshold();
 				int16_t preN = (p->preNeuron ? p->preNeuron->getNeuronID() : -1);
 				int16_t postN = p->postNeuron->getNeuronID();
 				
-				for (auto i=0; i<=4; i++)
+				for (auto i=0; i<=8; i++)
 				{
-//					packet[i] = *(reinterpret_cast<char*>(&timestamp) + i);
-//					packet[i+4] = *(reinterpret_cast<char*>(&p->delay) + i);
-//					packet[i+8] = *(reinterpret_cast<char*>(&potential) + i);
-//					packet[i+12] = *(reinterpret_cast<char*>(&threshold) + i);
 					packet[i] = *(reinterpret_cast<char*>(&timestamp) + i);
-					packet[i+8] = *(reinterpret_cast<char*>(&p->delay) + i);
-					packet[i+12] = *(reinterpret_cast<char*>(&potential) + i);
+				}
+				
+				for (auto i=8, j=0; i<=12; i++, j++)
+				{
+					packet[i] = *(reinterpret_cast<char*>(&p->delay) + j);
+					packet[i+4] = *(reinterpret_cast<char*>(&potential) + j);
 				}
 				
 				for (auto i=16, j=0; i<=17; i++,j++)

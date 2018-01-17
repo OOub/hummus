@@ -140,9 +140,9 @@ namespace baal
     	// ----- IMPLEMENTATION VARIABLES -----
         bool                  isClosed;
         bool                  openGL;
-        double                 timeWindow;
+        double                timeWindow;
         QVector<QPointF>      points;
-        double                 maxX;
+        double                maxX;
         int                   minY;
         int                   maxY;
         std::atomic_flag      atomicGuard;
