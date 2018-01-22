@@ -19,12 +19,12 @@
 int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
-	int repeatsInTeacher = 8000;
+	int repeatsInTeacher = 150;
 	baal::DataParser dataParser;
 	
-	auto data = dataParser.read1D("../../data/pip/1rec_4pips/short4pips_1type_2000reps.txt");
+	auto data = dataParser.read1D("../../data/pip/1rec_4pips/4pips_1type_200reps.txt");
 	
-	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/shortteacher4pips_1type_2000reps.txt");
+	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/teacher4pips_1type_200reps.txt");
 
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
@@ -37,22 +37,24 @@ int main(int argc, char** argv)
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data[0].back()+100;
 	float timestep = 0.1;
-
+	
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
-    float efficacyDecay = 1000;
+    float efficacyDecay = 0;
     float efficacy = 1;
+	
+    int inputNeurons = 671;
+    int layer1Neurons = 1;
+	
+    float weight = 19e-10/200;
+	float alpha = 0.01;
+	float lambda = 5;
+	
+	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda, efficacyDecay, efficacy);
+	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda, efficacyDecay, efficacy);
 
-    int inputNeurons = 788;
-    int layer1Neurons = 788;
-
-    float weight = 19e-10/50;
-
-	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
-	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, efficacyDecay, efficacy);
-
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
+	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 100);
 
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)
@@ -65,9 +67,9 @@ int main(int argc, char** argv)
 
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
-	network.setTimeWindow(5000);
+	network.setTimeWindow(500);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(788);
+	network.trackNeuron(671);
 
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
