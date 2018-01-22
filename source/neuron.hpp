@@ -431,17 +431,13 @@ namespace baal
 										}
 									}
 								}
-								// dat dere
 								synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
-								
-								std::cout << "synaptic efficacy: " << synapticEfficacy << std::endl;
 							}
 						}
 						cpt++;
 					}
 					weightReinforcement(network);
 					resetAfterLearning(network);
-				
 				}
 			}
 		}
@@ -499,11 +495,9 @@ namespace baal
 						
                     }
                 }
-				
                 else
                 {
                 	// positive reinforcement
-//                	std::cout << "supervisedV: " << supervisedPotential << "V: " << potential << std::endl;
 					if (supervisedPotential < threshold && allProjections->weight < 19e-10/(plasticID.size()))
                     {
                      	allProjections->weight +=  19e-10/(plasticID.size())*0.01;

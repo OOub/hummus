@@ -22,9 +22,11 @@ int main(int argc, char** argv)
 	int repeatsInTeacher = 1500;
 	baal::DataParser dataParser;
 	
-	auto data = dataParser.read1D("../../data/pip/1rec_4pips/4pips_1type_2000reps.txt");
+//	auto data = dataParser.read1D("../../data/pip/1rec_4pips/4pips_1type_2000reps.txt");
+//	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/teacher4pips_1type_2000reps.txt");
 	
-	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/teacher4pips_1type_2000reps.txt");
+	auto data = dataParser.read1D("../../data/pip/10rec_1pip/1pip_10types_2000reps.txt");
+	auto teacher = dataParser.read1D("../../data/pip/10rec_1pip/teacher1pip_10types_2000reps.txt");
 
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
@@ -42,7 +44,7 @@ int main(int argc, char** argv)
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
 	
-    int inputNeurons = 764;
+    int inputNeurons = 809;
     int layer1Neurons = 10;
 	
     float weight = 19e-10/200;
