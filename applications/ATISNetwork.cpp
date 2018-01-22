@@ -19,12 +19,12 @@
 int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
-	int repeatsInTeacher = 150;
+	int repeatsInTeacher = 1500;
 	baal::DataParser dataParser;
 	
-	auto data = dataParser.read1D("../../data/pip/1rec_4pips/4pips_1type_200reps.txt");
+	auto data = dataParser.read1D("../../data/pip/1rec_4pips/4pips_1type_2000reps.txt");
 	
-	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/teacher4pips_1type_200reps.txt");
+	auto teacher = dataParser.read1D("../../data/pip/1rec_4pips/teacher4pips_1type_2000reps.txt");
 
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
@@ -44,8 +44,8 @@ int main(int argc, char** argv)
     float efficacyDecay = 0;
     float efficacy = 1;
 	
-    int inputNeurons = 671;
-    int layer1Neurons = 1;
+    int inputNeurons = 764;
+    int layer1Neurons = 10;
 	
     float weight = 19e-10/200;
 	float alpha = 0.01;
@@ -68,8 +68,8 @@ int main(int argc, char** argv)
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(500);
-	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(671);
+	network.setOutputMinY(inputNeurons);
+	network.trackNeuron(765);
 
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
