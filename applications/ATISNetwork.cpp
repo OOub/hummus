@@ -41,8 +41,6 @@ int main(int argc, char** argv)
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
-    float efficacyDecay = 0;
-    float efficacy = 1;
 	
     int inputNeurons = 764;
     int layer1Neurons = 10;
@@ -51,8 +49,8 @@ int main(int argc, char** argv)
 	float alpha = 0.01;
 	float lambda = 5;
 	
-	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda, efficacyDecay, efficacy);
-	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda, efficacyDecay, efficacy);
+	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
+	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
 
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 100);
 

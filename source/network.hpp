@@ -38,7 +38,7 @@ namespace baal
 		{}
 		
 		// ----- PUBLIC NETWORK METHODS -----
-		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _alpha=1, float _lambda=1,  float _decaySynapticEfficacy=0, float _synapticEfficacy=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addNeurons(int _numberOfNeurons, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
         {
         	unsigned long shift = 0;
         	if (!neurons.empty())
@@ -49,7 +49,7 @@ namespace baal
         	std::vector<Neuron> temp;
 			for (auto i=0+shift; i < _numberOfNeurons+shift; i++)
 			{
-			temp.emplace_back(i,layerCounter,_decayCurrent,_decayPotential,_refractoryPeriod, _alpha, _lambda, _decaySynapticEfficacy,_synapticEfficacy,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent);
+			temp.emplace_back(i,layerCounter,_decayCurrent,_decayPotential,_refractoryPeriod, _alpha, _lambda, _threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent);
 			}
 			neurons.push_back(std::move(temp));
 			layerCounter++;
