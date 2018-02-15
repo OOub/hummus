@@ -465,7 +465,7 @@ namespace baal
         }
 		
 		template <typename Network>
-        void weightReinforcement(Network* network)
+        void weightReinforcement(Network* network) // this needs to be different OR we cannot simply align to the last value9
         {
             std::vector<int> plasticID;
             for (auto& plasticNeurons: network->getPlasticNeurons())

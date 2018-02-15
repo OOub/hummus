@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 	baal::DataParser dataParser;
 	
 	// time jitter test
-	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
+	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 //  ----- NETWORK PARAMETERS -----
 	
@@ -47,8 +47,8 @@ int main(int argc, char** argv)
     int layer1Neurons = 27;
 //	int layer2Neurons = 27;
 
-	float alpha = 0.1;
-	float lambda = 2;
+	float alpha = 0.5;
+	float lambda = 0.5;
 	
     float weight = 19e-10/4; //weight dependent on feature size
 	
