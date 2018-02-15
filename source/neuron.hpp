@@ -220,7 +220,7 @@ namespace baal
 						fireCounter++;
 					}
 				}
-				delayLearning(timestamp, network);
+//				delayLearning(timestamp, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				supervisedPotential = resetPotential;
@@ -447,28 +447,25 @@ namespace baal
         {
 			network->getPlasticTime().clear();
 			network->getPlasticNeurons().clear();
-//			network->getGeneratedSpikes().clear(); // how to avoid adding noise to next learning epochs without clearing the list of spikes that didn't occur
+//			network->getGeneratedSpikes().clear();
 			network->setInputSpikeCounter(0);
 			
 			if (!network->getTeacher())
 			{
 				// lateral inhibition
-				if (layerID != 0) //here change to only affect the same layer
+				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
 				{
-					for (auto& projReset: preProjections[0]->preNeuron->postProjections)
+					if (projReset->postNeuron->neuronID != neuronID && projReset->postNeuron->layerID == layerID)
 					{
-						if (projReset->postNeuron->neuronID != neuronID)
-						{
-							projReset->postNeuron->setPotential(restingPotential);
-							projReset->postNeuron->setCurrent(0);
-						}
+						projReset->postNeuron->setPotential(restingPotential);
+						projReset->postNeuron->setCurrent(0);
 					}
 				}
 			}
         }
 		
 		template <typename Network>
-        void weightReinforcement(Network* network) // make sure this isn't affecting downstream layers
+        void weightReinforcement(Network* network)
         {
             std::vector<int> plasticID;
             for (auto& plasticNeurons: network->getPlasticNeurons())
@@ -476,17 +473,19 @@ namespace baal
                 plasticID.push_back(plasticNeurons->getNeuronID());
             }
 			
-            // looping through all projections from the winner
+            // looping through all projections from the winner exclude the postProjections
+//            std::cout << this->layerID << std::endl;
             for (auto& allProjections: this->preProjections)
             {
                 int16_t ID = allProjections->preNeuron->getNeuronID();
+//                std::cout << allProjections->preNeuron->getLayerID() << std::endl;
                 // if the projection is plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
 					// positive reinforcement
 					if (supervisedPotential < threshold && allProjections->weight <= plasticID.size())
                     {
-                     	allProjections->weight += plasticID.size()*0.01;
+//                     	allProjections->weight += plasticID.size()*0.01;
                     }
                 }
                 else
@@ -494,11 +493,11 @@ namespace baal
                     if (allProjections->weight > 0)
                     {
                         // negative reinforcement
-                        allProjections->weight -= plasticID.size()*0.01;
-						if (allProjections->weight < 0)
-						{
-							allProjections->weight = 0;
-						}
+//                        allProjections->weight -= plasticID.size()*0.01;
+//						if (allProjections->weight < 0)
+//						{
+//							allProjections->weight = 0;
+//						}
                     }
 				}
             }

@@ -38,14 +38,14 @@ int main(int argc, char** argv)
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	
-//	float decayCurrent2 = 50;
-//	float potentialDecay2 = 60;
+	float decayCurrent2 = 50;
+	float potentialDecay2 = 60;
 	
 	float refractoryPeriod = 3;
 	
     int inputNeurons = 27;
     int layer1Neurons = 27;
-//	int layer2Neurons = 10;
+	int layer2Neurons = 10;
 
 	float alpha = 0.1;
 	float lambda = 2;
@@ -54,10 +54,10 @@ int main(int argc, char** argv)
 	
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-//	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, alpha, lambda);
+	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
-//	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, 19e-10, true, 40); // weight has to be different
+	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, 0, false, 0); // weight has to be different
 	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)

@@ -44,13 +44,16 @@ namespace baal
         	unsigned long shift = 0;
         	if (!neurons.empty())
         	{
-				shift = neurons.back().size();
+				for (auto& it: neurons)
+				{
+					shift += it.size();
+				}
 			}
 			
         	std::vector<Neuron> temp;
 			for (auto i=0+shift; i < _numberOfNeurons+shift; i++)
 			{
-			temp.emplace_back(i,layerCounter,_decayCurrent,_decayPotential,_refractoryPeriod, _alpha, _lambda, _threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent);
+				temp.emplace_back(i,layerCounter,_decayCurrent,_decayPotential,_refractoryPeriod, _alpha, _lambda, _threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent);
 			}
 			neurons.push_back(std::move(temp));
 			layerCounter++;
