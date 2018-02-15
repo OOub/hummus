@@ -31,6 +31,7 @@ namespace baal
         Network(std::vector<NetworkDelegate*> _delegates = {}) :
             delegates(_delegates),
             teacher(nullptr),
+            layerNumber(0),
 			layerCounter(0),
 			inputSpikeCounter(0),
 			teachingProgress(false),
@@ -99,6 +100,7 @@ namespace baal
 		
         void run(double _runtime, float _timestep)
         {
+        	layerNumber = getNeuronPopulations().size();
         	std::cout << "Running the network..." << std::endl;
 			#ifndef NDEBUG
             std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
@@ -194,6 +196,11 @@ namespace baal
             teachingProgress = status;
         }
 		
+        uint64_t getLayerNumber() const
+        {
+        	return layerNumber;
+        }
+		
 		// ----- SUPERVISED LEARNING METHOD -----
         void injectTeacher(std::vector<std::vector<double>>* _teacher)
         {
@@ -285,6 +292,7 @@ namespace baal
         std::deque<spike>                generatedSpikes;
         std::vector<NetworkDelegate*>    delegates;
 		std::vector<std::vector<Neuron>> neurons;
+		uint64_t					     layerNumber;
 		int                              layerCounter;
 		int                              inputSpikeCounter;
 		int                              teacherIterator;

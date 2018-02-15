@@ -58,7 +58,8 @@ namespace baal
         {
         	if (!empty)
         	{
-				if (!p->isInitial && spiked)
+        		// here need to replace condition by something that will output only the last layer (actual output)
+				if (p->postNeuron->getLayerID() == network->getLayerNumber()-1 && spiked)
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)

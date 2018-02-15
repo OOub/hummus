@@ -179,7 +179,7 @@ namespace baal
 				#endif
 				for (auto delegate: network->getDelegates())
 				{
-					if (delegate->getMode() == NetworkDelegate::Mode::display)
+					if (potential < threshold)
 					{
 						delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this);
 					}
@@ -202,6 +202,7 @@ namespace baal
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
+
 				for (auto delegate: network->getDelegates())
 				{
 					delegate->getArrivingSpike(timestamp, &activeProjection, true, false, network, this);
@@ -325,6 +326,7 @@ namespace baal
 					{
 						tMax = timestamp;
 					}
+					
 					// if there is no supervised signal
 					else
 					{
@@ -333,7 +335,6 @@ namespace baal
 					#ifndef NDEBUG
 					std::cout << "patterns contains " << network->getInputSpikeCounter() << " spikes" << std::endl;
 					#endif
-					
 					// looping through presynaptic neurons belonging to the pattern
 					int cpt = 0;
 					for (auto& plasticNeurons: network->getPlasticNeurons())
@@ -345,7 +346,6 @@ namespace baal
 							if (plasticProjections->postNeuron->getNeuronID() == neuronID)
 							{
 								timeDifferences.push_back(tMax - network->getPlasticTime().at(cpt) - plasticProjections->delay);
-								
 								if (network->getTeacher()) // if supervised learning
 								{
 									if (network->getTeachingProgress())
@@ -360,7 +360,7 @@ namespace baal
 											#endif
 											if (network->getLearningLog())
 											{
-												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
 											}
 										}
 
@@ -373,7 +373,7 @@ namespace baal
 											#endif
 											if (network->getLearningLog())
 											{
-												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
 											}
 										}
 
@@ -385,7 +385,7 @@ namespace baal
 											#endif
 											if (network->getLearningLog())
 											{
-												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << 0 << "\n";
+												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << 0 << " " << plasticProjections->weight << "\n";
 											}
 										}
 									}
@@ -402,7 +402,7 @@ namespace baal
 										#endif
 										if (network->getLearningLog())
 										{
-											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
 										}
 									}
 
@@ -415,7 +415,7 @@ namespace baal
 										#endif
 										if (network->getLearningLog())
 										{
-											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << "\n";
+											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
 										}
 									}
 
@@ -427,7 +427,7 @@ namespace baal
 										#endif
 										if (network->getLearningLog())
 										{
-											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " <<  0 <<  "\n";
+											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << 0 << " " << plasticProjections->weight << "\n";
 										}
 									}
 								}
@@ -447,13 +447,13 @@ namespace baal
         {
 			network->getPlasticTime().clear();
 			network->getPlasticNeurons().clear();
-			network->getGeneratedSpikes().clear();
+//			network->getGeneratedSpikes().clear(); // how to avoid adding noise to next learning epochs without clearing the list of spikes that didn't occur
 			network->setInputSpikeCounter(0);
 			
 			if (!network->getTeacher())
 			{
 				// lateral inhibition
-				if (layerID != 0)
+				if (layerID != 0) //here change to only affect the same layer
 				{
 					for (auto& projReset: preProjections[0]->preNeuron->postProjections)
 					{
@@ -468,12 +468,11 @@ namespace baal
         }
 		
 		template <typename Network>
-        void weightReinforcement(Network* network)
+        void weightReinforcement(Network* network) // make sure this isn't affecting downstream layers
         {
             std::vector<int> plasticID;
             for (auto& plasticNeurons: network->getPlasticNeurons())
             {
-            
                 plasticID.push_back(plasticNeurons->getNeuronID());
             }
 			
@@ -481,26 +480,25 @@ namespace baal
             for (auto& allProjections: this->preProjections)
             {
                 int16_t ID = allProjections->preNeuron->getNeuronID();
-                // if the projection is not plastic
-                if (std::find(plasticID.begin(), plasticID.end(), ID) == plasticID.end())
+                // if the projection is plastic
+                if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
-                    if (allProjections->weight > 0)
+					// positive reinforcement
+					if (supervisedPotential < threshold && allProjections->weight <= plasticID.size())
                     {
-                        // negative reinforcement
-                        allProjections->weight -= 19e-10/(plasticID.size())*0.01;
-						if (allProjections->weight < 0)
-						{
-							allProjections->weight = 0;
-						}
-						
+                     	allProjections->weight += plasticID.size()*0.01;
                     }
                 }
                 else
                 {
-                	// positive reinforcement
-					if (supervisedPotential < threshold && allProjections->weight < 19e-10/(plasticID.size()))
+                    if (allProjections->weight > 0)
                     {
-                     	allProjections->weight +=  19e-10/(plasticID.size())*0.01;
+                        // negative reinforcement
+                        allProjections->weight -= plasticID.size()*0.01;
+						if (allProjections->weight < 0)
+						{
+							allProjections->weight = 0;
+						}
                     }
 				}
             }

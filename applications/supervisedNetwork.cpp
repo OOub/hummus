@@ -19,14 +19,14 @@
 int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
-	int repeatsInTeacher = 2000;
+	int repeatsInTeacher = 300;
 	baal::DataParser dataParser;
 	
 	// time jitter test
-	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
 	
 	// supervised learning
-	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/1.5teacherSignal.txt");
+	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/3teacherSignal.txt");
 	
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	}
 
 //  ----- NETWORK PARAMETERS -----
-	std::string filename = "supervisedLearning_1.5jitter.bin";
+	std::string filename = "supervisedLearning_3jitter.bin";
 	
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
@@ -48,18 +48,20 @@ int main(int argc, char** argv)
 	float refractoryPeriod = 3;
 	
     int inputNeurons = 27;
-    int layer1Neurons = 27;
+    int layer1Neurons = 10;
 	
     float weight = 19e-10/10;
+	float alpha = 0.1;//0.5;
+	float lambda = 1;//2;
 	
-	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
-	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
+	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 
 	// starting the loggers
-//	network.learningLogger("learningLog_1.5jitter.txt");
-//	network.getNeuronPopulations()[1][data[1][1]].potentialLogger("potentialLog_9.5jitter.txt");
+//	network.learningLogger("supervisedLearning_3jitter.txt");
+//	network.getNeuronPopulations()[1][data[1][7]].potentialLogger("supervisedPotential_3jitter.txt");
 	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)
