@@ -35,13 +35,20 @@ int main(int argc, char** argv)
 	
     float weight = 19e-10;
 	
+	// creating input neurons
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
+	
+	// creating layer 1 neurons
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	
+	// creating layer 2 neurons
 	network.addNeurons(layer2Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 	
+	// connecting input layer and layer 1
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, false, 0); // the bool refers to whether or not we want to randomize the weights and delays
 	
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, false, 0);
+	// connecting layer 1 and layer 2
+	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, false, 0);
 	
 	// injecting spikes in the input layer
 	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(10));

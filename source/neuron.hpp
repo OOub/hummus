@@ -220,7 +220,7 @@ namespace baal
 						fireCounter++;
 					}
 				}
-//				delayLearning(timestamp, network);
+				delayLearning(timestamp, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				supervisedPotential = resetPotential;
@@ -455,7 +455,7 @@ namespace baal
 				// lateral inhibition
 				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
 				{
-					if (projReset->postNeuron->neuronID != neuronID && projReset->postNeuron->layerID == layerID)
+					if (projReset->postNeuron->neuronID != neuronID)// && projReset->postNeuron->layerID == layerID)
 					{
 						projReset->postNeuron->setPotential(restingPotential);
 						projReset->postNeuron->setCurrent(0);
@@ -474,18 +474,16 @@ namespace baal
             }
 			
             // looping through all projections from the winner exclude the postProjections
-//            std::cout << this->layerID << std::endl;
             for (auto& allProjections: this->preProjections)
             {
                 int16_t ID = allProjections->preNeuron->getNeuronID();
-//                std::cout << allProjections->preNeuron->getLayerID() << std::endl;
                 // if the projection is plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
 					// positive reinforcement
 					if (supervisedPotential < threshold && allProjections->weight <= plasticID.size())
                     {
-//                     	allProjections->weight += plasticID.size()*0.01;
+                     	allProjections->weight += plasticID.size()*0.01;
                     }
                 }
                 else
@@ -493,11 +491,11 @@ namespace baal
                     if (allProjections->weight > 0)
                     {
                         // negative reinforcement
-//                        allProjections->weight -= plasticID.size()*0.01;
-//						if (allProjections->weight < 0)
-//						{
-//							allProjections->weight = 0;
-//						}
+                        allProjections->weight -= plasticID.size()*0.01;
+						if (allProjections->weight < 0)
+						{
+							allProjections->weight = 0;
+						}
                     }
 				}
             }
