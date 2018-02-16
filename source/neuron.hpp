@@ -34,7 +34,6 @@ namespace baal
 		Neuron*     postNeuron;
 		float       weight;
 		float       delay;
-		bool        isInitial;
 	};
 	
 	struct spike
@@ -64,7 +63,7 @@ namespace baal
 			potential(_restingPotential),
 			supervisedPotential(_restingPotential),
 			activity(false),
-			initialProjection{nullptr, nullptr, 1000e-10, 0, true},
+			initialProjection{nullptr, nullptr, 1000e-10, 0},
 			fireCounter(0),
             timeStart(0),
             timeEnd(0),
@@ -101,7 +100,7 @@ namespace baal
         {
             if (postNeuron)
             {
-                postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay, false}));
+                postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay}));
                 postNeuron->preProjections.push_back(postProjections.back().get());
             }
             else
@@ -113,7 +112,7 @@ namespace baal
 		template<typename Network>
 		void update(double timestamp, float timestep, spike s, Network* network)
 		{
-			if (s.postProjection && s.postProjection->isInitial)
+			if (s.postProjection && s.postProjection->postNeuron->layerID == 0) // this is problematic because only the first layer gets affected overall
             {
                 network->getPlasticTime().push_back(timestamp);
                 network->getPlasticNeurons().push_back(this);
@@ -309,8 +308,6 @@ namespace baal
     	template<typename Network>
 		void delayLearning(double timestamp, Network* network)
 		{
-			if (network->getInputSpikeCounter() != 0)
-			{
 				if (layerID != 0)
 				{
 					#ifndef NDEBUG
@@ -345,48 +342,42 @@ namespace baal
 							// checking if it's the winner postNeuron
 							if (plasticProjections->postNeuron->getNeuronID() == neuronID)
 							{
+								float change = 0;
 								timeDifferences.push_back(tMax - network->getPlasticTime().at(cpt) - plasticProjections->delay);
 								if (network->getTeacher()) // if supervised learning
 								{
-									if (network->getTeachingProgress())
+									if (network->getTeachingProgress()) // this is added to stop the learning if it's supervised
 									{
 										// delay convergence equations
 										if (timeDifferences.back() > 0)
 										{
-											float change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
+											change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
 											plasticProjections->delay += change;
 											#ifndef NDEBUG
 											std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 											#endif
-											if (network->getLearningLog())
-											{
-												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
-											}
 										}
 
 										else if (timeDifferences.back() < 0)
 										{
-											float change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
+											change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
 											plasticProjections->delay += change;
 											#ifndef NDEBUG
 											std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 											#endif
-											if (network->getLearningLog())
-											{
-												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
-											}
 										}
 
 										else
 										{
-											plasticProjections->delay += 0;
+											plasticProjections->delay += change;
 											#ifndef NDEBUG
 											std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << 0 << std::endl;
 											#endif
-											if (network->getLearningLog())
-											{
-												*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << 0 << " " << plasticProjections->weight << "\n";
-											}
+										}
+										
+										if (network->getLearningLog())
+										{
+											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
 										}
 									}
 								}
@@ -395,40 +386,33 @@ namespace baal
 									// delay convergence equations
 									if (timeDifferences.back() > 0)
 									{
-										float change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
+										change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
 										plasticProjections->delay += change;
 										#ifndef NDEBUG
 										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 										#endif
-										if (network->getLearningLog())
-										{
-											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
-										}
 									}
 
 									else if (timeDifferences.back() < 0)
 									{
-										float change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
+										change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
 										plasticProjections->delay += change;
 										#ifndef NDEBUG
 										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 										#endif
-										if (network->getLearningLog())
-										{
-											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
-										}
 									}
 
 									else
 									{
-										plasticProjections->delay += 0;
+										plasticProjections->delay += change;
 										#ifndef NDEBUG
 										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << 0 << std::endl;
 										#endif
-										if (network->getLearningLog())
-										{
-											*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << 0 << " " << plasticProjections->weight << "\n";
-										}
+									}
+									
+									if (network->getLearningLog())
+									{
+										*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
 									}
 								}
 								synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
@@ -439,7 +423,6 @@ namespace baal
 					weightReinforcement(network);
 					resetAfterLearning(network);
 				}
-			}
 		}
 		
 		template <typename Network>
@@ -447,15 +430,13 @@ namespace baal
         {
 			network->getPlasticTime().clear();
 			network->getPlasticNeurons().clear();
-//			network->getGeneratedSpikes().clear();
-			network->setInputSpikeCounter(0);
 			
 			if (!network->getTeacher())
 			{
 				// lateral inhibition
 				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
 				{
-					if (projReset->postNeuron->neuronID != neuronID)// && projReset->postNeuron->layerID == layerID)
+					if (projReset->postNeuron->neuronID != neuronID)
 					{
 						projReset->postNeuron->setPotential(restingPotential);
 						projReset->postNeuron->setCurrent(0);
@@ -465,7 +446,7 @@ namespace baal
         }
 		
 		template <typename Network>
-        void weightReinforcement(Network* network) // this needs to be different OR we cannot simply align to the last value9
+        void weightReinforcement(Network* network) // this needs to be different OR we cannot simply align to the last value
         {
             std::vector<int> plasticID;
             for (auto& plasticNeurons: network->getPlasticNeurons())
@@ -477,7 +458,7 @@ namespace baal
             for (auto& allProjections: this->preProjections)
             {
                 int16_t ID = allProjections->preNeuron->getNeuronID();
-                // if the projection is plastic
+                // if the projection is plastic // need to add condition if plastic AND SPIKED
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
 					// positive reinforcement

@@ -57,7 +57,6 @@ namespace baal
 				for (auto i=8, j=0; i<=12; i++, j++)
 				{
 					packet[i] = *(reinterpret_cast<char*>(&p->delay) + j);
-//					packet[i+4] = *(reinterpret_cast<char*>(&p->weight) + j);
 					packet[i+4] = *(reinterpret_cast<char*>(&potential) + j);
 				}
 				

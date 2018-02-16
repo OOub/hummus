@@ -33,7 +33,6 @@ namespace baal
             teacher(nullptr),
             layerNumber(0),
 			layerCounter(0),
-			inputSpikeCounter(0),
 			teachingProgress(false),
 			teacherIterator(0)
 		{}
@@ -169,16 +168,6 @@ namespace baal
             return generatedSpikes;
         }
 		
-		int getInputSpikeCounter() const
-        {
-            return inputSpikeCounter;
-        }
-		
-		void setInputSpikeCounter(int resetValue)
-        {
-            inputSpikeCounter = resetValue;
-        }
-		
 		int getTeacherIterator() const
         {
             return teacherIterator;
@@ -204,7 +193,7 @@ namespace baal
         	return layerNumber;
         }
 		
-		// ----- SUPERVISED LEARNING METHOD -----
+		// ----- SUPERVISED LEARNING METHODS -----
         void injectTeacher(std::vector<std::vector<double>>* _teacher)
         {
             teacher = _teacher;
@@ -257,11 +246,6 @@ namespace baal
 				
 				if (s.timestamp <= time + (timestep/2))
 				{
-					if (s.postProjection->isInitial)
-					{
-						inputSpikeCounter++;
-					}
-					
 					neuron->update(time, timestep, s, this);
 
 					if (listSelector == 0)
@@ -297,7 +281,6 @@ namespace baal
 		std::vector<std::vector<Neuron>> neurons;
 		uint64_t					     layerNumber;
 		int                              layerCounter;
-		int                              inputSpikeCounter;
 		int                              teacherIterator;
 		bool                             teachingProgress;
 		std::unique_ptr<std::ofstream>   learningLog;

@@ -49,7 +49,6 @@ namespace baal
             maxX(1),
             minY(0),
             maxY(1)
-    
         {
             qRegisterMetaType<QtCharts::QAbstractSeries*>();
             qRegisterMetaType<QtCharts::QValueAxis*>();
@@ -63,7 +62,7 @@ namespace baal
         {
         	if (!empty)
         	{
-				if (p->isInitial && spiked)
+				if (p->postNeuron->getLayerID() == 0 && spiked)
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)
