@@ -47,7 +47,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -66,7 +66,9 @@ namespace baal
 			initialProjection{nullptr, nullptr, 1000e-10, 0},
             lastSpikeTime(0),
             alpha(_alpha),
-            lambda(_lambda)
+            lambda(_lambda),
+            eligibilityTrace(0),
+            eligibilityDecay(_eligibilityDecay)
     	{
     		// error handling
 			if (decayCurrent == decayPotential)
@@ -114,6 +116,7 @@ namespace baal
 			
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
+			eligibilityTrace *= std::exp(-timestep/50);
 			
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
@@ -123,6 +126,7 @@ namespace baal
 			{
 				if (s.postProjection)
 				{
+					eligibilityTrace += 1;
 					current += externalCurrent*s.postProjection->weight;
 					activeProjection = *s.postProjection;
 				}
@@ -139,6 +143,7 @@ namespace baal
 					{
 						if (std::abs((*network->getTeacher())[0][network->getTeacherIterator()] - timestamp) < 1e-1)
 						{
+							eligibilityTrace = 1;
 							current = 19e-10;
 							potential = threshold;
 							network->setTeacherIterator(network->getTeacherIterator()+1);
@@ -212,7 +217,7 @@ namespace baal
             }
             return spike{timestamp, &initialProjection};
         }
-		
+	
     	// ----- SETTERS AND GETTERS -----
 		int16_t getNeuronID() const
         {
@@ -266,6 +271,11 @@ namespace baal
 	
 	protected:
 	
+		void myelinPlasticity()
+		{
+			//use the eligibility to select which neurons are plastic
+		}
+		
     	// ----- PROTECTED NEURON METHODS -----
 		
 		// ----- NEURON PARAMETERS -----
@@ -280,11 +290,13 @@ namespace baal
         float                                    inputResistance;
         float                                    current;
         float                                    potential;
-        bool                                     activity;
+		bool                                     activity;
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
 		float                                    alpha;
 		float                                    lambda;
+		float                                    eligibilityTrace;
+		float                                    eligibilityDecay;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		projection                               activeProjection;
