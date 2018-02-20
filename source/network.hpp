@@ -132,16 +132,7 @@ namespace baal
             #endif
 		}
 		
-		void learningLogger(std::string filename)
-		{
-			learningLog.reset(new std::ofstream(filename));
-		}
-		
 		// ----- SETTERS AND GETTERS -----
-		std::unique_ptr<std::ofstream>& getLearningLog()
-		{
-			return learningLog;
-		}
 		
 		std::vector<std::vector<Neuron>>& getNeuronPopulations()
 		{
@@ -152,16 +143,6 @@ namespace baal
 		{
 			return delegates;
 		}
-		
-		std::vector<Neuron*>& getPlasticNeurons()
-        {
-            return plasticNeurons;
-        }
-		
-        std::vector<double>& getPlasticTime()
-        {
-            return plasticTime;
-        }
 		
 		std::deque<spike>& getGeneratedSpikes()
         {
@@ -273,8 +254,6 @@ namespace baal
 		}
 		
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::vector<double>              plasticTime;
-        std::vector<Neuron*>             plasticNeurons;
 		std::deque<spike>                initialSpikes;
         std::deque<spike>                generatedSpikes;
         std::vector<NetworkDelegate*>    delegates;
@@ -283,7 +262,6 @@ namespace baal
 		int                              layerCounter;
 		int                              teacherIterator;
 		bool                             teachingProgress;
-		std::unique_ptr<std::ofstream>   learningLog;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
         std::vector<std::vector<double>>* teacher;

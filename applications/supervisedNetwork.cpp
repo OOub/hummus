@@ -58,10 +58,6 @@ int main(int argc, char** argv)
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
-
-	// starting the loggers
-//	network.learningLogger("supervisedLearning_3jitter.txt");
-//	network.getNeuronPopulations()[1][data[1][7]].potentialLogger("supervisedPotential_3jitter.txt");
 	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data[0].size(); idx++)

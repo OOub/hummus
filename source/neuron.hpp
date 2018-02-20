@@ -64,9 +64,6 @@ namespace baal
 			supervisedPotential(_restingPotential),
 			activity(false),
 			initialProjection{nullptr, nullptr, 1000e-10, 0},
-			fireCounter(0),
-            timeStart(0),
-            timeEnd(0),
             lastSpikeTime(0),
             alpha(_alpha),
             lambda(_lambda)
@@ -93,14 +90,6 @@ namespace baal
         Neuron& operator=(const Neuron&) = delete; // copy assign constructor
         Neuron& operator=(Neuron&&) = default; // move assign constructor
 		
-		virtual ~Neuron()
-		{
-			if (counterLog)
-            {
-                *counterLog << "Neuron " << neuronID << " fired " << fireCounter << " times\n";
-            }
-		}
-		
 		// ----- PUBLIC NEURON METHODS -----
 		void addProjection(Neuron* postNeuron, float weight, float delay)
         {
@@ -118,12 +107,6 @@ namespace baal
 		template<typename Network>
 		void update(double timestamp, float timestep, spike s, Network* network)
 		{
-			if (s.postProjection && s.postProjection->postNeuron->layerID == 0) // this is problematic because only the first layer gets affected overall
-            {
-                network->getPlasticTime().push_back(timestamp);
-                network->getPlasticNeurons().push_back(this);
-            }
-			
             if (timestamp - lastSpikeTime >= refractoryPeriod)
             {
                 activity = false;
@@ -172,11 +155,6 @@ namespace baal
 				}
 			}
 			
-			if (potentialLog)
-			{
-				*potentialLog << timestamp << " " << potential << "\n";
-			}
-			
 			if (s.postProjection)
 			{
 				#ifndef NDEBUG
@@ -218,14 +196,6 @@ namespace baal
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 
-				if (counterLog)
-				{
-					if (timestamp >= timeStart && timestamp <= timeEnd)
-					{
-						fireCounter++;
-					}
-				}
-				delayLearning(timestamp, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				supervisedPotential = resetPotential;
@@ -241,19 +211,6 @@ namespace baal
                 initialProjection.postNeuron = this;
             }
             return spike{timestamp, &initialProjection};
-        }
-		
-        void spikeCountLogger(double _timeStart, double _timeEnd, std::string filename)
-        {
-            timeStart = _timeStart;
-            timeEnd = _timeEnd;
-            counterLog.reset(new std::ofstream(filename));
-        }
-		
-        void potentialLogger(std::string filename)
-        {
-        	std::cout << "logging the potential of neuron " << neuronID << std::endl;
-        	potentialLog.reset(new std::ofstream(filename));
         }
 		
     	// ----- SETTERS AND GETTERS -----
@@ -310,183 +267,6 @@ namespace baal
 	protected:
 	
     	// ----- PROTECTED NEURON METHODS -----
-
-    	template<typename Network>
-		void delayLearning(double timestamp, Network* network)
-		{
-			if (layerID != 0)
-			{
-				#ifndef NDEBUG
-				if (network->getTeachingProgress())
-				{
-					std::cout << "learning epoch" << std::endl;
-				}
-				#endif
-				std::vector<double> timeDifferences;
-				float tMax = 0;
-				// if there is a supervised signal
-				if (network->getTeacher())
-				{
-					tMax = timestamp;
-				}
-				
-				// if there is no supervised signal
-				else
-				{
-					tMax = *std::max_element(network->getPlasticTime().begin(), network->getPlasticTime().end());
-				}
-				#ifndef NDEBUG
-				std::cout << "patterns contains " << network->getInputSpikeCounter() << " spikes" << std::endl;
-				#endif
-				// looping through presynaptic neurons belonging to the pattern
-				int cpt = 0;
-				for (auto& plasticNeurons: network->getPlasticNeurons())
-				{
-					// looping through each presynaptic neuron's projections
-					for (auto& plasticProjections: plasticNeurons->postProjections)
-					{
-						// checking if it's the winner postNeuron
-						if (plasticProjections->postNeuron->getNeuronID() == neuronID)
-						{
-							float change = 0;
-							timeDifferences.push_back(tMax - network->getPlasticTime().at(cpt) - plasticProjections->delay);
-							if (network->getTeacher()) // if supervised learning
-							{
-								if (network->getTeachingProgress()) // this is added to stop the learning if it's supervised
-								{
-									// delay convergence equations
-									if (timeDifferences.back() > 0)
-									{
-										change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
-										plasticProjections->delay += change;
-										#ifndef NDEBUG
-										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-										#endif
-									}
-
-									else if (timeDifferences.back() < 0)
-									{
-										change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
-										plasticProjections->delay += change;
-										#ifndef NDEBUG
-										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-										#endif
-									}
-
-									else
-									{
-										plasticProjections->delay += change;
-										#ifndef NDEBUG
-										std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << 0 << std::endl;
-										#endif
-									}
-									
-									if (network->getLearningLog())
-									{
-										*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
-									}
-								}
-							}
-							else // if unsupervised learning
-							{
-								// delay convergence equations
-								if (timeDifferences.back() > 0)
-								{
-									change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
-									plasticProjections->delay += change;
-									#ifndef NDEBUG
-									std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-									#endif
-								}
-
-								else if (timeDifferences.back() < 0)
-								{
-									change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
-									plasticProjections->delay += change;
-									#ifndef NDEBUG
-									std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-									#endif
-								}
-
-								else
-								{
-									plasticProjections->delay += change;
-									#ifndef NDEBUG
-									std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << 0 << std::endl;
-									#endif
-								}
-								
-								if (network->getLearningLog())
-								{
-									*network->getLearningLog() << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " " << timeDifferences.back() << " " << change << " " << plasticProjections->weight << "\n";
-								}
-							}
-							synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
-						}
-					}
-					cpt++;
-				}
-				weightReinforcement(network);
-				resetAfterLearning(network);
-			}
-		}
-		
-		template <typename Network>
-        void resetAfterLearning(Network* network)
-        {
-			network->getPlasticTime().clear();
-			network->getPlasticNeurons().clear();
-			
-			if (!network->getTeacher())
-			{
-				// lateral inhibition
-				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
-				{
-					if (projReset->postNeuron->neuronID != neuronID)
-					{
-						projReset->postNeuron->setPotential(restingPotential);
-						projReset->postNeuron->setCurrent(0);
-					}
-				}
-			}
-        }
-		
-		template <typename Network>
-        void weightReinforcement(Network* network) // this needs to be different OR we cannot simply align to the last value
-        {
-            std::vector<int> plasticID;
-            for (auto& plasticNeurons: network->getPlasticNeurons())
-            {
-                plasticID.push_back(plasticNeurons->getNeuronID());
-            }
-			
-            // looping through all projections from the winner exclude the postProjections
-            for (auto& allProjections: this->preProjections)
-            {
-                int16_t ID = allProjections->preNeuron->getNeuronID();
-                // if the projection is plastic
-                if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
-                {
-					// positive reinforcement
-					if (supervisedPotential < threshold && allProjections->weight <= plasticID.size())
-                    {
-                     	allProjections->weight += plasticID.size()*0.01;
-                    }
-                }
-                else
-                {
-                    if (allProjections->weight > 0)
-                    {
-                        // negative reinforcement
-                        allProjections->weight -= plasticID.size()*0.01;
-						if (allProjections->weight < 0)
-						{
-							allProjections->weight = 0;
-						}
-                    }
-				}
-            }
-        }
 		
 		// ----- NEURON PARAMETERS -----
 		int16_t                                  neuronID;
@@ -511,11 +291,6 @@ namespace baal
         std::vector<std::unique_ptr<projection>> postProjections;
         std::vector<projection*>                 preProjections;
         projection                               initialProjection;
-		int                                      fireCounter;
-        double                                   timeStart;
-        double                                   timeEnd;
-        std::unique_ptr<std::ofstream>           counterLog;
-        std::unique_ptr<std::ofstream>           potentialLog;
         double                                   lastSpikeTime;
         float                                    supervisedPotential;
     };
