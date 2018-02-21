@@ -126,7 +126,7 @@ namespace baal
 			{
 				if (s.postProjection)
 				{
-					eligibilityTrace += 1;
+					eligibilityTrace = 1;
 					current += externalCurrent*s.postProjection->weight;
 					activeProjection = *s.postProjection;
 				}
@@ -200,7 +200,13 @@ namespace baal
 				{
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
-
+				
+				if (layerID == 0) // the input projections are not plastic
+				{
+					std::cout << timestamp << " " << neuronID << std::endl;
+//					myelinPlasticity(timestamp, network);
+				}
+				
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				supervisedPotential = resetPotential;
@@ -270,10 +276,50 @@ namespace baal
 		}
 	
 	protected:
-	
-		void myelinPlasticity()
+		
+		template<typename Network>
+		void myelinPlasticity(double timestamp, Network* network)
 		{
-			//use the eligibility to select which neurons are plastic
+			std::cout << "learning epoch" << std::endl;
+			std::vector<double> timeDifferences;
+			
+			for (auto& inputProjection: preProjections)
+			{
+				// selecting plastic neurons
+				if (inputProjection->preNeuron->eligibilityTrace > 0.6)
+				{
+					float change = 0;
+					float spikeEmissionTime = eligibilityDecay*std::log(eligibilityTrace)+timestamp;
+					timeDifferences.push_back(timestamp - spikeEmissionTime - inputProjection->delay);
+					std::cout << "ts=" << timestamp << " spikeEmission=" << spikeEmissionTime << " td=" << timeDifferences.back() << " delay=" << inputProjection->delay << std::endl;
+					if (timeDifferences.back() > 0)
+					{
+						// change delays
+					}
+					
+					else if (timeDifferences.back() < 0)
+					{
+						// change delays
+					}
+					
+					else
+					{
+						// do nothing
+					}
+				}
+			}
+			resetLearning(network);
+			// also use the eligibility trace to determine the time differences and maximise the potentials -> what's the point of maximizing if it already spiked?
+			// reset eligibility trace of plastic neurons
+		}
+		
+		template<typename Network>
+		void resetLearning(Network* network)
+		{
+			for (auto& inputProjection: preProjections)
+			{
+				inputProjection->preNeuron->eligibilityTrace = 0;
+			}
 		}
 		
     	// ----- PROTECTED NEURON METHODS -----
