@@ -25,7 +25,7 @@ namespace baal
 		double timestamp;
 		double neuronID;
 	};
-	
+		
 	class DataParser
 	{
     public:
@@ -33,11 +33,9 @@ namespace baal
         DataParser(){}
 		
 		// reading one dimentional data
-//        std::vector<std::vector<double>> read1D(std::string filename)
         std::vector<input> read1D(std::string filename)
         {
         	std::vector<input> data;
-//            std::vector<std::vector<double>> data(2);
             std::vector<double> columns(2);
             
             std::cout << "Reading " << filename << std::endl;
@@ -48,8 +46,6 @@ namespace baal
                 while (dataFile >> columns[0] >> columns[1])
                 {
                 	data.push_back(input{columns[0], columns[1]});
-//                    data[0].push_back(columns[0]);
-//                    data[1].push_back(columns[1]);
                 }
             }
             else
@@ -62,7 +58,6 @@ namespace baal
 				return a.timestamp < b.timestamp;
 			});
 			
-//            std::cout << "the largest neuron ID is " << *std::max_element(data[1].begin(),data[1].end())+1 << std::endl;
             std::cout << "Done." << std::endl;
             return data;
         }

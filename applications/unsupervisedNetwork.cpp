@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 	
 	// time jitter test
 	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-
+	
 //  ----- NETWORK PARAMETERS -----
 
 	std::string filename = "unsupervisedLearning_jitter.bin";
@@ -46,13 +46,14 @@ int main(int argc, char** argv)
 
 	float alpha = 0.5;
 	float lambda = 0.5;
+	float eligibilityDecay = 50;
 
-    float weight = 19e-10; //weight dependent on feature size
+    float weight = 19e-10/4; //weight dependent on feature size
 
-	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
+	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, false, 0);
+	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data.size(); idx++)
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(1000);
 	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(55);
+	network.trackNeuron(28);
 
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
