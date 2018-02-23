@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 17/01/2018
+ * Last Version: 22/02/2018
  *
  * Information: the neuron class defines a neuron and the learning rules dictating its behavior.
  */
@@ -19,8 +19,8 @@
 #include <random>
 #include <string>
 #include <vector>
-#include <cmath>
 #include <memory>
+#include <cmath>
 
 #include "networkDelegate.hpp"
 
@@ -279,13 +279,17 @@ namespace baal
 		template<typename Network>
 		void myelinPlasticity(double timestamp, Network* network)
 		{
+			#ifndef NDEBUG
+			std::cout << "learning epoch" << std::endl;
+			#endif
 			std::vector<double> timeDifferences;
-			
+			std::vector<int> plasticID;
 			for (auto& inputProjection: preProjections)
 			{
 				// selecting plastic neurons
-				if (inputProjection->preNeuron->eligibilityTrace > 0.6)
+				if (inputProjection->preNeuron->eligibilityTrace > 0.1)
 				{
+					plasticID.push_back(inputProjection->preNeuron->neuronID);
 					float change = 0;
 					float spikeEmissionTime = eligibilityDecay*std::log(eligibilityTrace)+timestamp;
 					timeDifferences.push_back(timestamp - spikeEmissionTime - inputProjection->delay);
@@ -295,45 +299,74 @@ namespace baal
 						change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
 						inputProjection->delay += change;
 						#ifndef NDEBUG
-						std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						std::cout << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 						#endif
 					}
-					
+
 					else if (timeDifferences.back() < 0)
 					{
 						change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
 						inputProjection->delay += change;
 						#ifndef NDEBUG
-						std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						std::cout << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 						#endif
 					}
-					
-					else
-					{
-						inputProjection->delay += change;
-						#ifndef NDEBUG
-						std::cout << plasticProjections->preNeuron->getNeuronID() << " " << plasticProjections->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << 0 << std::endl;
-						#endif
-					}
+					synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
 				}
 			}
+			reinforcementLearning(plasticID, network);
 			resetLearning(network);
-			// also use the eligibility trace to determine the time differences and maximise the potentials -> what's the point of maximizing if it already spiked?
-			// reset eligibility trace of plastic neurons
+		}
+		
+		template <typename Network>
+		void reinforcementLearning(std::vector<int> plasticID, Network* network) // try to kick this in only after the spikes are aligned
+		{
+			// looping through all projections from the winner exclude the postProjections
+            for (auto& allProjections: this->preProjections)
+            {
+                int16_t ID = allProjections->preNeuron->getNeuronID();
+                // if the projection is plastic
+                if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
+                {
+					// positive reinforcement
+					if (supervisedPotential < threshold && allProjections->weight <= plasticID.size())
+                    {
+                     	allProjections->weight += plasticID.size()*0.1;
+                    }
+                }
+                else
+                {
+                    if (allProjections->weight > 0)
+                    {
+                        // negative reinforcement
+                        allProjections->weight -= plasticID.size()*0.1;
+						if (allProjections->weight < 0)
+						{
+							allProjections->weight = 0;
+						}
+                    }
+				}
+            }
 		}
 		
 		template<typename Network>
 		void resetLearning(Network* network)
 		{
+//			network->getGeneratedSpikes().clear(); // need to somehow get rid of this through the weight learning rule
 			for (auto& inputProjection: preProjections)
 			{
 				inputProjection->preNeuron->eligibilityTrace = 0;
 			}
+			
+			for (auto& projReset: preProjections[0]->preNeuron->postProjections)
+			{
+				if (projReset->postNeuron->neuronID != neuronID)
+				{
+					projReset->postNeuron->setPotential(restingPotential);
+					projReset->postNeuron->setCurrent(0);
+				}
+			}
 		}
-		
-		template <typename Network>
-		void reinforcementLearning(Network* network)
-		{}
 		
     	// ----- PROTECTED NEURON METHODS -----
 		

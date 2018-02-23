@@ -39,22 +39,28 @@ int main(int argc, char** argv)
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 
+	float decayCurrent2 = 40;
+	float potentialDecay2 = 50;
+	
 	float refractoryPeriod = 3;
 
     int inputNeurons = 27;
     int layer1Neurons = 27;
-
+	int layer2Neurons = 27;
+	
 	float alpha = 0.5;
 	float lambda = 0.5;
-	float eligibilityDecay = 50;
+	float eligibilityDecay = 20;
 
     float weight = 19e-10/4; //weight dependent on feature size
 
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-
+	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
-
+	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, true, 20);
+	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data.size(); idx++)
 	{
