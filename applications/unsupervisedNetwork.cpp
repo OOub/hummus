@@ -25,7 +25,6 @@ int main(int argc, char** argv)
 	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 //  ----- NETWORK PARAMETERS -----
-
 	std::string filename = "unsupervisedLearning_jitter.bin";
 
 	baal::Logger logger(filename);
@@ -48,9 +47,9 @@ int main(int argc, char** argv)
     int layer1Neurons = 27;
 	int layer2Neurons = 27;
 	
-	float alpha = 0.5;
-	float lambda = 0.5;
-	float eligibilityDecay = 20;
+	float alpha = 0.25;
+	float lambda = 0.25;
+	float eligibilityDecay = 100;
 
     float weight = 19e-10/4; //weight dependent on feature size
 
@@ -59,7 +58,7 @@ int main(int argc, char** argv)
 	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
-	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, true, 20);
+	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, true, 30);
 	
 	// injecting spikes in the input layer
 	for (auto idx=0; idx<data.size(); idx++)

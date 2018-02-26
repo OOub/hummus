@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 22/02/2018
+ * Last Version: 26/02/2018
  *
  * Information: the neuron class defines a neuron and the learning rules dictating its behavior.
  */
@@ -68,6 +68,7 @@ namespace baal
             alpha(_alpha),
             lambda(_lambda),
             eligibilityTrace(0),
+            emissionTrace(0),
             eligibilityDecay(_eligibilityDecay)
     	{
     		// error handling
@@ -116,7 +117,8 @@ namespace baal
 			
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
-			eligibilityTrace *= std::exp(-timestep/50);
+			eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
+			emissionTrace *= std::exp(-timestep/eligibilityDecay);
 			
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
@@ -126,7 +128,7 @@ namespace baal
 			{
 				if (s.postProjection)
 				{
-					eligibilityTrace = 1;
+					emissionTrace = 1;
 					current += externalCurrent*s.postProjection->weight;
 					activeProjection = *s.postProjection;
 				}
@@ -143,7 +145,6 @@ namespace baal
 					{
 						if (std::abs((*network->getTeacher())[0][network->getTeacherIterator()] - timestamp) < 1e-1)
 						{
-							eligibilityTrace = 1;
 							current = 19e-10;
 							potential = threshold;
 							network->setTeacherIterator(network->getTeacherIterator()+1);
@@ -187,6 +188,7 @@ namespace baal
 			
 			if (potential >= threshold)
 			{
+				eligibilityTrace = 1;
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
@@ -275,7 +277,8 @@ namespace baal
 		}
 	
 	protected:
-		
+	
+		// ----- PROTECTED NEURON METHODS -----
 		template<typename Network>
 		void myelinPlasticity(double timestamp, Network* network)
 		{
@@ -290,8 +293,9 @@ namespace baal
 				if (inputProjection->preNeuron->eligibilityTrace > 0.1)
 				{
 					plasticID.push_back(inputProjection->preNeuron->neuronID);
+					
 					float change = 0;
-					float spikeEmissionTime = eligibilityDecay*std::log(eligibilityTrace)+timestamp;
+					float spikeEmissionTime = eligibilityDecay*std::log(emissionTrace)+timestamp;
 					timeDifferences.push_back(timestamp - spikeEmissionTime - inputProjection->delay);
 					
 					if (timeDifferences.back() > 0)
@@ -299,7 +303,7 @@ namespace baal
 						change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
 						inputProjection->delay += change;
 						#ifndef NDEBUG
-						std::cout << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 						#endif
 					}
 
@@ -308,7 +312,7 @@ namespace baal
 						change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
 						inputProjection->delay += change;
 						#ifndef NDEBUG
-						std::cout << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 						#endif
 					}
 					synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
@@ -319,7 +323,7 @@ namespace baal
 		}
 		
 		template <typename Network>
-		void reinforcementLearning(std::vector<int> plasticID, Network* network) // try to kick this in only after the spikes are aligned
+		void reinforcementLearning(std::vector<int> plasticID, Network* network)
 		{
 			// looping through all projections from the winner exclude the postProjections
             for (auto& allProjections: this->preProjections)
@@ -351,8 +355,15 @@ namespace baal
 		
 		template<typename Network>
 		void resetLearning(Network* network)
-		{
-//			network->getGeneratedSpikes().clear(); // need to somehow get rid of this through the weight learning rule
+		{			
+			for (auto i=0; i<network->getGeneratedSpikes().size(); i++)
+			{
+				if (network->getGeneratedSpikes()[i].postProjection->postNeuron->getLayerID() == layerID)
+				{
+					network->getGeneratedSpikes().erase(network->getGeneratedSpikes().begin()+i);
+				}
+			}
+			
 			for (auto& inputProjection: preProjections)
 			{
 				inputProjection->preNeuron->eligibilityTrace = 0;
@@ -367,8 +378,6 @@ namespace baal
 				}
 			}
 		}
-		
-    	// ----- PROTECTED NEURON METHODS -----
 		
 		// ----- NEURON PARAMETERS -----
 		int16_t                                  neuronID;
@@ -388,6 +397,7 @@ namespace baal
 		float                                    alpha;
 		float                                    lambda;
 		float                                    eligibilityTrace;
+		float                                    emissionTrace;
 		float                                    eligibilityDecay;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
