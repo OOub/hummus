@@ -30,53 +30,60 @@ int main(int argc, char** argv)
 	
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
-		teacher[idx].resize(repeatsInTeacher);
+		teacher.resize(repeatsInTeacher);
 	}
 
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "supervisedLearning_3jitter.bin";
-	
+
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
-	
+
 //  ----- INITIALISING THE NETWORK -----
-	float runtime = data[0].back()+100;
+	float runtime = data.back().timestamp+1;
 	float timestep = 0.1;
-	
+
 	float decayCurrent = 10;
 	float potentialDecay = 20;
-	float refractoryPeriod = 3;
 	
+	float decayCurrent2 = 40;
+	float potentialDecay2 = 50;
+	
+	float refractoryPeriod = 3;
+
     int inputNeurons = 27;
     int layer1Neurons = 10;
+	int layer2Neurons = 4;
 	
     float weight = 19e-10/10;
-	float alpha = 0.1;//0.5;
-	float lambda = 1;//2;
-	
+	float alpha = 1;
+	float lambda = 1;
+
 	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
 	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
+	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
+	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false,  19e-10/5, true, 20);
 	
 	// injecting spikes in the input layer
-	for (auto idx=0; idx<data[0].size(); idx++)
+	for (auto idx=0; idx<data.size(); idx++)
 	{
-		network.injectSpike(network.getNeuronPopulations()[0][data[1][idx]].prepareInitialSpike(data[0][idx]));
+		network.injectSpike(network.getNeuronPopulations()[0][data[idx].neuronID].prepareInitialSpike(data[idx].timestamp));
     }
-	
+
 	// injecting the teacher signal for supervised threshold learning
   	network.injectTeacher(&teacher);
-	
+
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(1000);
 	network.setOutputMinY(layer1Neurons);
 	network.trackNeuron(28);
-	
+
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
-	
+
 //  ----- EXITING APPLICATION -----
     return errorCode;
 }

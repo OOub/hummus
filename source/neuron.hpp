@@ -139,11 +139,11 @@ namespace baal
 			// impose spiking when using supervised learning
 			if (network->getTeacher())
 			{
-				if (network->getTeacherIterator() < (*network->getTeacher())[0].size())
+				if (network->getTeacherIterator() < (*network->getTeacher()).size())
 				{
-					if ((*network->getTeacher())[1][network->getTeacherIterator()] == neuronID)
+					if ((*network->getTeacher())[network->getTeacherIterator()].neuronID == neuronID)
 					{
-						if (std::abs((*network->getTeacher())[0][network->getTeacherIterator()] - timestamp) < 1e-1)
+						if (std::abs((*network->getTeacher())[network->getTeacherIterator()].timestamp - timestamp) < 1e-1)
 						{
 							current = 19e-10;
 							potential = threshold;
@@ -189,6 +189,7 @@ namespace baal
 			if (potential >= threshold)
 			{
 				eligibilityTrace = 1;
+				
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
@@ -282,11 +283,9 @@ namespace baal
 		template<typename Network>
 		void myelinPlasticity(double timestamp, Network* network)
 		{
-			#ifndef NDEBUG
-			std::cout << "learning epoch" << std::endl;
-			#endif
 			std::vector<double> timeDifferences;
 			std::vector<int> plasticID;
+			
 			for (auto& inputProjection: preProjections)
 			{
 				// selecting plastic neurons
@@ -297,23 +296,48 @@ namespace baal
 					float change = 0;
 					float spikeEmissionTime = eligibilityDecay*std::log(emissionTrace)+timestamp;
 					timeDifferences.push_back(timestamp - spikeEmissionTime - inputProjection->delay);
-					
-					if (timeDifferences.back() > 0)
+					if (network->getTeacher()) // supervised learning
 					{
-						change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
-						inputProjection->delay += change;
-						#ifndef NDEBUG
-						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-						#endif
-					}
+						if (network->getTeachingProgress()) // stops learning when the teacher signal is over
+						{
+							if (timeDifferences.back() > 0)
+							{
+								change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
+								inputProjection->delay += change;
+								#ifndef NDEBUG
+								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+								#endif
+							}
 
-					else if (timeDifferences.back() < 0)
+							else if (timeDifferences.back() < 0)
+							{
+								change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
+								inputProjection->delay += change;
+								#ifndef NDEBUG
+								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+								#endif
+							}
+						}
+					}
+					else // unsupervised learning
 					{
-						change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
-						inputProjection->delay += change;
-						#ifndef NDEBUG
-						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-						#endif
+						if (timeDifferences.back() > 0)
+						{
+							change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
+							inputProjection->delay += change;
+							#ifndef NDEBUG
+							std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+							#endif
+						}
+
+						else if (timeDifferences.back() < 0)
+						{
+							change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
+							inputProjection->delay += change;
+							#ifndef NDEBUG
+							std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+							#endif
+						}
 					}
 					synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
 				}

@@ -110,7 +110,8 @@ namespace baal
 			return network.getNeuronPopulations();
 		}
 		
-		void injectTeacher(std::vector<std::vector<double>>* _teacher)
+		template<typename input>
+		void injectTeacher(std::vector<input>* _teacher)
         {
             network.injectTeacher(_teacher);
         }

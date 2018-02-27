@@ -19,6 +19,7 @@
 #include <deque>
 
 #include "neuron.hpp"
+#include "dataParser.hpp"
 #include "networkDelegate.hpp"
 
 namespace baal
@@ -175,13 +176,13 @@ namespace baal
         }
 		
 		// ----- SUPERVISED LEARNING METHODS -----
-        void injectTeacher(std::vector<std::vector<double>>* _teacher)
+        void injectTeacher(std::vector<input>* _teacher)
         {
             teacher = _teacher;
             teachingProgress = true;
         }
 		
-        std::vector<std::vector<double>>* getTeacher() const
+        std::vector<input>* getTeacher() const
         {
             return teacher;
         }
@@ -264,6 +265,6 @@ namespace baal
 		bool                             teachingProgress;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
-        std::vector<std::vector<double>>* teacher;
+        std::vector<input>* teacher;
     };
 }
