@@ -27,6 +27,7 @@
 #include <QtCharts/QAreaSeries>
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
+#include <QtWidgets/QSpinBox>
 
 #include "network.hpp"
 
@@ -45,7 +46,8 @@ namespace baal
             isClosed(false),
             input(0),
             minY(0),
-            maxY(1)
+            maxY(1),
+            layerTracker(1)
     
         {
             atomicGuard.clear(std::memory_order_release);
@@ -58,8 +60,7 @@ namespace baal
         {
         	if (!empty)
         	{
-        		// here need to replace condition by something that will output only the last layer (actual output)
-				if (p->postNeuron->getLayerID() == network->getLayerNumber()-1 && spiked)
+				if (p->postNeuron->getLayerID() == layerTracker && spiked) //make a box that will select the layer (where 0 is a forbidden value)
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)
@@ -97,6 +98,11 @@ namespace baal
     public slots:
 		
     	// ----- QT-RELATED METHODS -----
+		void changeLayer(int newLayer)
+		{
+			layerTracker = newLayer;
+		}
+		
         void disable()
         {
             while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
@@ -130,17 +136,18 @@ namespace baal
                 atomicGuard.clear(std::memory_order_release);
             }
         }
-    
+		
     protected:
 		
     	// ----- IMPLEMENTATION VARIABLES -----
         bool                  openGL;
         bool                  isClosed;
-        double                 timeWindow;
+        double                timeWindow;
         QVector<QPointF>      points;
         float                 input;
         int                   minY;
         int                   maxY;
         std::atomic_flag      atomicGuard;
+        int                   layerTracker;
     };
 }

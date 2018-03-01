@@ -19,6 +19,7 @@
 #include <QtWidgets/QApplication>
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
+#include <QQmlContext>
 
 #include "network.hpp"
 #include "inputViewer.hpp"
@@ -32,7 +33,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR -----
-        Display(std::vector<NetworkDelegate*> nd = {}, float threshold=-50)
+        Display(std::vector<NetworkDelegate*> nd = {})
         {
         	static int argc = 1;
 			static char* argv[1] = {NULL};
@@ -47,6 +48,7 @@ namespace baal
             qmlRegisterType<PotentialViewer>("PotentialViewer", 1, 0, "PotentialViewer");
 			
 			engine = new QQmlApplicationEngine();
+			engine->rootContext()->setContextProperty("layers", 1);
             engine->loadData(
 				#include "gui.qml"
             );
@@ -81,6 +83,8 @@ namespace baal
 		
 		int run(double _runtime, float _timestep)
         {
+        	uint64_t layer = network.getNeuronPopulations().size() - 1;
+        	engine->rootContext()->setContextProperty("layers", layer);
             std::thread spikeManager([this, _runtime, _timestep]{
                 network.run(_runtime, _timestep);
             });

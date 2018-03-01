@@ -136,6 +136,17 @@ ApplicationWindow
 					tickCount: outputRec.height/50
 				}
 
+				SpinBox
+				{
+					id: layerbox
+					minimumValue: 1
+					maximumValue: layers
+					onEditingFinished:
+					{
+						outputViewer.changeLayer(value)
+					}
+				}
+
 				ScatterSeries
 				{
 					id: output

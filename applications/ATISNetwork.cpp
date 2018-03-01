@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 16/01/2018
+ * Last Version: 27/02/2018
  *
  * Information: Example of a basic spiking neural network.
  */
@@ -19,16 +19,9 @@
 int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
-//	int repeatsInTeacher = 150;
 	baal::DataParser dataParser;
 	
 	auto data = dataParser.read1D("../../data/pip/1rec_1pip/1pip_1type_200reps.txt");
-//	auto teacher = dataParser.read1D("../../data/pip/1rec_1pip/teacher1pip_1type_200reps.txt");
-	
-//	for (auto idx=0; idx<teacher.size(); idx++)
-//	{
-//		teacher[idx].resize(repeatsInTeacher);
-//	}
 	
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "unsupervised_ATIS1pip.bin";
@@ -36,45 +29,47 @@ int main(int argc, char** argv)
 	baal::Display network({&logger});
 
 //  ----- INITIALISING THE NETWORK -----
-	float runtime = data[0].back()+100;
+	float runtime = data.back().timestamp+1;
 	float timestep = 0.1;
 	
 	float decayCurrent = 20;
 	float potentialDecay = 30;
+	
+	float decayCurrent2 = 300;
+	float potentialDecay2 = 310;
+	
 	float refractoryPeriod = 3;
 	
     int inputNeurons = 671;
     int layer1Neurons = 671;
+	int layer2Neurons = 10;
 	
-    float weight = 19e-10/10;
-	float alpha = 0.1;
-	float lambda = 20;
+	float alpha = 1;
+	float lambda = 1;
 	
-	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 100);
-
+	float eligibilityDecay = 100;
+	
+	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, 300, alpha, lambda);
+	
+	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, 50e-10/10, true, 100);
+	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, 50e-10, true, 300);
+	
 	// injecting spikes in the input layer
-	for (auto idx=0; idx<data[0].size(); idx++)
+	for (auto idx=0; idx<data.size(); idx++)
 	{
-		network.injectSpike(network.getNeuronPopulations()[0][data[1][idx]].prepareInitialSpike(data[0][idx]));
+		network.injectSpike(network.getNeuronPopulations()[0][data[idx].neuronID].prepareInitialSpike(data[idx].timestamp));
     }
 
-	// injecting the teacher signal for supervised threshold learning
-//  	network.injectTeacher(&teacher);
-
 //  ----- DISPLAY SETTINGS -----
-	network.useHardwareAcceleration(false);
-	network.setTimeWindow(1000);
-	network.setOutputMinY(inputNeurons);
-	network.trackNeuron(671);
+	network.useHardwareAcceleration(true);
+	network.setTimeWindow(10000);
+	network.trackNeuron(780);
 
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
-//    network.run(runtime, timestep);
 
 //  ----- EXITING APPLICATION -----
     return errorCode;
-//    return 0;
 }
