@@ -66,7 +66,8 @@ int main(int argc, char** argv)
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(10000);
 	network.trackNeuron(780);
-
+	network.trackLayer(2);
+	
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
 

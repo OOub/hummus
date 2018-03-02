@@ -128,6 +128,11 @@ namespace baal
             potentialviewer->useHardwareAcceleration(accelerate);
         }
 		
+		void trackLayer(int layerToTrack)
+		{
+			outputviewer->changeLayer(layerToTrack);
+		}
+		
         void trackNeuron(int neuronToTrack)
         {
             potentialviewer->trackNeuron(neuronToTrack);

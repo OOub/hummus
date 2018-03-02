@@ -60,7 +60,6 @@ int main(int argc, char** argv)
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(runtime);
-	network.setOutputMinY(layer1Neurons);
 	network.trackNeuron(2);
 	
 //  ----- RUNNING THE NETWORK -----
