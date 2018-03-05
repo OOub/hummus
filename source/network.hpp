@@ -59,6 +59,7 @@ namespace baal
 			layerCounter++;
         }
 		
+		// standard all to all connectivity
     	void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0)
     	{
     		int delay = 0;
@@ -87,6 +88,12 @@ namespace baal
 					pre.addProjection(&post, weight, delay);
 				}
 			}
+		}
+		
+		// neighbouring regions in a 2D space are represented by neighbouring neurons
+		void retinotopicMapping(int networkWidth, std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0)
+		{
+			
 		}
 		
 		void injectSpike(spike s)

@@ -17,7 +17,7 @@
 
 int main(int argc, char** argv)
 {
-	
+
 //  ----- NETWORK PARAMETERS -----
 	baal::Display network;
 	
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	network.addNeurons(layer2Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 	
 	// connecting input layer and layer 1
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, false, 0); // the bool refers to whether or not we want to randomize the weights and delays
+	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, false, 0); // the bool allows us to randomize weights and delays
 	
 	// connecting layer 1 and layer 2
 	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, false, 0);
