@@ -52,13 +52,13 @@ namespace baal
                 {
                 	data.push_back(input{columns[0], columns[1]});
                 }
+                dataFile.close();
 				std::sort(data.begin(), data.end(), [](input a, input b)
 				{
 					return a.timestamp < b.timestamp;
 				});
 			
 				std::cout << "Done." << std::endl;
-				dataFile.close();
 				return data;
             }
             else
@@ -83,6 +83,12 @@ namespace baal
 					// step2: do something with columns[1] and columns[2] to get the connectionMatrix
 				}
 				dataFile.close();
+				std::sort(data.begin(), data.end(), [](input a, input b)
+				{
+					return a.timestamp < b.timestamp;
+				});
+				// step3: save everything into the dataPackage structure
+				std::cout << "Done." << std::endl;
 				return output;
             }
 			else
