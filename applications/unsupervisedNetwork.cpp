@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 	baal::DataParser dataParser;
 	
 	// time jitter test
-	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+	auto data = dataParser.readData("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "unsupervisedLearning_jitter.bin";

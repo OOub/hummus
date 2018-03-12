@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 //  ----- READING DATA FROM FILE -----
 	baal::DataParser dataParser;
 	
-	auto data = dataParser.read1D("../../data/pip/1rec_1pip/1pip_1type_200reps.txt");
+	auto data = dataParser.readData("../../data/pip/1rec_1pip/1pip_1type_200reps.txt");
 	
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "unsupervised_ATIS1pip.bin";

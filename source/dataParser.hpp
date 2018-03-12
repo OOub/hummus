@@ -11,10 +11,11 @@
 
 #pragma once
 
-#include <iostream>
-#include <fstream>
 #include <vector>
 #include <string>
+#include <cstddef>
+#include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <algorithm>
 
@@ -24,12 +25,8 @@ namespace baal
 	{
 		double timestamp;
 		double neuronID;
-	};
-	
-	struct dataPackage
-	{
-		std::vector<input> data;
-		std::vector<std::vector<double>> connectionMatrix;
+		double x;
+		double y;
 	};
 	
 	class DataParser
@@ -38,19 +35,30 @@ namespace baal
     	// ----- CONSTRUCTOR -----
         DataParser(){}
 		
-		// reading one dimentional data (timestamp, Index)
-        std::vector<input> read1D(std::string filename)
+		// reading 1D (timestamp, Index) or 2D  data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
+        std::vector<input> readData(std::string filename, int width=16)
         {
-            std::cout << "Reading " << filename << std::endl;
             dataFile.open(filename);
             
             if (dataFile.good())
             {
 				std::vector<input> data;
-				std::vector<double> columns(2);
-                while (dataFile >> columns[0] >> columns[1])
+				std::string line;
+		
+				while (std::getline(dataFile, line))
                 {
-                	data.push_back(input{columns[0], columns[1]});
+                	std::vector<std::string> fields;
+                	split(fields, line, " ");
+                	// 1D data (timestamp, index)
+                	if (fields.size() == 2)
+                	{
+						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1});
+					}
+					//2D data (timestamp, X, Y)
+                	else if (fields.size() == 3)
+                	{
+                		data.push_back(input{std::stod(fields[0]),std::stod(fields[1])+width*std::stod(fields[2]), std::stod(fields[1]), std::stod(fields[2])});
+					}
                 }
                 dataFile.close();
 				std::sort(data.begin(), data.end(), [](input a, input b)
@@ -67,36 +75,28 @@ namespace baal
             }
         }
 		
-		// reading two dimentional data (timestamp, X, Y)
-		dataPackage read2D(std::string filename, int width)
+		template <typename Container>
+		Container& split(Container& result, const typename Container::value_type& s, const typename Container::value_type& delimiters)
 		{
-			std::cout << "Reading " << filename << std::endl;
-			dataFile.open(filename);
-			if (dataFile.good())
-            {
-				dataPackage output;
-				std::vector<input> data;
-				std::vector<double> columns(3);
-				while (dataFile >> columns[0] >> columns[1] >> columns[2])
-				{
-					data.push_back(input{columns[0],columns[1]+width*columns[2]});
-					// step2: do something with columns[1] and columns[2] to get the connectionMatrix
-				}
-				dataFile.close();
-				std::sort(data.begin(), data.end(), [](input a, input b)
-				{
-					return a.timestamp < b.timestamp;
-				});
-				// step3: save everything into the dataPackage structure
-				std::cout << "Done." << std::endl;
-				return output;
-            }
-			else
-            {
-                throw std::runtime_error("the file could not be opened");
-            }
+			result.clear();
+			size_t current;
+			size_t next = -1;
+			do
+			{
+				// strip front and back whitespaces
+				next = s.find_first_not_of(delimiters, next + 1);
+				if (next == Container::value_type::npos) break;
+				next -= 1;
+				
+				// split string according to delimiters
+				current = next + 1;
+				next = s.find_first_of(delimiters, current);
+				result.push_back(s.substr(current, next - current));
+			}
+			while (next != Container::value_type::npos);
+			return result;
 		}
-		
+
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----
         std::ifstream dataFile;

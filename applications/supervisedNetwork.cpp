@@ -23,10 +23,10 @@ int main(int argc, char** argv)
 	baal::DataParser dataParser;
 	
 	// time jitter test
-	auto data = dataParser.read1D("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
+	auto data = dataParser.readData("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
 	
 	// supervised learning
-	auto teacher = dataParser.read1D("../../data/generatedPatterns/timeJitter/3teacherSignal.txt");
+	auto teacher = dataParser.readData("../../data/generatedPatterns/timeJitter/3teacherSignal.txt");
 	
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
