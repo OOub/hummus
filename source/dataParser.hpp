@@ -25,8 +25,6 @@ namespace baal
 	{
 		double timestamp;
 		double neuronID;
-		double x;
-		double y;
 	};
 	
 	class DataParser
@@ -44,7 +42,9 @@ namespace baal
             {
 				std::vector<input> data;
 				std::string line;
-		
+				bool dataType = false;
+				
+				std::cout << "Reading " << filename << std::endl;
 				while (std::getline(dataFile, line))
                 {
                 	std::vector<std::string> fields;
@@ -52,15 +52,30 @@ namespace baal
                 	// 1D data (timestamp, index)
                 	if (fields.size() == 2)
                 	{
-						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1});
+						data.push_back(input{std::stod(fields[0]), std::stod(fields[1])});
 					}
 					//2D data (timestamp, X, Y)
                 	else if (fields.size() == 3)
                 	{
-                		data.push_back(input{std::stod(fields[0]),std::stod(fields[1])+width*std::stod(fields[2]), std::stod(fields[1]), std::stod(fields[2])});
+                		if (!dataType)
+                		{
+                			dataType = true;
+						}
+                		data.push_back(input{std::stod(fields[0]),std::stod(fields[1])+width*std::stod(fields[2])});
 					}
                 }
                 dataFile.close();
+				
+				
+				if (dataType)
+				{
+					std::cout << "2D data detected" << std::endl;
+				}
+				else
+				{
+					std::cout << "1D data detected" << std::endl;
+				}
+				
 				std::sort(data.begin(), data.end(), [](input a, input b)
 				{
 					return a.timestamp < b.timestamp;

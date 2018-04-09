@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 	float refractoryPeriod = 3;
 	
     int inputNeurons = 671;
-    int layer1Neurons = 671;
+    int layer1Neurons = 10;
 	int layer2Neurons = 10;
 	
 	float alpha = 1;

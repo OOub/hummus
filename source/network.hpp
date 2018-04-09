@@ -90,17 +90,6 @@ namespace baal
 			}
 		}
 		
-		// neighbouring regions in a 2D space are represented by neighbouring neurons
-		void retinotopicMapping(int networkWidth, std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0)
-		{
-			/* Pseudocode: - THIS SHOULD GO IN THE APPROPRIATE FUNCTION -
-				- copy output structure
-				- std::unique on the neuronIDs - check how to write the appropriate lambda function
-				- distance calculation using std::hypot
-				- if distance == receptiveFieldRadius then save it in a structure (need to figure out this part) -> need a new connection matrix structure?
-			*/
-		}
-		
 		void injectSpike(spike s)
         {
             initialSpikes.push_back(s);
