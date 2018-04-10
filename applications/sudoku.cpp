@@ -41,6 +41,31 @@ int main(int argc, char** argv)
 	float timestep = 0.1;
 	int   sudokuWidth = 4;
 	int   neuronsPerDomain = 4;
+    int   numberOfLayers = 5; // a layer for each number + the output layer
+    
+//  ----- CREATING THE LAYERS -----
+    for (auto i=0; i<numberOfLayers; i++)
+    {
+        int x = 0;
+        int y = 0;
+        
+        for (auto j=0; j<std::pow(sudokuWidth,2); j++)
+        {
+            if (j % sudokuWidth == 0 && j != 0)
+		    {
+			    x++;
+			    y = 0;
+		    } 
+            network.addNeurons(neuronsPerDomain,i+1, x, y);
+            y++;
+        }    
+    }
+    
+//  ----- CONNECTING THE LAYERS -----
+    for (auto i=0; i<network.getNeuronPopulations().size(); i+=16)
+    {
+        std::cout << i << std::endl;
+    }
 
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
