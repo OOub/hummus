@@ -83,7 +83,7 @@ namespace baal
 		
 		int run(double _runtime, float _timestep)
         {
-        	uint64_t layer = network.getNeuronPopulations().size() - 1;
+        	int layer = network.getNeuronPopulations().size() - 1;
         	engine->rootContext()->setContextProperty("layers", layer);
             std::thread spikeManager([this, _runtime, _timestep]{
                 network.run(_runtime, _timestep);

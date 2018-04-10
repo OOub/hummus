@@ -41,9 +41,9 @@ solution 'icarus'
         -- Linux specific settings
         configuration 'linux'
         if os.is("linux") then
-            local mocCommand = '/home/omar/Qt/5.9.1/gcc_64/bin/moc' -- must point to the moc executable
-            local qtIncludeDirectory = '/home/omar/Qt/5.9.1/gcc_64/include' -- Qt headers
-            local qtLibDirectory = '/home/omar/Qt/5.9.1/gcc_64/lib' -- Qt dynamic libraries
+            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
+            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
+            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
             local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
             os.rmdir(mocDirectory)
             os.mkdir(mocDirectory)
@@ -156,9 +156,9 @@ solution 'icarus'
 	        -- Linux specific settings
 	        configuration 'linux'
 	        if os.is("linux") then
-	            local mocCommand = '/home/omar/Qt/5.9.1/gcc_64/bin/moc' -- must point to the moc executable
-	            local qtIncludeDirectory = '/home/omar/Qt/5.9.1/gcc_64/include' -- Qt headers
-	            local qtLibDirectory = '/home/omar/Qt/5.9.1/gcc_64/lib' -- Qt dynamic libraries
+	            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
+	            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
+	            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
 	            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
 	            os.rmdir(mocDirectory)
 	            os.mkdir(mocDirectory)
@@ -271,9 +271,9 @@ solution 'icarus'
 	        -- Linux specific settings
 	        configuration 'linux'
 	        if os.is("linux") then
-	            local mocCommand = '/home/omar/Qt/5.9.1/gcc_64/bin/moc' -- must point to the moc executable
-	            local qtIncludeDirectory = '/home/omar/Qt/5.9.1/gcc_64/include' -- Qt headers
-	            local qtLibDirectory = '/home/omar/Qt/5.9.1/gcc_64/lib' -- Qt dynamic libraries
+	            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
+	            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
+	            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
 	            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
 	            os.rmdir(mocDirectory)
 	            os.mkdir(mocDirectory)
@@ -386,9 +386,9 @@ solution 'icarus'
 	        -- Linux specific settings
 	        configuration 'linux'
 	        if os.is("linux") then
-	            local mocCommand = '/home/omar/Qt/5.9.1/gcc_64/bin/moc' -- must point to the moc executable
-	            local qtIncludeDirectory = '/home/omar/Qt/5.9.1/gcc_64/include' -- Qt headers
-	            local qtLibDirectory = '/home/omar/Qt/5.9.1/gcc_64/lib' -- Qt dynamic libraries
+	            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
+	            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
+	            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
 	            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
 	            os.rmdir(mocDirectory)
 	            os.mkdir(mocDirectory)
@@ -483,13 +483,13 @@ solution 'icarus'
 	        configuration {}
 	            includedirs {'/usr/local/include'}
 	            libdirs {'/usr/local/lib'}
-
-	project 'spikeSortingNetwork'
+	            
+	project 'sudoku'
 	        -- General settings
 	        kind 'ConsoleApp'
 	        language 'C++'
 	        location 'build'
-	        files {'source/**.hpp', 'applications/spikeSortingNetwork.cpp'}
+	        files {'source/**.hpp', 'applications/sudoku.cpp'}
 
 			-- Run moc and link to the Qt library
 	        local mocFiles = {
@@ -501,9 +501,9 @@ solution 'icarus'
 	        -- Linux specific settings
 	        configuration 'linux'
 	        if os.is("linux") then
-	            local mocCommand = '/home/omar/Qt/5.9.1/gcc_64/bin/moc' -- must point to the moc executable
-	            local qtIncludeDirectory = '/home/omar/Qt/5.9.1/gcc_64/include' -- Qt headers
-	            local qtLibDirectory = '/home/omar/Qt/5.9.1/gcc_64/lib' -- Qt dynamic libraries
+	            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
+	            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
+	            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
 	            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
 	            os.rmdir(mocDirectory)
 	            os.mkdir(mocDirectory)
