@@ -7,6 +7,7 @@
  * Last Version: 22/02/2018
  *
  * Information: The DataParser class is used to input data from files into a vector.
+ * To-Do: implement a way to split into receptive fields by splitting the coordinate system depending on the dimensions and output that into a vector of vectors.
  */
 
 #pragma once
@@ -33,8 +34,8 @@ namespace baal
     	// ----- CONSTRUCTOR -----
         DataParser(){}
 		
-		// reading 1D (timestamp, Index) or 2D  data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
-        std::vector<input> readData(std::string filename, int width=16)
+		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
+        std::vector<input> readData(std::string filename, int width=26, int receptiveFields=2)
         {
             dataFile.open(filename);
             
@@ -49,12 +50,12 @@ namespace baal
                 {
                 	std::vector<std::string> fields;
                 	split(fields, line, " ");
-                	// 1D data (timestamp, index)
+                	// 1D data
                 	if (fields.size() == 2)
                 	{
 						data.push_back(input{std::stod(fields[0]), std::stod(fields[1])});
 					}
-					//2D data (timestamp, X, Y)
+					// 2D data
                 	else if (fields.size() == 3)
                 	{
                 		if (!dataType)
@@ -100,7 +101,10 @@ namespace baal
 			{
 				// strip front and back whitespaces
 				next = s.find_first_not_of(delimiters, next + 1);
-				if (next == Container::value_type::npos) break;
+				if (next == Container::value_type::npos)
+				{
+					break;
+				}
 				next -= 1;
 				
 				// split string according to delimiters
