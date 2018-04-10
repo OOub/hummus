@@ -41,8 +41,6 @@ int main(int argc, char** argv)
 	float timestep = 0.1;
 	int   sudokuWidth = 4;
 	int   neuronsPerDomain = 4;
-	
-
 
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

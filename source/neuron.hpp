@@ -47,7 +47,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -69,7 +69,10 @@ namespace baal
             lambda(_lambda),
             eligibilityTrace(0),
             emissionTrace(0),
-            eligibilityDecay(_eligibilityDecay)
+            eligibilityDecay(_eligibilityDecay),
+            xCoordinate(_xCoordinate),
+            yCoordinate(_yCoordinate),
+            zCoordinate(_zCoordinate)
     	{
     		// error handling
 			if (decayCurrent == decayPotential)
@@ -276,6 +279,21 @@ namespace baal
 		{
 			externalCurrent = newCurrent;
 		}
+		
+		int getX() const
+		{
+		    return xCoordinate;
+		}
+		
+		int getY() const
+		{
+		    return yCoordinate;
+		}
+		
+		int getZ() const
+		{
+		    return zCoordinate;
+		}
 	
 	protected:
 	
@@ -423,6 +441,9 @@ namespace baal
 		float                                    eligibilityTrace;
 		float                                    emissionTrace;
 		float                                    eligibilityDecay;
+		int                                      xCoordinate;
+		int                                      yCoordinate;
+		int                                      zCoordinate;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		projection                               activeProjection;
