@@ -33,14 +33,15 @@ namespace baal
             delegates(_delegates),
             teacher(nullptr),
             layerNumber(0),
-			layerCounter(0),
 			teachingProgress(false),
 			teacherIterator(0)
 		{}
 		
 		// ----- PUBLIC NETWORK METHODS -----
-		void addNeurons(int _numberOfNeurons, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addNeurons(int _numberOfNeurons, int _layerID, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
         {
+            std::cout << "we are adding " << _numberOfNeurons << " neurons with coordinates (" << _xCoordinate << "," << _yCoordinate  << "," << _zCoordinate << ")" << std::endl;
+            
         	unsigned long shift = 0;
         	if (!neurons.empty())
         	{
@@ -53,10 +54,9 @@ namespace baal
         	std::vector<Neuron> temp;
 			for (auto i=0+shift; i < _numberOfNeurons+shift; i++)
 			{
-				temp.emplace_back(i,layerCounter,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,_xCoordinate,_yCoordinate,_zCoordinate);
+				temp.emplace_back(i,_layerID,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,_xCoordinate,_yCoordinate,_zCoordinate);
 			}
 			neurons.push_back(std::move(temp));
-			layerCounter++;
         }
 		
 		// standard all to all connectivity
@@ -261,7 +261,6 @@ namespace baal
         std::vector<NetworkDelegate*>    delegates;
 		std::vector<std::vector<Neuron>> neurons;
 		uint64_t					     layerNumber;
-		int                              layerCounter;
 		int                              teacherIterator;
 		bool                             teachingProgress;
 		
