@@ -59,10 +59,12 @@ int main(int argc, char** argv)
 			    x++;
 			    y = 0;
 		    } 
-            network.addNeurons(neuronsPerDomain,i+1, x, y);
+            network.addNeurons(neuronsPerDomain,i+1, x, y, 0, baal::learningMode::weightPlasticity);
             y++;
         }    
     }
+    
+    std::cout << network.getNeuronPopulations()[0][0].getX() << "," << network.getNeuronPopulations()[0][0].getY() << std::endl;
     
 //  ----- CONNECTING THE LAYERS -----
     // lateral inhibition on domains with the same coordinates

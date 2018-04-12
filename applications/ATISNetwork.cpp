@@ -49,9 +49,9 @@ int main(int argc, char** argv)
 	
 	float eligibilityDecay = 100;
 	
-	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, 300, alpha, lambda);
+	network.addNeurons(inputNeurons, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(layer1Neurons, 1, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(layer2Neurons, 2, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent2, potentialDecay2, refractoryPeriod, 300, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, 50e-10/10, true, 100);
 	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, 50e-10, true, 300);

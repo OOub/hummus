@@ -28,6 +28,13 @@ namespace baal
 {
 	class Neuron;
 	
+	enum learningMode
+	{
+	    noLearning,
+	    delayPlasticity,
+	    weightPlasticity
+	};
+	
 	struct projection
 	{
 		Neuron*     preNeuron;
@@ -47,7 +54,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, learningMode _learningType=noLearning) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -72,8 +79,22 @@ namespace baal
             eligibilityDecay(_eligibilityDecay),
             xCoordinate(_xCoordinate),
             yCoordinate(_yCoordinate),
-            zCoordinate(_zCoordinate)
+            zCoordinate(_zCoordinate),
+            learningType(_learningType)
     	{
+			switch (learningType)
+			{
+			    case noLearning:
+			        std::cout << "no learning" << std::endl;	
+			        break;
+			        				        
+				case delayPlasticity:
+				    std::cout << "delay learning rule" << std::endl;	    
+			        
+				case weightPlasticity:
+				    std::cout << "weight learning rule" << std::endl;
+			}
+    	    
     		// error handling
 			if (decayCurrent == decayPotential)
             {
@@ -207,9 +228,16 @@ namespace baal
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 				
-				if (layerID != 0) // the input projections are not plastic
+				switch (learningType)
 				{
-					myelinPlasticity(timestamp, network);
+				    case noLearning:
+				        break;
+				        
+				    case delayPlasticity:	    
+					    myelinPlasticity(timestamp, network);
+				        
+				    case weightPlasticity:
+				        std::cout << "weight rule" << std::endl;
 				}
 				
 				lastSpikeTime = timestamp;
@@ -452,5 +480,6 @@ namespace baal
         projection                               initialProjection;
         double                                   lastSpikeTime;
         float                                    supervisedPotential;
+        learningMode                             learningType;
     };
 }

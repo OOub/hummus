@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#include "../source/neuron.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/network.hpp"
 #include "../source/display.hpp"
@@ -53,9 +54,9 @@ int main(int argc, char** argv)
 
     float weight = 19e-10/4; //weight dependent on feature size
 
-	network.addNeurons(inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(inputNeurons, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(layer1Neurons, 1, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(layer2Neurons, 2, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
 	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, true, 30);
