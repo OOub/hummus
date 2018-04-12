@@ -63,36 +63,19 @@ int main(int argc, char** argv)
     }
     
 //  ----- CONNECTING THE LAYERS -----
-    for (auto i=0; i<std::pow(sudokuWidth,2); i++)
-    {
-        // 1->2 and 2->1
-        network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[i+std::pow(sudokuWidth,2)], false, inhibitionWeight, false, 0);
-        network.allToallConnectivity(&network.getNeuronPopulations()[i+std::pow(sudokuWidth,2)], &network.getNeuronPopulations()[i], false, inhibitionWeight, false, 0);
-		
-		// 1->3 and 3->1
-		network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*2)], false, inhibitionWeight, false, 0);
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*2)], &network.getNeuronPopulations()[i], false, inhibitionWeight, false, 0);
-		
-		// 1->4 and 4->1
-		network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*3)], false, inhibitionWeight, false, 0);
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*3)], &network.getNeuronPopulations()[i], false, inhibitionWeight, false, 0);
-		
-		// 2->3 and 3->2
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+std::pow(sudokuWidth,2)], &network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*2)], false, inhibitionWeight, false, 0);
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*2)], &network.getNeuronPopulations()[i+std::pow(sudokuWidth,2)], false, inhibitionWeight, false, 0);
-		
-		// 2->4 and 4->2
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+std::pow(sudokuWidth,2)], &network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*3)], false, inhibitionWeight, false, 0);
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*3)], &network.getNeuronPopulations()[i+std::pow(sudokuWidth,2)], false, inhibitionWeight, false, 0);
-		
-		// 3->4 and 4->3
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*2)], &network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*3)], false, inhibitionWeight, false, 0);
-		network.allToallConnectivity(&network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*3)], &network.getNeuronPopulations()[i+(std::pow(sudokuWidth,2)*2)], false, inhibitionWeight, false, 0);
+    for (auto i=0; i<(numberOfLayers-1)*std::pow(sudokuWidth,2); i++)
+    { 
+        for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
+        {
+            if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY() && i !=j)
+            {
+                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, 1, false, 0);
+            }
+        }
     }
-    
-    // loop for horizontal / vertical / grid on each layer
+        
     for (auto i=0; i<(numberOfLayers-1)*std::pow(sudokuWidth,2); i+=std::pow(sudokuWidth,2))
-    {
+    { 
 		// horizontal connections
 		int x = 0;
 		for (auto j=i; j<i+std::pow(sudokuWidth,2); j++)
@@ -184,18 +167,20 @@ int main(int argc, char** argv)
 		}
     }
 
-    // input layer (layer 5) towards digits layers
+    // input layer towards digit layers
     for (auto i=std::pow(sudokuWidth,2)*(numberOfLayers-1); i<network.getNeuronPopulations().size(); i++)
     {
         for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
             {
-                std::cout << i << "->" << j << std::endl;
                 network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, 1, false, 0);
             }
         }
     }
+
+//  ----- INJECTING SPIKES -----
+     
 
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
