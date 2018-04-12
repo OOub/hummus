@@ -142,7 +142,6 @@ int main(int argc, char** argv)
 						if (network.getNeuronPopulations()[k][0].getX() >= 0 && network.getNeuronPopulations()[k][0].getX() <= 1 && network.getNeuronPopulations()[k][0].getY() >= 0 && network.getNeuronPopulations()[k][0].getY() <= 1 && j != k)
 						{
 							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
-							std::cout << j << "->" << k << std::endl;
 						}
 					}
 				}
@@ -153,7 +152,6 @@ int main(int argc, char** argv)
 						if (network.getNeuronPopulations()[k][0].getX() >= 0 && network.getNeuronPopulations()[k][0].getX() <= 1 && network.getNeuronPopulations()[k][0].getY() >= 2 && network.getNeuronPopulations()[k][0].getY() <= 3 && j != k)
 						{
 							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
-							std::cout << j << "->" << k << std::endl;
 						}
 					}
 				}
@@ -168,7 +166,6 @@ int main(int argc, char** argv)
 						if (network.getNeuronPopulations()[k][0].getX() >= 2 && network.getNeuronPopulations()[k][0].getX() <= 3 && network.getNeuronPopulations()[k][0].getY() >= 0 && network.getNeuronPopulations()[k][0].getY() <= 1 && j != k)
 						{
 							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
-							std::cout << j << "->" << k << std::endl;
 						}
 					}
 				}
@@ -180,7 +177,6 @@ int main(int argc, char** argv)
 				        if (network.getNeuronPopulations()[k][0].getX() >= 2 && network.getNeuronPopulations()[k][0].getX() <= 3 && network.getNeuronPopulations()[k][0].getY() >= 2 && network.getNeuronPopulations()[k][0].getY() <= 3 && j != k)
 					    {
 						    network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
-						    std::cout << j << "->" << k << std::endl;
 					    }
 					}
 				}
@@ -189,9 +185,16 @@ int main(int argc, char** argv)
     }
 
     // input layer (layer 5) towards digits layers
-    for (auto i=std::pow(sudokuWidth,2)*4; i<network.getNeuronPopulations().size(); i++)
+    for (auto i=std::pow(sudokuWidth,2)*(numberOfLayers-1); i<network.getNeuronPopulations().size(); i++)
     {
-        
+        for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
+        {
+            if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
+            {
+                std::cout << i << "->" << j << std::endl;
+                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, 1, false, 0);
+            }
+        }
     }
 
 //  ----- RUNNING THE NETWORK -----
