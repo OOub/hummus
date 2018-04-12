@@ -37,13 +37,15 @@ int main(int argc, char** argv)
 	baal::Network network;
 
 //  ----- NETWORK PARAMETERS -----
-	float runtime = 100;
-	float timestep = 0.1;
 	int   sudokuWidth = 4;
 	int   neuronsPerDomain = 4;
     int   numberOfLayers = 5;
     float inhibitionWeight = -1;
+    float stimulationWeight = 1;
     
+    float runtime = 100;
+	float timestep = 0.1;
+	
 //  ----- CREATING THE LAYERS -----
     for (auto i=0; i<numberOfLayers; i++)
     {
@@ -63,13 +65,14 @@ int main(int argc, char** argv)
     }
     
 //  ----- CONNECTING THE LAYERS -----
+    // lateral inhibition on domains with the same coordinates
     for (auto i=0; i<(numberOfLayers-1)*std::pow(sudokuWidth,2); i++)
     { 
         for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY() && i !=j)
             {
-                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, 1, false, 0);
+                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], false, inhibitionWeight, false, 0);
             }
         }
     }
@@ -174,7 +177,7 @@ int main(int argc, char** argv)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
             {
-                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, 1, false, 0);
+                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, stimulationWeight, false, 0);
             }
         }
     }
