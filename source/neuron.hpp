@@ -316,9 +316,9 @@ namespace baal
 		template<typename Network>
 		void weightLearning(Network* network)
 		{
+		    std::max_element = (postProjections.begin(), postProjections.end(), []())
 		    for (&auto inputProjection: postProjections)
 		    {
-		        // neuron with the highest weight gets the weight modified then nested loop to negatively affect the weight of its targets
 		    }
 		}
 		
