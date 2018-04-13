@@ -64,8 +64,6 @@ int main(int argc, char** argv)
         }    
     }
     
-    std::cout << network.getNeuronPopulations()[0][0].getX() << "," << network.getNeuronPopulations()[0][0].getY() << std::endl;
-    
 //  ----- CONNECTING THE LAYERS -----
     // lateral inhibition on domains with the same coordinates
     for (auto i=0; i<(numberOfLayers-1)*std::pow(sudokuWidth,2); i++)

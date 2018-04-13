@@ -81,20 +81,7 @@ namespace baal
             yCoordinate(_yCoordinate),
             zCoordinate(_zCoordinate),
             learningType(_learningType)
-    	{
-			switch (learningType)
-			{
-			    case noLearning:
-			        std::cout << "no learning" << std::endl;	
-			        break;
-			        				        
-				case delayPlasticity:
-				    std::cout << "delay learning rule" << std::endl;	    
-			        
-				case weightPlasticity:
-				    std::cout << "weight learning rule" << std::endl;
-			}
-    	    
+    	{    	    
     		// error handling
 			if (decayCurrent == decayPotential)
             {
@@ -237,7 +224,7 @@ namespace baal
 					    myelinPlasticity(timestamp, network);
 				        
 				    case weightPlasticity:
-				        std::cout << "weight rule" << std::endl;
+				        weightLearning(network);
 				}
 				
 				lastSpikeTime = timestamp;
@@ -326,6 +313,15 @@ namespace baal
 	protected:
 	
 		// ----- PROTECTED NEURON METHODS -----
+		template<typename Network>
+		void weightLearning(Network* network)
+		{
+		    for (&auto inputProjection: postProjections)
+		    {
+		        // neuron with the highest weight gets the weight modified then nested loop to negatively affect the weight of its targets
+		    }
+		}
+		
 		template<typename Network>
 		void myelinPlasticity(double timestamp, Network* network)
 		{
