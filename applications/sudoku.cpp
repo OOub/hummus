@@ -58,8 +58,15 @@ int main(int argc, char** argv)
 		    {
 			    x++;
 			    y = 0;
-		    } 
-            network.addNeurons(neuronsPerDomain,i+1, x, y, 0, baal::learningMode::weightPlasticity);
+		    }
+		    if (i < numberOfLayers-1)
+		    {
+                network.addNeurons(neuronsPerDomain,i+1, x, y, 0, baal::learningMode::noLearning);
+            }
+            else
+            {
+                network.addNeurons(neuronsPerDomain,i+1, x, y, 0, baal::learningMode::weightPlasticity);
+            }
             y++;
         }    
     }

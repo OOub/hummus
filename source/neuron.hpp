@@ -197,6 +197,11 @@ namespace baal
 				}
 			}
 			
+			if (learningType == weightPlasticity) // temporary for testing purposes 
+			{
+			    weightLearning(network);
+			}
+			
 			if (potential >= threshold)
 			{
 				eligibilityTrace = 1;
@@ -316,9 +321,19 @@ namespace baal
 		template<typename Network>
 		void weightLearning(Network* network)
 		{
-		    std::max_element = (postProjections.begin(), postProjections.end(), []())
-		    for (&auto inputProjection: postProjections)
+		    auto winner = std::max_element(postProjections.begin(), postProjections.end(), [](std::unique_ptr<projection>& p1, std::unique_ptr<projection>& p2){return p1->weight < p2->weight;});
+		    
+		    // positive reinforcement
+		    std::cout << "neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->preNeuron->neuronID << ", layer " << postProjections[std::distance(std::begin(postProjections), winner)]->preNeuron->layerID << "->" << "neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->neuronID << ", layer " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->layerID << " is the winner" << std::endl;
+		    
+		    postProjections[std::distance(std::begin(postProjections), winner)]->weight += 1;
+		    
+		    // negative reinforcement
+		    std::cout << "negatively reinforcing neurons connected to neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->neuronID << " from layer " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->layerID << std::endl;
+		    for (auto& targetProjection :postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->postProjections)
 		    {
+		        targetProjection->weight -= 1;
+		        std::cout << "neuron " << targetProjection->postNeuron->neuronID << ", layer " << targetProjection->postNeuron->layerID << std::endl;
 		    }
 		}
 		
