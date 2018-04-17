@@ -58,7 +58,7 @@ namespace baal
         }
 		
 		// standard all to all connectivity
-    	void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0)
+    	void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
     	{
     		int delay = 0;
     		float weight = 0;
@@ -83,7 +83,7 @@ namespace baal
 					{
 						weight = _weight;
 					}
-					pre.addProjection(&post, weight, delay);
+					pre.addProjection(&post, weight, delay, redundantConnections);
 				}
 			}
 		}

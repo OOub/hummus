@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY() && i !=j)
             {
-                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], false, inhibitionWeight, false, 0);
+                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], false, inhibitionWeight, false, 0, false);
             }
         }
     }
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 			{
 				if (network.getNeuronPopulations()[k][0].getX() == x && j != k)
 				{
-					network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
+					network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false); // add if not already connected condition
 				}
 			}
 		}
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 			{
 				if (network.getNeuronPopulations()[k][0].getY() == y && j != k)
 				{
-					network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
+					network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false);
 				}
 			}
 		}
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 					{
 						if (network.getNeuronPopulations()[k][0].getX() >= 0 && network.getNeuronPopulations()[k][0].getX() <= 1 && network.getNeuronPopulations()[k][0].getY() >= 0 && network.getNeuronPopulations()[k][0].getY() <= 1 && j != k)
 						{
-							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
+							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false);
 						}
 					}
 				}
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
 					{
 						if (network.getNeuronPopulations()[k][0].getX() >= 0 && network.getNeuronPopulations()[k][0].getX() <= 1 && network.getNeuronPopulations()[k][0].getY() >= 2 && network.getNeuronPopulations()[k][0].getY() <= 3 && j != k)
 						{
-							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
+							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false);
 						}
 					}
 				}
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
 					{
 						if (network.getNeuronPopulations()[k][0].getX() >= 2 && network.getNeuronPopulations()[k][0].getX() <= 3 && network.getNeuronPopulations()[k][0].getY() >= 0 && network.getNeuronPopulations()[k][0].getY() <= 1 && j != k)
 						{
-							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
+							network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false);
 						}
 					}
 				}
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 					{
 				        if (network.getNeuronPopulations()[k][0].getX() >= 2 && network.getNeuronPopulations()[k][0].getX() <= 3 && network.getNeuronPopulations()[k][0].getY() >= 2 && network.getNeuronPopulations()[k][0].getY() <= 3 && j != k)
 					    {
-						    network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0);
+						    network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false);
 					    }
 					}
 				}
@@ -184,7 +184,7 @@ int main(int argc, char** argv)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
             {
-                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, stimulationWeight, false, 0);
+                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, stimulationWeight, false, 0, false);
             }
         }
     }

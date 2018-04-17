@@ -105,12 +105,30 @@ namespace baal
         Neuron& operator=(Neuron&&) = default; // move assign constructor
 		
 		// ----- PUBLIC NEURON METHODS -----
-		void addProjection(Neuron* postNeuron, float weight, float delay)
+		void addProjection(Neuron* postNeuron, float weight, float delay, bool redundantConnections=true)
         {
             if (postNeuron)
             {
-                postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay}));
-                postNeuron->preProjections.push_back(postProjections.back().get());
+                if (redundantConnections == false)
+                {
+                    int16_t ID = postNeuron->neuronID;
+                    auto result = std::find_if(postProjections.begin(), postProjections.end(), [ID](const std::unique_ptr<projection>& p){return p->postNeuron->neuronID == ID;});
+                    
+                    if (result == postProjections.end()) 
+                    {
+                        postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay}));
+                        postNeuron->preProjections.push_back(postProjections.back().get());
+                    }
+                    else
+                    {
+                        std::cout << "projection " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
+                    }
+                }
+                else
+                {
+                    postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay}));
+                    postNeuron->preProjections.push_back(postProjections.back().get());
+                }
             }
             else
             {
@@ -321,19 +339,24 @@ namespace baal
 		template<typename Network>
 		void weightLearning(Network* network)
 		{
-		    auto winner = std::max_element(postProjections.begin(), postProjections.end(), [](std::unique_ptr<projection>& p1, std::unique_ptr<projection>& p2){return p1->weight < p2->weight;});
+		    auto winner = std::max_element(postProjections.begin(), postProjections.end(), [](const std::unique_ptr<projection>& p1, const std::unique_ptr<projection>& p2){return p1->weight < p2->weight;});
 		    
 		    // positive reinforcement
+		    #ifndef NDEBUG
 		    std::cout << "neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->preNeuron->neuronID << ", layer " << postProjections[std::distance(std::begin(postProjections), winner)]->preNeuron->layerID << "->" << "neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->neuronID << ", layer " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->layerID << " is the winner" << std::endl;
-		    
+		    #endif
 		    postProjections[std::distance(std::begin(postProjections), winner)]->weight += 1;
 		    
 		    // negative reinforcement
+		    #ifndef NDEBUG
 		    std::cout << "negatively reinforcing neurons connected to neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->neuronID << " from layer " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->layerID << std::endl;
+		    #endif
 		    for (auto& targetProjection :postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->postProjections)
 		    {
-		        targetProjection->weight -= 1;
+		        #ifndef NDEBUG
 		        std::cout << "neuron " << targetProjection->postNeuron->neuronID << ", layer " << targetProjection->postNeuron->layerID << std::endl;
+		        #endif
+		        targetProjection->weight -= 1;
 		    }
 		}
 		
