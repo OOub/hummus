@@ -213,12 +213,7 @@ namespace baal
 						delegate->getArrivingSpike(timestamp, nullptr, false, true, network, this);
 					}
 				}
-			}
-			
-			if (learningType == weightPlasticity) // temporary for testing purposes 
-			{
-			    weightLearning(network);
-			}
+			} 
 			
 			if (potential >= threshold)
 			{
@@ -348,15 +343,14 @@ namespace baal
 		    postProjections[std::distance(std::begin(postProjections), winner)]->weight += 1;
 		    
 		    // negative reinforcement
-		    #ifndef NDEBUG
-		    std::cout << "negatively reinforcing neurons connected to neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->neuronID << " from layer " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->layerID << std::endl;
-		    #endif
-		    for (auto& targetProjection :postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->postProjections)
+		    for (auto& winnerPostProjections : postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->postProjections)
 		    {
-		        #ifndef NDEBUG
-		        std::cout << "neuron " << targetProjection->postNeuron->neuronID << ", layer " << targetProjection->postNeuron->layerID << std::endl;
-		        #endif
-		        targetProjection->weight -= 1;
+		        // loop to find the layer 5 connections and these are the ones that should be decreased
+		        for (auto& targetProjection: winnerPostProjections->postNeuron->preProjections)
+		        {
+		            // if the preprojection originates from layer 5 and if it has the same set of coordinates as the spiking neuron
+		            targetProjection->weight -= 1;
+		        }
 		    }
 		}
 		
