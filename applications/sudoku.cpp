@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 10/04/2018
+ * Last Version: 17/04/2018
  *
  * Information: spiking neural network trained to solve a 4x4 sudoku.
  *
@@ -189,9 +189,10 @@ int main(int argc, char** argv)
         }
     }
 
+//  ----- CHANGING WEIGHTS OF FILLED SUDOKU SQUARES -----
+
 //  ----- INJECTING SPIKES -----
      
-
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 
