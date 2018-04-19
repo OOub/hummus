@@ -42,6 +42,7 @@ int main(int argc, char** argv)
     int   numberOfLayers = 5;
     float inhibitionWeight = -1;
     float stimulationWeight = 1;
+    float filledWeight = 10;
     
     float runtime = 100;
 	float timestep = 0.1;
@@ -176,22 +177,37 @@ int main(int argc, char** argv)
 			}
 		}
     }
+ 
+    struct sudoku
+    {
+        int X;
+        int Y;
+        int layerID;
+    };
+    std::vector<sudoku> filledValues = {};
+    
+    filledValues.push_back(sudoku{0,0,2});
+    filledValues.push_back(sudoku{0,3,1});
+    filledValues.push_back(sudoku{1,1,3});
+    filledValues.push_back(sudoku{2,2,1});
+    filledValues.push_back(sudoku{3,0,3});
+    filledValues.push_back(sudoku{3,3,4});
 
     // input layer towards digit layers
-    for (auto i=std::pow(sudokuWidth,2)*(numberOfLayers-1); i<network.getNeuronPopulations().size(); i++)
-    {
+    for (auto i=std::pow(sudokuWidth,2)*(numberOfLayers-1); i<network.getNeuronPopulations().size(); i++) // add if condition for different weights 
+    {   
         for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
             {
+                // here add an if condition that loops throught the vector with an else
                 network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, stimulationWeight, false, 0, false);
             }
         }
     }
 
-//  ----- CHANGING WEIGHTS OF FILLED SUDOKU SQUARES -----
-
 //  ----- INJECTING SPIKES -----
+      
      
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

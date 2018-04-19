@@ -133,7 +133,6 @@ namespace baal
 		}
 		
 		// ----- SETTERS AND GETTERS -----
-		
 		std::vector<std::vector<Neuron>>& getNeuronPopulations()
 		{
 			return neurons;
