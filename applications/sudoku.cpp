@@ -200,8 +200,17 @@ int main(int argc, char** argv)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
             {
-                // here add an if condition that loops throught the vector with an else
-                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, stimulationWeight, false, 0, false);
+                for (auto val: filledValues)
+                {
+                    if (network.getNeuronPopulations()[j][0].getX() == val.X && network.getNeuronPopulations()[j][0].getY() == val.Y && network.getNeuronPopulations()[j][0].getLayerID() == val.layerID)
+                    {
+                        network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, filledWeight, false, 0, false);
+                    }
+                    else
+                    {
+                        network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, stimulationWeight, false, 0, false);
+                    }
+                }
             }
         }
     }
