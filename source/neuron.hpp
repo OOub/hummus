@@ -217,11 +217,6 @@ namespace baal
 				}
 			} 
 			
-			if (learningType == weightPlasticity) // dis is a test
-			{
-			    weightLearning(network);
-			}
-			
 			if (potential >= threshold)
 			{
 				eligibilityTrace = 1;
@@ -240,16 +235,13 @@ namespace baal
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 				
-				switch (learningType)
+				if (learningType == delayPlasticity)
 				{
-				    case noLearning:
-				        break;
-				        
-				    case delayPlasticity:	    
-					    myelinPlasticity(timestamp, network);
-				        
-				    case weightPlasticity:
-				        weightLearning(network);
+				    myelinPlasticity(timestamp, network);
+				}
+				else if (learningType == weightPlasticity)
+				{
+				    weightLearning(network);
 				}
 				
 				lastSpikeTime = timestamp;
@@ -339,7 +331,7 @@ namespace baal
 	
 		// ----- PROTECTED NEURON METHODS -----
 		template<typename Network>
-		void weightLearning(Network* network)
+		void weightLearning(Network* network) // there's a segfault
 		{
 		    auto winner = std::max_element(postProjections.begin(), postProjections.end(), [](const std::unique_ptr<projection>& p1, const std::unique_ptr<projection>& p2){return p1->weight < p2->weight;});
 		    

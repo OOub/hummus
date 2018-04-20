@@ -25,14 +25,17 @@
 
 #include <iostream>
 
+#include "../source/dataParser.hpp"
 #include "../source/network.hpp"
 #include "../source/display.hpp"
 #include "../source/logger.hpp"
 
 int main(int argc, char** argv)
 {
-	baal::DataParser dataParser;
-
+//  ----- READING DATA FROM FILE -----
+    baal::DataParser dataParser;
+    auto data = dataParser.readData("../../data/sudoku/sudokuRandomSpikes.txt");
+    
 //  ----- INITIALISING THE NETWORK -----
 	baal::Network network;
 
@@ -44,7 +47,7 @@ int main(int argc, char** argv)
     float stimulationWeight = 1;
     float filledWeight = 10;
     
-    float runtime = 100;
+    float runtime = 10000;
 	float timestep = 0.1;
 	
 //  ----- CREATING THE LAYERS -----
@@ -184,7 +187,7 @@ int main(int argc, char** argv)
         int Y;
         int layerID;
     };
-    std::vector<sudoku> filledValues = {};
+    std::vector<sudoku> filledValues;
     
     filledValues.push_back(sudoku{0,0,2});
     filledValues.push_back(sudoku{0,3,1});
@@ -194,7 +197,7 @@ int main(int argc, char** argv)
     filledValues.push_back(sudoku{3,3,4});
 
     // input layer towards digit layers
-    for (auto i=std::pow(sudokuWidth,2)*(numberOfLayers-1); i<network.getNeuronPopulations().size(); i++) // add if condition for different weights 
+    for (auto i=std::pow(sudokuWidth,2)*(numberOfLayers-1); i<network.getNeuronPopulations().size(); i++)
     {   
         for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
         {
@@ -209,14 +212,12 @@ int main(int argc, char** argv)
                     }
                 }
                 network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, weight, false, 0, false);
-                std::cout << network.getNeuronPopulations()[j][0].getX() << "," << network.getNeuronPopulations()[j][0].getY() << " connection " << network.getNeuronPopulations()[i][0].getLayerID() << "->" <<  network.getNeuronPopulations()[j][0].getLayerID() << " weight " << weight << std::endl;
             }
         }
     }
 
 //  ----- INJECTING SPIKES -----
-      
-     
+    
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 
