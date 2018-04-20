@@ -198,19 +198,18 @@ int main(int argc, char** argv)
     {   
         for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
         {
+            float weight = stimulationWeight;
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
             {
                 for (auto val: filledValues)
                 {
                     if (network.getNeuronPopulations()[j][0].getX() == val.X && network.getNeuronPopulations()[j][0].getY() == val.Y && network.getNeuronPopulations()[j][0].getLayerID() == val.layerID)
                     {
-                        network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, filledWeight, false, 0, false);
-                    }
-                    else
-                    {
-                        network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, stimulationWeight, false, 0, false);
+                        weight = filledWeight;
                     }
                 }
+                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, weight, false, 0, false);
+                std::cout << network.getNeuronPopulations()[j][0].getX() << "," << network.getNeuronPopulations()[j][0].getY() << " connection " << network.getNeuronPopulations()[i][0].getLayerID() << "->" <<  network.getNeuronPopulations()[j][0].getLayerID() << " weight " << weight << std::endl;
             }
         }
     }

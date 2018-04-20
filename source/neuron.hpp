@@ -121,7 +121,9 @@ namespace baal
                     }
                     else
                     {
+                        #ifndef NDEBUG
                         std::cout << "projection " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
+                        #endif
                     }
                 }
                 else
