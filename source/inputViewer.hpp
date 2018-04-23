@@ -62,7 +62,7 @@ namespace baal
         {
         	if (!empty)
         	{
-				if (p->postNeuron->getLayerID() == 0 && spiked)
+				if (p->postNeuron->getLayerID() == 0 && spiked) // need to automatically find which is the input layer
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)

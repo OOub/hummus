@@ -43,9 +43,9 @@ int main(int argc, char** argv)
 	int   sudokuWidth = 4;
 	int   neuronsPerDomain = 4;
     int   numberOfLayers = 5;
-    float inhibitionWeight = -1;
-    float stimulationWeight = 1;
-    float filledWeight = 10;
+    float inhibitionWeight = -19e-10;
+    float stimulationWeight = 19e-10;
+    float filledWeight = 1;
     
     float runtime = 10000;
 	float timestep = 0.1;
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
             }
             else
             {
-                network.addNeurons(neuronsPerDomain,i+1, x, y, 0, baal::learningMode::weightPlasticity);
+                network.addNeurons(neuronsPerDomain,0, x, y, 0, baal::learningMode::weightPlasticity);
             }
             y++;
         }    
@@ -217,7 +217,19 @@ int main(int argc, char** argv)
     }
 
 //  ----- INJECTING SPIKES -----
-    
+	for (auto i=0; i<data.size(); i++)
+	{
+		int nID = data[i].neuronID;
+		for (auto j=std::pow(sudokuWidth,2)*(numberOfLayers-1); j<network.getNeuronPopulations().size(); j++)
+		{
+			auto spikes = std::find_if(network.getNeuronPopulations()[j].begin(), network.getNeuronPopulations()[j].end(), [nID](const baal::Neuron& n){return n.getNeuronID() == nID;});
+			if (spikes != std::end(network.getNeuronPopulations()[j]))
+			{
+				network.injectSpike(network.getNeuronPopulations()[j][std::distance(network.getNeuronPopulations()[j].begin(), spikes)].prepareInitialSpike(data[i].timestamp));
+			}
+		}
+    }
+	
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 
