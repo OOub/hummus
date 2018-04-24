@@ -231,7 +231,7 @@ int main(int argc, char** argv)
     }
 	
 //  ----- RUNNING THE NETWORK -----
-    network.run(runtime, timestep);
+    network.run(runtime, timestep, true);
 
 //  ----- EXITING APPLICATION -----
     return 0;

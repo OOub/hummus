@@ -36,7 +36,7 @@ namespace baal
 			teachingProgress(false),
 			teacherIterator(0)
 		{}
-		
+	
 		// ----- PUBLIC NETWORK METHODS -----
 		void addNeurons(int _numberOfNeurons, int _layerID, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
         {            
@@ -100,7 +100,7 @@ namespace baal
                 s);
         }
 		
-        void run(double _runtime, float _timestep)
+        void run(double _runtime, float _timestep, bool sudokuWeightsSave=false)
         {
         	layerNumber = getNeuronPopulations().size();
         	std::cout << "Running the network..." << std::endl;
@@ -125,6 +125,27 @@ namespace baal
 				throw std::runtime_error("add neurons to the network before running it");
 			}
 			
+			if (sudokuWeightsSave)
+			{
+				// saving weights of the initial layer
+				std::ofstream myfile;
+				myfile.open ("sudoku_output.txt");
+				for (auto& n: neurons)
+				{
+					for (auto& m: n)
+					{
+						if (m.getLayerID() == 0)
+						{
+							for (auto& proj: m.getPostProjections())
+							{
+								myfile << proj->preNeuron->getNeuronID() << " " << proj->postNeuron->getNeuronID() << " " << proj->weight << " " << proj->preNeuron->getLayerID() << " " << proj->postNeuron->getLayerID() << " " << proj->preNeuron->getX() << " " << proj->preNeuron->getY() << "\n";
+							}
+						}
+					}
+				}
+				myfile.close();
+  			}
+
 			std::cout << "Done." << std::endl;
             #ifndef NDEBUG
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;

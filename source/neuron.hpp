@@ -326,7 +326,12 @@ namespace baal
 		{
 		    return zCoordinate;
 		}
-	
+		
+		std::vector<std::unique_ptr<projection>>& getPostProjections()
+		{
+			return postProjections;
+		}
+		
 	protected:
 	
 		// ----- PROTECTED NEURON METHODS -----
