@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
     baal::DataParser dataParser;
-    auto data = dataParser.readData("../../data/sudoku/sudokuRandomSpikes.txt");
+    auto data = dataParser.readData("../../data/sudoku/sudokuRandomSpikesFixed.txt");
     
 //  ----- INITIALISING THE NETWORK -----
 	baal::Network network;
@@ -43,12 +43,11 @@ int main(int argc, char** argv)
 	int   sudokuWidth = 4;
 	int   neuronsPerDomain = 4;
     int   numberOfLayers = 5;
-    float inhibitionWeight = -19e-10;
-    float stimulationWeight = 19e-10;
-    float filledWeight = 1;
+    float inhibitionWeight = -1;
+    float filledWeight = 19e-10;
     
     float runtime = 10000;
-	float timestep = 0.1;
+	float timestep = 1;
 	
 //  ----- CREATING THE LAYERS -----
     for (auto i=0; i<numberOfLayers; i++)
@@ -69,7 +68,7 @@ int main(int argc, char** argv)
             }
             else
             {
-                network.addNeurons(neuronsPerDomain,0, x, y, 0, baal::learningMode::weightPlasticity);
+                network.addNeurons(neuronsPerDomain,0, x, y, 0, baal::learningMode::noLearning);
             }
             y++;
         }    
@@ -103,7 +102,7 @@ int main(int argc, char** argv)
 			{
 				if (network.getNeuronPopulations()[k][0].getX() == x && j != k)
 				{
-					network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false); // add if not already connected condition
+					network.allToallConnectivity(&network.getNeuronPopulations()[j], &network.getNeuronPopulations()[k], false, inhibitionWeight, false, 0, false);
 				}
 			}
 		}
@@ -198,20 +197,18 @@ int main(int argc, char** argv)
 
     // input layer towards digit layers
     for (auto i=std::pow(sudokuWidth,2)*(numberOfLayers-1); i<network.getNeuronPopulations().size(); i++)
-    {   
+    {
         for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
         {
-            float weight = stimulationWeight;
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY())
             {
                 for (auto val: filledValues)
                 {
                     if (network.getNeuronPopulations()[j][0].getX() == val.X && network.getNeuronPopulations()[j][0].getY() == val.Y && network.getNeuronPopulations()[j][0].getLayerID() == val.layerID)
                     {
-                        weight = filledWeight;
+                        network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, filledWeight, false, 0, false);
                     }
                 }
-                network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[j], true, weight, false, 0, false);
             }
         }
     }

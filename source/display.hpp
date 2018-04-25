@@ -81,12 +81,12 @@ namespace baal
             potentialviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
         }
 		
-		int run(double _runtime, float _timestep)
+		int run(double _runtime, float _timestep,  bool _sudokuWeightsSave=false)
         {
         	uint64_t layer = network.getNeuronPopulations().size() - 1;
         	engine->rootContext()->setContextProperty("layers", layer);
-            std::thread spikeManager([this, _runtime, _timestep]{
-                network.run(_runtime, _timestep);
+            std::thread spikeManager([this, _runtime, _timestep, _sudokuWeightsSave]{
+                network.run(_runtime, _timestep, _sudokuWeightsSave);
             });
             int errorCode = app->exec();
             spikeManager.join();
