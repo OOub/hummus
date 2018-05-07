@@ -178,6 +178,23 @@ int main(int argc, char** argv)
 				}
 			}
 		}
+		
+		// positive stimulation
+		for (auto j=i; j<i+std::pow(sudokuWidth,2); j++)
+		{
+			
+//			for (auto l=i; l<i+std::pow(sudokuWidth,2); l++)
+//			{
+				// if it is found inside the projections
+//				for (auto& projections: network.getNeuronPopulations()[j][0].getPostProjections())
+//				{
+//					if (projections->postNeuron->getLayerID() == projections->preNeuron->getLayerID())
+//					{
+			
+//					}
+//				}
+//			}
+		}
     }
  
     struct sudoku
@@ -187,7 +204,7 @@ int main(int argc, char** argv)
         int layerID;
     };
     std::vector<sudoku> filledValues;
-    
+
     filledValues.push_back(sudoku{0,0,2});
     filledValues.push_back(sudoku{0,3,1});
     filledValues.push_back(sudoku{1,1,3});
@@ -228,7 +245,7 @@ int main(int argc, char** argv)
     }
 	
 //  ----- RUNNING THE NETWORK -----
-    network.run(runtime, timestep, true);
+    network.run(runtime, timestep, false);
 
 //  ----- EXITING APPLICATION -----
     return 0;

@@ -32,7 +32,6 @@ namespace baal
 	{
 	    noLearning,
 	    delayPlasticity,
-	    weightPlasticity
 	};
 	
 	struct projection
@@ -239,10 +238,6 @@ namespace baal
 				{
 				    myelinPlasticity(timestamp, network);
 				}
-				else if (learningType == weightPlasticity)
-				{
-				    weightLearning(network);
-				}
 				
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
@@ -335,39 +330,6 @@ namespace baal
 	protected:
 	
 		// ----- PROTECTED NEURON METHODS -----
-		template<typename Network>
-		void weightLearning(Network* network) // there's a segfault under linux with the projection 
-		{
-		    auto winner = std::max_element(postProjections.begin(), postProjections.end(), [](const std::unique_ptr<projection>& p1, const std::unique_ptr<projection>& p2){return p1->weight < p2->weight;});
-
-		    // positive reinforcement
-		    #ifndef NDEBUG
-		    std::cout << "neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->preNeuron->neuronID << ", layer " << postProjections[std::distance(std::begin(postProjections), winner)]->preNeuron->layerID << "->" << "neuron " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->neuronID << ", layer " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->layerID << " " << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->xCoordinate << "," << postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->yCoordinate << " is the winner" << std::endl;
-		    #endif
-//		    postProjections[std::distance(std::begin(postProjections), winner)]->weight += 0.1; // this is for one neuron only not all the neurons in the domain so it's wrong
-
-		    // negative reinforcement
-		    for (auto& winnerPostProjections : postProjections[std::distance(std::begin(postProjections), winner)]->postNeuron->postProjections)
-		    {
-		        // loop to find the layer 5 connections and these are the ones that should be decreased
-		        for (auto& targetProjection: winnerPostProjections->postNeuron->preProjections)
-		        {
-		            // if the preprojection originates from layer 5 and if it has the same set of coordinates as the spiking neuron
-		            if (targetProjection->preNeuron->layerID == 5)
-		            {
-		                #ifndef NDEBUG
-		                std::cout << "projection being inhibited is " << targetProjection->preNeuron->neuronID << "->" << targetProjection->postNeuron->neuronID << " from layers " << targetProjection->preNeuron->layerID << "->" << targetProjection->postNeuron->layerID  << " with coordinates " << targetProjection->preNeuron->xCoordinate << "," << targetProjection->preNeuron->yCoordinate << "->" << targetProjection->postNeuron->xCoordinate << "," << targetProjection->postNeuron->yCoordinate << std::endl;
-		                #endif
-		                targetProjection->weight -= 0.1;
-		                if (targetProjection->weight < 0)
-		                {
-		                    targetProjection->weight = 0;
-		                }
-		            }
-		        }
-		    }
-		}
-		
 		template<typename Network>
 		void myelinPlasticity(double timestamp, Network* network)
 		{
