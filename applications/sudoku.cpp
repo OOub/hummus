@@ -44,6 +44,7 @@ int main(int argc, char** argv)
 	int   neuronsPerDomain = 4;
     int   numberOfLayers = 5;
     float inhibitionWeight = -1;
+    float stimulationWeight = 1;
     float filledWeight = 19e-10;
     
     float runtime = 10000;
@@ -73,11 +74,24 @@ int main(int argc, char** argv)
             y++;
         }    
     }
-    
+	
+	// creating a vector with all the coordinates
+	struct domain
+	{
+		int X;
+		int Y;
+	};
+	
+	std::vector<domain> grid;
+	for (auto i=0; i<std::pow(sudokuWidth,2); i++)
+	{
+		grid.push_back(domain{network.getNeuronPopulations()[i][0].getX(), network.getNeuronPopulations()[i][0].getY()});
+	}
+	
 //  ----- CONNECTING THE LAYERS -----
     // lateral inhibition on domains with the same coordinates
     for (auto i=0; i<(numberOfLayers-1)*std::pow(sudokuWidth,2); i++)
-    { 
+    {
         for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)
         {
             if (network.getNeuronPopulations()[i][0].getX() == network.getNeuronPopulations()[j][0].getX() && network.getNeuronPopulations()[i][0].getY() == network.getNeuronPopulations()[j][0].getY() && i !=j)
@@ -86,18 +100,18 @@ int main(int argc, char** argv)
             }
         }
     }
-        
+
     for (auto i=0; i<(numberOfLayers-1)*std::pow(sudokuWidth,2); i+=std::pow(sudokuWidth,2))
-    { 
+    {
 		// horizontal connections
 		int x = 0;
 		for (auto j=i; j<i+std::pow(sudokuWidth,2); j++)
-		{   
+		{
 			if (j % sudokuWidth == 0 && j != i)
 			{
 				x++;
 			}
-			 
+
 			for (auto k=i; k<i+std::pow(sudokuWidth,2); k++)
 			{
 				if (network.getNeuronPopulations()[k][0].getX() == x && j != k)
@@ -106,7 +120,7 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-		
+
 		// vertical connections
 		int	y = 0;
 		for (auto j=i; j<i+std::pow(sudokuWidth,2); j++)
@@ -125,7 +139,7 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-		
+
 //		// grid connections
 		for (auto j=i; j<i+std::pow(sudokuWidth,2); j++)
 		{
@@ -152,7 +166,7 @@ int main(int argc, char** argv)
 					}
 				}
 			}
-			
+
 			else if (network.getNeuronPopulations()[j][0].getX() >= 2 && network.getNeuronPopulations()[j][0].getX() <= 3)
 			{
 				if (network.getNeuronPopulations()[j][0].getY() >= 0 && network.getNeuronPopulations()[j][0].getY() <= 1)
@@ -165,7 +179,7 @@ int main(int argc, char** argv)
 						}
 					}
 				}
-				
+
 				else if (network.getNeuronPopulations()[j][0].getY() >= 2 && network.getNeuronPopulations()[j][0].getY() <= 3)
 				{
 					for (auto k=i; k<i+std::pow(sudokuWidth,2); k++)
@@ -178,25 +192,32 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-		
-		// positive stimulation
+
+		// positive stimulation (this is not working yet)
+		// domain structure is linked to this part
+
 		for (auto j=i; j<i+std::pow(sudokuWidth,2); j++)
 		{
-			
-//			for (auto l=i; l<i+std::pow(sudokuWidth,2); l++)
-//			{
-				// if it is found inside the projections
+			for (auto l=i; l<i+std::pow(sudokuWidth,2); l++)
+			{
 //				for (auto& projections: network.getNeuronPopulations()[j][0].getPostProjections())
-//				{
+//        		{
 //					if (projections->postNeuron->getLayerID() == projections->preNeuron->getLayerID())
 //					{
-			
+//						for (auto& domains: grid)
+//						{
+//							if (projections->postNeuron->getX() == domains.X && projections->postNeuron->getY() == domains.Y && projections->preNeuron->getX() == domains.X && projections->preNeuron->getY() == domains.Y)
+//							{
+//								std::cout << "preNeuron " << projections->preNeuron->getX() << "," << projections->preNeuron->getY() << " postNeuron " << projections->postNeuron->getX() << "," << projections->postNeuron->getY() << " layer " << projections->preNeuron->getLayerID() << std::endl;
+//								break;
+//							}
+//						}
 //					}
-//				}
-//			}
+//        		}
+			}
 		}
     }
- 
+
     struct sudoku
     {
         int X;
@@ -244,6 +265,7 @@ int main(int argc, char** argv)
 		}
     }
 	
+    
 //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep, false);
 
