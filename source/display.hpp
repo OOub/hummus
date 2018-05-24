@@ -81,12 +81,12 @@ namespace baal
             potentialviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
         }
 		
-		int run(double _runtime, float _timestep)
+		int run(double _runtime, float _timestep,  bool _sudokuWeightsSave=false)
         {
         	uint64_t layer = network.getNeuronPopulations().size() - 1;
         	engine->rootContext()->setContextProperty("layers", layer);
-            std::thread spikeManager([this, _runtime, _timestep]{
-                network.run(_runtime, _timestep);
+            std::thread spikeManager([this, _runtime, _timestep, _sudokuWeightsSave]{
+                network.run(_runtime, _timestep, _sudokuWeightsSave);
             });
             int errorCode = app->exec();
             spikeManager.join();
@@ -99,9 +99,9 @@ namespace baal
 			network.addNeurons(_numberOfNeurons,_layerID,_xCoordinate,_yCoordinate,_zCoordinate, _learningType, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent);
 		}
 		
-		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0)
+		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
 		{
-			network.allToallConnectivity(presynapticLayer,postsynapticLayer,randomWeights,_weight,randomDelays,_delay);
+			network.allToallConnectivity(presynapticLayer,postsynapticLayer,randomWeights,_weight,randomDelays,_delay,redundantConnections);
 		}
 		
 		void injectSpike(spike s)

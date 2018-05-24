@@ -35,7 +35,7 @@ namespace baal
         DataParser(){}
 		
 		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
-        std::vector<input> readData(std::string filename, int width=26, int receptiveFields=2)
+        std::vector<input> readData(std::string filename, int width=26)
         {
             dataFile.open(filename);
             
