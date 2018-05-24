@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 	//  ----- INJECTING SPIKES -----
 	for (auto i=0; i<data.size(); i++)
 	{
-		
+//		 network.injectSpike();
 	}
 	
 	//  ----- RUNNING THE NETWORK -----

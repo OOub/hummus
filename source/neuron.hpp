@@ -429,7 +429,8 @@ namespace baal
 		
 		template<typename Network>
 		void resetLearning(Network* network)
-		{			
+		{
+			// clearing generated spike list
 			for (auto i=0; i<network->getGeneratedSpikes().size(); i++)
 			{
 				if (network->getGeneratedSpikes()[i].postProjection->postNeuron->getLayerID() == layerID)
@@ -438,11 +439,13 @@ namespace baal
 				}
 			}
 			
+			// resetting plastic neurons
 			for (auto& inputProjection: preProjections)
 			{
 				inputProjection->preNeuron->eligibilityTrace = 0;
 			}
 			
+			// lateral inhibition
 			for (auto& projReset: preProjections[0]->preNeuron->postProjections)
 			{
 				if (projReset->postNeuron->neuronID != neuronID)
