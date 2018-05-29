@@ -37,26 +37,26 @@ int main(int argc, char** argv)
     float weight = 19e-10;
 
 	// creating input neurons
-	network.addNeurons(inputNeurons, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(inputNeurons, 0, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 1 neurons
-	network.addNeurons(layer1Neurons, 1, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(layer1Neurons, 1, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 2 neurons
-	network.addNeurons(layer2Neurons, 2, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(layer2Neurons, 2, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// connecting input layer and layer 1
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, false, 0); // the bool allows us to randomize weights and delays
+	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0); // the bool allows us to randomize weights and delays
 
 	// connecting layer 1 and layer 2
-	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, false, 0);
+	network.allToallConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false, weight, false, 0);
 
 	// injecting spikes in the input layer
-	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(10));
-	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(11));
-	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(13));
-	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(15));
-	network.injectSpike(network.getNeuronPopulations()[0][0].prepareInitialSpike(25));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(11));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(13));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(15));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(25));
 
 //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);

@@ -26,8 +26,8 @@ namespace baal
 {
 	struct receptiveField
 	{
-		std::vector<Neuron> RFneurons;
-		int16_t             domainID;
+		std::vector<Neuron> rfNeurons;
+		int16_t             rfID;
 		int16_t             layerID;
 	};
 	
@@ -47,24 +47,32 @@ namespace baal
 		}
 	
 		// ----- PUBLIC NETWORK METHODS -----
-		void addNeurons(int _numberOfNeurons, int _layerID, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addNeurons(int _numberOfNeurons, int16_t _layerID, int16_t _rfID=0, int _xCoordinate=-1, int _yCoordinate=-1, int _zCoordinate=-1, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
         {            
         	unsigned long shift = 0;
         	if (!neurons.empty())
         	{
 				for (auto& it: neurons)
 				{
-					shift += it.size();
+					shift += it.rfNeurons.size();
 				}
 			}
 			
         	std::vector<Neuron> temp;
 			for (auto i=0+shift; i < _numberOfNeurons+shift; i++)
 			{
-				temp.emplace_back(i,_layerID,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,_xCoordinate,_yCoordinate,_zCoordinate,_learningType);
+				temp.emplace_back(i,_layerID,_rfID,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,_xCoordinate,_yCoordinate,_zCoordinate,_learningType);
 			}
-			neurons.push_back(std::move(temp));
+			neurons.push_back(receptiveField{std::move(temp),_rfID,_layerID});
         }
+		
+		void create2DGrid(int gridSize, int rfNumber, int _numberOfNeurons, int16_t _layerID, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		{
+		    for (auto i=0; i<rfNumber; i++)
+		    {
+		        
+		    }
+		}
 		
 		// standard all to all connectivity
     	void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
@@ -86,7 +94,7 @@ namespace baal
 					
 					if (randomWeights)
 					{
-						weight = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/_weight));
+						weight = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX/_weight));
 					}
 					else
 					{
@@ -109,9 +117,9 @@ namespace baal
                 s);
         }
 		
-        void run(double _runtime, float _timestep, bool sudokuWeightsSave=false)
+        void run(double _runtime, float _timestep)
         {
-        	layerNumber = getNeuronPopulations().size();
+        	layerNumber = getNeuronPopulations().size(); // everything to do with layers is broken
         	std::cout << "Running the network..." << std::endl;
 			#ifndef NDEBUG
             std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
@@ -122,7 +130,7 @@ namespace baal
 				{
 					for (auto& pop: neurons)
 					{
-						for (auto& neuron: pop)
+						for (auto& neuron: pop.rfNeurons)
 						{
 							update(&neuron, i, _timestep);
 						}
@@ -133,27 +141,6 @@ namespace baal
 			{
 				throw std::runtime_error("add neurons to the network before running it");
 			}
-			
-			if (sudokuWeightsSave)
-			{
-				// saving weights of the initial layer
-				std::ofstream myfile;
-				myfile.open ("sudoku_output.txt");
-				for (auto& n: neurons)
-				{
-					for (auto& m: n)
-					{
-						if (m.getLayerID() == 0)
-						{
-							for (auto& proj: m.getPostProjections())
-							{
-								myfile << proj->preNeuron->getNeuronID() << " " << proj->postNeuron->getNeuronID() << " " << proj->weight << " " << proj->preNeuron->getLayerID() << " " << proj->postNeuron->getLayerID() << " " << proj->preNeuron->getX() << " " << proj->preNeuron->getY() << "\n";
-							}
-						}
-					}
-				}
-				myfile.close();
-  			}
 
 			std::cout << "Done." << std::endl;
             #ifndef NDEBUG
@@ -163,7 +150,7 @@ namespace baal
 		}
 		
 		// ----- SETTERS AND GETTERS -----
-		std::vector<std::vector<Neuron>>& getNeuronPopulations()
+		std::vector<receptiveField>& getNeuronPopulations()
 		{
 			return neurons;
 		}
@@ -286,8 +273,7 @@ namespace baal
 		std::deque<spike>                initialSpikes;
         std::deque<spike>                generatedSpikes;
         std::vector<NetworkDelegate*>    delegates;
-		std::vector<std::vector<Neuron>> neurons;
-		//std::vector<receptiveField>      neurons;
+		std::vector<receptiveField>      neurons;
 		uint64_t					     layerNumber;
 		int                              teacherIterator;
 		bool                             teachingProgress;

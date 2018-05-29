@@ -26,6 +26,8 @@ namespace baal
 	{
 		double timestamp;
 		double neuronID;
+		double x;
+		double y;
 	};
 	
 	class DataParser
@@ -35,7 +37,7 @@ namespace baal
         DataParser(){}
 		
 		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
-        std::vector<input> readData(std::string filename, int width=26)
+        std::vector<input> readData(std::string filename, int width=24)
         {
             dataFile.open(filename);
             
@@ -53,7 +55,7 @@ namespace baal
                 	// 1D data
                 	if (fields.size() == 2)
                 	{
-						data.push_back(input{std::stod(fields[0]), std::stod(fields[1])});
+						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1});
 					}
 					// 2D data
                 	else if (fields.size() == 3)
@@ -62,7 +64,7 @@ namespace baal
                 		{
                 			dataType = true;
 						}
-                		data.push_back(input{std::stod(fields[0]),std::stod(fields[1])+width*std::stod(fields[2])});
+                		data.push_back(input{std::stod(fields[0]), std::stod(fields[1])+width*std::stod(fields[2]), std::stod(fields[1]), std::stod(fields[2])});
 					}
                 }
                 dataFile.close();

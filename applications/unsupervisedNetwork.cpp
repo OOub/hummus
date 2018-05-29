@@ -19,63 +19,63 @@
 
 int main(int argc, char** argv)
 {
-//  ----- READING DATA FROM FILE -----
-	baal::DataParser dataParser;
-	
-	// time jitter test
-	auto data = dataParser.readData("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
-	
-//  ----- NETWORK PARAMETERS -----
-	std::string filename = "unsupervisedLearning_jitter.bin";
+////  ----- READING DATA FROM FILE -----
+//	baal::DataParser dataParser;
+//	
+//	// time jitter test
+//	auto data = dataParser.readData("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+//	
+////  ----- NETWORK PARAMETERS -----
+//	std::string filename = "unsupervisedLearning_jitter.bin";
 
-	baal::Logger logger(filename);
-	baal::Display network({&logger});
+//	baal::Logger logger(filename);
+//	baal::Display network({&logger});
 
-//  ----- INITIALISING THE NETWORK -----
-	float runtime = data.back().timestamp+1;
+////  ----- INITIALISING THE NETWORK -----
+//	float runtime = data.back().timestamp+1;
 
-	float timestep = 0.1;
+//	float timestep = 0.1;
 
-	float decayCurrent = 10;
-	float potentialDecay = 20;
+//	float decayCurrent = 10;
+//	float potentialDecay = 20;
 
-	float decayCurrent2 = 40;
-	float potentialDecay2 = 50;
-	
-	float refractoryPeriod = 3;
+//	float decayCurrent2 = 40;
+//	float potentialDecay2 = 50;
+//	
+//	float refractoryPeriod = 3;
 
-    int inputNeurons = 27;
-    int layer1Neurons = 27;
-	int layer2Neurons = 27;
-	
-	float alpha = 0.25;
-	float lambda = 0.25;
-	float eligibilityDecay = 100;
+//    int inputNeurons = 27;
+//    int layer1Neurons = 27;
+//	int layer2Neurons = 27;
+//	
+//	float alpha = 0.25;
+//	float lambda = 0.25;
+//	float eligibilityDecay = 100;
 
-    float weight = 19e-10/4; //weight dependent on feature size
+//    float weight = 19e-10/4; //weight dependent on feature size
 
-	network.addNeurons(inputNeurons, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(layer1Neurons, 1, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(layer2Neurons, 2, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	
-	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
-	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, true, 30);
-	
-	// injecting spikes in the input layer
-	for (auto idx=0; idx<data.size(); idx++)
-	{
-		network.injectSpike(network.getNeuronPopulations()[0][data[idx].neuronID].prepareInitialSpike(data[idx].timestamp));
-    }
+//	network.addNeurons(inputNeurons, 0, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+//	network.addNeurons(layer1Neurons, 1, 0, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+//	network.addNeurons(layer2Neurons, 2, 0, 0, 0, 0, baal::learningMode::delayPlasticity, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay, alpha, lambda);
+//	
+//	network.allToallConnectivity(&network.getNeuronPopulations()[0], &network.getNeuronPopulations()[1], false, weight, true, 20);
+//	network.allToallConnectivity(&network.getNeuronPopulations()[1], &network.getNeuronPopulations()[2], false, weight, true, 30);
+//	
+//	// injecting spikes in the input layer
+//	for (auto idx=0; idx<data.size(); idx++)
+//	{
+//		network.injectSpike(network.getNeuronPopulations()[0][data[idx].neuronID].prepareInitialSpike(data[idx].timestamp));
+//    }
 
-//  ----- DISPLAY SETTINGS -----
-	network.useHardwareAcceleration(true);
-	network.setTimeWindow(1000);
-	network.setOutputMinY(layer1Neurons);
-	network.trackNeuron(28);
+////  ----- DISPLAY SETTINGS -----
+//	network.useHardwareAcceleration(true);
+//	network.setTimeWindow(1000);
+//	network.setOutputMinY(layer1Neurons);
+//	network.trackNeuron(28);
 
-//  ----- RUNNING THE NETWORK -----
-    int errorCode = network.run(runtime, timestep);
+////  ----- RUNNING THE NETWORK -----
+//    int errorCode = network.run(runtime, timestep);
 
-//  ----- EXITING APPLICATION -----
-    return errorCode;
+////  ----- EXITING APPLICATION -----
+//    return errorCode;
 }

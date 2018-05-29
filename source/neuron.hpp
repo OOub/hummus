@@ -53,9 +53,10 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, learningMode _learningType=noLearning) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int _xCoordinate=-1, int _yCoordinate=-1, int _zCoordinate=-1, learningMode _learningType=noLearning) :
 			neuronID(_neuronID),
 			layerID(_layerID),
+			rfID(_rfID),
 			decayCurrent(_decayCurrent),
 			decayPotential(_decayPotential),
 			refractoryPeriod(_refractoryPeriod),
@@ -267,6 +268,11 @@ namespace baal
 			return layerID;
 		}
 		
+	    int16_t getRFID() const
+		{
+			return rfID;
+		}
+		
 		float getThreshold() const
         {
             return threshold;
@@ -459,6 +465,7 @@ namespace baal
 		// ----- NEURON PARAMETERS -----
 		int16_t                                  neuronID;
 		int16_t                                  layerID;
+		int16_t                                  rfID;
 		float                                    decayCurrent;
 		float                                    decayPotential;
         float                                    refractoryPeriod;

@@ -81,12 +81,12 @@ namespace baal
             potentialviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
         }
 		
-		int run(double _runtime, float _timestep,  bool _sudokuWeightsSave=false)
+		int run(double _runtime, float _timestep)
         {
-        	uint64_t layer = network.getNeuronPopulations().size() - 1;
+        	int layer = network.getNeuronPopulations().size() - 1;
         	engine->rootContext()->setContextProperty("layers", layer);
-            std::thread spikeManager([this, _runtime, _timestep, _sudokuWeightsSave]{
-                network.run(_runtime, _timestep, _sudokuWeightsSave);
+            std::thread spikeManager([this, _runtime, _timestep]{
+                network.run(_runtime, _timestep);
             });
             int errorCode = app->exec();
             spikeManager.join();
@@ -94,9 +94,9 @@ namespace baal
         }
 		
 		// ----- NETWORK CLASS WRAPPERS -----
-		void addNeurons(int _numberOfNeurons, int _layerID, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addNeurons(int _numberOfNeurons, int _layerID, int _rfID=0, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
 		{   
-			network.addNeurons(_numberOfNeurons,_layerID,_xCoordinate,_yCoordinate,_zCoordinate, _learningType, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent);
+			network.addNeurons(_numberOfNeurons,_layerID,_rfID,_xCoordinate,_yCoordinate,_zCoordinate, _learningType, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent);
 		}
 		
 		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
@@ -109,7 +109,7 @@ namespace baal
             network.injectSpike(s);
         }
 		
-		std::vector<std::vector<Neuron>>& getNeuronPopulations()
+		std::vector<receptiveField>& getNeuronPopulations()
 		{
 			return network.getNeuronPopulations();
 		}
