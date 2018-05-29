@@ -82,9 +82,11 @@ namespace baal
         }
 		
 		int run(double _runtime, float _timestep)
-        {
-        	int layer = network.getNeuronPopulations().size() - 1;
-        	engine->rootContext()->setContextProperty("layers", layer);
+        {	
+            auto maxLayerNumber = std::max_element(network.getNeuronPopulations().begin(), network.getNeuronPopulations().end(), [](const receptiveField& one, const receptiveField& two){return one.layerID < two.layerID;});
+            
+        	engine->rootContext()->setContextProperty("layers", network.getNeuronPopulations()[std::distance(std::begin(network.getNeuronPopulations()),maxLayerNumber)].layerID);
+        	
             std::thread spikeManager([this, _runtime, _timestep]{
                 network.run(_runtime, _timestep);
             });
@@ -94,9 +96,9 @@ namespace baal
         }
 		
 		// ----- NETWORK CLASS WRAPPERS -----
-		void addNeurons(int _numberOfNeurons, int _layerID, int _rfID=0, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addNeurons(int _numberOfNeurons, int _layerID, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int _rfID=0, int _xCoordinate=0, int _yCoordinate=0, int _zCoordinate=0)
 		{   
-			network.addNeurons(_numberOfNeurons,_layerID,_rfID,_xCoordinate,_yCoordinate,_zCoordinate, _learningType, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent);
+			network.addNeurons(_numberOfNeurons,_layerID, _learningType, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent,_rfID,_xCoordinate,_yCoordinate,_zCoordinate);
 		}
 		
 		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)

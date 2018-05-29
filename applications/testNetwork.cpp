@@ -37,13 +37,13 @@ int main(int argc, char** argv)
     float weight = 19e-10;
 
 	// creating input neurons
-	network.addNeurons(inputNeurons, 0, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(inputNeurons, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 1 neurons
-	network.addNeurons(layer1Neurons, 1, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(layer1Neurons, 1, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 2 neurons
-	network.addNeurons(layer2Neurons, 2, 0, 0, 0, 0, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(layer2Neurons, 2, baal::learningMode::noLearning, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// connecting input layer and layer 1
 	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0); // the bool allows us to randomize weights and delays

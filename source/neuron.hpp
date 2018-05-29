@@ -439,7 +439,7 @@ namespace baal
 			// clearing generated spike list
 			for (auto i=0; i<network->getGeneratedSpikes().size(); i++)
 			{
-				if (network->getGeneratedSpikes()[i].postProjection->postNeuron->getLayerID() == layerID)
+				if (network->getGeneratedSpikes()[i].postProjection->postNeuron->getLayerID() == layerID && network->getGeneratedSpikes()[i].postProjection->postNeuron->getRFID() == rfID)
 				{
 					network->getGeneratedSpikes().erase(network->getGeneratedSpikes().begin()+i);
 				}

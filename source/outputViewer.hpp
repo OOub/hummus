@@ -60,7 +60,7 @@ namespace baal
         {
         	if (!empty)
         	{
-				if (p->postNeuron->getLayerID() == layerTracker && spiked) //make a box that will select the layer (where 0 is a forbidden value)
+				if (p->postNeuron->getLayerID() == layerTracker && spiked)
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)
