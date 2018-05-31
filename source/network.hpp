@@ -47,7 +47,8 @@ namespace baal
 		}
 	
 		// ----- PUBLIC NETWORK METHODS -----
-		void addNeurons(int _numberOfNeurons, int16_t _layerID, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _rfID=0, int _xCoordinate=-1, int _yCoordinate=-1, int _zCoordinate=-1)
+		// add neurons
+		void addNeurons(int16_t _layerID, learningMode _learningType=noLearning, int _numberOfNeurons=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _rfID=0)
         {            
         	unsigned long shift = 0;
         	if (!neurons.empty())
@@ -61,17 +62,76 @@ namespace baal
         	std::vector<Neuron> temp;
 			for (auto i=0+shift; i < _numberOfNeurons+shift; i++)
 			{
-				temp.emplace_back(i,_layerID,_rfID,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,_xCoordinate,_yCoordinate,_zCoordinate,_learningType);
+				temp.emplace_back(i,_layerID,_rfID,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,-1,-1,-1,_learningType);
 			}
 			neurons.push_back(receptiveField{std::move(temp),_rfID,_layerID});
         }
 		
-		void create2DGrid(int gridSize, int rfNumber, int _numberOfNeurons, int16_t _layerID, learningMode _learningType=noLearning, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		// add neurons within receptive fields
+		void addReceptiveFields(int gridSize, int rfNumber, int16_t _layerID, learningMode _learningType=noLearning, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
 		{
-		    for (auto i=0; i<rfNumber; i++)
-		    {
-		        
-		    }
+		    // error handling
+		    double d_sqrt = std::sqrt(rfNumber);
+            int i_sqrt = d_sqrt;
+            if (d_sqrt != i_sqrt)
+            {
+                throw std::logic_error("the number of receptive fields has to be a perfect square"); 
+            }
+            
+            double d_rfSize = gridSize/std::sqrt(rfNumber);
+            int i_rfSize = d_rfSize;
+            if (d_rfSize != i_rfSize)
+            {
+                throw std::logic_error("the size of the square grid does not match with the number of receptive fields");
+            }
+            
+            // grid creation
+		    if (_numberOfNeurons == -1)
+		    { 
+		        std::cout << "adding receptive fields with 2D neurons to the network" << std::endl;
+		        int x = 0;
+		        int y = 0;
+		        for (int16_t j=0; j<rfNumber; j++)
+		        {   
+		            ///////////////////////////////////////
+                	unsigned long shift = 0;
+                	if (!neurons.empty())
+                	{
+				        for (auto& it: neurons)
+				        {
+					        shift += it.rfNeurons.size();
+				        }
+			        }
+			
+                	std::vector<Neuron> temp;
+
+			        for (auto i=0+shift; i < std::pow(gridSize/std::sqrt(rfNumber),2)+shift; i++)
+			        {
+				        temp.emplace_back(i,_layerID,j,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,x,y,-1,_learningType);
+				        y++;
+				        if (y == gridSize/std::sqrt(rfNumber))
+			            {
+			                x++;
+			                y = 0;
+			            }
+			        }
+			        x=0;
+			        neurons.push_back(receptiveField{std::move(temp),j,_layerID});
+			        ////////////////////////////////////////
+		        }
+            }
+            else if (_numberOfNeurons > 0)
+            {
+                std::cout << "adding receptive fields with 1D neurons to the network" << std::endl;
+                for (auto j=0; j<rfNumber; j++)
+		        {   
+                    addNeurons(_layerID, _learningType,_numberOfNeurons, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent,j);
+                }
+            }
+            else
+            {
+                throw std::logic_error("the number of neurons to add cannot be less than or equal to 0");
+            }
 		}
 		
 		// standard all to all connectivity
@@ -105,11 +165,13 @@ namespace baal
 			}
 		}
 		
+		// add spike to the network
 		void injectSpike(spike s)
         {
             initialSpikes.push_back(s);
         }
 		
+		// adding spikes generated by non-input neurons ot the network
         void injectGeneratedSpike(spike s)
         {
             generatedSpikes.insert(
@@ -117,6 +179,7 @@ namespace baal
                 s);
         }
 		
+		// clock-based running through the network
         void run(double _runtime, float _timestep)
         {
         	layerNumber = getNeuronPopulations().size(); // everything to do with layers is broken
@@ -191,12 +254,14 @@ namespace baal
         }
 		
 		// ----- SUPERVISED LEARNING METHODS -----
+		// add teacher signal for supervised learning
         void injectTeacher(std::vector<input>* _teacher)
         {
             teacher = _teacher;
             teachingProgress = true;
         }
 		
+		// getter for the teacher signal
         std::vector<input>* getTeacher() const
         {
             return teacher;
@@ -205,6 +270,7 @@ namespace baal
     protected:
     
 		// -----PROTECTED NETWORK METHODS -----
+		// update neuron status
 		void update(Neuron* neuron, double time, float timestep)
 		{
 			if (generatedSpikes.empty() && !initialSpikes.empty())
@@ -236,6 +302,7 @@ namespace baal
 			}
 		}
 		
+		// helper for the update method
 		void updateHelper(spike s, Neuron* neuron, double time, float timestep, int listSelector)
 		{
 			if (s.postProjection->postNeuron->getNeuronID() == neuron->getNeuronID())
