@@ -36,47 +36,36 @@ int main(int argc, char** argv)
 
     float weight = 19e-10;
 
-    network.addReceptiveFields(24, 36, 0);
-
-    for (auto h=0; h<network.getNeuronPopulations().size(); h++)
-    {
-        std::cout << "receptive field " << network.getNeuronPopulations()[h].rfID+1 << std::endl;
-        for (auto i=0; i<network.getNeuronPopulations()[h].rfNeurons.size(); i++)
-        {
-            std::cout << network.getNeuronPopulations()[h].rfNeurons[i].getX() << "," << network.getNeuronPopulations()[h].rfNeurons[i].getY() << std::endl;
-        }
-    }
-
 	// creating input neurons
-	//network.addNeurons(0, baal::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(0, baal::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 1 neurons
-	//network.addNeurons(1, baal::learningMode::noLearning, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(1, baal::learningMode::noLearning, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 2 neurons
-	//network.addNeurons(2, baal::learningMode::noLearning, layer2Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(2, baal::learningMode::noLearning, layer2Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// connecting input layer and layer 1
-	//network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
+	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
 
 	// connecting layer 1 and layer 2
-	//network.allToallConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false, weight, false, 0);
+	network.allToallConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false, weight, false, 0);
 
 	// injecting spikes in the input layer
-//	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
-//	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(11));
-//	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(13));
-//	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(15));
-//	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(25));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(11));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(13));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(15));
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(25));
 
 //  ----- DISPLAY SETTINGS -----
-//	network.useHardwareAcceleration(true);
-//	network.setTimeWindow(runtime);
-//	network.trackNeuron(2);
+	network.useHardwareAcceleration(true);
+	network.setTimeWindow(runtime);
+	network.trackNeuron(2);
 
 //  ----- RUNNING THE NETWORK -----
-//    int errorCode = network.run(runtime, timestep);
+    int errorCode = network.run(runtime, timestep);
 
 //  ----- EXITING APPLICATION -----
-    return 0;//errorCode;
+    return errorCode;
 }
