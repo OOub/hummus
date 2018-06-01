@@ -18,87 +18,98 @@
 
 int main(int argc, char** argv)
 {
-//	//  ----- READING DATA FROM FILE -----
-//	baal::DataParser dataParser;
-//	auto data = dataParser.readData("../../data/pip/1rec_1pip/1pip_1type_200reps.txt");
-//	
-//	//  ----- INITIALISING THE NETWORK -----
-//	baal::Network network;
-//	
-//	//  ----- NETWORK PARAMETERS -----
-//	float runtime = data.back().timestamp+1;
-//	float timestep = 0.1;
-//	int neuronsPerReceptiveField = 5;
-//	int imageSize = 24;
-//	
-//	//  ----- RECEPTIVE FIELDS CONNECTIVITY -----
-//	// input layer with 36 receptive fields
-//	int x = 0;
-//	int y = 0;
-//	for (auto i=0; i<std::pow(imageSize/4,2); i++)
-//	{
-//		if (i % (imageSize/4) == 0 && i != 0)
-//		{
-//			x++;
-//			y = 0;
-//		}
-//		network.addNeurons(neuronsPerReceptiveField, 0);
-//		y++;
-//	}
-//	
-//	// intermediate layer with 4 receptive fields
-//	x = 0;
-//	y = 0;
-//	for (auto i=0; i<4; i++)
-//	{
-//		if (i % 2 == 0 && i != 0)
-//		{
-//			x++;
-//			y = 0;
-//		}
-//		network.addNeurons(neuronsPerReceptiveField, 1);
-//		y++;
-//	}
-//	
-//	// output layer with 1 receptive field
-//	network.addNeurons(neuronsPerReceptiveField, 2);
-//	
-//	// connecting the input layer to the first layer
-////	for (auto i=0; i<std::pow(imageSize/4,2); i++)
-////	{
-////		if (network.getNeuronPopulations()[i][0].getX() < 12 && network.getNeuronPopulations()[i][0].getY() < 12)
-////		{
-////			network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[36], false, 1, false);
-////		}
-////		else if (network.getNeuronPopulations()[i][0].getX() >= 12 && network.getNeuronPopulations()[i][0].getX() <= 24 && network.getNeuronPopulations()[i][0].getY() < 12)
-////		{
-////			network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[37], false, 1, false);
-////		}
-////		else if (network.getNeuronPopulations()[i][0].getX() < 12 && network.getNeuronPopulations()[i][0].getY() >= 12 && network.getNeuronPopulations()[i][0].getY() <= 24)
-////		{
-////			network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[38], false, 1, false);
-////		}
-////		else if (network.getNeuronPopulations()[i][0].getX() >= 12 && network.getNeuronPopulations()[i][0].getX() <= 24 && network.getNeuronPopulations()[i][0].getY() >= 12 && network.getNeuronPopulations()[i][0].getY() <= 24)
-////		{
-////			network.allToallConnectivity(&network.getNeuronPopulations()[i], &network.getNeuronPopulations()[39], false, 1, false);
-////		}
-////	}
-//	
-//	// connecting the first layer to the output layer
-//	for (auto i=std::pow(imageSize/4,2); i<network.getNeuronPopulations().size()-1; i++)
-//	{
-//		network.allToallConnectivity(&network.getNeuronPopulations()[i].rfNeurons, &network.getNeuronPopulations()[40].rfNeurons, false, 1, false);
-//	}
-//	
-//	//  ----- INJECTING SPIKES -----
-//	for (auto i=0; i<data.size(); i++)
-//	{
-////		 network.injectSpike();
-//	}
-//	
-//	//  ----- RUNNING THE NETWORK -----
-//	network.run(runtime, timestep);
+	//  ----- READING DATA FROM FILE -----
+	baal::DataParser dataParser;
+	auto data = dataParser.readData("../data/pip/1rec_1pip/1pip_1type_200reps.txt");
 	
-	//  ----- EXITING APPLICATION -----
-	return 0;
+	std::cout << data[0].x << "," << data[0].y << std::endl;
+	
+	//  ----- INITIALISING THE NETWORK -----
+	std::string filename = "rfTest.bin";
+	baal::Logger logger(filename);
+	baal::Display network({&logger});
+	
+	//  ----- NETWORK PARAMETERS -----
+	float runtime = data.back().timestamp+1;
+	float timestep = 1;
+	int imageSize = 24;
+	int inputlayerRF = 36;
+	int layer1RF = 4;
+	int layer1Neurons = 10;
+	int layer2Neurons = 10;
+	int weight = 1;
+	
+	//  ----- CREATING THE NETWORK -----
+	// input layer with 36 receptive fields (2D neurons)
+    network.addReceptiveFields(imageSize, inputlayerRF, 0, baal::learningMode::noLearning);
+	
+	// layer 1 with 4 receptive fields (1D neurons)
+    network.addReceptiveFields(imageSize, layer1RF, 1, baal::learningMode::noLearning, layer1Neurons);
+	
+	// layer 2 with 1 receptive field (1D neurons)
+	network.addNeurons(2, baal::learningMode::noLearning, layer2Neurons);
+	
+    //  ----- CONNECTING THE NETWORK -----
+	for (auto& receptiveField: network.getNeuronPopulations())
+	{
+	    // connecting input layer to layer 1
+	    if (receptiveField.layerID == 0)
+	    {
+	        if (receptiveField.rfNeurons[0].getX() >= 0 && receptiveField.rfNeurons[0].getY() >= 0)
+	        {
+                if (receptiveField.rfNeurons[0].getX() < 12 && receptiveField.rfNeurons[0].getY() < 12)
+                {
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[36].rfNeurons, false, weight, false, 0);
+                }
+                else if (receptiveField.rfNeurons[0].getX() < 12 && receptiveField.rfNeurons[0].getY() >= 12)
+                {
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[37].rfNeurons, false, weight, false, 0);
+                }
+                else if (receptiveField.rfNeurons[0].getX() >= 12 && receptiveField.rfNeurons[0].getY() < 12)
+                {
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[38].rfNeurons, false, weight, false, 0);
+                }
+                else if (receptiveField.rfNeurons[0].getX() >= 12 && receptiveField.rfNeurons[0].getY() >= 12)
+                {
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[39].rfNeurons, false, weight, false, 0);
+                }
+            }
+	    }
+	    // connecting layer 1 to the output layer
+	    else if (receptiveField.layerID == 1)
+	    {
+	        network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations().back().rfNeurons, false, weight, false, 0);
+	    }
+	}
+	
+	//  ----- INJECTING SPIKES -----
+	for (auto& event: data)
+	{
+	    for (auto& receptiveField: network.getNeuronPopulations())
+	    {
+	   	    if (receptiveField.layerID == 0)
+	        {
+	            for (auto& neuron: receptiveField.rfNeurons)
+	            {
+	                if (neuron.getX() == event.x && neuron.getY() == event.y)
+	                {
+                        network.injectSpike(neuron.prepareInitialSpike(event.timestamp));
+	                    break;
+	                }
+	            }
+	        }
+	    }
+	}
+	
+    //  ----- DISPLAY SETTINGS -----
+	network.useHardwareAcceleration(true);
+	network.setTimeWindow(10000);
+	network.trackNeuron(-1);
+	network.trackLayer(1);
+	
+    //  ----- RUNNING THE NETWORK -----
+    int errorCode = network.run(runtime, timestep);
+
+    //  ----- EXITING APPLICATION -----
+    return errorCode;
 }
