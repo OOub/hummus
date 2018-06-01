@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 12/01/2018
+ * Last Version: 31/05/2018
  *
  * Information: Example of a basic spiking neural network.
  */
@@ -36,14 +36,14 @@ int main(int argc, char** argv)
 
     float weight = 19e-10;
 
-    network.addReceptiveFields(23, 36, 0);
+    network.addReceptiveFields(24, 36, 0);
 
     for (auto h=0; h<network.getNeuronPopulations().size(); h++)
     {
-        //std::cout << "receptive field " << network.getNeuronPopulations()[h].rfID+1 << std::endl;
+        std::cout << "receptive field " << network.getNeuronPopulations()[h].rfID+1 << std::endl;
         for (auto i=0; i<network.getNeuronPopulations()[h].rfNeurons.size(); i++)
         {
-            //std::cout << network.getNeuronPopulations()[h].rfNeurons[i].getX() << "," << network.getNeuronPopulations()[h].rfNeurons[i].getY() << std::endl;
+            std::cout << network.getNeuronPopulations()[h].rfNeurons[i].getX() << "," << network.getNeuronPopulations()[h].rfNeurons[i].getY() << std::endl;
         }
     }
 

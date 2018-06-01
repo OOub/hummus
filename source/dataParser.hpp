@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 22/02/2018
+ * Last Version: 31/05/2018
  *
  * Information: The DataParser class is used to input data from files into a vector.
  * To-Do: implement a way to split into receptive fields by splitting the coordinate system depending on the dimensions and output that into a vector of vectors.

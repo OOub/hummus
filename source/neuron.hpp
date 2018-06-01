@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 26/02/2018
+ * Last Version: 31/05/2018
  *
  * Information: the neuron class defines a neuron and the learning rules dictating its behavior.
  */
