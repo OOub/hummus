@@ -40,7 +40,7 @@ namespace baal
     Q_OBJECT
     public:
 		
-    	// ----- OCNSTRUCTOR AND DESTRUCTOR -----
+    	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         InputViewer(QObject *parent = 0) :
             QObject(parent),
             timeWindow(100),
@@ -84,11 +84,6 @@ namespace baal
         void setTimeWindow(double newWindow)
         {
             timeWindow = newWindow;
-        }
-		
-        void setMinY(float y)
-        {
-            minY = y;
         }
 		
 		void useHardwareAcceleration(bool accelerate)

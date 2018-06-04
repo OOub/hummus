@@ -22,8 +22,6 @@ int main(int argc, char** argv)
 	baal::DataParser dataParser;
 	auto data = dataParser.readData("../data/pip/1rec_1pip/1pip_1type_200reps.txt");
 	
-	std::cout << data[0].x << "," << data[0].y << std::endl;
-	
 	//  ----- INITIALISING THE NETWORK -----
 	std::string filename = "rfTest.bin";
 	baal::Logger logger(filename);
@@ -37,7 +35,7 @@ int main(int argc, char** argv)
 	int layer1RF = 4;
 	int layer1Neurons = 10;
 	int layer2Neurons = 10;
-	int weight = 1;
+	int weight = 10;//19e-10;
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)
@@ -59,26 +57,26 @@ int main(int argc, char** argv)
 	        {
                 if (receptiveField.rfNeurons[0].getX() < 12 && receptiveField.rfNeurons[0].getY() < 12)
                 {
-                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[36].rfNeurons, false, weight, false, 0);
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[36].rfNeurons, false, weight/10, true, 100);
                 }
                 else if (receptiveField.rfNeurons[0].getX() < 12 && receptiveField.rfNeurons[0].getY() >= 12)
                 {
-                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[37].rfNeurons, false, weight, false, 0);
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[37].rfNeurons, false, weight/10, true, 100);
                 }
                 else if (receptiveField.rfNeurons[0].getX() >= 12 && receptiveField.rfNeurons[0].getY() < 12)
                 {
-                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[38].rfNeurons, false, weight, false, 0);
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[38].rfNeurons, false, weight/10, true, 100);
                 }
                 else if (receptiveField.rfNeurons[0].getX() >= 12 && receptiveField.rfNeurons[0].getY() >= 12)
                 {
-                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[39].rfNeurons, false, weight, false, 0);
+                    network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations()[39].rfNeurons, false, weight/10, true, 100);
                 }
             }
 	    }
 	    // connecting layer 1 to the output layer
 	    else if (receptiveField.layerID == 1)
 	    {
-	        network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations().back().rfNeurons, false, weight, false, 0);
+	        network.allToallConnectivity(&receptiveField.rfNeurons, &network.getNeuronPopulations().back().rfNeurons, false, weight, true, 300);
 	    }
 	}
 	
@@ -104,7 +102,6 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
 	network.useHardwareAcceleration(true);
 	network.setTimeWindow(10000);
-	network.trackNeuron(-1);
 	network.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----

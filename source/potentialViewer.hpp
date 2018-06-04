@@ -125,7 +125,12 @@ namespace baal
         // ----- QT-RELATED METHODS -----
         void changeTrackedNeuron(int newNeuron)
         {
-            neuronTracker = newNeuron;
+            if (neuronTracker != newNeuron)
+            {
+                neuronTracker = newNeuron;
+                minY = 20;
+                maxY = -70;
+            }
         }
     
         void disable()

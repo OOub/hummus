@@ -83,9 +83,29 @@ namespace baal
 		
 		int run(double _runtime, float _timestep)
         {	
+            // finding the number of layers in the network
             auto maxLayerNumber = std::max_element(network.getNeuronPopulations().begin(), network.getNeuronPopulations().end(), [](const receptiveField& one, const receptiveField& two){return one.layerID < two.layerID;});
             
         	engine->rootContext()->setContextProperty("layers", network.getNeuronPopulations()[std::distance(std::begin(network.getNeuronPopulations()),maxLayerNumber)].layerID);
+        	
+        	// number of neurons in each layer
+
+        	std::vector<int> neuronsInLayers(network.getNeuronPopulations()[std::distance(std::begin(network.getNeuronPopulations()),maxLayerNumber)].layerID+1, 0);
+        	for (auto i=0; i< network.getNeuronPopulations()[std::distance(std::begin(network.getNeuronPopulations()),maxLayerNumber)].layerID+1; i++)
+        	{
+        	    for (auto& receptiveField: network.getNeuronPopulations())
+        	    {
+        	        if (receptiveField.layerID == i)
+        	        {
+                        neuronsInLayers[i] += receptiveField.rfNeurons.size();
+        	        }
+        	    }
+        	    if (i > 0)
+        	    {
+        	        neuronsInLayers[i] += neuronsInLayers[i-1];
+        	    }
+        	}
+        	outputviewer->setYLookup(neuronsInLayers);
         	
             std::thread spikeManager([this, _runtime, _timestep]{
                 network.run(_runtime, _timestep);
@@ -150,16 +170,6 @@ namespace baal
             inputviewer->setTimeWindow(newWindow);
             outputviewer->setTimeWindow(newWindow);
             potentialviewer->setTimeWindow(newWindow);
-        }
-		
-        void setInputMinY(float minInputY)
-        {
-            inputviewer->setMinY(minInputY);
-        }
-		
-        void setOutputMinY(float minOutputY)
-        {
-            outputviewer->setMinY(minOutputY);
         }
 		
     protected:

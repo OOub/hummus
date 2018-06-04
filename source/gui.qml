@@ -78,6 +78,7 @@ ApplicationWindow
 					id: input
 					name: "Input Neurons"
 					markerSize: 8
+					markerShape: ScatterSeries.MarkerShapeCircle
 					axisX: inputX
 					axisY: inputY
 					borderColor: 'transparent'
@@ -152,6 +153,7 @@ ApplicationWindow
 					id: output
 					name: "Output Neurons"
 					markerSize: 8
+					markerShape: ScatterSeries.MarkerShapeCircle
 					axisX: outputX
 					axisY: outputY
 					borderColor: 'transparent'

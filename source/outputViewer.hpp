@@ -67,6 +67,7 @@ namespace baal
 					{
 						points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
 						maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
+						minY = yLookupTable[layerTracker-1];
 					}
 					else
 					{
@@ -84,15 +85,15 @@ namespace baal
             timeWindow = newWindow;
         }
 		
-        void setMinY(float y)
-        {
-            minY = y;
-        }
-		
 		void useHardwareAcceleration(bool accelerate)
         {
             openGL = accelerate;
         }
+		
+		void setYLookup(std::vector<int> newLookup)
+		{
+		    yLookupTable = newLookup;
+		}
 		
     Q_SIGNALS:
     public slots:
@@ -100,7 +101,12 @@ namespace baal
     	// ----- QT-RELATED METHODS -----
 		void changeLayer(int newLayer)
 		{
-			layerTracker = newLayer;
+		    if (layerTracker != newLayer)
+		    {
+			    layerTracker = newLayer;
+			    minY = 0;
+			    maxY = 1;
+			}
 		}
 		
         void disable()
@@ -109,7 +115,7 @@ namespace baal
             isClosed = true;
             atomicGuard.clear(std::memory_order_release);
         }
-    
+        
         void update(QtCharts::QValueAxis *axisX, QtCharts::QValueAxis *axisY, QtCharts::QAbstractSeries *series)
         {
             if (!isClosed)
@@ -149,5 +155,6 @@ namespace baal
         int                   maxY;
         std::atomic_flag      atomicGuard;
         int                   layerTracker;
+        std::vector<int>      yLookupTable;
     };
 }
