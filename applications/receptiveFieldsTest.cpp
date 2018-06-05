@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	int layer1RF = 4;
 	int layer1Neurons = 10;
 	int layer2Neurons = 10;
-	int weight = 10;//19e-10;
+	float weight = 50e-10;
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 	}
 	
     //  ----- DISPLAY SETTINGS -----
-	network.useHardwareAcceleration(true);
+	network.useHardwareAcceleration(false);
 	network.setTimeWindow(10000);
 	network.trackLayer(1);
 	
