@@ -32,64 +32,32 @@
 
 int main(int argc, char** argv)
 {
-////  ----- READING DATA FROM FILE -----
-//    baal::DataParser dataParser;
-//    auto data = dataParser.readData("../../data/sudoku/sudokuRandomSpikesFixed.txt");
-//    
-////  ----- INITIALISING THE NETWORK -----
-//	baal::Network network;
+//  ----- READING DATA FROM FILE -----
+    baal::DataParser dataParser;
+    auto data = dataParser.readData("../data/sudoku/sudokuRandomSpikesFixed.txt");
+    
+//  ----- INITIALISING THE NETWORK -----
+	baal::Network network;
 
-////  ----- NETWORK PARAMETERS -----
-//	int   sudokuWidth = 4;
-//	int   neuronsPerDomain = 4;
-//    int   numberOfLayers = 5;
-//    float inhibitionWeight = -1;
-//    float stimulationWeight = 1;
-//    float filledWeight = 19e-10;
-//    
-//    float runtime = 10000;
-//	float timestep = 1;
-//	
-////  ----- CREATING THE LAYERS -----
-//    for (auto i=0; i<numberOfLayers; i++)
-//    {
-//        int x = 0;
-//        int y = 0;
-//        
-//        for (auto j=0; j<std::pow(sudokuWidth,2); j++)
-//        {
-//            if (j % sudokuWidth == 0 && j != 0)
-//		    {
-//			    x++;
-//			    y = 0;
-//		    }
-//		    if (i < numberOfLayers-1)
-//		    {
-//                network.addNeurons(neuronsPerDomain,i+1, 0, x, y, 0, baal::learningMode::noLearning);
-//            }
-//            else
-//            {
-//                network.addNeurons(neuronsPerDomain,0, 0, x, y, 0, baal::learningMode::noLearning);
-//            }
-//            y++;
-//        }    
-//    }
-//	
-//	// creating a vector with all the coordinates
-//	struct domain
-//	{
-//		int X;
-//		int Y;
-//	};
-//	
-//	std::vector<domain> grid;
-//	for (auto i=0; i<std::pow(sudokuWidth,2); i++)
-//	{
-//		grid.push_back(domain{network.getNeuronPopulations()[i][0].getX(), network.getNeuronPopulations()[i][0].getY()});
-//	}
-//	
-////  ----- CONNECTING THE LAYERS -----
-//    // lateral inhibition on domains with the same coordinates
+//  ----- NETWORK PARAMETERS -----
+	int   sudokuWidth = 4;
+    float inhibitionWeight = -1;
+    float stimulationWeight = 1;
+    float filledWeight = 19e-10;
+    
+    float runtime = 10000;
+	float timestep = 1;
+	
+//  ----- CREATING THE LAYERS -----
+    network.addReceptiveFields(16, 0, baal::learningMode::noLearning, 8);
+    network.addReceptiveFields(16, 1, baal::learningMode::noLearning, 8);
+    network.addReceptiveFields(16, 2, baal::learningMode::noLearning, 8);
+    network.addReceptiveFields(16, 3, baal::learningMode::noLearning, 8);
+    network.addReceptiveFields(16, 4, baal::learningMode::noLearning, 8);
+
+//  ----- CONNECTING THE LAYERS -----
+    // lateral inhibition on domains with the same coordinates
+    
 //    for (auto i=0; i<(numberOfLayers-1)*std::pow(sudokuWidth,2); i++)
 //    {
 //        for (auto j=0; j<std::pow(sudokuWidth,2)*(numberOfLayers-1); j++)

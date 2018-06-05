@@ -121,9 +121,9 @@ namespace baal
 			network.addNeurons(_layerID, _learningType,_numberOfNeurons, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent,_rfID);
 		}
 		
-		void addReceptiveFields(int gridSize, int rfNumber, int16_t _layerID, learningMode _learningType=noLearning, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addReceptiveFields(int rfNumber, int16_t _layerID, learningMode _learningType=noLearning, int gridSize=0, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
 		{
-		    network.addReceptiveFields(gridSize,rfNumber,_layerID,_learningType,_numberOfNeurons,_decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent);
+		    network.addReceptiveFields(rfNumber,_layerID,_learningType,gridSize,_numberOfNeurons,_decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent);
 		}
 		
 		void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
