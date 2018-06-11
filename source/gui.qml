@@ -77,7 +77,7 @@ ApplicationWindow
 				{
 					id: input
 					name: "Input Neurons"
-					markerSize: 8
+					markerSize: 5
 					markerShape: ScatterSeries.MarkerShapeCircle
 					axisX: inputX
 					axisY: inputY
@@ -152,7 +152,7 @@ ApplicationWindow
 				{
 					id: output
 					name: "Output Neurons"
-					markerSize: 8
+					markerSize: 5
 					markerShape: ScatterSeries.MarkerShapeCircle
 					axisX: outputX
 					axisY: outputY

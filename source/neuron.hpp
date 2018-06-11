@@ -31,7 +31,8 @@ namespace baal
 	enum learningMode
 	{
 	    noLearning,
-	    delayPlasticity,
+	    delayPlasticityNoReinforcement,
+	    delayPlasticityReinforcement,
 	};
 	
 	struct projection
@@ -149,7 +150,15 @@ namespace baal
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
 			eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
-			emissionTrace *= std::exp(-timestep/eligibilityDecay);
+			//emissionTrace *= std::exp(-timestep/eligibilityDecay);
+			if (emissionTrace > 0.1) // rethink this strategy
+			{
+				emissionTrace -= 0.0001;
+				if (emissionTrace < 0.0001)
+				{
+					emissionTrace = 0;
+				}
+			}
 			
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
@@ -235,7 +244,7 @@ namespace baal
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 				
-				if (learningType == delayPlasticity)
+				if (learningType == delayPlasticityNoReinforcement || learningType == delayPlasticityReinforcement)
 				{
 				    myelinPlasticity(timestamp, network);
 				}
@@ -350,7 +359,9 @@ namespace baal
 					plasticID.push_back(inputProjection->preNeuron->neuronID);
 					
 					float change = 0;
-					float spikeEmissionTime = eligibilityDecay*std::log(emissionTrace)+timestamp;
+					//float spikeEmissionTime = timestamp-eligibilityDecay*std::log(emissionTrace); // there is a mistake here
+					float spikeEmissionTime = timestamp - 1 + emissionTrace;
+					
 					timeDifferences.push_back(timestamp - spikeEmissionTime - inputProjection->delay);
 					if (network->getTeacher()) // supervised learning
 					{
@@ -398,14 +409,19 @@ namespace baal
 					synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
 				}
 			}
-			reinforcementLearning(plasticID, network);
+			if (learningType == delayPlasticityReinforcement)
+			{
+				reinforcementLearning(plasticID, network);
+			}
 			resetLearning(network);
 		}
 		
+		// this eventually needs to be controlled by backpropagating potential to push towards desired spike times
 		template <typename Network>
 		void reinforcementLearning(std::vector<int> plasticID, Network* network)
 		{
-			// looping through all projections from the winner exclude the postProjections
+			std::cout << "FUUCK" << std::endl;
+			// looping through all projections from the winner
             for (auto& allProjections: this->preProjections)
             {
                 int16_t ID = allProjections->preNeuron->getNeuronID();
@@ -420,10 +436,11 @@ namespace baal
                 }
                 else
                 {
+                	// add clause to check if it's from the same receptive field or not assuming there is more than one receptive field
                     if (allProjections->weight > 0)
                     {
                         // negative reinforcement
-                        allProjections->weight -= plasticID.size()*0.1;
+                        allProjections->weight -= plasticID.size()*0.1; // cannot do this when we have receptive fields needs to only target the non-receptive field neurons
 						if (allProjections->weight < 0)
 						{
 							allProjections->weight = 0;

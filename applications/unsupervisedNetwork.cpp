@@ -22,12 +22,12 @@ int main(int argc, char** argv)
 //  ----- READING DATA FROM FILE -----
 	baal::DataParser dataParser;
 	
-	// time jitter test
-	auto data = dataParser.readData("../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+	auto data = dataParser.readData("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 //  ----- NETWORK PARAMETERS -----
-	std::string filename = "unsupervisedLearning_jitter.bin";
-
+	std::string filename = "testDelaysOPPOSITECHANGE.bin";
+	//std::string filename = "testDelaysNORMALCHANGE.bin";
+	
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
 
@@ -48,15 +48,17 @@ int main(int argc, char** argv)
     int layer1Neurons = 27;
 	int layer2Neurons = 27;
 	
-	float alpha = 0.25;
-	float lambda = 0.25;
-	float eligibilityDecay = 100;
+	float alpha = 1;
+	float lambda = 5;
+	
+	float eligibilityDecay = 20;
+	float eligibilityDecay2 = 40;
 
     float weight = 19e-10/4; //weight dependent on feature size
 
 	network.addNeurons(0, baal::learningMode::noLearning, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(1, baal::learningMode::delayPlasticity, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(2, baal::learningMode::delayPlasticity, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(1, baal::learningMode::delayPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(2, baal::learningMode::delayPlasticityReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay2, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);
 	network.allToallConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false, weight, true, 30);
