@@ -22,8 +22,7 @@ int main(int argc, char** argv)
 {
 	//  ----- READING DATA FROM FILE -----
 	baal::DataParser dataParser;
-	//auto data = dataParser.readData("../../data/pip/1rec_1pip/1pip_1type_200reps.txt");
-	auto data = dataParser.readData("../../data/pip/2recs_1pip/t101pip_2types_200reps.txt");
+	auto data = dataParser.readData("../../data/pip/2recs_1pip/sst101pip_2types_200reps.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
 	std::string filename = "rfTest.bin";

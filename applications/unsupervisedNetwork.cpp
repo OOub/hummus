@@ -25,14 +25,14 @@ int main(int argc, char** argv)
 	auto data = dataParser.readData("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 //  ----- NETWORK PARAMETERS -----
-	std::string filename = "testDelaysOPPOSITECHANGE.bin";
+	std::string filename = "loggerTest.bin";
 	//std::string filename = "testDelaysNORMALCHANGE.bin";
 	
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
 
 //  ----- INITIALISING THE NETWORK -----
-	float runtime = data.back().timestamp+1;
+	float runtime = 10000; //data.back().timestamp+1;
 
 	float timestep = 0.1;
 

@@ -54,7 +54,7 @@ namespace baal
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int _xCoordinate=-1, int _yCoordinate=-1, int _zCoordinate=-1, learningMode _learningType=noLearning) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, learningMode _learningType=noLearning) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			rfID(_rfID),
@@ -420,7 +420,6 @@ namespace baal
 		template <typename Network>
 		void reinforcementLearning(std::vector<int> plasticID, Network* network)
 		{
-			std::cout << "FUUCK" << std::endl;
 			// looping through all projections from the winner
             for (auto& allProjections: this->preProjections)
             {
@@ -436,11 +435,10 @@ namespace baal
                 }
                 else
                 {
-                	// add clause to check if it's from the same receptive field or not assuming there is more than one receptive field
                     if (allProjections->weight > 0)
                     {
                         // negative reinforcement
-                        allProjections->weight -= plasticID.size()*0.1; // cannot do this when we have receptive fields needs to only target the non-receptive field neurons
+                        allProjections->weight -= plasticID.size()*0.1;
 						if (allProjections->weight < 0)
 						{
 							allProjections->weight = 0;
@@ -500,9 +498,9 @@ namespace baal
 		float                                    eligibilityTrace;
 		float                                    emissionTrace;
 		float                                    eligibilityDecay;
-		int                                      xCoordinate;
-		int                                      yCoordinate;
-		int                                      zCoordinate;
+		int16_t                                  xCoordinate;
+		int16_t                                  yCoordinate;
+		int16_t                                  zCoordinate;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		projection                               activeProjection;

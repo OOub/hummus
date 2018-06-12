@@ -14,7 +14,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <stdexcept>
+
 
 #include "network.hpp"
 
@@ -25,7 +27,7 @@ namespace baal
     public:
     	// ----- CONSTRUCTOR -----
         Logger(std::string filename) :
-            potential(0)
+            bytes(32, 0)
         {
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good())
@@ -44,37 +46,29 @@ namespace baal
         {
         	if (!empty)
         	{
-				potential = p->postNeuron->getPotential();
-				
-				int16_t preN = (p->preNeuron ? p->preNeuron->getNeuronID() : -1);
-				int16_t postN = p->postNeuron->getNeuronID();
-				
-				for (auto i=0; i<=8; i++)
-				{
-					packet[i] = *(reinterpret_cast<char*>(&timestamp) + i);
-				}
-				
-				for (auto i=8, j=0; i<=12; i++, j++)
-				{
-					packet[i] = *(reinterpret_cast<char*>(&p->delay) + j);
-					packet[i+4] = *(reinterpret_cast<char*>(&potential) + j);
-				}
-				
-				for (auto i=16, j=0; i<=17; i++,j++)
-				{
-					packet[i] = *(reinterpret_cast<char*>(&preN) + j);
-					packet[i+2] = *(reinterpret_cast<char*>(&postN) + j);
-				}
-
-				saveFile.write(packet, sizeof(packet));
+        		copy_to(bytes.data() + 0, timestamp);
+        		copy_to(bytes.data() + 8, p->delay);
+        		copy_to(bytes.data() + 12, p->weight);
+				copy_to(bytes.data() + 16, p->postNeuron->getPotential());
+				copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
+				copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
+				copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
+				copy_to(bytes.data() + 26, p->postNeuron->getRFID());
+				copy_to(bytes.data() + 28, p->postNeuron->getX());
+				copy_to(bytes.data() + 30, p->postNeuron->getY());
+				saveFile.write(bytes.data(), bytes.size());
             }
         }
     
     protected:
 		
+		template <typename T>
+		static void copy_to(char* target, T t) {
+		    *reinterpret_cast<T*>(target) = t;
+		}
+		
     	// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream saveFile;
-        char packet[20];
-        float potential;
+        std::vector<char> bytes;
     };
 }
