@@ -14,7 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
+#include <array>
 #include <stdexcept>
 
 
@@ -26,8 +26,7 @@ namespace baal
     {
     public:
     	// ----- CONSTRUCTOR -----
-        Logger(std::string filename) :
-            bytes(32, 0)
+        Logger(std::string filename)
         {
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good())
@@ -46,6 +45,7 @@ namespace baal
         {
         	if (!empty)
         	{
+        	    std::array<char, 32> bytes;
         		copy_to(bytes.data() + 0, timestamp);
         		copy_to(bytes.data() + 8, p->delay);
         		copy_to(bytes.data() + 12, p->weight);
@@ -69,6 +69,5 @@ namespace baal
 		
     	// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream saveFile;
-        std::vector<char> bytes;
     };
 }

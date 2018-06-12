@@ -322,17 +322,17 @@ namespace baal
 			externalCurrent = newCurrent;
 		}
 		
-		int getX() const
+		int16_t getX() const
 		{
 		    return xCoordinate;
 		}
 		
-		int getY() const
+		int16_t getY() const
 		{
 		    return yCoordinate;
 		}
 		
-		int getZ() const
+		int16_t getZ() const
 		{
 		    return zCoordinate;
 		}
@@ -349,9 +349,9 @@ namespace baal
 		void myelinPlasticity(double timestamp, Network* network)
 		{
 			std::vector<double> timeDifferences;
-			std::vector<int> plasticID;
+			std::vector<int16_t> plasticID;
 			
-			for (auto& inputProjection: preProjections)
+			for (auto inputProjection: preProjections)
 			{
 				// selecting plastic neurons
 				if (inputProjection->preNeuron->eligibilityTrace > 0.1)
@@ -418,7 +418,7 @@ namespace baal
 		
 		// this eventually needs to be controlled by backpropagating potential to push towards desired spike times
 		template <typename Network>
-		void reinforcementLearning(std::vector<int> plasticID, Network* network)
+		void reinforcementLearning(std::vector<int16_t> plasticID, Network* network)
 		{
 			// looping through all projections from the winner
             for (auto& allProjections: this->preProjections)

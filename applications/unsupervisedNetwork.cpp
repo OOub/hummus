@@ -26,13 +26,12 @@ int main(int argc, char** argv)
 	
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "loggerTest.bin";
-	//std::string filename = "testDelaysNORMALCHANGE.bin";
 	
 	baal::Logger logger(filename);
 	baal::Display network({&logger});
 
 //  ----- INITIALISING THE NETWORK -----
-	float runtime = 10000; //data.back().timestamp+1;
+	float runtime = data.back().timestamp+1;
 
 	float timestep = 0.1;
 
@@ -76,7 +75,7 @@ int main(int argc, char** argv)
 
 //  ----- RUNNING THE NETWORK -----
     int errorCode = network.run(runtime, timestep);
-
+	
 //  ----- EXITING APPLICATION -----
     return errorCode;
 }
