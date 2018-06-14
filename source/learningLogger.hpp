@@ -43,7 +43,6 @@ namespace baal
 
 	void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
 	{
-		std::cout << "learning epoch" << std::endl;
 		const int64_t bitSize = 22+8*timeDifferences.size()+4*plasticNeurons[0].size();
 		std::vector<char> bytes(bitSize);
 		Logger::copy_to(bytes.data() + 0, bitSize);
@@ -52,11 +51,9 @@ namespace baal
 		Logger::copy_to(bytes.data() + 18, postNeuron->getLayerID());
 		Logger::copy_to(bytes.data() + 20, postNeuron->getRFID());
 		
-		std::cout << "bit size " << bitSize << std::endl;
 		int count = 22;
 		for (auto i=0; i<timeDifferences.size(); i++)
 		{
-			std::cout << timeDifferences[i] << " " << plasticNeurons[0][i] << " " << plasticNeurons[1][i] << std::endl;
 			Logger::copy_to(bytes.data() + count, timeDifferences[i]);
 			Logger::copy_to(bytes.data() + count+8, plasticNeurons[0][i]);
 			Logger::copy_to(bytes.data() + count+10, plasticNeurons[1][i]);

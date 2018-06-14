@@ -94,16 +94,16 @@ namespace baal
 		        
 		        int ycount = 0;
 			    int xcount = 0;
-			     
+				int count = 0;
 			    int sq_rfNumber = std::sqrt(rfNumber);
 		        for (int16_t j=0; j<rfNumber; j++)
 		        {   
 		            if (j % sq_rfNumber == 0 && j != 0)
 		            {
-                        ycount = 0;
+		            	ycount = 0;
                         xcount++;
 		            }
-
+					
                 	unsigned long shift = 0;
                 	if (!neurons.empty())
                 	{
@@ -114,24 +114,27 @@ namespace baal
 			        }
 			
                 	std::vector<Neuron> temp;
-                	int count = 0;
+
                 	x=0+xcount*gridSize/sq_rfNumber;
-                	
+					
 			        for (auto i=0+shift; i < std::pow(gridSize/sq_rfNumber,2)+shift; i++)
-			        { 
+			        {
 			            if (count % (gridSize/sq_rfNumber) == 0 && count != 0)
 			            {
-			                y = 0+ycount*gridSize/sq_rfNumber;
+							y = 0+ycount*gridSize/sq_rfNumber;
 			            }
 			            count++;
+
 				        temp.emplace_back(i,_layerID,j,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,x,y,-1,_learningType);
-				        y++;
+						
+						y++;
+
 				        if (count % (gridSize/sq_rfNumber) == 0 && count != 0)
 			            {
 			                x++;
 			            }
 			        }
-			        ycount++;
+					ycount++;
 			        neurons.push_back(receptiveField{std::move(temp),j,_layerID});
 		        }
             }
