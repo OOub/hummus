@@ -150,7 +150,6 @@ namespace baal
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
 			eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
-			//emissionTrace *= std::exp(-timestep/eligibilityDecay);
 			if (emissionTrace > 0.1) // rethink this strategy
 			{
 				emissionTrace -= 0.0001;
@@ -208,9 +207,12 @@ namespace baal
 				#endif
 				for (auto delegate: network->getDelegates())
 				{
-					if (potential < threshold)
+					if (delegate->getMode() != NetworkDelegate::Mode::learningLogger)
 					{
-						delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this);
+						if (potential < threshold)
+						{
+							delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this, {}, {});
+						}
 					}
 				}
 			}
@@ -221,7 +223,7 @@ namespace baal
 				{
 					if (delegate->getMode() == NetworkDelegate::Mode::display)
 					{
-						delegate->getArrivingSpike(timestamp, nullptr, false, true, network, this);
+						delegate->getArrivingSpike(timestamp, nullptr, false, true, network, this, {}, {});
 					}
 				}
 			}
@@ -233,12 +235,15 @@ namespace baal
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
-
+				
 				for (auto delegate: network->getDelegates())
 				{
-					delegate->getArrivingSpike(timestamp, &activeProjection, true, false, network, this);
+					if (delegate->getMode() != NetworkDelegate::Mode::learningLogger)
+					{
+						delegate->getArrivingSpike(timestamp, &activeProjection, true, false, network, this, {}, {});
+					}
 				}
-			
+				
 				for (auto& p : postProjections)
 				{
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
@@ -342,6 +347,11 @@ namespace baal
 			return postProjections;
 		}
 		
+		float getEligibilityTrace() const
+		{
+			return eligibilityTrace;
+		}
+		
 	protected:
 	
 		// ----- PROTECTED NEURON METHODS -----
@@ -350,6 +360,7 @@ namespace baal
 		{
 			std::vector<double> timeDifferences;
 			std::vector<int16_t> plasticID;
+			std::vector<std::vector<int16_t>> plasticCoordinates(2);
 			
 			for (auto inputProjection: preProjections)
 			{
@@ -357,9 +368,10 @@ namespace baal
 				if (inputProjection->preNeuron->eligibilityTrace > 0.1)
 				{
 					plasticID.push_back(inputProjection->preNeuron->neuronID);
+					plasticCoordinates[0].push_back(inputProjection->preNeuron->xCoordinate);
+					plasticCoordinates[1].push_back(inputProjection->preNeuron->yCoordinate);
 					
 					float change = 0;
-					//float spikeEmissionTime = timestamp-eligibilityDecay*std::log(emissionTrace); // there is a mistake here
 					float spikeEmissionTime = timestamp - 1 + emissionTrace;
 					
 					timeDifferences.push_back(timestamp - spikeEmissionTime - inputProjection->delay);
@@ -409,6 +421,15 @@ namespace baal
 					synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
 				}
 			}
+			
+			for (auto delegate: network->getDelegates())
+			{
+				if (delegate->getMode() == NetworkDelegate::Mode::learningLogger)
+				{
+					delegate->getArrivingSpike(timestamp, nullptr, false, false, network, this, timeDifferences, plasticCoordinates);
+				}
+			}
+			
 			if (learningType == delayPlasticityReinforcement)
 			{
 				reinforcementLearning(plasticID, network);

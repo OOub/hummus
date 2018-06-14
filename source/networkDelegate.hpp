@@ -28,11 +28,12 @@ namespace baal
 		enum class Mode
 		{
 			display,
-			logger
+			logger,
+			learningLogger
 		};
 		
 		// ----- PURE VIRTUAL METHOD -----
-		virtual void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) = 0;
+		virtual void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) = 0;
 		virtual Mode getMode() const = 0;
 	};
 }

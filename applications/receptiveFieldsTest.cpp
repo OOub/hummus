@@ -17,6 +17,7 @@
 #include "../source/network.hpp"
 #include "../source/display.hpp"
 #include "../source/logger.hpp"
+#include "../source/learningLogger.hpp"
 
 int main(int argc, char** argv)
 {
@@ -25,12 +26,14 @@ int main(int argc, char** argv)
 	auto data = dataParser.readData("../../data/pip/2recs_1pip/sst101pip_2types_200reps.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
-	std::string filename = "rfTest.bin";
-	baal::Logger logger(filename);
-	baal::Display network({&logger});
+	std::string filename1 = "rfSpikeLog.bin";
+	std::string filename2 = "rfLearningLog.bin";
+	baal::Logger logger(filename1);
+	baal::LearningLogger learningLogger(filename2);
+	baal::Display network({&logger, &learningLogger});
 	
 	//  ----- NETWORK PARAMETERS -----
-	float runtime = data.back().timestamp+1;
+	float runtime = 5000;//data.back().timestamp+1;
 	float timestep = 0.1;
 	int imageSize = 24;
 	int inputlayerRF = 36;

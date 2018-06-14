@@ -199,9 +199,9 @@ namespace baal
         {
         	layerNumber = getNeuronPopulations().size(); // everything to do with layers is broken
         	std::cout << "Running the network..." << std::endl;
-			#ifndef NDEBUG
+
             std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-            #endif
+
 			if (!neurons.empty())
 			{
 				for (double i=0; i<_runtime; i+=_timestep)
@@ -221,10 +221,10 @@ namespace baal
 			}
 
 			std::cout << "Done." << std::endl;
-            #ifndef NDEBUG
+
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
             std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
-            #endif
+
 		}
 		
 		// ----- SETTERS AND GETTERS -----

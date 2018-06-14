@@ -41,7 +41,7 @@ namespace baal
 			return NetworkDelegate::Mode::logger;
 		}
 		
-        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
+        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
         {
         	if (!empty)
         	{
@@ -59,14 +59,13 @@ namespace baal
 				saveFile.write(bytes.data(), bytes.size());
             }
         }
-    
-    protected:
 		
 		template <typename T>
 		static void copy_to(char* target, T t) {
 		    *reinterpret_cast<T*>(target) = t;
 		}
 		
+    protected:
     	// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream saveFile;
     };

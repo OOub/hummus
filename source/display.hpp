@@ -74,7 +74,7 @@ namespace baal
 			return NetworkDelegate::Mode::display;
 		}
 		
-        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron) override
+        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
         {
             inputviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
             outputviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
