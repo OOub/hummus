@@ -141,7 +141,7 @@ namespace baal
 		
 		template<typename Network>
 		void update(double timestamp, float timestep, spike s, Network* network)
-		{
+		{			
             if (timestamp - lastSpikeTime >= refractoryPeriod)
             {
                 activity = false;
@@ -360,7 +360,7 @@ namespace baal
 		{
 			std::vector<double> timeDifferences;
 			std::vector<int16_t> plasticID;
-			std::vector<std::vector<int16_t>> plasticCoordinates(2);
+			std::vector<std::vector<int16_t>> plasticCoordinates(3);
 			
 			for (auto inputProjection: preProjections)
 			{
@@ -370,7 +370,8 @@ namespace baal
 					plasticID.push_back(inputProjection->preNeuron->neuronID);
 					plasticCoordinates[0].push_back(inputProjection->preNeuron->xCoordinate);
 					plasticCoordinates[1].push_back(inputProjection->preNeuron->yCoordinate);
-					
+					plasticCoordinates[2].push_back(inputProjection->preNeuron->rfID);
+
 					float change = 0;
 					float spikeEmissionTime = timestamp - 1 + emissionTrace;
 					

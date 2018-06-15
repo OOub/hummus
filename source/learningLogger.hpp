@@ -43,7 +43,7 @@ namespace baal
 
 	void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
 	{
-		const int64_t bitSize = 22+8*timeDifferences.size()+4*plasticNeurons[0].size();
+		const int64_t bitSize = 22+8*timeDifferences.size()+6*plasticNeurons[0].size();
 		std::vector<char> bytes(bitSize);
 		Logger::copy_to(bytes.data() + 0, bitSize);
 		Logger::copy_to(bytes.data() + 8, timestamp);
@@ -57,7 +57,8 @@ namespace baal
 			Logger::copy_to(bytes.data() + count, timeDifferences[i]);
 			Logger::copy_to(bytes.data() + count+8, plasticNeurons[0][i]);
 			Logger::copy_to(bytes.data() + count+10, plasticNeurons[1][i]);
-			count += 12;
+			Logger::copy_to(bytes.data() + count+12, plasticNeurons[2][i]);
+			count += 14;
 		}
 		saveFile.write(bytes.data(), bytes.size());
 	}

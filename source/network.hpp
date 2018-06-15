@@ -124,7 +124,7 @@ namespace baal
 							y = 0+ycount*gridSize/sq_rfNumber;
 			            }
 			            count++;
-
+			            std::cout << j << " " <<  x << "," << y << std::endl;
 				        temp.emplace_back(i,_layerID,j,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,x,y,-1,_learningType);
 						
 						y++;
@@ -142,7 +142,7 @@ namespace baal
             {
                 std::cout << "adding receptive fields with 1D neurons to the network" << std::endl;
                 for (auto j=0; j<rfNumber; j++)
-		        {   
+		        {
                     addNeurons(_layerID, _learningType,_numberOfNeurons, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent,j);
                 }
             }
