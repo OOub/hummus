@@ -7,8 +7,8 @@
  * Last Version: 14/05/2018
  *
  * Information: Example of a spiking neural network using receptive fields for the pip card task.
- * layer 1 minimum weight -> 19e-10 / 16
- * layer 2 minimum weight -> 19e-10 / 64
+ * layer 1 minimum weight -> 19e-10 / 16 -> this is wrong because layer 1 receives spikes from 9 receptive fields so 144 spikes theoretically)
+ * layer 2 minimum weight -> 19e-10 / 80
  */
 
 #include <iostream>
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	baal::Display network({&logger, &learningLogger});
 	
 	//  ----- NETWORK PARAMETERS -----
-	float runtime = 5000;//data.back().timestamp+1;
+	float runtime = data.back().timestamp+1;
 	float timestep = 0.1;
 	int imageSize = 24;
 	int inputlayerRF = 36;
@@ -93,6 +93,7 @@ int main(int argc, char** argv)
                 }
             }
 	    }
+		
 	    // connecting layer 1 to the output layer
 	    else if (receptiveField.layerID == 1)
 	    {
