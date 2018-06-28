@@ -1,5 +1,5 @@
 
-solution 'icarus'
+solution 'baal'
     configurations {'Release', 'Debug'}
     location 'build'
 
@@ -600,7 +600,7 @@ solution 'icarus'
 	            includedirs {'/usr/local/include'}
 	            libdirs {'/usr/local/lib'}
 
-project 'receptiveFieldsTest'
+	project 'receptiveFieldsTest'
 	        -- General settings
 	        kind 'ConsoleApp'
 	        language 'C++'

@@ -67,7 +67,7 @@ namespace baal
 			neurons.push_back(receptiveField{std::move(temp),_rfID,_layerID});
         }
 		
-		// add neurons within receptive fields // make gridSize optional
+		// add neurons within receptive fields
 		void addReceptiveFields(int rfNumber, int16_t _layerID, learningMode _learningType=noLearning, int gridSize=0, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
 		{
 		    // error handling
