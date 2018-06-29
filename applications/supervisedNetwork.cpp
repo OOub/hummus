@@ -14,7 +14,7 @@
 #include "../source/dataParser.hpp"
 #include "../source/network.hpp"
 #include "../source/display.hpp"
-#include "../source/logger.hpp"
+#include "../source/spikeLogger.hpp"
 
 int main(int argc, char** argv)
 {
@@ -23,10 +23,10 @@ int main(int argc, char** argv)
 	baal::DataParser dataParser;
 	
 	// time jitter test
-	auto data = dataParser.readData("../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
+	auto data = dataParser.readData("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
 	
 	// supervised learning
-	auto teacher = dataParser.readData("../data/generatedPatterns/timeJitter/3teacherSignal.txt");
+	auto teacher = dataParser.readData("../../data/generatedPatterns/timeJitter/3teacherSignal.txt");
 	
 	for (auto idx=0; idx<teacher.size(); idx++)
 	{
@@ -36,8 +36,8 @@ int main(int argc, char** argv)
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "supervisedLearning_3jitter.bin";
 
-	baal::Logger logger(filename);
-	baal::Display network({&logger});
+	baal::SpikeLogger spikeLogger(filename);
+	baal::Display network({&spikeLogger});
 
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data.back().timestamp+1;

@@ -13,7 +13,7 @@
 
 #include "../source/network.hpp"
 #include "../source/display.hpp"
-#include "../source/logger.hpp"
+#include "../source/spikeLogger.hpp"
 
 int main(int argc, char** argv)
 {

@@ -16,7 +16,7 @@
 #include "../source/dataParser.hpp"
 #include "../source/network.hpp"
 #include "../source/display.hpp"
-#include "../source/logger.hpp"
+#include "../source/spikeLogger.hpp"
 #include "../source/learningLogger.hpp"
 
 int main(int argc, char** argv)
@@ -28,9 +28,9 @@ int main(int argc, char** argv)
 	//  ----- INITIALISING THE NETWORK -----
 	std::string filename1 = "rfSpikeLog.bin";
 	std::string filename2 = "rfLearningLog.bin";
-	baal::Logger logger(filename1);
+	baal::SpikeLogger spikeLogger(filename1);
 	baal::LearningLogger learningLogger(filename2);
-	baal::Display network({&logger, &learningLogger});
+	baal::Display network({&spikeLogger, &learningLogger});
 	
 	//  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;

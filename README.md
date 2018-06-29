@@ -80,9 +80,8 @@ so far there are three applications build using the simulator:
 1. testNetwork.hpp: a test neural network made to understand how the simulator works
 2. unsupervisedNetwork.hpp: a neural network that uses unsupervised learning to learn toy patterns
 3. supervisedNetwork.hpp: a neural network that uses supervised learning to learn toy patterns
-4. ATISNetwork.hpp: a neural network to learn poker card pips
-5. receptiveFieldsTest.hpp: a 2D neural network using receptive fields to learn poker card pips
-6. sudoku.hpp: a neural network solving 4x4 sudokus
+4. receptiveFieldsTest.hpp: a 2D neural network using receptive fields to learn poker card pips
+
 
 ##### Classes #####
 

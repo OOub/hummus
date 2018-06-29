@@ -18,7 +18,7 @@
 #include <stdexcept>
 
 #include "network.hpp"
-#include "logger.hpp"
+#include "spikeLogger.hpp"
 
 namespace baal
 {
@@ -45,19 +45,19 @@ namespace baal
 	{
 		const int64_t bitSize = 22+8*timeDifferences.size()+6*plasticNeurons[0].size();
 		std::vector<char> bytes(bitSize);
-		Logger::copy_to(bytes.data() + 0, bitSize);
-		Logger::copy_to(bytes.data() + 8, timestamp);
-		Logger::copy_to(bytes.data() + 16, postNeuron->getNeuronID());
-		Logger::copy_to(bytes.data() + 18, postNeuron->getLayerID());
-		Logger::copy_to(bytes.data() + 20, postNeuron->getRFID());
+		SpikeLogger::copy_to(bytes.data() + 0, bitSize);
+		SpikeLogger::copy_to(bytes.data() + 8, timestamp);
+		SpikeLogger::copy_to(bytes.data() + 16, postNeuron->getNeuronID());
+		SpikeLogger::copy_to(bytes.data() + 18, postNeuron->getLayerID());
+		SpikeLogger::copy_to(bytes.data() + 20, postNeuron->getRFID());
 		
 		int count = 22;
 		for (auto i=0; i<timeDifferences.size(); i++)
 		{
-			Logger::copy_to(bytes.data() + count, timeDifferences[i]);
-			Logger::copy_to(bytes.data() + count+8, plasticNeurons[0][i]);
-			Logger::copy_to(bytes.data() + count+10, plasticNeurons[1][i]);
-			Logger::copy_to(bytes.data() + count+12, plasticNeurons[2][i]);
+			SpikeLogger::copy_to(bytes.data() + count, timeDifferences[i]);
+			SpikeLogger::copy_to(bytes.data() + count+8, plasticNeurons[0][i]);
+			SpikeLogger::copy_to(bytes.data() + count+10, plasticNeurons[1][i]);
+			SpikeLogger::copy_to(bytes.data() + count+12, plasticNeurons[2][i]);
 			count += 14;
 		}
 		saveFile.write(bytes.data(), bytes.size());

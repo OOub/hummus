@@ -28,7 +28,7 @@ namespace baal
 		enum class Mode
 		{
 			display,
-			logger,
+			spikeLogger,
 			learningLogger
 		};
 		

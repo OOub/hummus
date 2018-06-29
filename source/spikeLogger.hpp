@@ -1,5 +1,5 @@
 /*
- * logger.hpp
+ * spikeLogger.hpp
  * Baal - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -22,11 +22,11 @@
 
 namespace baal
 {
-    class Logger : public NetworkDelegate
+    class SpikeLogger : public NetworkDelegate
     {
     public:
     	// ----- CONSTRUCTOR -----
-        Logger(std::string filename)
+        SpikeLogger(std::string filename)
         {
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good())
@@ -35,10 +35,10 @@ namespace baal
             }
         }
 		
-		// ----- PUBLIC LOGGER METHODS -----
+		// ----- PUBLIC SPIKE LOGGER METHODS -----
 		Mode getMode() const override
 		{
-			return NetworkDelegate::Mode::logger;
+			return NetworkDelegate::Mode::spikeLogger;
 		}
 		
         void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
