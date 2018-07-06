@@ -61,7 +61,8 @@ namespace baal
         }
 		
 		template <typename T>
-		static void copy_to(char* target, T t) {
+		static void copy_to(char* target, T t)
+		{
 		    *reinterpret_cast<T*>(target) = t;
 		}
 		
