@@ -22,15 +22,17 @@ Install Qt 5.10.1 and make sure the Qt Charts add-on is installed (cannot guaran
 
 ##### On macOS #####
 
-# option 1  
+option 1 
+
 in the terminal run: brew install qt5
 
-# option 2  
+option 2  
+
 download directly from: https://www.qt.io/download/
 
 ##### On Linux Debian #####
 
-# option 1
+option 1
 
 1. download directly from: https://www.qt.io/download/
 
@@ -43,7 +45,7 @@ export LD\_LIBRARY\_PATH
 
 3. modify the include and library paths of Qt in the premake4 file
 
-# option 2
+option 2
 
 1. in the terminal run: sudo apt-get install qtbase5-dev qtdeclarative5-dev
 
@@ -56,7 +58,7 @@ Qt libraries
 Installation
 ==========================
 
-##### Installation ##### 
+##### Installation
 in the terminal run: premake4 install
 
 ##### Uninstallation #####
@@ -75,7 +77,7 @@ Using the simulator
 
 ##### Applications #####
 
-so far there are three applications build using the simulator:
+so far there are four applications build using the simulator:
 
 1. testNetwork.hpp: a test neural network made to understand how the simulator works
 2. unsupervisedNetwork.hpp: a neural network that uses unsupervised learning to learn toy patterns
