@@ -78,7 +78,7 @@ if Xcode is being used we could convert the application into an Xcode project by
 Using the simulator
 ==========================
 
-##### Applications #####
+# Applications
 
 so far there are four applications build using the simulator:
 
@@ -88,7 +88,7 @@ so far there are four applications build using the simulator:
 4. receptiveFieldsTest.hpp: a 2D neural network using receptive fields to learn poker card pips
 
 
-##### Classes #####
+# Classes
 
 the simulator is a header-only library with 10 classes:
 
@@ -99,7 +99,7 @@ the network class acts as a spike manager
 the networkDelegate class is polymorphic class to handle add-ons
 
 ##### neuron
-the neuron class defines a neuron and the learning rules dictating its behavior. ##### Any modifications to add new learning rules or neuron types are to be done at this stage.
+the neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage.
 
 ##### dataParser
 The DataParser class is used to input data from files into a vector: 1D data (timestamp, Index) or 2D data (timestamp, X, Y)
