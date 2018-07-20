@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 17/01/2018
  *
- * Information: The PotentialViewer class is used by the Display class to show a specified neuron's approximate potential. It is only an approximation because this GUI element works in an even-based fashion.
+ * Information: The PotentialViewer class is used by the Display class to show a specified neuron's potential. Depends on Qt5
  */
 
 #pragma once

@@ -72,6 +72,9 @@ Testing
 
 2. Run the executable testNetwork
 
+##### Optional: only for macOS #####
+if Xcode is being used we could convert the application into an Xcode project by running: premake4 xcode3 
+
 Using the simulator
 ==========================
 
@@ -87,4 +90,34 @@ so far there are four applications build using the simulator:
 
 ##### Classes #####
 
-the simulator is a header-only library with 10 classes
+the simulator is a header-only library with 10 classes:
+
+##### network 
+the network class acts as a spike manager
+
+##### network delegate
+the networkDelegate class is polymorphic class to handle add-ons
+
+##### neuron
+the neuron class defines a neuron and the learning rules dictating its behavior. ##### Any modifications to add new learning rules or neuron types are to be done at this stage.
+
+##### dataParser
+The DataParser class is used to input data from files into a vector: 1D data (timestamp, Index) or 2D data (timestamp, X, Y)
+
+##### learningLogger
+Add-on to the Network class, used to write the learning rule's output into a log binary file; In other words, which neurons are being modified at each learning epoch. This can be read using the snnReader.m matlab function
+
+##### spikeLogger
+Add-on to the Network class, used to write the spiking neural network output into a log binary file. This can be read using the snnReader.m matlab function
+
+##### display
+Add-on to the Network class, used to display a GUI of the spiking neural network output. Depends on Qt5
+
+##### inputViewer
+The InputViewer class is used by the Display class to show the input neurons. Depends on Qt5
+
+##### outputViewer
+The OutputViewer class is used by the Display class to show the output neurons. Depends on Qt5
+
+##### potentialViewer
+The PotentialViewer class is used by the Display class to show a specified neuron's potential. Depends on Qt5

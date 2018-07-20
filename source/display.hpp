@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 31/05/2018
  *
- * Information: Add-on to the Network class, used to display a GUI of the spiking neural network output
+ * Information: Add-on to the Network class, used to display a GUI of the spiking neural network output. Depends on Qt5
  */
 
 #pragma once

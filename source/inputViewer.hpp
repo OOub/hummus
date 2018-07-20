@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 17/01/2018
  *
- * Information: The InputViewer class is used by the Display class to show the input neurons.
+ * Information: The InputViewer class is used by the Display class to show the input neurons. Depends on Qt5
  */
 
 #pragma once
