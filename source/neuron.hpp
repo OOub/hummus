@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 31/05/2018
  *
- * Information: the neuron class defines a neuron and the learning rules dictating its behavior.
+ * Information: the neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage. 
  */
 
 #pragma once

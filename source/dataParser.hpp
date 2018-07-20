@@ -7,7 +7,6 @@
  * Last Version: 31/05/2018
  *
  * Information: The DataParser class is used to input data from files into a vector.
- * To-Do: implement a way to split into receptive fields by splitting the coordinate system depending on the dimensions and output that into a vector of vectors.
  */
 
 #pragma once
@@ -37,7 +36,7 @@ namespace baal
         DataParser(){}
 		
 		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
-		// encode the 2D neurons differently to simply this function because the 2D to 1D mapping is now obsolete
+
         std::vector<input> readData(std::string filename, int width=24)
         {
             dataFile.open(filename);

@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 12/06/2018
  *
- * Information: Add-on to the Network class, used to write the spiking neural network output into a log binary file.
+ * Information: Add-on to the Network class, used to write the spiking neural network output into a log binary file. This can be read using the snnReader.m matlab function
  */
 
 #pragma once
