@@ -89,7 +89,7 @@ namespace baal
             }
             else
             {
-                throw std::runtime_error("the file could not be opened");
+                throw std::runtime_error("the file could not be opened. Please check that the path is set correctly.");
             }
         }
 		

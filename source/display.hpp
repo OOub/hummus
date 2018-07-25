@@ -89,7 +89,6 @@ namespace baal
         	engine->rootContext()->setContextProperty("layers", network.getNeuronPopulations()[std::distance(std::begin(network.getNeuronPopulations()),maxLayerNumber)].layerID);
         	
         	// number of neurons in each layer
-
         	std::vector<int> neuronsInLayers(network.getNeuronPopulations()[std::distance(std::begin(network.getNeuronPopulations()),maxLayerNumber)].layerID+1, 0);
         	for (auto i=0; i< network.getNeuronPopulations()[std::distance(std::begin(network.getNeuronPopulations()),maxLayerNumber)].layerID+1; i++)
         	{
@@ -171,7 +170,7 @@ namespace baal
             outputviewer->setTimeWindow(newWindow);
             potentialviewer->setTimeWindow(newWindow);
         }
-		
+
     protected:
 		
 		// ----- IMPLEMENTATION VARIABLES -----
