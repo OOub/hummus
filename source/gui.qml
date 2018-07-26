@@ -2,7 +2,7 @@ R""(
 
 /*
  * gui.qml
- * Baal - clock-driven spiking neural network simulator
+ * Adonis_t - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr

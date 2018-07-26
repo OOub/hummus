@@ -1,123 +1,63 @@
-Baal: clock-based spiking neural network simulator
+﻿
+# Adonis Quick Start Guide
 
-Dependencies
-==========================
+Adonis is a spiking neural network simulator coded using C++. There are currently two versions:
+* Adonis_t : a clock-based version of the simulator which includes current dynamics
+* Adonis_e : an event-based version of the simulator without current dynamics
 
-# Homebrew is used to install the dependencies on macOS:
+## Dependencies
 
-To install homebrew, open the terminal and run: /usr/bin/ruby -e \"\$(curl -fsSL
-https://raw.githubusercontent.com/Homebrew/install/master install)\"
+#### On macOS
 
-# Premake4 is used to build this project
+###### Homebrew
+Homebrew is used to easily install macOS dependencies. Open a terminal and run ``/usr/bin/ruby -e “$(curl -fsSL [https://raw.githubusercontent.com/Homebrew/install/master](https://raw.githubusercontent.com/Homebrew/install/master) install)”``.
 
-##### On macOS #####
-in the terminal run: brew install premake
+###### Premake 4
+Premake 4 is used to build the project. Open a terminal and run ``brew install premake``.
 
-##### On Linux Debian #####
-in the terminal run: sudo apt-get install premake4
+###### Qt
+The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions.
+ 
+**first option:**  Open a terminal and run ``brew install qt5``
 
-# If the Display Class is being used:
+**second option:** 
+1. Download directly from https://www.qt.io/download/
+2. Select the correct version of Qt
+3. Make sure the Qt Charts add-on is selected
+4. Open the premake4.lua file and modify the moc, include and library paths depending on where Qt was installed 
 
-Install Qt 5.10.1 and make sure the Qt Charts add-on is installed (cannot guarantee support for other versions of Qt)
+### On Linux (Debian and Ubuntu)
 
-##### On macOS #####
+###### Premake 4
+Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``.
 
-option 1 
+###### Qt
+The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions.
 
-in the terminal run: brew install qt5
-
-option 2  
-
-download directly from: https://www.qt.io/download/
-
-##### On Linux Debian #####
-
-option 1
-
-1. download directly from: https://www.qt.io/download/
-
-2. permanently add the Qt dynamic lib path to the LD\_LIBRARY\_PATH by
-opening the .bashrc file in your home directory and adding at the end
-the lines:
-
-LD\_LIBRARY\_PATH=\[path the Qt dynamic lib path\]  
+1. Download directly from https://www.qt.io/download/
+2. Select the correct version of Qt
+3. Make sure the Qt Charts add-on is selected
+4. Open the premake4.lua file and modify the moc, include and library paths depending on where Qt was installed 
+5. Open the .bashrc file in your home directory and add these lines:
+```
+LD\_LIBRARY\_PATH=[path to the Qt dynamic lib]
 export LD\_LIBRARY\_PATH 
+```
 
-3. modify the include and library paths of Qt in the premake4 file
+## Testing
 
-option 2
+1. Go to the Adonis directory and run ``premake4 gmake && cd build &&.
+    make``
+2. execute ``./release/testNetwork`` to run the spiking neural network.
 
-1. in the terminal run: sudo apt-get install qtbase5-dev qtdeclarative5-dev
+**_Disclaimer: some of the applications bundled in with the simulator use a path relative to the executable to use one of the files present in the data folder. For such cases, execute ``cd release && ./testNetwork`` instead of ``./release/testNetwork``_**
 
-2. follow instructions from this website to build the Qt Charts add-on
-from source: https://github.com/qt/qtcharts
+#### Optional: only for macOS
+to use Xcode as an IDE, go the Adonis base directory and run ``premake4 xcode3``.
 
-3. make sure QT Charts libraries are in the same folder as the rest of
-Qt libraries
+## Using the simulator
 
-Installation
-==========================
+The Adonis simulator is a header-only C++ library with 10 classes
 
-##### Installation
-in the terminal run: premake4 install
+[flowChart]: resources/flowchart.png "Adonis UML Diagram"
 
-##### Uninstallation #####
-in the terminal run: premake4 uninstall
-
-Testing
-==========================
-
-1. Go to the baal directory and run: premake4 gmake && cd build &&
-    make
-
-2. Run the executable testNetwork
-
-##### Optional: only for macOS #####
-if Xcode is being used we could convert the application into an Xcode project by running: premake4 xcode3 
-
-Using the simulator
-==========================
-
-# Applications
-
-so far there are four applications build using the simulator:
-
-1. testNetwork.hpp: a test neural network made to understand how the simulator works
-2. unsupervisedNetwork.hpp: a neural network that uses unsupervised learning to learn toy patterns
-3. supervisedNetwork.hpp: a neural network that uses supervised learning to learn toy patterns
-4. receptiveFieldsTest.hpp: a 2D neural network using receptive fields to learn poker card pips
-
-
-# Classes
-
-the simulator is a header-only library with 10 classes:
-
-##### network 
-the network class acts as a spike manager
-
-##### network delegate
-the networkDelegate class is polymorphic class to handle add-ons
-
-##### neuron
-the neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage.
-
-##### dataParser
-The DataParser class is used to input data from files into a vector: 1D data (timestamp, Index) or 2D data (timestamp, X, Y)
-
-##### learningLogger
-Add-on to the Network class, used to write the learning rule's output into a log binary file; In other words, which neurons are being modified at each learning epoch. This can be read using the snnReader.m matlab function
-
-##### spikeLogger
-Add-on to the Network class, used to write the spiking neural network output into a log binary file. This can be read using the snnReader.m matlab function
-
-##### display
-Add-on to the Network class, used to display a GUI of the spiking neural network output. Depends on Qt5
-
-##### inputViewer
-The InputViewer class is used by the Display class to show the input neurons. Depends on Qt5
-
-##### outputViewer
-The OutputViewer class is used by the Display class to show the output neurons. Depends on Qt5
-
-##### potentialViewer
-The PotentialViewer class is used by the Display class to show a specified neuron's potential. Depends on Qt5

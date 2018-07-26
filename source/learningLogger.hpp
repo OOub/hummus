@@ -1,6 +1,6 @@
 /*
  * learningLogger.hpp
- * Baal - clock-driven spiking neural network simulator
+ * Adonis_t - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -20,7 +20,7 @@
 #include "network.hpp"
 #include "spikeLogger.hpp"
 
-namespace baal
+namespace adonis_t
 {
     class LearningLogger : public NetworkDelegate
     {

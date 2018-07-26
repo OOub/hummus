@@ -1,6 +1,6 @@
 /*
  * recpetiveFieldsTest.cpp
- * Baal - clock-driven spiking neural network simulator
+ * Adonis_t - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -21,15 +21,15 @@
 int main(int argc, char** argv)
 {
 	//  ----- READING DATA FROM FILE -----
-	baal::DataParser dataParser;
+	adonis_t::DataParser dataParser;
 	auto data = dataParser.readData("../../data/pip/2_classes/t10_1pip_2types_200reps.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
 	std::string filename1 = "rfSpikeLog.bin";
 	std::string filename2 = "rfLearningLog.bin";
-	baal::SpikeLogger spikeLogger(filename1);
-	baal::LearningLogger learningLogger(filename2);
-	baal::Display network({&spikeLogger, &learningLogger});
+	adonis_t::SpikeLogger spikeLogger(filename1);
+	adonis_t::LearningLogger learningLogger(filename2);
+	adonis_t::Display network({&spikeLogger, &learningLogger});
 	
 	//  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;
@@ -52,12 +52,12 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)
-    network.addReceptiveFields(inputlayerRF, 0, baal::learningMode::noLearning, imageSize, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+    network.addReceptiveFields(inputlayerRF, 0, adonis_t::learningMode::noLearning, imageSize, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	// layer 1 with 36 receptive fields and a layer depth equal to 5 (1D neurons)
 	for (auto i=0; i<layer1Volume; i++)
 	{
-    	network.addReceptiveFields(layer1RF, 1, baal::learningMode::delayPlasticityNoReinforcement, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+    	network.addReceptiveFields(layer1RF, 1, adonis_t::learningMode::delayPlasticityNoReinforcement, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
     }
 	
     //  ----- CONNECTING THE NETWORK -----

@@ -1,6 +1,6 @@
 /*
  * networkDelegate.hpp
- * Baal - clock-driven spiking neural network simulator
+ * Adonis_t - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -11,7 +11,7 @@
 
 #pragma once
 
-namespace baal
+namespace adonis_t
 {
 	class Network;
 	class Neuron;

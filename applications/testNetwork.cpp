@@ -1,6 +1,6 @@
 /*
  * testNetwork.cpp
- * Baal - clock-driven spiking neural network simulator
+ * Adonis_t - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -17,10 +17,10 @@
 
 int main(int argc, char** argv)
 {
-	baal::DataParser dataParser;
+	adonis_t::DataParser dataParser;
 
 //  ----- NETWORK PARAMETERS -----
-	baal::Display network;
+	adonis_t::Display network;
 
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = 100;
@@ -37,13 +37,13 @@ int main(int argc, char** argv)
     float weight = 19e-10;
 
 	// creating input neurons
-	network.addNeurons(0, baal::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 1 neurons
-	network.addNeurons(1, baal::learningMode::noLearning, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(1, adonis_t::learningMode::noLearning, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// creating layer 2 neurons
-	network.addNeurons(2, baal::learningMode::noLearning, layer2Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(2, adonis_t::learningMode::noLearning, layer2Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// connecting input layer and layer 1
 	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);

@@ -1,6 +1,6 @@
 /*
  * supervisedNetwork.cpp
- * Baal - clock-driven spiking neural network simulator
+ * Adonis_t - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 {
 //  ----- READING DATA FROM FILE -----
 	int repeatsInTeacher = 300;
-	baal::DataParser dataParser;
+	adonis_t::DataParser dataParser;
 	
 	// time jitter test
 	auto data = dataParser.readData("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
@@ -36,8 +36,8 @@ int main(int argc, char** argv)
 //  ----- NETWORK PARAMETERS -----
 	std::string filename = "supervisedLearning_3jitter.bin";
 
-	baal::SpikeLogger spikeLogger(filename);
-	baal::Display network({&spikeLogger});
+	adonis_t::SpikeLogger spikeLogger(filename);
+	adonis_t::Display network({&spikeLogger});
 
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data.back().timestamp+1;
@@ -59,9 +59,9 @@ int main(int argc, char** argv)
 	float alpha = 1;
 	float lambda = 1;
 
-	network.addNeurons(0, baal::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-	network.addNeurons(1, baal::learningMode::delayPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-	network.addNeurons(2, baal::learningMode::delayPlasticityReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, alpha, lambda);
+	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
+	network.addNeurons(1, adonis_t::learningMode::delayPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
+	network.addNeurons(2, adonis_t::learningMode::delayPlasticityReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, alpha, lambda);
 	
 	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);
 	network.allToallConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false,  19e-10/5, true, 20);
