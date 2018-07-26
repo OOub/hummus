@@ -1,4 +1,4 @@
-﻿
+
 # Adonis Quick Start Guide
 
 Adonis is a spiking neural network simulator coded using C++. There are currently two versions:
@@ -59,5 +59,4 @@ to use Xcode as an IDE, go the Adonis base directory and run ``premake4 xcode3``
 
 The Adonis simulator is a header-only C++ library with 10 classes
 
-[flowChart]: resources/flowchart.png "Adonis UML Diagram"
-
+![flowChart](resources/flowchart.png)
