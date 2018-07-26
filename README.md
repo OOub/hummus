@@ -1,4 +1,4 @@
-﻿
+
 # Adonis Quick Start Guide
 
 Adonis is a spiking neural network simulator coded using C++. There are currently two versions:
@@ -21,6 +21,7 @@ The Qt framework is needed when using the GUI to visualise the output of a neura
 **first option:**  Open a terminal and run ``brew install qt5``
 
 **second option:** 
+
 1. Download directly from https://www.qt.io/download/
 2. Select the correct version of Qt
 3. Make sure the Qt Charts add-on is selected
