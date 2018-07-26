@@ -1,7 +1,10 @@
 
-solution 'baal'
+solution 'adonis_t' 
     configurations {'Release', 'Debug'}
     location 'build'
+
+    os.execute('rm -rf build') 
+    os.execute('mkdir build')
 
     for index, file in pairs(os.matchfiles('applications/*.cpp')) do
     	local name = path.getbasename(file)
@@ -12,84 +15,97 @@ solution 'baal'
         	location 'build'
         	files {'source/**.hpp', 'applications/' .. name .. '.cpp'}
 
-        	-- Run moc and link to the Qt library
-	        local mocFiles = {
-	            'source/inputViewer.hpp',
-	            'source/outputViewer.hpp',
-	            'source/potentialViewer.hpp',
-	        }
+        	newoption {
+   				trigger     = 'without-qt',
+   				description = 'Compiles without Qt'
+			}
 
-	        -- Linux specific settings
-	        configuration 'linux'
-	        if os.is("linux") then
-	            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
-	            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
-	            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
-	            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
-	            os.rmdir(mocDirectory)
-	            os.mkdir(mocDirectory)
-	            for index, mocFile in pairs(mocFiles) do
-	                if os.execute(mocCommand
-	                    .. ' -I\'' .. qtIncludeDirectory .. '/QtQml\''
-	                    .. ' -o \'' .. mocDirectory .. '/' .. path.getbasename(mocFile) .. '.cpp\''
-	                    .. ' \''.. mocFile .. '\''
-	                    ) ~= 0 then
-	                    print(string.char(27) .. '[31mPre-compiling ' .. mocFile .. ' failed' .. string.char(27) .. '[0m')
-	                    os.exit(1)
-	                end
-	            print(string.char(27) .. '[32m' .. mocFile .. ' was successfully pre-compiled' .. string.char(27) .. '[0m')
-	            end
+			if _OPTIONS['without-qt'] then
+   				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
+   			else
+   				with_qt = true
+   				print(string.char(27) .. '[32m Building with Qt' .. string.char(27) .. '[0m')
+			end
 
-	            files {mocDirectory .. '/**.hpp', mocDirectory .. '/**.cpp', 'source/**.qml'}
-	            includedirs {qtIncludeDirectory, qtIncludeDirectory .. '/QtQml'}
-	            
-	            libdirs {qtLibDirectory}
-	            links {'Qt5Core', 'Qt5Gui', 'Qt5Qml', 'Qt5Quick','Qt5Widgets','Qt5Charts'}
-	            
-	            buildoptions {'-fPIC'}
-	        end
+			if with_qt then
+				print(string.char(27) .. '[32m entering loop' .. string.char(27) .. '[0m')
+	            -- Run moc and link to the Qt library
+	        	local mocFiles = {
+	            	'source/inputViewer.hpp',
+	            	'source/outputViewer.hpp',
+	            	'source/potentialViewer.hpp',
+	        	}
+
+		        -- Linux specific settings
+		        if os.is("linux") then
+		            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
+		            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
+		            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
+		            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
+		            os.rmdir(mocDirectory)
+		            os.mkdir(mocDirectory)
+		            for index, mocFile in pairs(mocFiles) do
+		                if os.execute(mocCommand
+		                    .. ' -I\'' .. qtIncludeDirectory .. '/QtQml\''
+		                    .. ' -o \'' .. mocDirectory .. '/' .. path.getbasename(mocFile) .. '.cpp\''
+		                    .. ' \''.. mocFile .. '\''
+		                    ) ~= 0 then
+		                    print(string.char(27) .. '[31mPre-compiling ' .. mocFile .. ' failed' .. string.char(27) .. '[0m')
+		                    os.exit(1)
+		                end
+		            print(string.char(27) .. '[32m' .. mocFile .. ' was successfully pre-compiled' .. string.char(27) .. '[0m')
+		            end
+
+		            files {mocDirectory .. '/**.hpp', mocDirectory .. '/**.cpp', 'source/**.qml'}
+		            includedirs {qtIncludeDirectory, qtIncludeDirectory .. '/QtQml'}
+		            
+		            libdirs {qtLibDirectory}
+		            links {'Qt5Core', 'Qt5Gui', 'Qt5Qml', 'Qt5Quick','Qt5Widgets','Qt5Charts'}
+		            
+		            buildoptions {'-fPIC'}
+		        end
 
 
-	        -- Mac OS X specific settings
-	        configuration 'macosx'
-	        if os.is("macosx") then
+		        -- Mac OS X specific settings
+		        if os.is("macosx") then
 
-	            local mocCommand = '/usr/local/opt/qt/bin/moc' -- must point to the moc executable
-	            local qtIncludeDirectory = '/usr/local/opt/qt/include' -- Qt headers
-	            local qtLibDirectory = '/usr/local/opt/qt/lib' -- Qt dynamic libraries
+		            local mocCommand = '/usr/local/opt/qt/bin/moc' -- must point to the moc executable
+		            local qtIncludeDirectory = '/usr/local/opt/qt/include' -- Qt headers
+		            local qtLibDirectory = '/usr/local/opt/qt/lib' -- Qt dynamic libraries
 
-	            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
-	            os.rmdir(mocDirectory)
-	            os.mkdir(mocDirectory)
-	            for index, mocFile in pairs(mocFiles) do
-	                if os.execute(mocCommand
-	                    .. ' -I\'' .. qtIncludeDirectory .. '/QtQml\''
-	                    .. ' -o \'' .. mocDirectory .. '/' .. path.getbasename(mocFile) .. '.cpp\''
-	                    .. ' \''.. mocFile .. '\''
-	                    ) ~= 0 then
-	                    print(string.char(27) .. '[31mPre-compiling ' .. mocFile .. ' failed' .. string.char(27) .. '[0m')
-	                    os.exit(1)
-	                end
-	                print(string.char(27) .. '[32m' .. mocFile .. ' was successfully pre-compiled' .. string.char(27) .. '[0m')
-	            end
+		            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
+		            os.rmdir(mocDirectory)
+		            os.mkdir(mocDirectory)
+		            for index, mocFile in pairs(mocFiles) do
+		                if os.execute(mocCommand
+		                    .. ' -I\'' .. qtIncludeDirectory .. '/QtQml\''
+		                    .. ' -o \'' .. mocDirectory .. '/' .. path.getbasename(mocFile) .. '.cpp\''
+		                    .. ' \''.. mocFile .. '\''
+		                    ) ~= 0 then
+		                    print(string.char(27) .. '[31mPre-compiling ' .. mocFile .. ' failed' .. string.char(27) .. '[0m')
+		                    os.exit(1)
+		                end
+		                print(string.char(27) .. '[32m' .. mocFile .. ' was successfully pre-compiled' .. string.char(27) .. '[0m')
+		            end
 
-	            files {mocDirectory .. '/**.hpp', mocDirectory .. '/**.cpp', 'source/**.qml'}
-	            includedirs {qtIncludeDirectory, qtIncludeDirectory .. '/QtQml'}
+		            files {mocDirectory .. '/**.hpp', mocDirectory .. '/**.cpp', 'source/**.qml'}
+		            includedirs {qtIncludeDirectory, qtIncludeDirectory .. '/QtQml'}
 
-	            libdirs {qtLibDirectory}
-	            buildoptions {'-fPIC'}
+		            libdirs {qtLibDirectory}
+		            buildoptions {'-fPIC'}
 
-	            linkoptions
-	            {
-	                '-F' .. qtLibDirectory,
-	                '-framework QtCore',
-	                '-framework QtGui',
-	                '-framework QtQml',
-	                '-framework QtQuick',
-	                '-framework QtWidgets',
-	                '-framework QtQuickControls2',
-	                '-framework QtCharts',
-	            }
+		            linkoptions
+		            {
+		                '-F' .. qtLibDirectory,
+		                '-framework QtCore',
+		                '-framework QtGui',
+		                '-framework QtQml',
+		                '-framework QtQuick',
+		                '-framework QtWidgets',
+		                '-framework QtQuickControls2',
+		                '-framework QtCharts',
+		            }
+		        end
 	        end
 
 	        -- Declare the configurations
@@ -105,7 +121,6 @@ solution 'baal'
 
 	        -- Linux specific settings
 	        configuration 'linux'
-
 	            buildoptions {'-std=c++11'}
 	            linkoptions {'-std=c++11'}
 	            links {'pthread'}

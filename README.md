@@ -1,4 +1,4 @@
-
+﻿
 # Adonis Quick Start Guide
 
 Adonis is a spiking neural network simulator coded using C++. There are currently two versions:
@@ -15,7 +15,7 @@ Homebrew is used to easily install macOS dependencies. Open a terminal and run `
 ###### Premake 4
 Premake 4 is used to build the project. Open a terminal and run ``brew install premake``.
 
-###### Qt
+###### Qt (optional if no GUI is needed)
 The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions.
  
 **first option:**  Open a terminal and run ``brew install qt5``
@@ -31,7 +31,7 @@ The Qt framework is needed when using the GUI to visualise the output of a neura
 ###### Premake 4
 Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``.
 
-###### Qt
+###### Qt (optional if no GUI is needed)
 The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions.
 
 1. Download directly from https://www.qt.io/download/
@@ -52,11 +52,16 @@ export LD\_LIBRARY\_PATH
 
 **_Disclaimer: some of the applications bundled in with the simulator use a path relative to the executable to use one of the files present in the data folder. For such cases, execute ``cd release && ./testNetwork`` instead of ``./release/testNetwork``_**
 
-#### Optional: only for macOS
-to use Xcode as an IDE, go the Adonis base directory and run ``premake4 xcode3``.
+#### Premake Actions and Options
+To use Xcode as an IDE on macOS, go the Adonis base directory and run ``premake4 xcode4``.
+
+In case you do not want a GUI, you can build Adonis without any Qt dependencies by running ``premake4 --without-qt gmake`` instead of ``premake4 gmake``
+
+Run ``premake4 --help`` for more information
 
 ## Using the simulator
 
 The Adonis simulator is a header-only C++ library with 10 classes
 
 ![flowChart](resources/flowchart.png)
+
