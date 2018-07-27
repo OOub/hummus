@@ -41,7 +41,7 @@ namespace adonis_t
 		return NetworkDelegate::Mode::learningLogger;
 	}
 
-	void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
+	void learningEpoch(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
 	{
 		const int64_t bitSize = 22+8*timeDifferences.size()+6*plasticNeurons[0].size();
 		std::vector<char> bytes(bitSize);

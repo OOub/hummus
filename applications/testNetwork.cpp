@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include "../source/network.hpp"
+#include "../source/display.hpp"
 #include "../source/spikeLogger.hpp"
 
 int main(int argc, char** argv)
@@ -19,8 +20,9 @@ int main(int argc, char** argv)
 	adonis_t::DataParser dataParser;
 
 //  ----- NETWORK PARAMETERS -----
-	adonis_t::Network network;
-
+//	adonis_t::Network network;
+	adonis_t::Display network;
+	
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = 100;
 	float timestep = 0.1;
@@ -57,9 +59,16 @@ int main(int argc, char** argv)
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(15));
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(25));
 
+//  ----- DISPLAY SETTINGS -----
+  	network.useHardwareAcceleration(true);
+  	network.setTimeWindow(runtime);
+  	network.trackNeuron(2);
+	
 //  ----- RUNNING THE NETWORK -----
-    network.run(runtime, timestep);
+//    network.run(runtime, timestep);
+    int errorCode = network.run(runtime, timestep);
 
 //  ----- EXITING APPLICATION -----
-    return 0;
+//    return 0;
+    return errorCode;
 }

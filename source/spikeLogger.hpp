@@ -36,28 +36,36 @@ namespace adonis_t
         }
 		
 		// ----- PUBLIC SPIKE LOGGER METHODS -----
-		Mode getMode() const override
-		{
-			return NetworkDelegate::Mode::spikeLogger;
-		}
-		
-        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
+		void incomingSpike(double timestamp, projection* p, Network* network) override
         {
-        	if (!empty)
-        	{
-        	    std::array<char, 32> bytes;
-        		copy_to(bytes.data() + 0, timestamp);
-        		copy_to(bytes.data() + 8, p->delay);
-        		copy_to(bytes.data() + 12, p->weight);
-				copy_to(bytes.data() + 16, p->postNeuron->getPotential());
-				copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
-				copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
-				copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
-				copy_to(bytes.data() + 26, p->postNeuron->getRFID());
-				copy_to(bytes.data() + 28, p->postNeuron->getX());
-				copy_to(bytes.data() + 30, p->postNeuron->getY());
-				saveFile.write(bytes.data(), bytes.size());
-            }
+			std::array<char, 32> bytes;
+			copy_to(bytes.data() + 0, timestamp);
+			copy_to(bytes.data() + 8, p->delay);
+			copy_to(bytes.data() + 12, p->weight);
+			copy_to(bytes.data() + 16, p->postNeuron->getPotential());
+			copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
+			copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
+			copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
+			copy_to(bytes.data() + 26, p->postNeuron->getRFID());
+			copy_to(bytes.data() + 28, p->postNeuron->getX());
+			copy_to(bytes.data() + 30, p->postNeuron->getY());
+			saveFile.write(bytes.data(), bytes.size());
+        }
+		
+		void neuronFired(double timestamp, projection* p, Network* network) override
+        {
+			std::array<char, 32> bytes;
+			copy_to(bytes.data() + 0, timestamp);
+			copy_to(bytes.data() + 8, p->delay);
+			copy_to(bytes.data() + 12, p->weight);
+			copy_to(bytes.data() + 16, p->postNeuron->getPotential());
+			copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
+			copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
+			copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
+			copy_to(bytes.data() + 26, p->postNeuron->getRFID());
+			copy_to(bytes.data() + 28, p->postNeuron->getX());
+			copy_to(bytes.data() + 30, p->postNeuron->getY());
+			saveFile.write(bytes.data(), bytes.size());
         }
 		
 		template <typename T>

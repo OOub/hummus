@@ -56,52 +56,50 @@ namespace adonis_t
         virtual ~PotentialViewer(){}
 		
     	// ----- PUBLIC POTENTIALVIEWER METHODS -----
-        void handleData(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron)
-        {
-        	if (!empty)
-        	{
-				if (p->postNeuron->getNeuronID() == neuronTracker)
-				{
-					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-					if (!isClosed)
-					{
-						potential = p->postNeuron->getPotential();
-						threshold = p->postNeuron->getThreshold();
-						points.append(QPointF(timestamp, potential));
-						thresPoints.append(QPointF(timestamp, threshold));
-						minY = std::min(minY, static_cast<float>(potential));
-						maxY = std::max(maxY, static_cast<float>(potential));
-					}
-					else
-					{
-						points.clear();
-					}
-					atomicGuard.clear(std::memory_order_release);
-				}
-			}
-			else
+		void handleData(double timestamp, projection* p, Network* network)
+		{
+			if (p->postNeuron->getNeuronID() == neuronTracker)
 			{
-				if (postNeuron->getNeuronID() == neuronTracker)
+				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
+				if (!isClosed)
 				{
-					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-					if (!isClosed)
-					{
-						potential = postNeuron->getPotential();
-						points.append(QPointF(timestamp, potential));
-						thresPoints.append(QPointF(timestamp, threshold));
-						minY = std::min(minY, static_cast<float>(potential));
-						maxY = std::max(maxY, static_cast<float>(potential));
-					}
-					else
-					{
-						points.clear();
-						thresPoints.clear();
-					}
-					atomicGuard.clear(std::memory_order_release);
+					potential = p->postNeuron->getPotential();
+					threshold = p->postNeuron->getThreshold();
+					points.append(QPointF(timestamp, potential));
+					thresPoints.append(QPointF(timestamp, threshold));
+					minY = std::min(minY, static_cast<float>(potential));
+					maxY = std::max(maxY, static_cast<float>(potential));
 				}
+				else
+				{
+					points.clear();
+				}
+				atomicGuard.clear(std::memory_order_release);
+			}
+		}
+		
+		void handleTimestep(double timestamp, Network* network, Neuron* postNeuron)
+		{
+			if (postNeuron->getNeuronID() == neuronTracker)
+			{
+				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
+				if (!isClosed)
+				{
+					potential = postNeuron->getPotential();
+					points.append(QPointF(timestamp, potential));
+					thresPoints.append(QPointF(timestamp, threshold));
+					minY = std::min(minY, static_cast<float>(potential));
+					maxY = std::max(maxY, static_cast<float>(potential));
+				}
+				else
+				{
+					points.clear();
+					thresPoints.clear();
+				}
+				atomicGuard.clear(std::memory_order_release);
 			}
 			maxX = timestamp;
-        }
+		}
 		
 		// ----- SETTERS -----
 		void setTimeWindow(double newWindow)

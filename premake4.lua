@@ -24,11 +24,9 @@ solution 'adonis_t'
    				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
    			else
    				with_qt = true
-   				print(string.char(27) .. '[32m Building with Qt' .. string.char(27) .. '[0m')
 			end
 
 			if with_qt then
-				print(string.char(27) .. '[32m entering loop' .. string.char(27) .. '[0m')
 	            -- Run moc and link to the Qt library
 	        	local mocFiles = {
 	            	'source/inputViewer.hpp',

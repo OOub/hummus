@@ -25,15 +25,11 @@ namespace adonis_t
 		NetworkDelegate() = default;
 		virtual ~NetworkDelegate(){}
 		
-		enum class Mode
-		{
-			display,
-			spikeLogger,
-			learningLogger
-		};
+		// ----- PUBLIC METHODS -----
+		virtual void incomingSpike(double timestamp, projection* p, Network* network){}
+		virtual void neuronFired(double timestamp, projection* p, Network* network){}
+		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}
+		virtual void learningEpoch(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons){}
 		
-		// ----- PURE VIRTUAL METHOD -----
-		virtual void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) = 0;
-		virtual Mode getMode() const = 0;
 	};
 }

@@ -69,17 +69,24 @@ namespace adonis_t
         }
 		
     	// ----- PUBLIC DISPLAY METHODS -----
-		Mode getMode() const override
+		void incomingSpike(double timestamp, projection* p, Network* network) override
 		{
-			return NetworkDelegate::Mode::display;
+			potentialviewer->handleData(timestamp, p, network);
 		}
 		
-        void getArrivingSpike(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
+        void neuronFired(double timestamp, projection* p, Network* network) override
         {
-            inputviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
-            outputviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
-            potentialviewer->handleData(timestamp, p, spiked, empty, network, postNeuron);
-        }
+			inputviewer->handleData(timestamp, p, network);
+			outputviewer->handleData(timestamp, p, network);
+			potentialviewer->handleData(timestamp, p, network);
+		}
+		
+		void timestep(double timestamp, Network* network, Neuron* postNeuron) override
+        {
+			inputviewer->handleTimestep(timestamp);
+			outputviewer->handleTimestep(timestamp);
+			potentialviewer->handleTimestep(timestamp, network, postNeuron);
+		}
 		
 		int run(double _runtime, float _timestep)
         {	
@@ -175,7 +182,7 @@ namespace adonis_t
 		
 		// ----- IMPLEMENTATION VARIABLES -----
         std::unique_ptr<QApplication>          app;
-        QQmlApplicationEngine*                 engine; // this should be a unique pointer but there's a double free error because of the usage of qml and the engine
+        QQmlApplicationEngine*                 engine;
         Network                                network;
         InputViewer*                           inputviewer;
         OutputViewer*                          outputviewer;

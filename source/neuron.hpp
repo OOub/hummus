@@ -207,12 +207,9 @@ namespace adonis_t
 				#endif
 				for (auto delegate: network->getDelegates())
 				{
-					if (delegate->getMode() != NetworkDelegate::Mode::learningLogger)
+					if (potential < threshold)
 					{
-						if (potential < threshold)
-						{
-							delegate->getArrivingSpike(timestamp, s.postProjection, false, false, network, this, {}, {});
-						}
+						delegate->incomingSpike(timestamp, s.postProjection, network);
 					}
 				}
 			}
@@ -221,10 +218,7 @@ namespace adonis_t
 			{
 				for (auto delegate: network->getDelegates())
 				{
-					if (delegate->getMode() == NetworkDelegate::Mode::display)
-					{
-						delegate->getArrivingSpike(timestamp, nullptr, false, true, network, this, {}, {});
-					}
+					delegate->timestep(timestamp, network, this);
 				}
 			}
 			
@@ -238,10 +232,7 @@ namespace adonis_t
 				
 				for (auto delegate: network->getDelegates())
 				{
-					if (delegate->getMode() != NetworkDelegate::Mode::learningLogger)
-					{
-						delegate->getArrivingSpike(timestamp, &activeProjection, true, false, network, this, {}, {});
-					}
+					delegate->neuronFired(timestamp, &activeProjection, network);
 				}
 				
 				for (auto& p : postProjections)
@@ -352,6 +343,11 @@ namespace adonis_t
 			return eligibilityTrace;
 		}
 		
+		projection* getInitialProjection()
+		{
+			return &initialProjection;
+		}
+		
 	protected:
 	
 		// ----- PROTECTED NEURON METHODS -----
@@ -425,10 +421,7 @@ namespace adonis_t
 			
 			for (auto delegate: network->getDelegates())
 			{
-				if (delegate->getMode() == NetworkDelegate::Mode::learningLogger)
-				{
-					delegate->getArrivingSpike(timestamp, nullptr, false, false, network, this, timeDifferences, plasticCoordinates);
-				}
+				delegate->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
 			}
 			
 			if (learningType == delayPlasticityReinforcement)

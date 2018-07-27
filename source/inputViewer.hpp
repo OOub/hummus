@@ -58,25 +58,26 @@ namespace adonis_t
         virtual ~InputViewer(){}
 		
     	// ----- PUBLIC INPUTVIEWER METHODS -----
-        void handleData(double timestamp, projection* p, bool spiked, bool empty, Network* network, Neuron* postNeuron)
+		void handleData(double timestamp, projection* p, Network* network)
         {
-        	if (!empty)
-        	{
-				if (p->postNeuron->getLayerID() == 0 && spiked) // need to automatically find which is the input layer
+			if (p->postNeuron->getInitialProjection()->postNeuron)
+			{
+				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
+				if (!isClosed)
 				{
-					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-					if (!isClosed)
-					{
-						points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
-						maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
-					}
-					else
-					{
-						points.clear();
-					}
-					atomicGuard.clear(std::memory_order_release);
+					points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
+					maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
 				}
+				else
+				{
+					points.clear();
+				}
+				atomicGuard.clear(std::memory_order_release);
 			}
+        }
+		
+		void handleTimestep(double timestamp)
+        {
 			maxX = timestamp;
         }
 		
