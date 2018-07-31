@@ -65,7 +65,10 @@ namespace adonis_t
 				{
 					points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
 					maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
-					minY = yLookupTable[layerTracker-1];
+					if (yLookupTable.size() > 0)
+					{
+						minY = yLookupTable[layerTracker-1];
+					}
 				}
 				else
 				{

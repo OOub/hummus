@@ -14,7 +14,7 @@
 #include "../source/neuron.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/network.hpp"
-#include "../source/display.hpp"
+#include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
 
 int main(int argc, char** argv)
@@ -25,10 +25,9 @@ int main(int argc, char** argv)
 	auto data = dataParser.readData("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
 	
 //  ----- NETWORK PARAMETERS -----
-	std::string filename = "loggerTest.bin";
-	
-	adonis_t::SpikeLogger spikeLogger(filename);
-	adonis_t::Display network({&spikeLogger});
+	adonis_t::QtDisplay qtDisplay;
+	adonis_t::SpikeLogger spikeLogger(std::string("loggerTest.bin"));
+	adonis_t::Network network({&spikeLogger}, &qtDisplay);
 
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = data.back().timestamp+1;
@@ -69,13 +68,13 @@ int main(int argc, char** argv)
     }
 
 //  ----- DISPLAY SETTINGS -----
-	network.useHardwareAcceleration(true);
-	network.setTimeWindow(1000);
-	network.trackNeuron(28);
+	qtDisplay.useHardwareAcceleration(true);
+	qtDisplay.setTimeWindow(1000);
+	qtDisplay.trackNeuron(28);
 
 //  ----- RUNNING THE NETWORK -----
-    int errorCode = network.run(runtime, timestep);
+    network.run(runtime, timestep);
 	
 //  ----- EXITING APPLICATION -----
-    return errorCode;
+    return 0;
 }

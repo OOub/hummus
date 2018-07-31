@@ -30,6 +30,5 @@ namespace adonis_t
 		virtual void neuronFired(double timestamp, projection* p, Network* network){}
 		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}
 		virtual void learningEpoch(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons){}
-		
 	};
 }

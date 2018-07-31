@@ -14,7 +14,7 @@
 
 #include "../source/dataParser.hpp"
 #include "../source/network.hpp"
-#include "../source/display.hpp"
+#include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
 #include "../source/learningLogger.hpp"
 
@@ -25,11 +25,11 @@ int main(int argc, char** argv)
 	auto data = dataParser.readData("../../data/pip/2_classes/t10_1pip_2types_200reps.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
-	std::string filename1 = "rfSpikeLog.bin";
-	std::string filename2 = "rfLearningLog.bin";
-	adonis_t::SpikeLogger spikeLogger(filename1);
-	adonis_t::LearningLogger learningLogger(filename2);
-	adonis_t::Display network({&spikeLogger, &learningLogger});
+	adonis_t::QtDisplay qtDisplay;
+	adonis_t::SpikeLogger spikeLogger(std::string("rfSpikeLog.bin"));
+	adonis_t::LearningLogger learningLogger(std::string("rfLearningLog.bin"));
+	
+	adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 	
 	//  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;
@@ -96,14 +96,14 @@ int main(int argc, char** argv)
 	}
 
     //  ----- DISPLAY SETTINGS -----
-	network.useHardwareAcceleration(true);
-	network.setTimeWindow(5000);
-	network.trackLayer(1);
-	network.trackNeuron(670);
+	qtDisplay.useHardwareAcceleration(true);
+	qtDisplay.setTimeWindow(5000);
+	qtDisplay.trackLayer(1);
+	qtDisplay.trackNeuron(670);
 
     //  ----- RUNNING THE NETWORK -----
-    int errorCode = network.run(runtime, timestep);
+    network.run(runtime, timestep);
 
     //  ----- EXITING APPLICATION -----
-    return errorCode;
+    return 0;
 }

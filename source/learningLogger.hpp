@@ -22,7 +22,7 @@
 
 namespace adonis_t
 {
-    class LearningLogger : public NetworkDelegate
+    class LearningLogger : public StandardNetworkDelegate
     {
     public:
     	// ----- CONSTRUCTOR -----
@@ -36,11 +36,6 @@ namespace adonis_t
         }
 
 	// ----- PUBLIC LOGGER METHODS -----
-	Mode getMode() const override
-	{
-		return NetworkDelegate::Mode::learningLogger;
-	}
-
 	void learningEpoch(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
 	{
 		const int64_t bitSize = 22+8*timeDifferences.size()+6*plasticNeurons[0].size();

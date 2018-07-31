@@ -22,7 +22,7 @@
 
 namespace adonis_t
 {
-    class SpikeLogger : public NetworkDelegate
+    class SpikeLogger : public StandardNetworkDelegate
     {
     public:
     	// ----- CONSTRUCTOR -----

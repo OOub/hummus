@@ -16,11 +16,13 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <thread>
 #include <deque>
 
 #include "neuron.hpp"
 #include "dataParser.hpp"
-#include "networkDelegate.hpp"
+#include "standardNetworkDelegate.hpp"
+#include "mainThreadNetworkDelegate.hpp"
 
 namespace adonis_t
 {
@@ -36,16 +38,17 @@ namespace adonis_t
     public:
 		
 		// ----- CONSTRUCTOR AND DESTRUCTOR ------
-        Network(std::vector<NetworkDelegate*> _delegates = {}) :
-            delegates(_delegates),
+        Network(std::vector<StandardNetworkDelegate*> _stdDelegates = {}, MainThreadNetworkDelegate* _thDelegate = nullptr) :
+            stdDelegates(_stdDelegates),
+			thDelegate(_thDelegate),
             teacher(nullptr),
-            layerNumber(0),
 			teachingProgress(false),
 			teacherIterator(0)
-		{
+		{}
 		
-		}
-	
+		Network(MainThreadNetworkDelegate* _thDelegate) : Network({}, _thDelegate)
+		{}
+		
 		// ----- PUBLIC NETWORK METHODS -----
 		// add neurons
 		void addNeurons(int16_t _layerID, learningMode _learningType=noLearning, int _numberOfNeurons=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _rfID=0)
@@ -199,34 +202,61 @@ namespace adonis_t
 		// clock-based running through the network
         void run(double _runtime, float _timestep)
         {
-        	layerNumber = getNeuronPopulations().size(); // everything to do with layers is broken
-        	std::cout << "Running the network..." << std::endl;
+			std::thread spikeManager([this, _runtime, _timestep]{
+				std::cout << "Running the network..." << std::endl;
 
-            std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+				std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
 
-			if (!neurons.empty())
-			{
-				for (double i=0; i<_runtime; i+=_timestep)
+				if (!neurons.empty())
 				{
-					for (auto& pop: neurons)
+					for (double i=0; i<_runtime; i+=_timestep)
 					{
-						for (auto& neuron: pop.rfNeurons)
+						for (auto& pop: neurons)
 						{
-							update(&neuron, i, _timestep);
+							for (auto& neuron: pop.rfNeurons)
+							{
+								update(&neuron, i, _timestep);
+							}
 						}
 					}
 				}
-			}
-			else
+				else
+				{
+					throw std::runtime_error("add neurons to the network before running it");
+				}
+
+				std::cout << "Done." << std::endl;
+
+				std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
+				std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
+			});
+			
+			if (thDelegate)
 			{
-				throw std::runtime_error("add neurons to the network before running it");
+				// finding the number of layers in the network
+				int numberOfLayers = getNeuronPopulations()[std::distance(std::begin(getNeuronPopulations()),std::max_element(getNeuronPopulations().begin(), getNeuronPopulations().end(), [](const receptiveField& one, const receptiveField& two){return one.layerID < two.layerID;}))].layerID;
+			
+				// number of neurons in each layer
+				std::vector<int> neuronsInLayers(numberOfLayers+1, 0);
+				std::cout << neuronsInLayers.size() << std::endl;
+				for (auto i=0; i< numberOfLayers+1; i++)
+				{
+					for (auto& receptiveField: getNeuronPopulations())
+					{
+						if (receptiveField.layerID == i)
+						{
+							neuronsInLayers[i] += receptiveField.rfNeurons.size();
+						}
+					}
+					if (i > 0)
+					{
+						neuronsInLayers[i] += neuronsInLayers[i-1];
+					}
+				}
+			
+				thDelegate->begin(numberOfLayers, neuronsInLayers);
 			}
-
-			std::cout << "Done." << std::endl;
-
-            std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
-            std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
-
+			spikeManager.join();
 		}
 		
 		// ----- SETTERS AND GETTERS -----
@@ -235,9 +265,14 @@ namespace adonis_t
 			return neurons;
 		}
 		
-		std::vector<NetworkDelegate*>& getDelegates()
+		std::vector<StandardNetworkDelegate*>& getStandardDelegates()
 		{
-			return delegates;
+			return stdDelegates;
+		}
+		
+		MainThreadNetworkDelegate* getMainThreadDelegate()
+		{
+			return thDelegate;
 		}
 		
 		std::deque<spike>& getGeneratedSpikes()
@@ -263,11 +298,6 @@ namespace adonis_t
 		void setTeachingProgress(bool status)
         {
             teachingProgress = status;
-        }
-		
-        uint64_t getLayerNumber() const
-        {
-        	return layerNumber;
         }
 		
 		// ----- SUPERVISED LEARNING METHODS -----
@@ -354,13 +384,13 @@ namespace adonis_t
 		}
 		
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::deque<spike>                initialSpikes;
-        std::deque<spike>                generatedSpikes;
-        std::vector<NetworkDelegate*>    delegates;
-		std::vector<receptiveField>      neurons;
-		uint64_t					     layerNumber;
-		int                              teacherIterator;
-		bool                             teachingProgress;
+		std::deque<spike>                      initialSpikes;
+        std::deque<spike>                      generatedSpikes;
+        std::vector<StandardNetworkDelegate*>  stdDelegates;
+        MainThreadNetworkDelegate*             thDelegate;
+		std::vector<receptiveField>            neurons;
+		int                                    teacherIterator;
+		bool                                   teachingProgress;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
         std::vector<input>* teacher;

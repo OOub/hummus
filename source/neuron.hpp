@@ -205,20 +205,28 @@ namespace adonis_t
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (s.postProjection->preNeuron ? s.postProjection->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.postProjection->weight << " d=" << s.postProjection->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
 				#endif
-				for (auto delegate: network->getDelegates())
+				for (auto delegate: network->getStandardDelegates())
 				{
 					if (potential < threshold)
 					{
 						delegate->incomingSpike(timestamp, s.postProjection, network);
 					}
 				}
+				if (network->getMainThreadDelegate())
+				{
+					network->getMainThreadDelegate()->incomingSpike(timestamp, s.postProjection, network);
+				}
 			}
 			
 			else
 			{
-				for (auto delegate: network->getDelegates())
+				for (auto delegate: network->getStandardDelegates())
 				{
 					delegate->timestep(timestamp, network, this);
+				}
+				if (network->getMainThreadDelegate())
+				{
+					network->getMainThreadDelegate()->timestep(timestamp, network, this);
 				}
 			}
 			
@@ -230,9 +238,13 @@ namespace adonis_t
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
 				
-				for (auto delegate: network->getDelegates())
+				for (auto delegate: network->getStandardDelegates())
 				{
 					delegate->neuronFired(timestamp, &activeProjection, network);
+				}
+				if (network->getMainThreadDelegate())
+				{
+					network->getMainThreadDelegate()->neuronFired(timestamp, &activeProjection, network);
 				}
 				
 				for (auto& p : postProjections)
@@ -419,9 +431,13 @@ namespace adonis_t
 				}
 			}
 			
-			for (auto delegate: network->getDelegates())
+			for (auto delegate: network->getStandardDelegates())
 			{
 				delegate->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
+			}
+			if (network->getMainThreadDelegate())
+			{
+				network->getMainThreadDelegate()->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
 			}
 			
 			if (learningType == delayPlasticityReinforcement)

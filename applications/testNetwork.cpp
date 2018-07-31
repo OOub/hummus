@@ -12,31 +12,34 @@
 #include <iostream>
 
 #include "../source/network.hpp"
-#include "../source/display.hpp"
+#include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
+#include "../source/learningLogger.hpp"
 
 int main(int argc, char** argv)
 {
 	adonis_t::DataParser dataParser;
 
 //  ----- NETWORK PARAMETERS -----
-//	adonis_t::Network network;
-	adonis_t::Display network;
-	
+	adonis_t::QtDisplay qtDisplay;
+	adonis_t::SpikeLogger spikeLogger(std::string("spikeLog"));
+	adonis_t::LearningLogger learningLogger(std::string("learningLog"));
+	adonis_t::Network network({&spikeLogger, &learningLogger});
+
 //  ----- INITIALISING THE NETWORK -----
 	float runtime = 100;
 	float timestep = 0.1;
-
+	
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
-
+	
     int inputNeurons = 1;
     int layer1Neurons = 1;
 	int layer2Neurons = 1;
-
+	
     float weight = 19e-10;
-
+	
 	// creating input neurons
 	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
@@ -60,15 +63,13 @@ int main(int argc, char** argv)
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(25));
 
 //  ----- DISPLAY SETTINGS -----
-  	network.useHardwareAcceleration(true);
-  	network.setTimeWindow(runtime);
-  	network.trackNeuron(2);
+  	qtDisplay.useHardwareAcceleration(true);
+  	qtDisplay.setTimeWindow(runtime);
+  	qtDisplay.trackNeuron(2);
 	
 //  ----- RUNNING THE NETWORK -----
-//    network.run(runtime, timestep);
-    int errorCode = network.run(runtime, timestep);
+    network.run(runtime, timestep);
 
 //  ----- EXITING APPLICATION -----
-//    return 0;
-    return errorCode;
+    return 0;
 }
