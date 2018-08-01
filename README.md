@@ -1,7 +1,7 @@
 
 # Quick Start Guide
 
-Adonis is a spiking neural network simulator coded using C++. There are currently two versions:
+Adonis is a spiking neural network simulator coded using C++. There are currently two versions:  
 1. **Adonis_t** : a clock-based version of the simulator which includes current dynamics
 2. **Adonis_e** : an event-based version of the simulator without current dynamics
 
