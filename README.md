@@ -62,7 +62,7 @@ Run ``premake4 --help`` for more information
 
 ## Using the simulator
 
-The Adonis simulator is a header-only C++ library with 10 classes
+The Adonis simulator is a header-only C++ library with 12 classes
 
 ![flowChart](resources/flowchart.svg)
 
