@@ -1,9 +1,9 @@
 
-# Adonis Quick Start Guide
+# Quick Start Guide
 
 Adonis is a spiking neural network simulator coded using C++. There are currently two versions:
-* Adonis_t : a clock-based version of the simulator which includes current dynamics
-* Adonis_e : an event-based version of the simulator without current dynamics
+1. **Adonis_t** : a clock-based version of the simulator which includes current dynamics
+2. **Adonis_e** : an event-based version of the simulator without current dynamics
 
 ## Dependencies
 
@@ -18,9 +18,10 @@ Premake 4 is used to build the project. Open a terminal and run ``brew install p
 ###### Qt (optional if no GUI is needed)
 The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions.
  
-**first option:**  Open a terminal and run ``brew install qt5``
+**first option**  
+Open a terminal and run ``brew install qt5``
 
-**second option:** 
+**second option** 
 
 1. Download directly from https://www.qt.io/download/
 2. Select the correct version of Qt
