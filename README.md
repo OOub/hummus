@@ -1,4 +1,4 @@
-![Logo](resources/adonis_Logo.png)
+![Logo](resources/adonis_logo.png)
 
 
 # Quick Start Guide
