@@ -53,8 +53,7 @@ export LD\_LIBRARY\_PATH
 
 ## Testing
 
-1. Go to the Adonis directory and run ``premake4 gmake && cd build &&.
-    make``
+1. Go to the Adonis directory and run ``premake4 gmake && cd build && make``
 2. execute ``./release/testNetwork`` to run the spiking neural network.
 
 **_Disclaimer: some of the applications bundled in with the simulator use a path relative to the executable to use one of the files present in the data folder. For such cases, execute ``cd release && ./testNetwork`` instead of ``./release/testNetwork``_**
