@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="433px" height="174px" viewBox="0 0 433 174" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.2 (57519) - http://www.bohemiancoding.com/sketch -->
+    <title>Logo + Text</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <polygon id="path-1" points="59.7227934 0.596097117 84.6511557 6.57103912 103.694622 20.3229428 108.515936 39.8449099 116.792468 55.8643416 113.077097 66.3966035 127.027069 89.0062871 116.792468 96.0986459 121.138258 104.694311 116.792468 110.496254 121.138258 113.204525 116.792468 117.910915 116.792468 125.968583 109.66519 134.516682 95.9767822 134.516682 80.9283678 148.437335 59.7227934 173.867939 25.5605312 166.625768 10.6185314 152.832325 23.0243295 117.910915 14.5979261 94.5068368 0.0394802505 68.8145158 1.22358586 35.2148651 25.5605312 7.97171655"></polygon>
+        <filter x="-1.6%" y="-1.2%" width="103.1%" height="102.3%" filterUnits="objectBoundingBox" id="filter-3">
+            <feGaussianBlur stdDeviation="1.5" in="SourceAlpha" result="shadowBlurInner1"></feGaussianBlur>
+            <feOffset dx="0" dy="1" in="shadowBlurInner1" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="A4" transform="translate(-68.000000, -374.000000)">
+            <g id="Logo-+-Text" transform="translate(67.000000, 374.000000)">
+                <g id="Group" transform="translate(307.000000, 0.000000)">
+                    <mask id="mask-2" fill="white">
+                        <use xlink:href="#path-1"></use>
+                    </mask>
+                    <g id="Mask" fill-rule="nonzero">
+                        <use fill="#BC4F46" xlink:href="#path-1"></use>
+                        <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-1"></use>
+                    </g>
+                    <g mask="url(#mask-2)" fill-rule="nonzero" stroke="#FFFFFF" stroke-linecap="square" stroke-width="1.5">
+                        <g transform="translate(-12.000000, -7.500000)">
+                            <path d="M30.75,8.25 L71.25,45.75" id="Line"></path>
+                            <path d="M21.75,134.25 L56.25,111.75" id="Line-2"></path>
+                            <path d="M18.75,98.25 L56.25,111.75" id="Line-12"></path>
+                            <path d="M30.75,116.25 L42.75,149.25" id="Line-3"></path>
+                            <path d="M33.75,177.75 L65.25,137.25" id="Line-4"></path>
+                            <path d="M72.75,189.75 L65.655,137.955974" id="Line-5"></path>
+                            <path d="M18.75,162.75 L42.7545191,149.373399" id="Line-6"></path>
+                            <path d="M42.75,149.25 L47.25,159.75" id="Line-7"></path>
+                            <path d="M47.25,160.35 L71.25,180.75" id="Line-8"></path>
+                            <path d="M42.75,149.25 L65.25,137.25" id="Line-9"></path>
+                            <path d="M54.75,165.75 L114.75,150.75" id="Line-10"></path>
+                            <path d="M102.75,162.75 L65.784091,136.565814" id="Line-11"></path>
+                            <path d="M75.75,2.25 L35.25,53.25" id="Line-13"></path>
+                            <path d="M78.75,24.6 L110.252324,5.24856153" id="Line-14"></path>
+                            <path d="M78.75,24.75 L126.75,26.25" id="Line-15"></path>
+                            <path d="M79.05,24.75 L110.251607,56.2516071" id="Line-16"></path>
+                            <path d="M71.25,45.75 L135.75,47.25" id="Line-17"></path>
+                            <path d="M137.25,66.75 L110.25,56.25" id="Line-18"></path>
+                            <path d="M134.85,62.1 L97.05,68.2457395" id="Line-19"></path>
+                            <path d="M123.75,41.25 L110.25,56.25" id="Line-20"></path>
+                            <path d="M66.75,0.75 L78.75,24.75" id="Line-21"></path>
+                            <path d="M69.75,45.75 L78.75,24.75" id="Line-22"></path>
+                            <path d="M3.75,44.25 L69.75,44.25" id="Line-23"></path>
+                            <path d="M29.25,80.25 L35.25,53.25" id="Line-24"></path>
+                            <path d="M35.25,53.25 L69.75,44.25" id="Line-25"></path>
+                            <path d="M69.75,44.25 L72.75,84.75" id="Line-26"></path>
+                            <path d="M72.75,86.25 L96.75,68.25" id="Line-27"></path>
+                            <path d="M71.25,45.75 L98.25,68.25" id="Line-28"></path>
+                            <path d="M110.25,56.25 L98.25,66.75" id="Line-29"></path>
+                            <path d="M35.25,53.25 L2.25,39.75" id="Line-30"></path>
+                            <path d="M27.75,81.75 L6.75,27.75" id="Line-31"></path>
+                            <path d="M53.25,71.25 L69.75,44.25" id="Line-32"></path>
+                            <path d="M53.25,71.25 L72.75,86.25" id="Line-33"></path>
+                            <path d="M56.25,111.75 L65.25,137.25" id="Line-34"></path>
+                            <path d="M65.25,135.75 L90.75,122.25" id="Line-35"></path>
+                            <path d="M90.75,122.25 L108.75,147.75" id="Line-36"></path>
+                            <path d="M56.25,111.75 L90.75,122.25" id="Line-37"></path>
+                            <path d="M27.75,83.25 L27.75,101.25" id="Line-38"></path>
+                            <path d="M0.75,65.25 L56.25,111.75" id="Line-39"></path>
+                            <path d="M0.75,69.75 L27.75,81.75" id="Line-40"></path>
+                            <path d="M53.25,71.25 L27.75,81.75" id="Line-41"></path>
+                            <path d="M71.25,84.75 L27.75,81.75" id="Line-42"></path>
+                            <path d="M72.75,86.25 L56.25,110.25" id="Line-43"></path>
+                            <path d="M74.25,86.25 L90.75,122.25" id="Line-44"></path>
+                            <path d="M96.75,68.25 L90.75,122.25" id="Line-45"></path>
+                            <path d="M107.25,80.25 L90.75,120.75" id="Line-46"></path>
+                            <path d="M111.75,116.25 L90.75,122.25" id="Line-47"></path>
+                            <path d="M111.75,116.25 L102.75,161.25" id="Line-48"></path>
+                            <path d="M140.25,135.75 L90.75,122.25" id="Line-49"></path>
+                            <path d="M107.25,80.25 L111.75,116.25" id="Line-50"></path>
+                            <path d="M98.25,68.25 L107.25,80.25" id="Line-51"></path>
+                            <path d="M132.45,74.25 L96.75,68.25" id="Line-52"></path>
+                            <path d="M129.75,104.25 L125.25,72.75" id="Line-53"></path>
+                            <path d="M137.25,101.25 L111.75,116.25" id="Line-54"></path>
+                            <path d="M143.25,131.25 L113.25,116.25" id="Line-55"></path>
+                            <path d="M143.25,114.75 L111.75,116.25" id="Line-56"></path>
+                            <path d="M107.25,80.25 L149.25,60.75" id="Line-57"></path>
+                        </g>
+                    </g>
+                </g>
+                <text id="Adonis" font-family="Roboto-Light, Roboto" font-size="96" font-weight="300" fill="#4A4A4A">
+                    <tspan x="4.0390625" y="112">Adonis</tspan>
+                </text>
+                <text id="spiking-neural-netwo" font-family="Roboto-Light, Roboto" font-size="21" font-weight="300" fill="#4A4A4A">
+                    <tspan x="0.0568847656" y="141">spiking neural network simulator</tspan>
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>
