@@ -88,7 +88,7 @@ namespace adonis_t
             }
             else
             {
-                throw std::runtime_error("the file could not be opened. Please check that the path is set correctly.");
+                throw std::runtime_error("the file could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName");
             }
         }
 		
