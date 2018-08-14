@@ -57,7 +57,7 @@ export LD\_LIBRARY\_PATH
 
 2. execute ``cd release && ./testNetwork`` to run the spiking neural network
 
-**_Disclaimer: some of the applications bundled in with the simulator use a path relative to the executable to use one of the files present in the data folder. As such, executing ``./release/testNetwork`` instead of ``cd release && ./testNetwork`` could lead to an error message when the relative path is set incorrectly_**
+**_Disclaimer: some of the applications bundled with the simulator use a path relative to the executable to use one of the files present in the data folder. As such, executing ``./release/testNetwork`` instead of ``cd release && ./testNetwork`` could lead to an error message when the relative path is set incorrectly_**
 
 #### Premake Actions and Options
 
@@ -125,7 +125,7 @@ _Initialising The Network_
 
 ###### Connecting The Network
 
-* the network getter **getNeuronPopulations()** a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
+* the network getter **getNeuronPopulations()** returns a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
 
 * the network method **allToAllConnectivity()** connects all neurons of a presynaptic population with all neurons from a posynaptic population. It has 7 parameters:
 
