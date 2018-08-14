@@ -90,7 +90,7 @@ all the classes are declared within the ``adonis_t`` namespace. Check out testNe
 
 This is done via the **readData()** method which take in a string for the location of the input data file, and an int for the width of the 2D square grid in the case of 2D data.
 
-the output is a vector of struct with 4 fields: timestamp, neuronID, x, y.
+the output is a vector of struct with 4 fields: **timestamp**, **neuronID**, **x**, **y**.
 
 ###### Initialisation
 
@@ -116,13 +116,42 @@ _Initialising The Network_
 ``adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);``
 
 ###### Creating The Network
-**TBA**
+
+* to create neurons defined in a 1D space, we use the Network method **addNeurons()** method
+
+* to create neurons defined in a 2D square grid (for computer vision tasks), we use the Network method **addReceptiveFields()** method which creates a grid where each square in that grid contains a separate neuron population. This method allows the network to retain spatial information
+
+* an important parameter in the methods to create neurons is the learning rule selection via the enumeration **learningMode** defined in the Neuron class. Check it out to see all the available learning rule options.
 
 ###### Connecting The Network
-**TBA**
+
+* the network getter **getNeuronPopulations()** a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
+
+* the network method **allToallConnectivity()** connects all neurons of a presynaptic population with all neurons from a posynaptic population. It has 7 parameters:
+
+1. a reference to a presynaptic neuron population
+2. a reference to a postsynaptic neuron population
+3. a bool to randomise the projection weights around a value
+4. the weight value in question
+5. a bool to randomise the projection delays around a value
+6. the delay value in question
+7. a bool to allow redundant connectivity (more than one projection between a set of neurons)
+
+the following is an example of connectivity between 2 layers, with fixed weights, random delays with a maximum value of 20, and no redundant connectivity:
+```
+network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20, false);
+```
 
 ###### Injecting Spikes
-**TBA**
+
+* to inject a spike in a neuron we need to use the network method **injectSpike()** on a neuron. The neuron has to be defined as an input neuron via the Neuron class method **prepareInitialSpike** which takes in the timestamp of the spike. In the testNetwork.cpp you can find an example of how this looks:
+
+```
+network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
+```
+ here we inject a spike at timestamp 10 (a.u) for the first neuron in the first neuron population created.
+
+* if we are using an input data file we can loop through the input data vector (check reading input data section) to  find the neuron that has to spike and the spike timestamp. When using 1D data the spiking neuron is simply the neuron ID. For 2D data we have to search in the neuron population for the correct neuron using its x y coordinates (an example of that can be seen in the receptiveFieldsTest.cpp).
 
 ###### Qt Display Settings
 The QtDisplay class has 4 methods to control the settings:
