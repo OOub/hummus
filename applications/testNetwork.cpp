@@ -18,15 +18,14 @@
 
 int main(int argc, char** argv)
 {
-	adonis_t::DataParser dataParser;
 
-//  ----- NETWORK PARAMETERS -----
+    //  ----- INITIALISING THE NETWORK -----
 	adonis_t::QtDisplay qtDisplay;
 	adonis_t::SpikeLogger spikeLogger(std::string("spikeLog"));
 	adonis_t::LearningLogger learningLogger(std::string("learningLog"));
-	adonis_t::Network network({&spikeLogger, &learningLogger});
+	adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 
-//  ----- INITIALISING THE NETWORK -----
+    //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
 	float timestep = 0.1;
 	
@@ -40,36 +39,38 @@ int main(int argc, char** argv)
 	
     float weight = 19e-10;
 	
-	// creating input neurons
+	//  ----- CREATING THE NETWORK -----
+	// input neurons
 	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
-	// creating layer 1 neurons
+	// layer 1 neurons
 	network.addNeurons(1, adonis_t::learningMode::noLearning, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
-	// creating layer 2 neurons
+	// layer 2 neurons
 	network.addNeurons(2, adonis_t::learningMode::noLearning, layer2Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
-	// connecting input layer and layer 1
+    //  ----- CONNECTING THE NETWORK -----
+	// input layer -> layer 1
 	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
 
-	// connecting layer 1 and layer 2
+	// layer 1 -> layer 2
 	network.allToallConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false, weight, false, 0);
 
-	// injecting spikes in the input layer
+    //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(11));
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(13));
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(15));
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(25));
 
-//  ----- DISPLAY SETTINGS -----
+    //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
   	qtDisplay.trackNeuron(2);
 	
-//  ----- RUNNING THE NETWORK -----
+    //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 
-//  ----- EXITING APPLICATION -----
+    //  ----- EXITING APPLICATION -----
     return 0;
 }

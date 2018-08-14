@@ -1,9 +1,9 @@
 ![Logo](resources/adonis_logo.png)
 
-
 # Quick Start Guide
 
 Adonis is a spiking neural network simulator coded using C++. There are currently two versions:  
+
 **1. Adonis_t** : a clock-based version of the simulator which includes current dynamics  
 **2. Adonis_e** : an event-based version of the simulator without current dynamics
 
@@ -12,13 +12,13 @@ Adonis is a spiking neural network simulator coded using C++. There are currentl
 #### On macOS
 
 ###### Homebrew
-Homebrew is used to easily install macOS dependencies. Open a terminal and run ``/usr/bin/ruby -e “$(curl -fsSL [https://raw.githubusercontent.com/Homebrew/install/master](https://raw.githubusercontent.com/Homebrew/install/master) install)”``.
+Homebrew is used to easily install macOS dependencies. Open a terminal and run ``/usr/bin/ruby -e “$(curl -fsSL [https://raw.githubusercontent.com/Homebrew/install/master](https://raw.githubusercontent.com/Homebrew/install/master) install)”``
 
 ###### Premake 4
-Premake 4 is used to build the project. Open a terminal and run ``brew install premake``.
+Premake 4 is used to build the project. Open a terminal and run ``brew install premake``
 
 ###### Qt (optional if no GUI is needed)
-The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions.
+The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions
 
 **first option**  
 Open a terminal and run ``brew install qt5``
@@ -33,7 +33,7 @@ Open a terminal and run ``brew install qt5``
 #### On Linux (Debian and Ubuntu)
 
 ###### Premake 4
-Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``.
+Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``
 
 ###### Qt (optional if no GUI is needed)
 The Qt framework version 5.10 or newer is needed when using the GUI to visualise the output of a neural network. To install qt5 on Debian Buster, type the following:
@@ -53,21 +53,77 @@ export LD\_LIBRARY\_PATH
 
 ## Testing
 
-1. Go to the Adonis directory and run ``premake4 gmake && cd build && make``
-2. execute ``cd release && ./testNetwork`` to run the spiking neural network.
+1. Go to the Adonis directory and run ``premake4 gmake && cd build && make`` or ``premake4 --without-qt gmake && cd build && make`` in case we do not want any Qt dependencies
+
+2. execute ``cd release && ./testNetwork`` to run the spiking neural network
 
 **_Disclaimer: some of the applications bundled in with the simulator use a path relative to the executable to use one of the files present in the data folder. As such, executing ``./release/testNetwork`` instead of ``cd release && ./testNetwork`` could lead to an error message when the relative path is set incorrectly_**
 
-#### Building Without Qt
+#### Premake Actions and Options
+
+###### Using xCode on macOS
+To use Xcode as an IDE on macOS, go the Adonis base directory and run ``premake4 xcode4``
+
+###### Building Without Qt
 In case you do not want to use the Qt GUI, you can build Adonis without any Qt dependencies by running ``premake4 --without-qt gmake`` instead of ``premake4 gmake``
 
-#### Other Premake Actions and Options
-To use Xcode as an IDE on macOS, go the Adonis base directory and run ``premake4 xcode4``.
-
+###### Premake Help
 Run ``premake4 --help`` for more information
 
-## Using the simulator
+## Using The Simulator
 
+#### Adonis UML Diagram
 The Adonis simulator is a header-only C++ library with 12 classes
 
 ![flowChart](resources/flowchart.svg)
+
+#### Adonis_t
+all the classes are declared within the ``adonis_t`` namespace
+
+###### Important includes
+* add ``#include "../source/network.hpp"`` to use the base framework
+* any add-ons being used also need to be included. If I want to use the Qt Display for instance, I would add ``#include "../source/qtDisplay.hpp"``
+
+###### Reading Input data
+**TBA**
+
+###### Initialisation
+
+######## Initialising the optional Add-ons
+* the QtDisplay is initialised as such: ``adonis_t::QtDisplay qtDisplay;``
+* the SpikeLogger and the LearningLogger both take in an std::string as a parameter, to define the name of their corresponding output file. They are initialised as such:
+```
+adonis_t::SpikeLogger spikeLogger(std::string("spikeLog"));
+adonis_t::LearningLogger learningLogger(std::string("learningLog"));
+```
+######## Initialising The Network
+* if no add-ons are used we can directly initialise the network as such: ``adonis_t::Network network``
+
+* the Network class can take in a vector of references for the standard delegates:
+``adonis_t::Network network({&spikeLogger, &learningLogger});``
+
+* the Network class can also take in a reference to a main thread delegate (only 1 main thread add-on can be used):
+``adonis_t::Network network(&qtDisplay);``
+
+* if both types of add-ons are being used then we initialise as such:
+``adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);``
+
+###### Creating The Network
+**TBA**
+
+###### Connecting The Network
+**TBA**
+
+###### Injecting Spikes
+**TBA**
+
+###### Qt Display Settings
+The QtDisplay class has 4 methods to control the settings:
+
+* useHardwareAcceleration : a bool to control whether to use openGL
+* trackLayer : an int to track a specific layer
+* trackLayer : an int to track a specific neuron via its ID
+* setTimeWindow : a double that defines the time window of the display
+
+###### Running The Network
+to run the network use the Network class method run which takes the _runtime_ and the _timestep_ as parameters: ``network.run(runtime, timestep);``

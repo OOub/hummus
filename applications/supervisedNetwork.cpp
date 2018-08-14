@@ -18,7 +18,7 @@
 
 int main(int argc, char** argv)
 {
-//  ----- READING DATA FROM FILE -----
+    //  ----- READING DATA FROM FILE -----
 	int repeatsInTeacher = 300;
 	adonis_t::DataParser dataParser;
 	
@@ -33,12 +33,12 @@ int main(int argc, char** argv)
 		teacher.resize(repeatsInTeacher);
 	}
 
-//  ----- NETWORK PARAMETERS -----
+    //  ----- INITIALISING THE NETWORK -----
 	adonis_t::QtDisplay qtDisplay;
 	adonis_t::SpikeLogger spikeLogger(std::string("supervisedLearning_3jitter.bin"));
 	adonis_t::Network network({&spikeLogger}, &qtDisplay);
 
-//  ----- INITIALISING THE NETWORK -----
+    //  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;
 	float timestep = 0.1;
 
@@ -58,14 +58,16 @@ int main(int argc, char** argv)
 	float alpha = 1;
 	float lambda = 1;
 
+    //  ----- CREATING THE NETWORK -----
 	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
 	network.addNeurons(1, adonis_t::learningMode::delayPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
 	network.addNeurons(2, adonis_t::learningMode::delayPlasticityReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, alpha, lambda);
 	
+	//  ----- CONNECTING THE NETWORK -----
 	network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);
 	network.allToallConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false,  19e-10/5, true, 20);
 	
-	// injecting spikes in the input layer
+	//  ----- INJECTING SPIKES -----
 	for (auto idx=0; idx<data.size(); idx++)
 	{
 		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[data[idx].neuronID].prepareInitialSpike(data[idx].timestamp));
@@ -74,14 +76,14 @@ int main(int argc, char** argv)
 	// injecting the teacher signal for supervised threshold learning
   	network.injectTeacher(&teacher);
 
-//  ----- DISPLAY SETTINGS -----
+    //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(1000);
 	qtDisplay.trackNeuron(28);
 
-//  ----- RUNNING THE NETWORK -----
+    //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 
-//  ----- EXITING APPLICATION -----
+    //  ----- EXITING APPLICATION -----
     return 0;
 }
