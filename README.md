@@ -36,7 +36,10 @@ Open a terminal and run ``brew install qt5``
 Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``.
 
 ###### Qt (optional if no GUI is needed)
-The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions.
+The Qt framework version 5.9 or newer is needed when using the GUI to visualise the output of a neural network. To install qt5 on Debian Buster, type the following:
+``sudo apt-get install qt5-default libqt5charts5 libqt5charts5-dev libqt5qml5 qtdeclarative5-dev qml-module-qtcharts``
+
+This should get you going in terms of dependencies. If your distribution does not support that version (Debian Stretch bundles 5.7), consider downloading the latest Qt manually. The following has been tested with **Qt 5.11.1**.
 
 1. Download directly from https://www.qt.io/download/
 2. Select the correct version of Qt
@@ -50,8 +53,7 @@ export LD\_LIBRARY\_PATH
 
 ## Testing
 
-1. Go to the Adonis directory and run ``premake4 gmake && cd build &&.
-    make``
+1. Go to the Adonis directory and run ``premake4 gmake && cd build && make``
 2. execute ``./release/testNetwork`` to run the spiking neural network.
 
 **_Disclaimer: some of the applications bundled in with the simulator use a path relative to the executable to use one of the files present in the data folder. For such cases, execute ``cd release && ./testNetwork`` instead of ``./release/testNetwork``_**

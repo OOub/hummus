@@ -36,9 +36,9 @@ solution 'adonis_t'
 
 		        -- Linux specific settings
 		        if os.is("linux") then
-		            local mocCommand = '/home/omar/Qt/5.10.1/gcc_64/bin/moc' -- must point to the moc executable
-		            local qtIncludeDirectory = '/home/omar/Qt/5.10.1/gcc_64/include' -- Qt headers
-		            local qtLibDirectory = '/home/omar/Qt/5.10.1/gcc_64/lib' -- Qt dynamic libraries
+		            local mocCommand = '/usr/lib/x86_64-linux-gnu/qt5/bin/moc' -- must point to the moc executable
+		            local qtIncludeDirectory = '/usr/include/x86_64-linux-gnu/qt5' -- Qt headers
+		            local qtLibDirectory = '/usr/lib/x86_64-linux-gnu' -- Qt dynamic libraries
 		            local mocDirectory = path.getdirectory(_SCRIPT) .. '/build/moc'
 		            os.rmdir(mocDirectory)
 		            os.mkdir(mocDirectory)
