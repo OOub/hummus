@@ -30,7 +30,7 @@ Open a terminal and run ``brew install qt5``
 3. Make sure the Qt Charts add-on is selected
 4. Open the premake4.lua file and modify the moc, include and library paths depending on where Qt was installed
 
-#### On Linux (Debian and Ubuntu)
+#### On Linux
 
 ###### Premake 4
 Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``
