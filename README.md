@@ -78,18 +78,24 @@ The Adonis simulator is a header-only C++ library with 12 classes
 ![flowChart](resources/flowchart.svg)
 
 #### Adonis_t
-all the classes are declared within the ``adonis_t`` namespace
+all the classes are declared within the ``adonis_t`` namespace. Check out testNetwork.cpp for more information on how to build and run a spiking neural network.
 
 ###### Important includes
 * add ``#include "../source/network.hpp"`` to use the base framework
 * any add-ons being used also need to be included. If I want to use the Qt Display for instance, I would add ``#include "../source/qtDisplay.hpp"``
 
 ###### Reading Input data
-**TBA**
+* the DataParser class is capable of reading 1D input data formatted in a text file as such: _timestamp, index_
+* It can also read 2D data formatted as such: _timstamp, X, Y_
+
+This is done via the **readData()** method which take in a string for the location of the input data file, and an int for the width of the 2D square grid in the case of 2D data.
+
+the output is a vector of struct with 4 fields: timestamp, neuronID, x, y.
 
 ###### Initialisation
 
 _Initialising the optional Add-ons_
+
 * the QtDisplay is initialised as such: ``adonis_t::QtDisplay qtDisplay;``
 * the SpikeLogger and the LearningLogger both take in an std::string as a parameter, to define the name of their corresponding output file. They are initialised as such:
 ```
@@ -97,6 +103,7 @@ adonis_t::SpikeLogger spikeLogger(std::string("spikeLog"));
 adonis_t::LearningLogger learningLogger(std::string("learningLog"));
 ```
 _Initialising The Network_
+
 * if no add-ons are used we can directly initialise the network as such: ``adonis_t::Network network``
 
 * the Network class can take in a vector of references for the standard delegates:
