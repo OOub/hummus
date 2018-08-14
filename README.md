@@ -127,7 +127,7 @@ _Initialising The Network_
 
 * the network getter **getNeuronPopulations()** a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
 
-* the network method **allToallConnectivity()** connects all neurons of a presynaptic population with all neurons from a posynaptic population. It has 7 parameters:
+* the network method **allToAllConnectivity()** connects all neurons of a presynaptic population with all neurons from a posynaptic population. It has 7 parameters:
 
 1. a reference to a presynaptic neuron population
 2. a reference to a postsynaptic neuron population
@@ -139,7 +139,7 @@ _Initialising The Network_
 
 the following is an example of connectivity between 2 layers, with fixed weights, random delays with a maximum value of 20, and no redundant connectivity:
 ```
-network.allToallConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20, false);
+network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20, false);
 ```
 
 ###### Injecting Spikes
