@@ -89,14 +89,14 @@ all the classes are declared within the ``adonis_t`` namespace
 
 ###### Initialisation
 
-######## Initialising the optional Add-ons
+_Initialising the optional Add-ons_
 * the QtDisplay is initialised as such: ``adonis_t::QtDisplay qtDisplay;``
 * the SpikeLogger and the LearningLogger both take in an std::string as a parameter, to define the name of their corresponding output file. They are initialised as such:
 ```
 adonis_t::SpikeLogger spikeLogger(std::string("spikeLog"));
 adonis_t::LearningLogger learningLogger(std::string("learningLog"));
 ```
-######## Initialising The Network
+_Initialising The Network_
 * if no add-ons are used we can directly initialise the network as such: ``adonis_t::Network network``
 
 * the Network class can take in a vector of references for the standard delegates:
