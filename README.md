@@ -127,10 +127,10 @@ _Initialising The Network_
 ###### Qt Display Settings
 The QtDisplay class has 4 methods to control the settings:
 
-* useHardwareAcceleration : a bool to control whether to use openGL
-* trackLayer : an int to track a specific layer
-* trackLayer : an int to track a specific neuron via its ID
-* setTimeWindow : a double that defines the time window of the display
+* **useHardwareAcceleration()** : a bool to control whether to use openGL
+* **trackLayer()** : an int to track a specific layer
+* **trackNeuron()** : an int to track a specific neuron via its ID
+* **setTimeWindow()** : a double that defines the time window of the display
 
 ###### Running The Network
 to run the network use the Network class method run which takes the _runtime_ and the _timestep_ as parameters: ``network.run(runtime, timestep);``
