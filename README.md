@@ -79,7 +79,7 @@ Run ``premake4 --help`` for more information
 #### Adonis UML Diagram
 The Adonis simulator is a header-only C++ library with 12 classes
 
-![flowChart](resources/flowchart.svg)
+![flowChart](resources/flowchart.png)
 
 #### Adonis_t
 all the classes are declared within the ``adonis_t`` namespace. Check out testNetwork.cpp for more information on how to build and run a spiking neural network.
