@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 			{
 				if (receptiveFieldO.rfID == receptiveFieldI.rfID && receptiveFieldO.layerID != 0)
 				{
-					network.allToallConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, layer1Weight, true, 40);
+					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, layer1Weight, true, 40);
 				}
 			}
 	    }

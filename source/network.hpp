@@ -155,7 +155,7 @@ namespace adonis_t
 		}
 		
 		// standard all to all connectivity
-    	void allToallConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
+    	void allToAllConnectivity(std::vector<Neuron>* presynapticLayer, std::vector<Neuron>* postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
     	{
     		int delay = 0;
     		float weight = 0;
