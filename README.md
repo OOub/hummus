@@ -5,7 +5,11 @@
 Adonis is a spiking neural network simulator coded using C++. There are currently two versions:  
 
 **1. Adonis_t** : a clock-based version of the simulator which includes current dynamics  
-**2. Adonis_e** : an event-based version of the simulator without current dynamics
+**2. Adonis_e** : an event-based version of the simulator without current dynamics (work in progress)
+
+Adonis is a fast, lightweight and flexible spiking neural network simulator made specifically for pattern recognition tasks. Adonis makes it very simple to change/add learning rules without having to dig into the specifics of the code. So far, only leaky integrate and fire neurons are supported, as the usefulness of more complicated models is debatable in pattern recognition. The neuron model support will be updated as my research progresses. 
+
+Finally, Adonis allows full usage of both weight and conduction delays for pattern recognition
 
 ## Dependencies
 
