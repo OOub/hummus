@@ -157,6 +157,8 @@ network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitia
 
 * if we are using an input data file we can loop through the input data vector (check reading input data section) to  find the neuron that has to spike and the spike timestamp. When using 1D data the spiking neuron is simply the neuron ID. For 2D data we have to search in the neuron population for the correct neuron using its x y coordinates (an example of that can be seen in the receptiveFieldsTest.cpp).
 
+* we can stop learning at any time by calling the network method: **turnOffLearning(double timestamp)** which takes in a timestamp to disable the learning rules. This is useful in case we want to start injecting spikes from testing / cross-validation datasets.
+
 ###### Qt Display Settings
 The QtDisplay class has 4 methods to control the settings:
 
