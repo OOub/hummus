@@ -56,8 +56,8 @@ int main(int argc, char** argv)
 
     //  ----- CREATING THE NETWORK -----
 	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(1, adonis_t::learningMode::delayPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(2, adonis_t::learningMode::delayPlasticityReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay2, alpha, lambda);
+	network.addNeurons(1, adonis_t::learningMode::myelinPlasticityNoReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(2, adonis_t::learningMode::myelinPlasticityNoReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay2, alpha, lambda);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);

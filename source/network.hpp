@@ -43,6 +43,7 @@ namespace adonis_t
 			thDelegate(_thDelegate),
             teacher(nullptr),
 			teachingProgress(false),
+			learningStatus(true),
 			teacherIterator(0)
 		{}
 		
@@ -199,6 +200,12 @@ namespace adonis_t
                 s);
         }
 		
+		// turn off all learning rules (for cross-validation or test data)
+		void turnOffLearning(double timestamp)
+		{
+			learningOffSignal = timestamp;
+		}
+		
 		// clock-based running through the network
         void run(double _runtime, float _timestep)
         {
@@ -211,6 +218,11 @@ namespace adonis_t
 				{
 					for (double i=0; i<_runtime; i+=_timestep)
 					{
+						if (learningStatus==true && i >= learningOffSignal)
+						{
+							std::cout << "learning turned off at t=" << i << std::endl;
+							learningStatus = false;
+						}
 						for (auto& pop: neurons)
 						{
 							for (auto& neuron: pop.rfNeurons)
@@ -290,9 +302,14 @@ namespace adonis_t
             teacherIterator = increment;
         }
 		
-		int getTeachingProgress() const
+		bool getTeachingProgress() const
         {
             return teachingProgress;
+        }
+		
+		bool getLearningStatus() const
+        {
+            return learningStatus;
         }
 		
 		void setTeachingProgress(bool status)
@@ -391,6 +408,8 @@ namespace adonis_t
 		std::vector<receptiveField>            neurons;
 		int                                    teacherIterator;
 		bool                                   teachingProgress;
+		bool                                   learningStatus;
+		double                                 learningOffSignal;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
         std::vector<input>* teacher;

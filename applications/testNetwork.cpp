@@ -63,6 +63,9 @@ int main(int argc, char** argv)
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(15));
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(25));
 
+	// method to turn off learning. this is useful in case we want to cross-validate or test our network
+	network.turnOffLearning(5);
+	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);

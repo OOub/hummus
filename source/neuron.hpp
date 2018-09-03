@@ -6,7 +6,12 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 31/05/2018
  *
- * Information: the neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage. 
+ * Information: the neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage.
+ *
+ * To add a new learning rule:
+ * 1- create your learning method in the protected section of this class
+ * 2- update the learningMode enum with your learning rule
+ * 3- the new learning rule should be called via the learningRuleHandler method in the protected section of this class
  */
 
 #pragma once
@@ -31,8 +36,8 @@ namespace adonis_t
 	enum learningMode
 	{
 	    noLearning,
-	    delayPlasticityNoReinforcement,
-	    delayPlasticityReinforcement,
+	    myelinPlasticityNoReinforcement,
+	    myelinPlasticityReinforcement,
 	};
 	
 	struct projection
@@ -252,11 +257,8 @@ namespace adonis_t
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 				
-				if (learningType == delayPlasticityNoReinforcement || learningType == delayPlasticityReinforcement)
-				{
-				    myelinPlasticity(timestamp, network);
-				}
-				
+				learningRuleHandler(timestamp, network);
+
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				supervisedPotential = resetPotential;
@@ -361,8 +363,22 @@ namespace adonis_t
 		}
 		
 	protected:
-	
-		// ----- PROTECTED NEURON METHODS -----
+		
+		// ----- THE LEARNING RULES -----
+		
+		// this is the method called by the update function. Any new learning rule methods should be called at this stage
+		template<typename Network>
+		void learningRuleHandler(double timestamp, Network* network)
+		{
+			if (network->getLearningStatus())
+			{
+				if (learningType == myelinPlasticityNoReinforcement || learningType == myelinPlasticityReinforcement)
+				{
+					myelinPlasticity(timestamp, network);
+				}
+			}
+		}
+		
 		template<typename Network>
 		void myelinPlasticity(double timestamp, Network* network)
 		{
@@ -440,14 +456,13 @@ namespace adonis_t
 				network->getMainThreadDelegate()->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
 			}
 			
-			if (learningType == delayPlasticityReinforcement)
+			if (learningType == myelinPlasticityReinforcement)
 			{
 				reinforcementLearning(plasticID, network);
 			}
 			resetLearning(network);
 		}
 		
-		// this eventually needs to be controlled by backpropagating potential to push towards desired spike times
 		template <typename Network>
 		void reinforcementLearning(std::vector<int16_t> plasticID, Network* network)
 		{

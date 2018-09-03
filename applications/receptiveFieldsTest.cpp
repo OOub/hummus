@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 	// layer 1 with 36 receptive fields and a layer depth equal to 5 (1D neurons)
 	for (auto i=0; i<layer1Volume; i++)
 	{
-    	network.addReceptiveFields(layer1RF, 1, adonis_t::learningMode::delayPlasticityNoReinforcement, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+    	network.addReceptiveFields(layer1RF, 1, adonis_t::learningMode::myelinPlasticityReinforcement, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
     }
 	
     //  ----- CONNECTING THE NETWORK -----
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 	        }
 	    }
 	}
-
+		
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(5000);
