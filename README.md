@@ -40,7 +40,7 @@ Open a terminal and run ``brew install qt5``
 Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``
 
 ###### Qt (optional if no GUI is needed)
-The Qt framework version 5.10 or newer is needed when using the GUI to visualise the output of a neural network. To install qt5 on Debian Buster, type the following:
+The Qt framework version 5.9 or newer is needed when using the GUI to visualise the output of a neural network. To install qt5 on Debian Buster or Ubuntu 18.04, type the following:
 ``sudo apt-get install qt5-default libqt5charts5 libqt5charts5-dev libqt5qml5 qtdeclarative5-dev qml-module-qtcharts qml-module-qtquick-controls``
 
 This should get you going in terms of dependencies. If your distribution does not support that version (Debian Stretch bundles 5.7), consider downloading the latest Qt manually. The following has been tested with **Qt 5.11.1**.
