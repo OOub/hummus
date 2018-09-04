@@ -1,9 +1,19 @@
-function [output] = snnReader(filename, bool)
-    % the bool is 0 if we are reading a file originating from the
-    % spikeLogger and 1 if we are reading a file from the learningLogger
-    
+% snnReader.m
+
+% Created by Omar Oubari 
+% PhD - Institut de la Vision
+% Email: omar.oubari@inserm.fr
+
+% Last Version: 18/06/2018
+
+% Information: snnReader is a function that reads a binary file originating
+% from the Adonis spiking neural network simulators
+% bool = false for spikeLogger file and bool = true for learningLogger file
+
+
+function [output] = snnReader(filename, bool)    
     fileID = fopen(filename,'rb');
-    if bool == 0
+    if bool == false
         disp("reading spike logger")
         timestamp = []; delay = []; potential = []; preN = []; postN = []; layerID = []; rfID = []; weight = []; X = []; Y = [];
         
@@ -31,7 +41,7 @@ function [output] = snnReader(filename, bool)
         
         variableNames = {'timestamp','delay','weight','preN','postN','potential','layerID','rfID','X','Y'};
         output = table(timestamp',delay',weight',preN',postN',potential',layerID',rfID',X',Y','VariableNames',variableNames);
-    elseif bool == 1
+    elseif bool == true
         disp("reading learning logger")
         output = {};
         plasticNeurons = [];
@@ -47,13 +57,15 @@ function [output] = snnReader(filename, bool)
                 layerID = fread(fileID,1,'int16');
                 rfID = fread(fileID,1,'int16');
                 
-                for i = 1:(bitSize-22)/12
+                for i = 1:(bitSize-22)/14
                     plasticNeurons(end+1,1) = fread(fileID,1,'float64');
                     plasticNeurons(end,2) = fread(fileID,1,'int16');
                     plasticNeurons(end,3) = fread(fileID,1,'int16');
+                    plasticNeurons(end,4) = fread(fileID,1,'int16');
                 end
                 
                 output{end+1,1} = struct('timestamp', timestamp, 'winnerID', winnerID, 'layerID', layerID, 'rfID', rfID, 'plasticNeurons', plasticNeurons);
+                plasticNeurons = [];
             else
                 disp("finished reading")
                 break;
