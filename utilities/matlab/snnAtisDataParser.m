@@ -10,7 +10,7 @@
 % be fed into the Adonis spiking neural network simulator. The recordings
 % can be presented multiple times in a randomised or sequential order. 
 
-function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, repetitions, timeBetweenPresentations, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
+function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
     % folderPath - the path to the folder where all the recordings we want to parse are located
 
     % baseFileNames - the common name between all the files we want to feed
@@ -21,6 +21,9 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
     
     % timeBetweenPresentations - time in microseconds between each
     % repetition
+    
+    % timeJitter (optional) - adds time jitter to the recording. The value
+    % is the standard deviation for the gaussian centered around a spike time
     
     % conversionFactor (optional) - to convert data from microseconds
     
@@ -34,16 +37,24 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
     
     % handling optional arguments
     if nargin < 5
+        timeJitter = 0;
         conversionFactor = 10^-3;
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false; 
     elseif nargin < 6
+        conversionFactor = 10^-3;
+        boolRandomisePresentationOrder = false;
+        boolSpatialCrop = false;
+        boolTemporalCrop = false; 
+    elseif nargin < 7
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false;  
-    elseif nargin < 7
+    elseif nargin < 8
         boolSpatialCrop = false;
+        boolTemporalCrop = false;
+    elseif nargin < 9
         boolTemporalCrop = false;
     end
 
@@ -115,6 +126,17 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
     
     for i = 3:size(index2,1)
         snnInput(index2(i-1):index2(i)-1,1) = snnInput(index2(i-1):index2(i)-1,1) + snnInput(index2(i-1)-1) + timeBetweenPresentations;
+    end
+    
+    % adding time jitter
+    if timeJitter > 0
+        for i = 1:size(snnInput,1)
+            jitter = normrnd(snnInput(i,1), timeJitter);
+            while (jitter < 0)
+                jitter = normrnd(snnInput(i,1), timeJitter);
+            end
+            snnInput(i,1) = jitter;
+        end
     end
     
     % converting from microseconds

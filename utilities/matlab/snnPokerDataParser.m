@@ -9,13 +9,15 @@
 % Information: snnPokerDataParser is a function that parses the poker dataset (allcards.mat), so it can
 % be fed into the Adonis spiking neural network simulator 
 
-function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBetweenPresentations, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
+function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
     % allcards - path to the 'allcards.mat' file
     
     % repetitions - number of times each recording is presented
     
     % timeBetweenPresentations - time in microseconds between each
     % repetition
+    
+    % timeJitter (optional) - adds time jitter to the recording in microseconds
     
     % conversionFactor (optional) - to convert data from microseconds
     
@@ -29,21 +31,29 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
     
     % handling optional arguments
     if nargin < 4
+        timeJitter = 0;
         conversionFactor = 10^-3;
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false; 
     elseif nargin < 5
+        conversionFactor = 10^-3;
+        boolRandomisePresentationOrder = false;
+        boolSpatialCrop = false;
+        boolTemporalCrop = false; 
+    elseif nargin < 6
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false;  
-    elseif nargin < 6
+    elseif nargin < 7
         boolSpatialCrop = false;
+        boolTemporalCrop = false;
+    elseif nargin < 8
         boolTemporalCrop = false;
     end
     
-    load(allcards);
-    parsedData = ROI;
+    import = load(allcards);
+    parsedData = import.ROI;
     
     % temporal crop
     if boolTemporalCrop == true
@@ -91,6 +101,10 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
     presentationOrder = repmat(pipsUsed',[repetitions 1]);
     presentationOrder = [presentationOrder,randi(str2double(recordingNumber{1}),[length(presentationOrder) 1])];
     
+    if boolRandomisePresentationOrder == true
+        presentationOrder = Shuffle(presentationOrder);
+    end
+    
     snnInput = []; spikeIntervals = [];
     for i = 1:length(presentationOrder)
         snnInput = [double(snnInput); double(parsedData{presentationOrder(i,1),presentationOrder(i,2)}.TimeStamp), double(parsedData{presentationOrder(i,1),presentationOrder(i,2)}.Xaddress), double(parsedData{presentationOrder(i,1),presentationOrder(i,2)}.Yaddress)];
@@ -104,7 +118,6 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
     for i = 1:length(pipsUsed)
         for j = 1:length(setsUsed)
             firstRowData(end+1,:) = [parsedData{pipsUsed(i),setsUsed(j)}.TimeStamp(1), parsedData{pipsUsed(i),setsUsed(j)}.Xaddress(1), parsedData{pipsUsed(i),setsUsed(j)}.Yaddress(1)];
-            
         end
     end
     
@@ -124,6 +137,17 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
     
     for i = 3:size(index2,1)
         snnInput(index2(i-1):index2(i)-1,1) = snnInput(index2(i-1):index2(i)-1,1) + snnInput(index2(i-1)-1) + timeBetweenPresentations;
+    end
+    
+    % adding time jitter
+    if timeJitter > 0
+        for i = 1:size(snnInput,1)
+            jitter = normrnd(snnInput(i,1), timeJitter);
+            while (jitter < 0)
+                jitter = normrnd(snnInput(i,1), timeJitter);
+            end
+            snnInput(i,1) = jitter;
+        end
     end
     
     % converting from microseconds
