@@ -98,7 +98,7 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
     presentationOrder = repmat([1:length(parsedData)]',[repetitions 1]);
 
     if boolRandomisePresentationOrder == true
-        presentationOrder = Shuffle(presentationOrder);
+        presentationOrder = presentationOrder(randperm(size(presentationOrder,1)),:);
     end
     
     snnInput = []; spikeIntervals = [];
@@ -146,7 +146,7 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
         presentationOrder(i,3) = snnInput(spikeIntervals(i),1);
     end
 
-    output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals);
+    output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder(:,1:2));
     recordings = struct('originalData',data,'parsedData',parsedData);
 end
 

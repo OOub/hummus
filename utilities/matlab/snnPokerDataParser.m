@@ -101,8 +101,8 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
     presentationOrder = repmat(pipsUsed',[repetitions 1]);
     presentationOrder = [presentationOrder,randi(str2double(recordingNumber{1}),[length(presentationOrder) 1])];
     
-    if boolRandomisePresentationOrder == true
-        presentationOrder = Shuffle(presentationOrder);
+      if boolRandomisePresentationOrder == true
+        presentationOrder = presentationOrder(randperm(size(presentationOrder,1)),:);
     end
     
     snnInput = []; spikeIntervals = [];
