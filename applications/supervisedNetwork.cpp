@@ -80,7 +80,10 @@ int main(int argc, char** argv)
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(1000);
 	qtDisplay.trackNeuron(28);
-
+	
+	// to turn off learning and start testing
+	network.turnOffLearning(10000);
+	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 

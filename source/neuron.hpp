@@ -185,13 +185,16 @@ namespace adonis_t
 			{
 				if (network->getTeacherIterator() < (*network->getTeacher()).size())
 				{
-					if ((*network->getTeacher())[network->getTeacherIterator()].neuronID == neuronID)
+					if (network->getTeachingProgress())
 					{
-						if (std::abs((*network->getTeacher())[network->getTeacherIterator()].timestamp - timestamp) < 1e-1)
+						if ((*network->getTeacher())[network->getTeacherIterator()].neuronID == neuronID)
 						{
-							current = 19e-10;
-							potential = threshold;
-							network->setTeacherIterator(network->getTeacherIterator()+1);
+							if (std::abs((*network->getTeacher())[network->getTeacherIterator()].timestamp - timestamp) < 1e-1)
+							{
+								current = 19e-10;
+								potential = threshold;
+								network->setTeacherIterator(network->getTeacherIterator()+1);
+							}
 						}
 					}
 				}
@@ -200,7 +203,7 @@ namespace adonis_t
 					if (network->getTeachingProgress())
 					{
 						network->setTeachingProgress(false);
-						std::cout << "learning stopped at t=" << timestamp << std::endl;
+						std::cout << "teacher signal stopped at t=" << timestamp << std::endl;
 					}
 				}
 			}

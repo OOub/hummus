@@ -218,10 +218,19 @@ namespace adonis_t
 				{
 					for (double i=0; i<_runtime; i+=_timestep)
 					{
-						if (learningStatus==true && i >= learningOffSignal)
+						if (learningOffSignal)
 						{
-							std::cout << "learning turned off at t=" << i << std::endl;
-							learningStatus = false;
+							if (learningStatus==true && i >= learningOffSignal)
+							{
+								std::cout << "learning turned off at t=" << i << std::endl;
+								learningStatus = false;
+
+								if (teachingProgress==true)
+								{
+									std::cout << "teacher signal stopped at t=" << i << std::endl;
+									teachingProgress = false;
+								}
+							}
 						}
 						for (auto& pop: neurons)
 						{
@@ -250,7 +259,6 @@ namespace adonis_t
 			
 				// number of neurons in each layer
 				std::vector<int> neuronsInLayers(numberOfLayers+1, 0);
-				std::cout << neuronsInLayers.size() << std::endl;
 				for (auto i=0; i< numberOfLayers+1; i++)
 				{
 					for (auto& receptiveField: getNeuronPopulations())
