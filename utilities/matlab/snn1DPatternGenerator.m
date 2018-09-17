@@ -27,7 +27,8 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
     % boolRandomisePresentationOrder (optional) - bool to select whether to
     % randomise the order of appeance of the recordings
     
-    % boolSupervisedLearning (optional)
+    % boolSupervisedLearning (optional) - creates a matrix of time and
+    % neuronID to force certain neurons to fire at specific times (single layer support only)
     
     % handling optional arguments
     if nargin < 4
@@ -55,7 +56,7 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
     % generating the patterns
     patterns = cell(numberOfPatterns,1);
     for i = 1:numberOfPatterns
-        neurons = 1:numberOfNeurons;
+        neurons = 0:numberOfNeurons-1;
         neurons = neurons(:,randperm(size(neurons,2)))';
         time = sort(randperm(patternMaxDuration,numberOfNeurons)');
         time = time - time(1);
@@ -107,5 +108,21 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
         end
     end
     
-    output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder(:,1:2));
+    % creating the teacher signal
+    if boolSupervisedLearning == true
+        responseNeurons = numberOfNeurons:numberOfNeurons+numberOfPatterns-1;
+        for i = 1:length(presentationOrder)
+            % spike intervals as index + 2ms after the pattern as a desired
+            teacherSignal(i,1) = snnInput(spikeIntervals(i)) + 5;
+            
+            % presentation order to define which neurons are firing
+            teacherSignal(i,2) = responseNeurons(presentationOrder(i)); 
+        end
+    end
+    
+    if boolSupervisedLearning == true
+        output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder, 'teacherSignal', teacherSignal);
+    else
+        output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
+    end
 end
