@@ -77,7 +77,7 @@ namespace nour_c
 			current(0),
 			potential(_restingPotential),
 			supervisedPotential(_restingPotential),
-			activity(false),
+			active(true),
 			initialProjection{nullptr, nullptr, 1000e-10, 0, -1},
             lastSpikeTime(0),
             alpha(_alpha),
@@ -150,7 +150,7 @@ namespace nour_c
 		{			
             if (timestamp - lastSpikeTime >= refractoryPeriod)
             {
-                activity = false;
+                active = true;
             }
 			
 			// current decay
@@ -161,7 +161,7 @@ namespace nour_c
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
 			
 			// neuron inactive during refractory period
-			if (!activity)
+			if (active)
 			{
 				if (s.postProjection)
 				{
@@ -174,18 +174,15 @@ namespace nour_c
 			}
 			
 			// impose spiking when using supervised learning
-			if (network->getTeacher())
+			if (network->getTeachingProgress())
 			{
-				if (network->getTeachingProgress())
+				if (network->getTeacher()->front().neuronID == neuronID)
 				{
-					if (network->getTeacher()->front().neuronID == neuronID)
+					if (std::abs(network->getTeacher()->front().timestamp - timestamp) < 1e-1)
 					{
-						if (std::abs(network->getTeacher()->front().timestamp - timestamp) < 1e-1)
-						{
-							current = 19e-10;
-							potential = threshold;
-							network->getTeacher()->pop_front();
-						}
+						current = 19e-10;
+						potential = threshold;
+						network->getTeacher()->pop_front();
 					}
 				}
 			}
@@ -241,14 +238,13 @@ namespace nour_c
 				{
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
-				
+			
 				learningRuleHandler(timestamp, network);
-
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				supervisedPotential = resetPotential;
 				current = 0;
-				activity = true;
+				active = false;
 			}
 		}
 		
@@ -362,6 +358,9 @@ namespace nour_c
 					myelinPlasticity(timestamp, network);
 				}
 			}
+			
+			lateralInhibition(network);
+			resetLearning(network);
 		}
 		
 		template<typename Network>
@@ -447,7 +446,6 @@ namespace nour_c
 			{
 				reinforcementLearning(plasticID, network);
 			}
-			resetLearning(network);
 		}
 		
 		template <typename Network>
@@ -460,6 +458,7 @@ namespace nour_c
                 // if the projection is plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
+					
 					// positive reinforcement on winner projections
 					if (supervisedPotential < threshold && allProjections->weight <= 19e-10/plasticID.size())
                     {
@@ -479,12 +478,23 @@ namespace nour_c
                     }
 				}
             }
-			
-			// WTA algorithm to prevent a pattern being learned by a neuron other than the winner
-			
-			// 1. neurons belongong to the pattern
-			// 2. loop through their projections
-			// 3. reduce weight on those not going towards the winner
+		}
+		
+		template<typename Network>
+		void lateralInhibition(Network* network)
+		{
+			if (preProjections.size() > 0)
+			{
+				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
+				{
+					if (projReset->postNeuron->neuronID != neuronID)
+					{
+						projReset->postNeuron->active = false;
+						projReset->postNeuron->setCurrent(0);
+						projReset->postNeuron->setPotential(restingPotential);
+					}
+				}
+			}
 		}
 		
 		template<typename Network>
@@ -504,16 +514,6 @@ namespace nour_c
 			{
 				inputProjection->preNeuron->eligibilityTrace = 0;
 			}
-			
-			// lateral inhibition
-			for (auto& projReset: preProjections[0]->preNeuron->postProjections)
-			{
-				if (projReset->postNeuron->neuronID != neuronID)
-				{
-					projReset->postNeuron->setPotential(restingPotential);
-					projReset->postNeuron->setCurrent(0);
-				}
-			}
 		}
 		
 		// ----- NEURON PARAMETERS -----
@@ -529,7 +529,7 @@ namespace nour_c
         float                                    inputResistance;
         float                                    current;
         float                                    potential;
-		bool                                     activity;
+		bool                                     active;
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
 		float                                    alpha;

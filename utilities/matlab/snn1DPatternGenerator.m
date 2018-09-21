@@ -6,7 +6,7 @@
 
 % Last Version: 13/09/2018
 
-% Information: snn1DPatternGenerator is a function that generates simple one dimensional patterns to be used for testing the Nour spiking neural network simulator
+% Information: snn1DPatternGenerator is a function that generates simple one dimensional patterns to be used for testing the Adonis spiking neural network simulator
 
 function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, repetitions, patternMaxDuration, timeBetweenPresentations, timeJitter, boolRandomisePresentationOrder, boolSupervisedLearning)
     % numberOfNeurons - the number of neurons in the patterns being generated
@@ -111,12 +111,17 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
     % creating the teacher signal
     if boolSupervisedLearning == true
         responseNeurons = numberOfNeurons:numberOfNeurons+numberOfPatterns-1;
+        count = 1;
         for i = 1:length(presentationOrder)
-            % spike intervals as index + 2ms after the pattern as a desired
-            teacherSignal(i,1) = snnInput(spikeIntervals(i)) + 5;
+            % spike intervals as index + time in ms after the pattern as a desired
+            teacherSignal(i,1) = snnInput(spikeIntervals(i)) + 5*count;
             
             % presentation order to define which neurons are firing
             teacherSignal(i,2) = responseNeurons(presentationOrder(i)); 
+            count = count + 1;
+            if mod(i,4) == 0
+                count = 1;
+            end
         end
     end
     

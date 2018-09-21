@@ -256,13 +256,13 @@ namespace nour_c
 			if (thDelegate)
 			{
 				// finding the number of layers in the network
-				int numberOfLayers = getNeuronPopulations()[std::distance(std::begin(getNeuronPopulations()),std::max_element(getNeuronPopulations().begin(), getNeuronPopulations().end(), [](const receptiveField& one, const receptiveField& two){return one.layerID < two.layerID;}))].layerID;
+				int numberOfLayers = neurons[std::distance(std::begin(neurons),std::max_element(neurons.begin(), neurons.end(), [](const receptiveField& one, const receptiveField& two){return one.layerID < two.layerID;}))].layerID;
 			
 				// number of neurons in each layer
 				std::vector<int> neuronsInLayers(numberOfLayers+1, 0);
 				for (auto i=0; i< numberOfLayers+1; i++)
 				{
-					for (auto& receptiveField: getNeuronPopulations())
+					for (auto& receptiveField: neurons)
 					{
 						if (receptiveField.layerID == i)
 						{

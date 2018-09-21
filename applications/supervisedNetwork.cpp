@@ -44,16 +44,16 @@ int main(int argc, char** argv)
     int layer1Neurons = 4;
 	
 	float alpha = 1;
-	float lambda = 1;
+	float lambda = 0.1;
 	float eligibilityDecay = 20;
-    float weight = 19e-10/20;
+    float weight = 19e-10/10;
 
     //  ----- CREATING THE NETWORK -----
 	network.addNeurons(0, nour_c::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	network.addNeurons(1, nour_c::learningMode::myelinPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
+	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
 	
 	//  ----- INJECTING SPIKES -----
 	for (auto idx=0; idx<data.size(); idx++)

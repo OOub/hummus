@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 	qtDisplay.setTimeWindow(1000);
 	qtDisplay.trackNeuron(11);
 
-//	network.turnOffLearning(50000);
+	network.turnOffLearning(80000);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
