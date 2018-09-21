@@ -1,6 +1,6 @@
 /*
- * recpetiveFieldsTest.cpp
- * Adonis_t - clock-driven spiking neural network simulator
+ * receptiveFieldsTest.cpp
+ * Nour_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -25,11 +25,11 @@ int main(int argc, char** argv)
 	auto data = dataParser.readData("../../data/poker_card_task/2_classes/t10_1pip_2types_200reps.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
-	adonis_t::QtDisplay qtDisplay;
-	adonis_t::SpikeLogger spikeLogger("rfSpikeLog.bin");
-	adonis_t::LearningLogger learningLogger("rfLearningLog.bin");
+	nour_c::QtDisplay qtDisplay;
+	nour_c::SpikeLogger spikeLogger("rfSpikeLog.bin");
+	nour_c::LearningLogger learningLogger("rfLearningLog.bin");
 	
-	adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+	nour_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 	
 	//  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;
@@ -52,12 +52,12 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)
-    network.addReceptiveFields(inputlayerRF, 0, adonis_t::learningMode::noLearning, imageSize, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+    network.addReceptiveFields(inputlayerRF, 0, nour_c::learningMode::noLearning, imageSize, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	// layer 1 with 36 receptive fields and a layer depth equal to 5 (1D neurons)
 	for (auto i=0; i<layer1Volume; i++)
 	{
-    	network.addReceptiveFields(layer1RF, 1, adonis_t::learningMode::myelinPlasticityReinforcement, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+    	network.addReceptiveFields(layer1RF, 1, nour_c::learningMode::myelinPlasticityReinforcement, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
     }
 	
     //  ----- CONNECTING THE NETWORK -----

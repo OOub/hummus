@@ -1,6 +1,6 @@
 /*
  * testNetwork.cpp
- * Adonis_t - clock-driven spiking neural network simulator
+ * Nour_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -20,10 +20,10 @@ int main(int argc, char** argv)
 {
 
     //  ----- INITIALISING THE NETWORK -----
-	adonis_t::QtDisplay qtDisplay;
-	adonis_t::SpikeLogger spikeLogger("spikeLog");
-	adonis_t::LearningLogger learningLogger("learningLog");
-	adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+	nour_c::QtDisplay qtDisplay;
+	nour_c::SpikeLogger spikeLogger("spikeLog");
+	nour_c::LearningLogger learningLogger("learningLog");
+	nour_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
@@ -40,10 +40,10 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// input neurons
-	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(0, nour_c::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
-	network.addNeurons(1, adonis_t::learningMode::myelinPlasticityNoReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(1, nour_c::learningMode::myelinPlasticityNoReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 
     //  ----- CONNECTING THE NETWORK -----
