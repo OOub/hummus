@@ -1,5 +1,5 @@
 
-solution 'adonis_t' 
+solution 'nour_c' 
     configurations {'Release', 'Debug'}
     location 'build'
 

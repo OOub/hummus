@@ -22,12 +22,12 @@ int main(int argc, char** argv)
 {
 	//  ----- READING DATA FROM FILE -----
 	adonis_t::DataParser dataParser;
-	auto data = dataParser.readData("../../data/pip/2_classes/t10_1pip_2types_200reps.txt");
+	auto data = dataParser.readData("../../data/poker_card_task/2_classes/t10_1pip_2types_200reps.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
 	adonis_t::QtDisplay qtDisplay;
-	adonis_t::SpikeLogger spikeLogger(std::string("rfSpikeLog.bin"));
-	adonis_t::LearningLogger learningLogger(std::string("rfLearningLog.bin"));
+	adonis_t::SpikeLogger spikeLogger("rfSpikeLog.bin");
+	adonis_t::LearningLogger learningLogger("rfLearningLog.bin");
 	
 	adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 	

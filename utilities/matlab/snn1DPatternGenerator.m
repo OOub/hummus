@@ -6,7 +6,7 @@
 
 % Last Version: 13/09/2018
 
-% Information: snn1DPatternGenerator is a function that generates simple one dimensional patterns to be used for testing the Adonis spiking neural network simulator
+% Information: snn1DPatternGenerator is a function that generates simple one dimensional patterns to be used for testing the Nour spiking neural network simulator
 
 function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, repetitions, patternMaxDuration, timeBetweenPresentations, timeJitter, boolRandomisePresentationOrder, boolSupervisedLearning)
     % numberOfNeurons - the number of neurons in the patterns being generated

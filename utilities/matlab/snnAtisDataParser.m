@@ -7,7 +7,7 @@
 % Last Version: 04/09/2018
 
 % Information: snnAtisDataParser is a function that parses recordings originating from the Atis cameras, so it can
-% be fed into the Adonis spiking neural network simulator. The recordings
+% be fed into the Nour spiking neural network simulator. The recordings
 % can be presented multiple times in a randomised or sequential order. 
 
 function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)

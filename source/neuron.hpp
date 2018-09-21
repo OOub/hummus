@@ -1,12 +1,12 @@
 /*
  * neuron.hpp
- * Adonis_t - clock-driven spiking neural network simulator
+ * Nour_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 31/05/2018
  *
- * Information: the neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage.
+ * Information: The Neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage.
  *
  * To add a new learning rule:
  * 1- create your learning method in the protected section of this class
@@ -26,10 +26,11 @@
 #include <vector>
 #include <memory>
 #include <cmath>
+#include <deque>
 
 #include "networkDelegate.hpp"
 
-namespace adonis_t
+namespace nour_c
 {
 	class Neuron;
 	
@@ -46,6 +47,7 @@ namespace adonis_t
 		Neuron*     postNeuron;
 		float       weight;
 		float       delay;
+		double      lastInputTime;
 	};
 	
 	struct spike
@@ -76,12 +78,11 @@ namespace adonis_t
 			potential(_restingPotential),
 			supervisedPotential(_restingPotential),
 			activity(false),
-			initialProjection{nullptr, nullptr, 1000e-10, 0},
+			initialProjection{nullptr, nullptr, 1000e-10, 0, -1},
             lastSpikeTime(0),
             alpha(_alpha),
             lambda(_lambda),
             eligibilityTrace(0),
-            emissionTrace(0),
             eligibilityDecay(_eligibilityDecay),
             xCoordinate(_xCoordinate),
             yCoordinate(_yCoordinate),
@@ -122,7 +123,7 @@ namespace adonis_t
                     
                     if (result == postProjections.end()) 
                     {
-                        postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay}));
+                        postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay, -1}));
                         postNeuron->preProjections.push_back(postProjections.back().get());
                     }
                     else
@@ -134,7 +135,7 @@ namespace adonis_t
                 }
                 else
                 {
-                    postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay}));
+                    postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay, -1}));
                     postNeuron->preProjections.push_back(postProjections.back().get());
                 }
             }
@@ -155,14 +156,6 @@ namespace adonis_t
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
 			eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
-			if (emissionTrace > 0.1) // rethink this strategy
-			{
-				emissionTrace -= 0.0001;
-				if (emissionTrace < 0.0001)
-				{
-					emissionTrace = 0;
-				}
-			}
 			
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
@@ -172,9 +165,9 @@ namespace adonis_t
 			{
 				if (s.postProjection)
 				{
-					emissionTrace = 1;
 					current += externalCurrent*s.postProjection->weight;
 					activeProjection = *s.postProjection;
+					s.postProjection->lastInputTime = timestamp;
 				}
 				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 				supervisedPotential = potential;
@@ -183,27 +176,16 @@ namespace adonis_t
 			// impose spiking when using supervised learning
 			if (network->getTeacher())
 			{
-				if (network->getTeacherIterator() < (*network->getTeacher()).size())
+				if (network->getTeachingProgress())
 				{
-					if (network->getTeachingProgress())
+					if (network->getTeacher()->front().neuronID == neuronID)
 					{
-						if ((*network->getTeacher())[network->getTeacherIterator()].neuronID == neuronID)
+						if (std::abs(network->getTeacher()->front().timestamp - timestamp) < 1e-1)
 						{
-							if (std::abs((*network->getTeacher())[network->getTeacherIterator()].timestamp - timestamp) < 1e-1)
-							{
-								current = 19e-10;
-								potential = threshold;
-								network->setTeacherIterator(network->getTeacherIterator()+1);
-							}
+							current = 19e-10;
+							potential = threshold;
+							network->getTeacher()->pop_front();
 						}
-					}
-				}
-				else
-				{
-					if (network->getTeachingProgress())
-					{
-						network->setTeachingProgress(false);
-						std::cout << "teacher signal stopped at t=" << timestamp << std::endl;
 					}
 				}
 			}
@@ -389,6 +371,10 @@ namespace adonis_t
 			std::vector<int16_t> plasticID;
 			std::vector<std::vector<int16_t>> plasticCoordinates(3);
 			
+			#ifndef NDEBUG
+			std::cout << "New learning epoch at t=" << timestamp << std::endl;
+			#endif
+			
 			for (auto inputProjection: preProjections)
 			{
 				// selecting plastic neurons
@@ -400,9 +386,7 @@ namespace adonis_t
 					plasticCoordinates[2].push_back(inputProjection->preNeuron->rfID);
 
 					float change = 0;
-					float spikeEmissionTime = timestamp - 1 + emissionTrace;
-					
-					timeDifferences.push_back(timestamp - spikeEmissionTime - inputProjection->delay);
+					timeDifferences.push_back(timestamp - inputProjection->lastInputTime - inputProjection->delay);
 					if (network->getTeacher()) // supervised learning
 					{
 						if (network->getTeachingProgress()) // stops learning when the teacher signal is over
@@ -412,7 +396,7 @@ namespace adonis_t
 								change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
 								inputProjection->delay += change;
 								#ifndef NDEBUG
-								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << " weight: " << inputProjection->weight << std::endl;
 								#endif
 							}
 
@@ -421,7 +405,7 @@ namespace adonis_t
 								change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
 								inputProjection->delay += change;
 								#ifndef NDEBUG
-								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << " weight: " << inputProjection->weight << std::endl;
 								#endif
 							}
 						}
@@ -470,24 +454,24 @@ namespace adonis_t
 		void reinforcementLearning(std::vector<int16_t> plasticID, Network* network)
 		{
 			// looping through all projections from the winner
-            for (auto& allProjections: this->preProjections)
+            for (auto& allProjections: preProjections)
             {
-                int16_t ID = allProjections->preNeuron->getNeuronID();
+                int16_t ID = allProjections->preNeuron->neuronID;
                 // if the projection is plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
-					// positive reinforcement
-					if (supervisedPotential < threshold && allProjections->weight <= plasticID.size())
+					// positive reinforcement on winner projections
+					if (supervisedPotential < threshold && allProjections->weight <= 19e-10/plasticID.size())
                     {
-                     	allProjections->weight += plasticID.size()*0.1;
+                     	allProjections->weight += allProjections->weight*synapticEfficacy*plasticID.size()*0.1;
                     }
                 }
                 else
                 {
                     if (allProjections->weight > 0)
                     {
-                        // negative reinforcement
-                        allProjections->weight -= plasticID.size()*0.1;
+                        // negative reinforcement on other projections going towards the winner to prevent other neurons from triggering it
+                        allProjections->weight -= allProjections->weight*synapticEfficacy*plasticID.size()*0.1;
 						if (allProjections->weight < 0)
 						{
 							allProjections->weight = 0;
@@ -495,6 +479,12 @@ namespace adonis_t
                     }
 				}
             }
+			
+			// WTA algorithm to prevent a pattern being learned by a neuron other than the winner
+			
+			// 1. neurons belongong to the pattern
+			// 2. loop through their projections
+			// 3. reduce weight on those not going towards the winner
 		}
 		
 		template<typename Network>
@@ -545,7 +535,6 @@ namespace adonis_t
 		float                                    alpha;
 		float                                    lambda;
 		float                                    eligibilityTrace;
-		float                                    emissionTrace;
 		float                                    eligibilityDecay;
 		int16_t                                  xCoordinate;
 		int16_t                                  yCoordinate;

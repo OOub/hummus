@@ -7,7 +7,7 @@
 % Last Version: 18/06/2018
 
 % Information: snnReader is a function that reads a binary file originating
-% from the Adonis spiking neural network simulators
+% from the Nour spiking neural network simulators
 % bool = false for spikeLogger file and bool = true for learningLogger file
 
 

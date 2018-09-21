@@ -16,18 +16,20 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
+#include "../source/learningLogger.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- READING DATA FROM FILE -----
 	adonis_t::DataParser dataParser;
 	
-	auto data = dataParser.readData("../../data/generatedPatterns/cleanSignal/0bn0nn4fakePatterns_snnTest_2000reps_10msInterval.txt");
+	auto data = dataParser.readData("../../data/1D_patterns/control/oneD_10neurons_4patterns.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_t::QtDisplay qtDisplay;
-	adonis_t::SpikeLogger spikeLogger(std::string("loggerTest.bin"));
-	adonis_t::Network network({&spikeLogger}, &qtDisplay);
+	adonis_t::SpikeLogger spikeLogger("10neurons_4patterns_unsupervised_spikeLog.bin");
+	adonis_t::LearningLogger learningLogger("10neurons_4patterns_unsupervised_learningLog.bin");
+	adonis_t::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;
@@ -36,32 +38,23 @@ int main(int argc, char** argv)
 
 	float decayCurrent = 10;
 	float potentialDecay = 20;
-
-	float decayCurrent2 = 40;
-	float potentialDecay2 = 50;
 	
 	float refractoryPeriod = 3;
 
-    int inputNeurons = 27;
-    int layer1Neurons = 27;
-	int layer2Neurons = 27;
+    int inputNeurons = 10;
+    int layer1Neurons = 4;
 	
 	float alpha = 1;
-	float lambda = 5;
-	
+	float lambda = 0.1;
 	float eligibilityDecay = 20;
-	float eligibilityDecay2 = 40;
-
-    float weight = 19e-10/4; //weight dependent on feature size
+    float weight = 19e-10/10; //weight dependent on feature size
 
     //  ----- CREATING THE NETWORK -----
 	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(1, adonis_t::learningMode::myelinPlasticityNoReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(2, adonis_t::learningMode::myelinPlasticityNoReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, eligibilityDecay2, alpha, lambda);
+	network.addNeurons(1, adonis_t::learningMode::myelinPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);
-	network.allToAllConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false, weight, true, 30);
+	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
 	
 	//  ----- INJECTING SPIKES -----
 	for (auto idx=0; idx<data.size(); idx++)
@@ -72,7 +65,9 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(1000);
-	qtDisplay.trackNeuron(28);
+	qtDisplay.trackNeuron(11);
+
+//	network.turnOffLearning(50000);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

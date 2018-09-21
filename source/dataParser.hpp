@@ -1,6 +1,6 @@
 /*
  * dataParser.hpp
- * Adonis_t - clock-driven spiking neural network simulator
+ * Nour_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -18,8 +18,9 @@
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
+#include <deque>
 
-namespace adonis_t
+namespace nour_c
 {
 	struct input
 	{
@@ -91,6 +92,42 @@ namespace adonis_t
                 throw std::runtime_error("the file could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName");
             }
         }
+		
+		std::deque<input> readTeacherSignal(std::string filename)
+		{
+		 dataFile.open(filename);
+			
+            if (dataFile.good())
+            {
+				std::deque<input> data;
+				std::string line;
+				
+				std::cout << "Reading teacher signal" << filename << std::endl;
+				while (std::getline(dataFile, line))
+                {
+                	std::vector<std::string> fields;
+                	split(fields, line, " ");
+					
+                	if (fields.size() == 2)
+                	{
+						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1});
+					}
+                }
+                dataFile.close();
+				
+				std::sort(data.begin(), data.end(), [](input a, input b)
+				{
+					return a.timestamp < b.timestamp;
+				});
+			
+				std::cout << "Done." << std::endl;
+				return data;
+            }
+            else
+            {
+                throw std::runtime_error("the file could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName");
+            }
+		}
 		
 		template <typename Container>
 		Container& split(Container& result, const typename Container::value_type& s, const typename Container::value_type& delimiters)

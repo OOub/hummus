@@ -1,12 +1,12 @@
 /* 
  * network.hpp
- * Adonis_t - clock-driven spiking neural network simulator
+ * Nour_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 01/06/2018
  *
- * Information: the network class acts as a spike manager.
+ * Information: The Network class acts as a spike manager.
  */
 
 #pragma once
@@ -24,7 +24,7 @@
 #include "standardNetworkDelegate.hpp"
 #include "mainThreadNetworkDelegate.hpp"
 
-namespace adonis_t
+namespace nour_c
 {
 	struct receptiveField
 	{
@@ -43,8 +43,7 @@ namespace adonis_t
 			thDelegate(_thDelegate),
             teacher(nullptr),
 			teachingProgress(false),
-			learningStatus(true),
-			teacherIterator(0)
+			learningStatus(true)
 		{}
 		
 		Network(MainThreadNetworkDelegate* _thDelegate) : Network({}, _thDelegate)
@@ -209,7 +208,8 @@ namespace adonis_t
 		// clock-based running through the network
         void run(double _runtime, float _timestep)
         {
-			std::thread spikeManager([this, _runtime, _timestep]{
+			std::thread spikeManager([this, _runtime, _timestep]
+			{
 				std::cout << "Running the network..." << std::endl;
 
 				std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
@@ -229,6 +229,7 @@ namespace adonis_t
 								{
 									std::cout << "teacher signal stopped at t=" << i << std::endl;
 									teachingProgress = false;
+									teacher->clear();
 								}
 							}
 						}
@@ -300,16 +301,6 @@ namespace adonis_t
             return generatedSpikes;
         }
 		
-		int getTeacherIterator() const
-        {
-            return teacherIterator;
-        }
-		
-		void setTeacherIterator(int increment)
-        {
-            teacherIterator = increment;
-        }
-		
 		bool getTeachingProgress() const
         {
             return teachingProgress;
@@ -327,14 +318,14 @@ namespace adonis_t
 		
 		// ----- SUPERVISED LEARNING METHODS -----
 		// add teacher signal for supervised learning
-        void injectTeacher(std::vector<input>* _teacher)
+        void injectTeacher(std::deque<input>* _teacher)
         {
             teacher = _teacher;
             teachingProgress = true;
         }
 		
 		// getter for the teacher signal
-        std::vector<input>* getTeacher() const
+        std::deque<input>* getTeacher() const
         {
             return teacher;
         }
@@ -414,12 +405,11 @@ namespace adonis_t
         std::vector<StandardNetworkDelegate*>  stdDelegates;
         MainThreadNetworkDelegate*             thDelegate;
 		std::vector<receptiveField>            neurons;
-		int                                    teacherIterator;
 		bool                                   teachingProgress;
 		bool                                   learningStatus;
 		double                                 learningOffSignal;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
-        std::vector<input>* teacher;
+        std::deque<input>*                    teacher;
     };
 }

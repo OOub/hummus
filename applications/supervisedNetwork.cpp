@@ -1,6 +1,6 @@
 /*
  * supervisedNetwork.cpp
- * Adonis_t - clock-driven spiking neural network simulator
+ * Nour_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -15,28 +15,21 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
+#include "../source/learningLogger.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- READING DATA FROM FILE -----
-	int repeatsInTeacher = 300;
-	adonis_t::DataParser dataParser;
+	nour_c::DataParser dataParser;
 	
-	// time jitter test
-	auto data = dataParser.readData("../../data/generatedPatterns/timeJitter/3timeJitter0bn0nn4fakePatterns_snnTest_400reps_10msInterval.txt");
-	
-	// supervised learning
-	auto teacher = dataParser.readData("../../data/generatedPatterns/timeJitter/3teacherSignal.txt");
-	
-	for (auto idx=0; idx<teacher.size(); idx++)
-	{
-		teacher.resize(repeatsInTeacher);
-	}
+	auto data = dataParser.readData("../../data/1D_patterns/control/oneD_10neurons_4patterns.txt");
+	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/control/oneD_10neurons_4patterns_teacherSignal.txt");
 
     //  ----- INITIALISING THE NETWORK -----
-	adonis_t::QtDisplay qtDisplay;
-	adonis_t::SpikeLogger spikeLogger(std::string("supervisedLearning_3jitter.bin"));
-	adonis_t::Network network({&spikeLogger}, &qtDisplay);
+	nour_c::QtDisplay qtDisplay;
+	nour_c::SpikeLogger spikeLogger("10neurons_4patterns_supervised_spikeLog.bin");
+	nour_c::LearningLogger learningLogger("10neurons_4patterns_supervised_learningLog.bin");
+	nour_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;
@@ -45,27 +38,22 @@ int main(int argc, char** argv)
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	
-	float decayCurrent2 = 40;
-	float potentialDecay2 = 50;
-	
 	float refractoryPeriod = 3;
 
-    int inputNeurons = 27;
-    int layer1Neurons = 10;
-	int layer2Neurons = 4;
+    int inputNeurons = 10;
+    int layer1Neurons = 4;
 	
-    float weight = 19e-10/10;
 	float alpha = 1;
 	float lambda = 1;
+	float eligibilityDecay = 20;
+    float weight = 19e-10/20;
 
     //  ----- CREATING THE NETWORK -----
-	network.addNeurons(0, adonis_t::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-	network.addNeurons(1, adonis_t::learningMode::myelinPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, alpha, lambda);
-	network.addNeurons(2, adonis_t::learningMode::myelinPlasticityReinforcement, layer2Neurons, decayCurrent2, potentialDecay2, refractoryPeriod, alpha, lambda);
+	network.addNeurons(0, nour_c::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(1, nour_c::learningMode::myelinPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);
-	network.allToAllConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false,  19e-10/5, true, 20);
+	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
 	
 	//  ----- INJECTING SPIKES -----
 	for (auto idx=0; idx<data.size(); idx++)
@@ -79,10 +67,10 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(1000);
-	qtDisplay.trackNeuron(28);
+	qtDisplay.trackNeuron(11);
 	
 	// to turn off learning and start testing
-	network.turnOffLearning(10000);
+	network.turnOffLearning(80000);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

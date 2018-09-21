@@ -1,17 +1,17 @@
 /*
  * networkDelegate.hpp
- * Adonis_t - clock-driven spiking neural network simulator
+ * Nour_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 17/01/2018
  *
- * Information: the networkDelegate class is polymorphic class to handle add-ons
+ * Information: The NetworkDelegate class is polymorphic class to handle add-ons
  */
 
 #pragma once
 
-namespace adonis_t
+namespace nour_c
 {
 	class Network;
 	class Neuron;
