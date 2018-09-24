@@ -1,6 +1,6 @@
 /*
  * networkDelegate.hpp
- * Nour_c - clock-driven spiking neural network simulator
+ * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -11,7 +11,7 @@
 
 #pragma once
 
-namespace nour_c
+namespace Adonis_c
 {
 	class Network;
 	class Neuron;

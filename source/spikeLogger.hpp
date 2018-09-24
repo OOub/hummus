@@ -1,6 +1,6 @@
 /*
  * spikeLogger.hpp
- * Nour_c - clock-driven spiking neural network simulator
+ * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -20,7 +20,7 @@
 
 #include "network.hpp"
 
-namespace nour_c
+namespace adonis_c
 {
     class SpikeLogger : public StandardNetworkDelegate
     {

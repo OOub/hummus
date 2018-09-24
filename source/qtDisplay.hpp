@@ -1,6 +1,6 @@
 /*
  * qtDisplay.hpp
- * Nour_c - clock-driven spiking neural network simulator
+ * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -26,7 +26,7 @@
 #include "outputViewer.hpp"
 #include "potentialViewer.hpp"
 
-namespace nour_c
+namespace adonis_c
 {
     class QtDisplay : public MainThreadNetworkDelegate
     {

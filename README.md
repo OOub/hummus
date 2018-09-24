@@ -1,17 +1,17 @@
-![Logo](resources/nour_logo.png)
+![Logo](resources/adonis_logo.png)
 
 # Quick Start Guide
 
-Nour is a spiking neural network simulator coded using C++. There are currently two versions: 
+Adonis is a spiking neural network simulator coded using C++. There are currently two versions: 
 
-**Nour_c** : a clock-based version of the simulator which includes current dynamics  
-**Nour_e** : an event-based version of the simulator without current dynamics  
+**Adonis_c** : a clock-based version of the simulator which includes current dynamics  
+**Adonis_e** : an event-based version of the simulator without current dynamics  
 
 It is important to note that, as far as the user is concerned, the same methods are used for both versions. The only difference being the lack of current dynamics in the clock-based version  
 
-Nour is a fast, lightweight and flexible spiking neural network simulator made specifically for pattern recognition tasks. Nour makes it very simple to change/add learning rules without having to dig into the specifics of the code. So far, only leaky integrate and fire neurons are supported, as the usefulness of more complicated models is debatable in pattern recognition. The neuron model support will be updated as my research progresses. 
+Adonis is a fast, lightweight and flexible spiking neural network simulator made specifically for pattern recognition tasks. Adonis makes it very simple to change/add learning rules without having to dig into the specifics of the code. So far, only leaky integrate and fire neurons are supported, as the usefulness of more complicated models is debatable in pattern recognition. The neuron model support will be updated as my research progresses. 
 
-Finally, Nour allows full usage of both weight and conduction delays for pattern recognition
+Finally, Adonis allows full usage of both weight and conduction delays for pattern recognition
 
 ## Dependencies
 
@@ -59,7 +59,7 @@ export LD\_LIBRARY\_PATH
 
 ## Testing
 
-1. Go to the Nour directory and run ``premake4 gmake && cd build && make`` or ``premake4 --without-qt gmake && cd build && make`` in case we do not want any Qt dependencies
+1. Go to the Adonis directory and run ``premake4 gmake && cd build && make`` or ``premake4 --without-qt gmake && cd build && make`` in case we do not want any Qt dependencies
 
 2. execute ``cd release && ./testNetwork`` to run the spiking neural network
 
@@ -68,23 +68,23 @@ export LD\_LIBRARY\_PATH
 #### Premake Actions and Options
 
 ###### Using xCode on macOS
-To use Xcode as an IDE on macOS, go the Nour base directory and run ``premake4 xcode4``
+To use Xcode as an IDE on macOS, go the Adonis base directory and run ``premake4 xcode4``
 
 ###### Building Without Qt
-In case you do not want to use the Qt GUI, you can build Nour without any Qt dependencies by running ``premake4 --without-qt gmake`` instead of ``premake4 gmake``
+In case you do not want to use the Qt GUI, you can build Adonis without any Qt dependencies by running ``premake4 --without-qt gmake`` instead of ``premake4 gmake``
 
 ###### Premake Help
 Run ``premake4 --help`` for more information
 
 ## Using The Simulator
 
-#### Nour UML Diagram
-The Nour simulator is a header-only C++ library with 12 classes
+#### Adonis UML Diagram
+The Adonis simulator is a header-only C++ library with 12 classes
 
 ![flowChart](resources/flowchart.png)
 
-#### Nour_c
-all the classes are declared within the ``nour_c`` namespace. Check out testNetwork.cpp for more information on how to build and run a spiking neural network.
+#### Adonis_c
+all the classes are declared within the ``adonis_c`` namespace. Check out testNetwork.cpp for more information on how to build and run a spiking neural network.
 
 ###### Important includes
 * add ``#include "../source/network.hpp"`` to use the base framework
@@ -92,7 +92,7 @@ all the classes are declared within the ``nour_c`` namespace. Check out testNetw
 
 ###### Reading Input data
 * the DataParser class is capable of reading 1D input data formatted in a text file as such: _timestamp, index_
-* It can also read 2D data formatted as such: _timstamp, X, Y_
+* It can also read 2D data formatted as such: _timestamp, X, Y_
 
 This is done via the **readData()** method which take in a string for the location of the input data file, and an int for the width of the 2D square grid in the case of 2D data.
 
@@ -102,24 +102,24 @@ the output is a vector of struct with 4 fields: **timestamp**, **neuronID**, **x
 
 _Initialising the optional Add-ons_
 
-* the QtDisplay is initialised as such: ``nour_c::QtDisplay qtDisplay;``
+* the QtDisplay is initialised as such: ``adonis_c::QtDisplay qtDisplay;``
 * the SpikeLogger and the LearningLogger both take in an std::string as a parameter, to define the name of their corresponding output file. They are initialised as such:
 ```
-nour_c::SpikeLogger spikeLogger(std::string("spikeLog"));
-nour_c::LearningLogger learningLogger(std::string("learningLog"));
+adonis_c::SpikeLogger spikeLogger(std::string("spikeLog"));
+adonis_c::LearningLogger learningLogger(std::string("learningLog"));
 ```
 _Initialising The Network_
 
-* if no add-ons are used we can directly initialise the network as such: ``nour_c::Network network``
+* if no add-ons are used we can directly initialise the network as such: ``adonis_c::Network network``
 
 * the Network class can take in a vector of references for the standard delegates:
-``nour_c::Network network({&spikeLogger, &learningLogger});``
+``adonis_c::Network network({&spikeLogger, &learningLogger});``
 
 * the Network class can also take in a reference to a main thread delegate (only 1 main thread add-on can be used):
-``nour_c::Network network(&qtDisplay);``
+``adonis_c::Network network(&qtDisplay);``
 
 * if both types of add-ons are being used then we initialise as such:
-``nour_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);``
+``adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);``
 
 ###### Creating The Network
 

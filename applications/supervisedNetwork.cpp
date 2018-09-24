@@ -1,6 +1,6 @@
 /*
  * supervisedNetwork.cpp
- * Nour_c - clock-driven spiking neural network simulator
+ * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -20,16 +20,16 @@
 int main(int argc, char** argv)
 {
     //  ----- READING DATA FROM FILE -----
-	nour_c::DataParser dataParser;
+	adonis_c::DataParser dataParser;
 	
 	auto data = dataParser.readData("../../data/1D_patterns/control/oneD_10neurons_4patterns.txt");
 	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/control/oneD_10neurons_4patterns_teacherSignal.txt");
 
     //  ----- INITIALISING THE NETWORK -----
-	nour_c::QtDisplay qtDisplay;
-	nour_c::SpikeLogger spikeLogger("10neurons_4patterns_supervised_spikeLog.bin");
-	nour_c::LearningLogger learningLogger("10neurons_4patterns_supervised_learningLog.bin");
-	nour_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+	adonis_c::QtDisplay qtDisplay;
+	adonis_c::SpikeLogger spikeLogger("10neurons_4patterns_supervised_spikeLog.bin");
+	adonis_c::LearningLogger learningLogger("10neurons_4patterns_supervised_learningLog.bin");
+	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float runtime = data.back().timestamp+1;
@@ -49,8 +49,8 @@ int main(int argc, char** argv)
     float weight = 19e-10/10;
 
     //  ----- CREATING THE NETWORK -----
-	network.addNeurons(0, nour_c::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(1, nour_c::learningMode::myelinPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(0, adonis_c::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(1, adonis_c::learningMode::myelinPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);

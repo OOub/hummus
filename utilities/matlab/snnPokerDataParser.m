@@ -7,7 +7,7 @@
 % Last Version: 04/09/2018
 
 % Information: snnPokerDataParser is a function that parses the poker dataset (allcards.mat), so it can
-% be fed into the Nour spiking neural network simulator 
+% be fed into the Adonis spiking neural network simulator 
 
 function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
     % allcards - path to the 'allcards.mat' file
