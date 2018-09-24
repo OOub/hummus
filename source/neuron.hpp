@@ -76,7 +76,6 @@ namespace adonis_c
 			externalCurrent(_externalCurrent),
 			current(0),
 			potential(_restingPotential),
-			supervisedPotential(_restingPotential),
 			active(true),
 			initialProjection{nullptr, nullptr, 1000e-10, 0, -1},
             lastSpikeTime(0),
@@ -160,16 +159,6 @@ namespace adonis_c
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
 			
-			// impose spiking when using supervised learning
-			if (network->getTeachingProgress())
-			{
-				if (network->getTeacher()->front().neuronID == neuronID && std::abs(network->getTeacher()->front().timestamp - timestamp) < 1e-1)
-				{
-					potential = threshold;
-					network->getTeacher()->pop_front();
-				}
-			}
-			
 			// neuron inactive during refractory period
 			if (active)
 			{
@@ -180,7 +169,6 @@ namespace adonis_c
 					s.postProjection->lastInputTime = timestamp;
 				}
 				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
-				supervisedPotential = potential;
 			}
 			
 			if (s.postProjection)
@@ -238,7 +226,6 @@ namespace adonis_c
 				learningRuleHandler(timestamp, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
-				supervisedPotential = resetPotential;
 				current = 0;
 				active = false;
 			}
@@ -364,7 +351,7 @@ namespace adonis_c
 			std::vector<double> timeDifferences;
 			std::vector<int16_t> plasticID;
 			std::vector<std::vector<int16_t>> plasticCoordinates(3);
-			
+			bool supervise = false;
 			#ifndef NDEBUG
 			std::cout << "New learning epoch at t=" << timestamp << std::endl;
 			#endif
@@ -380,11 +367,12 @@ namespace adonis_c
 					plasticCoordinates[2].push_back(inputProjection->preNeuron->rfID);
 
 					float change = 0;
-					timeDifferences.push_back(timestamp - inputProjection->lastInputTime - inputProjection->delay);
-					if (network->getTeacher()) // supervised learning
+					if (network->getTeachingProgress()) // supervised learning
 					{
-						if (network->getTeachingProgress()) // stops learning when the teacher signal is over
+						if (timestamp >= network->getTeacher()->front().timestamp-decayPotential || timestamp <= network->getTeacher()->front().timestamp+decayPotential)
 						{
+							timeDifferences.push_back(network->getTeacher()->front().timestamp - inputProjection->lastInputTime - inputProjection->delay);
+							supervise = true;
 							if (timeDifferences.back() > 0)
 							{
 								change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
@@ -403,9 +391,15 @@ namespace adonis_c
 								#endif
 							}
 						}
+						else
+						{
+							timeDifferences.push_back(0);
+						}
+						synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
 					}
 					else // unsupervised learning
 					{
+						timeDifferences.push_back(timestamp - inputProjection->lastInputTime - inputProjection->delay);
 						if (timeDifferences.back() > 0)
 						{
 							change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
@@ -423,15 +417,21 @@ namespace adonis_c
 							std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 							#endif
 						}
+						synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
 					}
-					synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
 				}
+			}
+			
+			if (supervise)
+			{
+				network->getTeacher()->pop_front();
 			}
 			
 			for (auto delegate: network->getStandardDelegates())
 			{
 				delegate->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
 			}
+			
 			if (network->getMainThreadDelegate())
 			{
 				network->getMainThreadDelegate()->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
@@ -453,11 +453,10 @@ namespace adonis_c
                 // if the projection is plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
-					
 					// positive reinforcement on winner projections
-					if (supervisedPotential < threshold && allProjections->weight < 19e-10/plasticID.size())
+					if (allProjections->weight < 19e-10/plasticID.size())
                     {
-                     	allProjections->weight += allProjections->weight*synapticEfficacy*plasticID.size()*0.01;
+                     	allProjections->weight += allProjections->weight*synapticEfficacy*0.1/plasticID.size();
                     }
                 }
                 else
@@ -465,7 +464,7 @@ namespace adonis_c
                     if (allProjections->weight > 0)
                     {
                         // negative reinforcement on other projections going towards the winner to prevent other neurons from triggering it
-                        allProjections->weight -= allProjections->weight*synapticEfficacy*plasticID.size()*0.01;
+                        allProjections->weight -= allProjections->weight*synapticEfficacy*0.1/plasticID.size();
 						if (allProjections->weight < 0)
 						{
 							allProjections->weight = 0;
@@ -542,7 +541,6 @@ namespace adonis_c
         std::vector<projection*>                 preProjections;
         projection                               initialProjection;
         double                                   lastSpikeTime;
-        float                                    supervisedPotential;
         learningMode                             learningType;
     };
 }
