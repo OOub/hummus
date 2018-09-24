@@ -11,7 +11,7 @@
 
 #pragma once
 
-namespace Adonis_c
+namespace adonis_c
 {
 	class Network;
 	class Neuron;
