@@ -19,12 +19,12 @@
 
 int main(int argc, char** argv)
 {
-    //  ----- READING DATA FROM FILE -----
+    //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto data = dataParser.readData("../../data/1D_patterns/control/oneD_10neurons_4patterns.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/control/oneD_10neurons_4patterns.txt");
 	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/control/oneD_10neurons_4patterns_teacherSignal.txt");
-
+	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::SpikeLogger spikeLogger("10neurons_4patterns_supervised_spikeLog.bin");
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
-	float runtime = data.back().timestamp+1;
+	float runtime = trainingData.back().timestamp+1;
 	float timestep = 0.1;
 
 	float decayCurrent = 10;
@@ -46,19 +46,19 @@ int main(int argc, char** argv)
 	float alpha = 1;
 	float lambda = 0.1;
 	float eligibilityDecay = 20;
-    float weight = 19e-10/10;
+    float weight = 19e-10/20;
 
     //  ----- CREATING THE NETWORK -----
 	network.addNeurons(0, adonis_c::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	network.addNeurons(1, adonis_c::learningMode::myelinPlasticityReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
+	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
 	
 	//  ----- INJECTING SPIKES -----
-	for (auto idx=0; idx<data.size(); idx++)
+	for (auto idx=0; idx<trainingData.size(); idx++)
 	{
-		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[data[idx].neuronID].prepareInitialSpike(data[idx].timestamp));
+		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[trainingData[idx].neuronID].prepareInitialSpike(trainingData[idx].timestamp));
     }
 
 	// injecting the teacher signal for supervised threshold learning
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(1000);
-	qtDisplay.trackNeuron(11);
+	qtDisplay.trackNeuron(10);
 	
 	// to turn off learning and start testing
 	network.turnOffLearning(80000);

@@ -160,6 +160,16 @@ namespace adonis_c
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
 			
+			// impose spiking when using supervised learning
+			if (network->getTeachingProgress())
+			{
+				if (network->getTeacher()->front().neuronID == neuronID && std::abs(network->getTeacher()->front().timestamp - timestamp) < 1e-1)
+				{
+					potential = threshold;
+					network->getTeacher()->pop_front();
+				}
+			}
+			
 			// neuron inactive during refractory period
 			if (active)
 			{
@@ -171,20 +181,6 @@ namespace adonis_c
 				}
 				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 				supervisedPotential = potential;
-			}
-			
-			// impose spiking when using supervised learning
-			if (network->getTeachingProgress())
-			{
-				if (network->getTeacher()->front().neuronID == neuronID)
-				{
-					if (std::abs(network->getTeacher()->front().timestamp - timestamp) < 1e-1)
-					{
-						current = 19e-10;
-						potential = threshold;
-						network->getTeacher()->pop_front();
-					}
-				}
 			}
 			
 			if (s.postProjection)
@@ -358,7 +354,6 @@ namespace adonis_c
 					myelinPlasticity(timestamp, network);
 				}
 			}
-			
 			lateralInhibition(network);
 			resetLearning(network);
 		}
@@ -460,9 +455,9 @@ namespace adonis_c
                 {
 					
 					// positive reinforcement on winner projections
-					if (supervisedPotential < threshold && allProjections->weight <= 19e-10/plasticID.size())
+					if (supervisedPotential < threshold && allProjections->weight < 19e-10/plasticID.size())
                     {
-                     	allProjections->weight += allProjections->weight*synapticEfficacy*plasticID.size()*0.1;
+                     	allProjections->weight += allProjections->weight*synapticEfficacy*plasticID.size()*0.01;
                     }
                 }
                 else
@@ -470,7 +465,7 @@ namespace adonis_c
                     if (allProjections->weight > 0)
                     {
                         // negative reinforcement on other projections going towards the winner to prevent other neurons from triggering it
-                        allProjections->weight -= allProjections->weight*synapticEfficacy*plasticID.size()*0.1;
+                        allProjections->weight -= allProjections->weight*synapticEfficacy*plasticID.size()*0.01;
 						if (allProjections->weight < 0)
 						{
 							allProjections->weight = 0;
@@ -480,6 +475,7 @@ namespace adonis_c
             }
 		}
 		
+		// problem with the lateral inhibition
 		template<typename Network>
 		void lateralInhibition(Network* network)
 		{

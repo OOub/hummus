@@ -20,10 +20,10 @@
 
 int main(int argc, char** argv)
 {
-    //  ----- READING DATA FROM FILE -----
+    //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto data = dataParser.readData("../../data/1D_patterns/control/oneD_10neurons_4patterns.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/timeJitter/oneD_10neurons_4patterns.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
-	float runtime = data.back().timestamp+1;
+	float runtime = trainingData.back().timestamp+1;
 
 	float timestep = 0.1;
 
@@ -57,9 +57,9 @@ int main(int argc, char** argv)
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
 	
 	//  ----- INJECTING SPIKES -----
-	for (auto idx=0; idx<data.size(); idx++)
+	for (auto idx=0; idx<trainingData.size(); idx++)
 	{
-		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[data[idx].neuronID].prepareInitialSpike(data[idx].timestamp));
+		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[trainingData[idx].neuronID].prepareInitialSpike(trainingData[idx].timestamp));
     }
 
     //  ----- DISPLAY SETTINGS -----

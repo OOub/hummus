@@ -37,7 +37,7 @@ namespace adonis_c
         DataParser(){}
 		
 		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
-        std::vector<input> readData(std::string filename, int width=24)
+        std::vector<input> readTrainingData(std::string filename, int width=24)
         {
             dataFile.open(filename);
             
@@ -92,6 +92,19 @@ namespace adonis_c
                 throw std::runtime_error("the file could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName");
             }
         }
+		
+		// reads test data in the same format as the training data, stops learning at the end of the training data time and shifts the test data timestamps accordingly
+		template<typename Network>
+		std::vector<input> readTestData(std::vector<input>* trainingData, Network* network, std::string filename, int width=24)
+		{
+			auto data = readTrainingData(filename, width);
+			network->turnOffLearning(trainingData->back().timestamp);
+			for (auto& input: data)
+			{
+				input.timestamp += trainingData->back().timestamp + 1000;
+			}
+			return data;
+		}
 		
 		std::deque<input> readTeacherSignal(std::string filename)
 		{

@@ -20,9 +20,9 @@
 
 int main(int argc, char** argv)
 {
-	//  ----- READING DATA FROM FILE -----
+    //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-	auto data = dataParser.readData("../../data/poker_card_task/2_classes/t10_1pip_2types_200reps.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/poker_card_task/2_classes/t10_1pip_2types_200reps.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 	
 	//  ----- NETWORK PARAMETERS -----
-	float runtime = data.back().timestamp+1;
+	float runtime = trainingData.back().timestamp+1;
 	float timestep = 0.1;
 	int imageSize = 24;
 	int inputlayerRF = 36;
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 	}
 
 	//  ----- INJECTING SPIKES -----
-	for (auto& event: data)
+	for (auto& event: trainingData)
 	{
 	    for (auto& receptiveField: network.getNeuronPopulations())
 	    {
