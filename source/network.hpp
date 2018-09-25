@@ -21,6 +21,7 @@
 
 #include "neuron.hpp"
 #include "dataParser.hpp"
+#include "learningRuleHandler.hpp"
 #include "standardNetworkDelegate.hpp"
 #include "mainThreadNetworkDelegate.hpp"
 
@@ -51,7 +52,7 @@ namespace adonis_c
 		
 		// ----- PUBLIC NETWORK METHODS -----
 		// add neurons
-		void addNeurons(int16_t _layerID, learningMode _learningType=noLearning, int _numberOfNeurons=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _rfID=0)
+		void addNeurons(int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _rfID=0)
         {            
         	unsigned long shift = 0;
         	if (!neurons.empty())
@@ -65,13 +66,13 @@ namespace adonis_c
         	std::vector<Neuron> temp;
 			for (auto i=0+shift; i < _numberOfNeurons+shift; i++)
 			{
-				temp.emplace_back(i,_layerID,_rfID,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,-1,-1,-1,_learningType);
+				temp.emplace_back(i,_layerID,_rfID,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,-1,-1,-1,_learningRuleHandler);
 			}
 			neurons.push_back(receptiveField{std::move(temp),_rfID,_layerID});
         }
 		
 		// add neurons within receptive fields
-		void addReceptiveFields(int rfNumber, int16_t _layerID, learningMode _learningType=noLearning, int gridSize=0, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addReceptiveFields(int rfNumber, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int gridSize=0, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
 		{
 		    // error handling
 		    double d_sqrt = std::sqrt(rfNumber);
@@ -127,7 +128,7 @@ namespace adonis_c
 							y = 0+ycount*gridSize/sq_rfNumber;
 			            }
 			            count++;
-				        temp.emplace_back(i,_layerID,j,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_alpha,_lambda,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,x,y,-1,_learningType);
+				        temp.emplace_back(i,_layerID,j,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,x,y,-1,_learningRuleHandler);
 						
 						y++;
 
@@ -145,7 +146,7 @@ namespace adonis_c
                 std::cout << "adding receptive fields with 1D neurons to the network" << std::endl;
                 for (auto j=0; j<rfNumber; j++)
 		        {
-                    addNeurons(_layerID, _learningType,_numberOfNeurons, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_alpha, _lambda,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent,j);
+                    addNeurons(_layerID, _learningRuleHandler,_numberOfNeurons, _decayCurrent,_decayPotential,_refractoryPeriod,_eligibilityDecay,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent,j);
                 }
             }
             else

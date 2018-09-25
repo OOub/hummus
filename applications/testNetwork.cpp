@@ -15,6 +15,7 @@
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
 #include "../source/learningLogger.hpp"
+#include "../source/stdp.hpp"
 
 int main(int argc, char** argv)
 {
@@ -24,7 +25,10 @@ int main(int argc, char** argv)
 	adonis_c::SpikeLogger spikeLogger("spikeLog");
 	adonis_c::LearningLogger learningLogger("learningLog");
 	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
-
+	
+	//  ----- INITIALISING THE LEARNING RULE -----
+	adonis_c::Stdp learningRule;
+	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
 	float timestep = 0.1;
@@ -40,10 +44,10 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// input neurons
-	network.addNeurons(0, adonis_c::learningMode::noLearning, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(0, nullptr, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
-	network.addNeurons(1, adonis_c::learningMode::myelinPlasticityNoReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(1, &learningRule, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 
     //  ----- CONNECTING THE NETWORK -----

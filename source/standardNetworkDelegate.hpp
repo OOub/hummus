@@ -19,7 +19,7 @@ namespace adonis_c
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		StandardNetworkDelegate(){}
+		StandardNetworkDelegate() = default;
 		virtual ~StandardNetworkDelegate(){}
 	};
 }

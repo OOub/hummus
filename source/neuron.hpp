@@ -4,14 +4,9 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 31/05/2018
+ * Last Version: 25/09/2018
  *
- * Information: The Neuron class defines a neuron and the learning rules dictating its behavior. Any modifications to add new learning rules or neuron types are to be done at this stage.
- *
- * To add a new learning rule:
- * 1- create your learning method in the protected section of this class
- * 2- update the learningMode enum with your learning rule
- * 3- the new learning rule should be called via the learningRuleHandler method in the protected section of this class
+ * Information: The Neuron class defines a neuron and its parameters. It can take in a pointer to a LearningRuleHandler object to define which learning rule it follows
  */
 
 #pragma once
@@ -29,17 +24,11 @@
 #include <deque>
 
 #include "networkDelegate.hpp"
+#include "learningRuleHandler.hpp"
 
 namespace adonis_c
 {
 	class Neuron;
-	
-	enum learningMode
-	{
-	    noLearning,
-	    myelinPlasticityNoReinforcement,
-	    myelinPlasticityReinforcement,
-	};
 	
 	struct projection
 	{
@@ -61,7 +50,7 @@ namespace adonis_c
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _alpha=1, float _lambda=1, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, learningMode _learningType=noLearning) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			rfID(_rfID),
@@ -79,15 +68,13 @@ namespace adonis_c
 			active(true),
 			initialProjection{nullptr, nullptr, 1000e-10, 0, -1},
             lastSpikeTime(0),
-            alpha(_alpha),
-            lambda(_lambda),
             eligibilityTrace(0),
             eligibilityDecay(_eligibilityDecay),
             xCoordinate(_xCoordinate),
             yCoordinate(_yCoordinate),
             zCoordinate(_zCoordinate),
-            learningType(_learningType)
-    	{    	    
+			learningRuleHandler(_learningRuleHandler)
+    	{
     		// error handling
 			if (decayCurrent == decayPotential)
             {
@@ -223,7 +210,7 @@ namespace adonis_c
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 			
-				learningRuleHandler(timestamp, network);
+				learn(timestamp, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				current = 0;
@@ -276,6 +263,16 @@ namespace adonis_c
             return potential = newPotential;
         }
 		
+		float getDecayPotential() const
+        {
+            return decayPotential;
+        }
+		
+        float getDecayCurrent() const
+        {
+            return decayCurrent;
+        }
+		
         float getCurrent() const
         {
         	return current;
@@ -311,6 +308,11 @@ namespace adonis_c
 		    return zCoordinate;
 		}
 		
+		std::vector<projection*>& getPreProjections()
+		{
+			return preProjections;
+		}
+		
 		std::vector<std::unique_ptr<projection>>& getPostProjections()
 		{
 			return postProjections;
@@ -321,6 +323,21 @@ namespace adonis_c
 			return eligibilityTrace;
 		}
 		
+		float getSynapticEfficacy() const
+		{
+			return synapticEfficacy;
+		}
+		
+		float setSynapticEfficacy(float newEfficacy)
+		{
+			return synapticEfficacy = newEfficacy;
+		}
+		
+		float getInputResistance() const
+		{
+			return inputResistance;
+		}
+		
 		projection* getInitialProjection()
 		{
 			return &initialProjection;
@@ -328,153 +345,24 @@ namespace adonis_c
 		
 	protected:
 		
-		// ----- THE LEARNING RULES -----
+		// ----- THE LEARNING RULE -----
 		
-		// this is the method called by the update function. Any new learning rule methods should be called at this stage
+		// calls a learningRuleHandler to add a learning rule to the neuron
 		template<typename Network>
-		void learningRuleHandler(double timestamp, Network* network)
+		void learn(double timestamp, Network* network)
 		{
 			if (network->getLearningStatus())
 			{
-				if (learningType == myelinPlasticityNoReinforcement || learningType == myelinPlasticityReinforcement)
+				if (learningRuleHandler)
 				{
-					myelinPlasticity(timestamp, network);
+					learningRuleHandler->learn(timestamp, this, network);
 				}
 			}
 			lateralInhibition(network);
 			resetLearning(network);
 		}
 		
-		template<typename Network>
-		void myelinPlasticity(double timestamp, Network* network)
-		{
-			std::vector<double> timeDifferences;
-			std::vector<int16_t> plasticID;
-			std::vector<std::vector<int16_t>> plasticCoordinates(3);
-			bool supervise = false;
-			#ifndef NDEBUG
-			std::cout << "New learning epoch at t=" << timestamp << std::endl;
-			#endif
-			
-			for (auto inputProjection: preProjections)
-			{
-				// selecting plastic neurons
-				if (inputProjection->preNeuron->eligibilityTrace > 0.1)
-				{
-					plasticID.push_back(inputProjection->preNeuron->neuronID);
-					plasticCoordinates[0].push_back(inputProjection->preNeuron->xCoordinate);
-					plasticCoordinates[1].push_back(inputProjection->preNeuron->yCoordinate);
-					plasticCoordinates[2].push_back(inputProjection->preNeuron->rfID);
-
-					float change = 0;
-					if (network->getTeachingProgress()) // supervised learning
-					{
-						if (timestamp >= network->getTeacher()->front().timestamp-decayPotential || timestamp <= network->getTeacher()->front().timestamp+decayPotential)
-						{
-							timeDifferences.push_back(network->getTeacher()->front().timestamp - inputProjection->lastInputTime - inputProjection->delay);
-							supervise = true;
-							if (timeDifferences.back() > 0)
-							{
-								change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
-								inputProjection->delay += change;
-								#ifndef NDEBUG
-								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << " weight: " << inputProjection->weight << std::endl;
-								#endif
-							}
-
-							else if (timeDifferences.back() < 0)
-							{
-								change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
-								inputProjection->delay += change;
-								#ifndef NDEBUG
-								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << " weight: " << inputProjection->weight << std::endl;
-								#endif
-							}
-						}
-						else
-						{
-							timeDifferences.push_back(0);
-						}
-						synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
-					}
-					else // unsupervised learning
-					{
-						timeDifferences.push_back(timestamp - inputProjection->lastInputTime - inputProjection->delay);
-						if (timeDifferences.back() > 0)
-						{
-							change = lambda*(inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(-alpha*timeDifferences.back()/decayCurrent) - std::exp(-alpha*timeDifferences.back()/decayPotential))*synapticEfficacy;
-							inputProjection->delay += change;
-							#ifndef NDEBUG
-							std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-							#endif
-						}
-
-						else if (timeDifferences.back() < 0)
-						{
-							change = -lambda*((inputResistance/(decayCurrent-decayPotential)) * current * (std::exp(alpha*timeDifferences.back()/decayCurrent) - std::exp(alpha*timeDifferences.back()/decayPotential)))*synapticEfficacy;
-							inputProjection->delay += change;
-							#ifndef NDEBUG
-							std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-							#endif
-						}
-						synapticEfficacy = -std::exp(-std::pow(timeDifferences.back(),2))+1;
-					}
-				}
-			}
-			
-			if (supervise)
-			{
-				network->getTeacher()->pop_front();
-			}
-			
-			for (auto delegate: network->getStandardDelegates())
-			{
-				delegate->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
-			}
-			
-			if (network->getMainThreadDelegate())
-			{
-				network->getMainThreadDelegate()->learningEpoch(timestamp, network, this, timeDifferences, plasticCoordinates);
-			}
-			
-			if (learningType == myelinPlasticityReinforcement)
-			{
-				reinforcementLearning(plasticID, network);
-			}
-		}
-		
-		template <typename Network>
-		void reinforcementLearning(std::vector<int16_t> plasticID, Network* network)
-		{
-			// looping through all projections from the winner
-            for (auto& allProjections: preProjections)
-            {
-                int16_t ID = allProjections->preNeuron->neuronID;
-                // if the projection is plastic
-                if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
-                {
-					// positive reinforcement on winner projections
-					if (allProjections->weight < 19e-10/plasticID.size())
-                    {
-                     	allProjections->weight += allProjections->weight*synapticEfficacy*0.1/plasticID.size();
-                    }
-                }
-                else
-                {
-                    if (allProjections->weight > 0)
-                    {
-                        // negative reinforcement on other projections going towards the winner to prevent other neurons from triggering it
-                        allProjections->weight -= allProjections->weight*synapticEfficacy*0.1/plasticID.size();
-						if (allProjections->weight < 0)
-						{
-							allProjections->weight = 0;
-						}
-                    }
-				}
-            }
-		}
-		
-		// problem with the lateral inhibition
+		// ----- NEURON BEHAVIOR -----
 		template<typename Network>
 		void lateralInhibition(Network* network)
 		{
@@ -527,8 +415,6 @@ namespace adonis_c
 		bool                                     active;
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
-		float                                    alpha;
-		float                                    lambda;
 		float                                    eligibilityTrace;
 		float                                    eligibilityDecay;
 		int16_t                                  xCoordinate;
@@ -541,6 +427,6 @@ namespace adonis_c
         std::vector<projection*>                 preProjections;
         projection                               initialProjection;
         double                                   lastSpikeTime;
-        learningMode                             learningType;
+        LearningRuleHandler*                     learningRuleHandler;
     };
 }

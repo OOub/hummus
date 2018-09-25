@@ -17,6 +17,7 @@
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
 #include "../source/learningLogger.hpp"
+#include "../source/myelinPlasticity.hpp"
 
 int main(int argc, char** argv)
 {
@@ -52,12 +53,12 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)
-    network.addReceptiveFields(inputlayerRF, 0, adonis_c::learningMode::noLearning, imageSize, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+    network.addReceptiveFields(inputlayerRF, 0, nullptr, imageSize, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
 	
 	// layer 1 with 36 receptive fields and a layer depth equal to 5 (1D neurons)
 	for (auto i=0; i<layer1Volume; i++)
 	{
-    	network.addReceptiveFields(layer1RF, 1, adonis_c::learningMode::myelinPlasticityReinforcement, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+    	network.addReceptiveFields(layer1RF, 1, &myelinPlasticity, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
     }
 	
     //  ----- CONNECTING THE NETWORK -----

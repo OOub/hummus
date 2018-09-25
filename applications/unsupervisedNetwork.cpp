@@ -17,6 +17,7 @@
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
 #include "../source/learningLogger.hpp"
+#include "../source/myelinPlasticity.hpp"
 
 int main(int argc, char** argv)
 {
@@ -47,11 +48,14 @@ int main(int argc, char** argv)
 	float alpha = 1;
 	float lambda = 0.1;
 	float eligibilityDecay = 20;
-    float weight = 19e-10/10; //weight dependent on feature size
+    float weight = 19e-10/10; // weight dependent on feature size
 
+	//  ----- INITIALISING THE LEARNING RULE -----
+	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
+	
     //  ----- CREATING THE NETWORK -----
-	network.addNeurons(0, adonis_c::learningMode::noLearning, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
-	network.addNeurons(1, adonis_c::learningMode::myelinPlasticityNoReinforcement, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay, alpha, lambda);
+	network.addNeurons(0, nullptr, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
+	network.addNeurons(1, &myelinPlasticity, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
