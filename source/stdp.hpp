@@ -29,6 +29,7 @@ namespace adonis_c
 		// ----- PUBLIC METHODS -----
 		virtual void learn(double timestamp, Neuron* neuron, Network* network) override
 		{
+			// event-based exponential calculation because we have the last spike information
 			for (auto inputProjection: neuron->getPreProjections())
 			{
 				if (inputProjection->preNeuron->getEligibilityTrace() > 0.1)

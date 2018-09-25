@@ -1,11 +1,9 @@
 % hats.m
 
-% Created by Siohoi Ieng and Omar Oubari
+% Created by Siohoi Ieng
 % Institut de la Vision
 
-% Emails:
-% siohoi.ieng@inserm.fr
-% omar.oubari@inserm.fr
+% Email: siohoi.ieng@inserm.fr
 
 % Last Version: 25/09/2018
 

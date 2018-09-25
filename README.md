@@ -2,14 +2,13 @@
 
 # Quick Start Guide
 
-Adonis is a spiking neural network simulator coded using C++. There are currently two versions: 
+Adonis is a spiking neural network simulator coded using C++. There is currently one version released, with another purely event-based one in the works: 
 
 **Adonis_c** : a clock-based version of the simulator which includes current dynamics  
-**Adonis_e** : an event-based version of the simulator without current dynamics  
 
-It is important to note that, as far as the user is concerned, the same methods are used for both versions. The only difference being the lack of current dynamics in the clock-based version  
+Adonis is a fast, lightweight and flexible spiking neural network simulator made specifically for pattern recognition tasks. Adonis makes it very simple to change/add learning rules without having to dig into the specifics of the code.
 
-Adonis is a fast, lightweight and flexible spiking neural network simulator made specifically for pattern recognition tasks. Adonis makes it very simple to change/add learning rules without having to dig into the specifics of the code. So far, only leaky integrate and fire neurons are supported, as the usefulness of more complicated models is debatable in pattern recognition. The neuron model support will be updated as my research progresses. 
+So far, only leaky integrate and fire neurons are supported, as the usefulness of more complicated models is debatable in pattern recognition. The neuron model support will be updated as my research progresses. 
 
 Finally, Adonis allows full usage of both weight and conduction delays for pattern recognition
 
@@ -79,7 +78,7 @@ Run ``premake4 --help`` for more information
 ## Using The Simulator
 
 #### Adonis UML Diagram
-The Adonis simulator is a header-only C++ library with 12 classes
+The Adonis simulator is a header-only C++ library with 16 classes
 
 ![flowChart](resources/flowchart.png)
 
@@ -94,9 +93,24 @@ all the classes are declared within the ``adonis_c`` namespace. Check out testNe
 * the DataParser class is capable of reading 1D input data formatted in a text file as such: _timestamp, index_
 * It can also read 2D data formatted as such: _timestamp, X, Y_
 
-This is done via the **readData()** method which take in a string for the location of the input data file, and an int for the width of the 2D square grid in the case of 2D data.
+This is done via the **readTrainingData()** method which take in a string for the location of the input data file, and an int for the width of the 2D square grid in the case of 2D data.
 
 the output is a vector of struct with 4 fields: **timestamp**, **neuronID**, **x**, **y**.
+
+###### Adding a Teacher signal
+* We can make the myelin plasticity algorithm supervised by simply adding a training signal using the **readTeacherSignal()** method in the DataParser class.
+* the teacher signal is then injected into the network by passing it as a reference to the network method **injectTeacher()**, and it will look something like this: 
+
+```
+auto teacher = dataParser.readTeacherSignal(path_to_file);
+network.injectTeacher(&teacher);
+
+```
+
+the teacher signal in question is formatted as a matrix of desired timestamps, each timestamp referring to the desired time of alignement on each learning epoch.
+
+###### Reading Test data
+the **readTestData()** method reads a test dataset in the same format as the training data, stops learning at the end of the training data time and shifts the test dataset timestamps accordingly, so as to make a sequence of spike patterns to be fed into the network
 
 ###### Initialisation
 
@@ -127,7 +141,12 @@ _Initialising The Network_
 
 * to create neurons defined in a 2D square grid (for computer vision tasks), we use the Network method **addReceptiveFields()** method which creates a grid where each square in that grid contains a separate neuron population. This method allows the network to retain spatial information
 
-* an important parameter in the methods to create neurons is the learning rule selection via the enumeration **learningMode** defined in the Neuron class. Check it out to see all the available learning rule options.
+* an important parameter in the methods to create neurons is the selection of a learning rule. Each learning rule available inherits from the polymorphic class LearningRuleHandler: 
+
+1. The correct learning rule needs to be in the includes. 
+2. A LearningRuleHandler object needs to be created, and passed as a reference to the neuron creation methods, and if we don't want a learning rule, we simply pass a **nullptr**
+
+currently, 3 learning rules are implemented: MyelinPlasticity, MyelinPlasticityReinforcement, and Stdp.
 
 ###### Connecting The Network
 

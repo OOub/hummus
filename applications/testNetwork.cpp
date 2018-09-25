@@ -26,9 +26,6 @@ int main(int argc, char** argv)
 	adonis_c::LearningLogger learningLogger("learningLog");
 	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 	
-	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp learningRule;
-	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
 	float timestep = 0.1;
@@ -41,6 +38,9 @@ int main(int argc, char** argv)
     int layer1Neurons = 1;
 	
     float weight = 19e-10/2;
+
+	//  ----- INITIALISING THE LEARNING RULE -----
+	adonis_c::Stdp learningRule;
 	
 	//  ----- CREATING THE NETWORK -----
 	// input neurons
