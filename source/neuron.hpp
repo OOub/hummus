@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 25/09/2018
  *
- * Information: The Neuron class defines a neuron and its parameters. It can take in a pointer to a LearningRuleHandler object to define which learning rule it follows
+ * Information: The Neuron class defines a neuron and its parameters. It can take in a pointer to a LearningRuleHandler object to define which learning rule it follows. The weight is automatically scaled depending on the input resistance used
  */
 
 #pragma once
@@ -50,7 +50,7 @@ namespace adonis_c
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			rfID(_rfID),
@@ -66,7 +66,7 @@ namespace adonis_c
 			current(0),
 			potential(_restingPotential),
 			active(true),
-			initialProjection{nullptr, nullptr, 1000e-10, 0, -1},
+			initialProjection{nullptr, nullptr, 100/_inputResistance, 0, -1},
             lastSpikeTime(0),
             eligibilityTrace(0),
             eligibilityDecay(_eligibilityDecay),
@@ -123,7 +123,7 @@ namespace adonis_c
                 }
                 else
                 {
-                    postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay, -1}));
+                    postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight*(1/inputResistance), delay, -1}));
                     postNeuron->preProjections.push_back(postProjections.back().get());
                 }
             }

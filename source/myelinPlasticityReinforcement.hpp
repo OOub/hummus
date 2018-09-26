@@ -125,7 +125,7 @@ namespace adonis_c
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
 					// positive reinforcement on winner projections
-					if (allProjections->weight < 19e-10/plasticID.size())
+					if (allProjections->weight < (1/neuron->getInputResistance())/plasticID.size())
                     {
                      	allProjections->weight += allProjections->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
                     }

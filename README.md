@@ -152,12 +152,15 @@ currently, 3 learning rules are implemented: MyelinPlasticity, MyelinPlasticityR
 
 * the network getter **getNeuronPopulations()** returns a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
 
-* the network method **allToAllConnectivity()** connects all neurons of a presynaptic population with all neurons from a posynaptic population. It has 7 parameters:
+* the network method **allToAllConnectivity()** connects all neurons of a presynaptic population with all neurons from a postsynaptic population. It has 7 parameters:
 
 1. a reference to a presynaptic neuron population
 2. a reference to a postsynaptic neuron population
 3. a bool to randomise the projection weights around a value
 4. the weight value in question
+
+**it is important to note that the weight in question is scaled according to the input resistance R. So when weight w=1 the actual weight inside the projections is w/R. Additionally, by default the externalCurrent is set to 100. You can play with these parameters to control the shape of the membrane potential when a spike occurs**
+
 5. a bool to randomise the projection delays around a value
 6. the delay value in question
 7. a bool to allow redundant connectivity (more than one projection between a set of neurons)

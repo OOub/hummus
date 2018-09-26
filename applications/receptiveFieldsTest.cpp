@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 	int layer1RF = 36;
 	int layer1Neurons = 1;
 	int layer1Volume = 5;
-	float layer1Weight = 19e-10/5;
+	float layer1Weight = 1./5;
 	
 	float refractoryPeriod = 40;
 	float decayCurrent = 10;
@@ -50,6 +50,9 @@ int main(int argc, char** argv)
 	float lambda = 1;
 	
 	float eligibilityDecay = 40; // layer 1 temporal window
+
+	//  ----- INITIALISING THE LEARNING RULE -----
+	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)

@@ -52,7 +52,7 @@ namespace adonis_c
 		
 		// ----- PUBLIC NETWORK METHODS -----
 		// add neurons
-		void addNeurons(int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1, int16_t _rfID=0)
+		void addNeurons(int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
         {            
         	unsigned long shift = 0;
         	if (!neurons.empty())
@@ -72,7 +72,7 @@ namespace adonis_c
         }
 		
 		// add neurons within receptive fields
-		void addReceptiveFields(int rfNumber, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int gridSize=0, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=1)
+		void addReceptiveFields(int rfNumber, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int gridSize=0, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
 		    // error handling
 		    double d_sqrt = std::sqrt(rfNumber);

@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	float alpha = 1;
 	float lambda = 0.1;
 	float eligibilityDecay = 20;
-    float weight = 19e-10/10; // weight dependent on feature size
+    float weight = 1./10; // weight dependent on feature size
 
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
