@@ -34,17 +34,17 @@ int main(int argc, char** argv)
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
 	
-    int inputNeurons = 3;
+    int inputNeurons = 2;
     int layer1Neurons = 1;
 	
-    float weight = 19e-10/2;
+    float weight = 19e-10; 
 
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::Stdp learningRule;
 	
 	//  ----- CREATING THE NETWORK -----
 	// input neurons
-	network.addNeurons(0, nullptr, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(0, &learningRule, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
 	network.addNeurons(1, &learningRule, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
@@ -56,16 +56,12 @@ int main(int argc, char** argv)
 
     //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
-	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[1].prepareInitialSpike(13));
-	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[2].prepareInitialSpike(30));
-
-	// method to turn off learning. this is useful in case we want to cross-validate or test our network
-//	network.turnOffLearning(20);
+	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[1].prepareInitialSpike(23));
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(3);
+  	qtDisplay.trackNeuron(2);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

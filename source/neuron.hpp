@@ -73,7 +73,9 @@ namespace adonis_c
             xCoordinate(_xCoordinate),
             yCoordinate(_yCoordinate),
             zCoordinate(_zCoordinate),
-			learningRuleHandler(_learningRuleHandler)
+			learningRuleHandler(_learningRuleHandler),
+			plasticityTrace(0)
+		
     	{
     		// error handling
 			if (decayCurrent == decayPotential)
@@ -146,7 +148,7 @@ namespace adonis_c
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
 			
-			// neuron inactive during refractory period
+			// neuron inactive during refractory period this is the problem
 			if (active)
 			{
 				if (s.postProjection)
@@ -191,6 +193,7 @@ namespace adonis_c
 			if (potential >= threshold)
 			{
 				eligibilityTrace = 1;
+				plasticityTrace += 1;
 				
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
@@ -338,6 +341,21 @@ namespace adonis_c
 			return inputResistance;
 		}
 		
+		float getPlasticityTrace() const
+		{
+			return plasticityTrace;
+		}
+		
+		void setPlasticityTrace(float newtrace)
+		{
+			plasticityTrace = newtrace;
+		}
+		
+		double getLastSpikeTime() const
+		{
+			return lastSpikeTime;
+		}
+		
 		projection* getInitialProjection()
 		{
 			return &initialProjection;
@@ -428,5 +446,8 @@ namespace adonis_c
         projection                               initialProjection;
         double                                   lastSpikeTime;
         LearningRuleHandler*                     learningRuleHandler;
+		
+        // ----- LEARNING RULE VARIABLES -----
+        float                                    plasticityTrace;
     };
 }

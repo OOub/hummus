@@ -28,21 +28,26 @@ namespace adonis_c
 		
 		// ----- PUBLIC METHODS -----
 		virtual void learn(double timestamp, Neuron* neuron, Network* network) override
-		{
-			// event-based exponential calculation because we have the last spike information
+		{		
 			for (auto inputProjection: neuron->getPreProjections())
 			{
 				if (inputProjection->preNeuron->getEligibilityTrace() > 0.1)
 				{
-					inputProjection->weight += 0;
+					float preTrace = inputProjection->preNeuron->getPlasticityTrace()*A_plus*std::exp(-(timestamp - inputProjection->preNeuron->getLastSpikeTime())/tau_plus);
+					inputProjection->preNeuron->setPlasticityTrace(preTrace);
+					
+					inputProjection->weight += preTrace*(1/inputProjection->preNeuron->getInputResistance());
 				}
 			}
-
+		
 			for (auto& outputProjection: neuron->getPostProjections())
 			{
 				if (outputProjection->postNeuron->getEligibilityTrace() > 0.1)
 				{
-					outputProjection->weight -= 0;
+					float postTrace = outputProjection->postNeuron->getPlasticityTrace()*A_minus*std::exp(-(timestamp - outputProjection->postNeuron->getLastSpikeTime())/tau_minus);
+					outputProjection->postNeuron->setPlasticityTrace(postTrace);
+
+					outputProjection->weight -= postTrace*(1/outputProjection->postNeuron->getInputResistance());
 				}
 			}
 		}
@@ -54,7 +59,5 @@ namespace adonis_c
 		float A_minus;
 		float tau_plus;
 		float tau_minus;
-		float preTrace;
-		float postTrace;
 	};
 }
