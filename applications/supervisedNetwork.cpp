@@ -23,9 +23,10 @@ int main(int argc, char** argv)
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/control/oneD_10neurons_4patterns.txt");
-	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/control/oneD_10neurons_4patterns_teacherSignal.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/oneD_10neurons_4patterns.txt");
+	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/oneD_10neurons_4patterns_teacherSignal.txt");
 	
+	std::cout << "HERE " << teacher.front() <<std::endl;
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::SpikeLogger spikeLogger("10neurons_4patterns_supervised_spikeLog.bin");
@@ -74,7 +75,7 @@ int main(int argc, char** argv)
 	qtDisplay.trackNeuron(10);
 	
 	// to turn off learning and start testing
-	network.turnOffLearning(10000);
+	network.turnOffLearning(50000);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

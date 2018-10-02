@@ -115,9 +115,6 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
         for i = 1:length(presentationOrder)
             % spike intervals as index + time in ms after the pattern as a desired
             teacherSignal(i,1) = snnInput(spikeIntervals(i)) + 5*count;
-            
-            % presentation order to define which neurons are firing
-            teacherSignal(i,2) = responseNeurons(presentationOrder(i)); 
             count = count + 1;
             if mod(i,4) == 0
                 count = 1;

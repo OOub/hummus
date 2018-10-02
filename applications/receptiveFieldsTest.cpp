@@ -36,8 +36,7 @@ int main(int argc, char** argv)
 	float runtime = trainingData.back().timestamp+1;
 	float timestep = 0.1;
 	int imageSize = 24;
-	int inputlayerRF = 36;
-	int layer1RF = 36;
+	int rfSize = 4;
 	int layer1Neurons = 1;
 	int layer1Volume = 5;
 	float layer1Weight = 1./5;
@@ -56,14 +55,14 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)
-    network.addReceptiveFields(inputlayerRF, 0, nullptr, imageSize, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
+    network.addReceptiveFields(rfSize, imageSize, imageSize, 0, nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
 	
 	// layer 1 with 36 receptive fields and a layer depth equal to 5 (1D neurons)
 	for (auto i=0; i<layer1Volume; i++)
 	{
-    	network.addReceptiveFields(layer1RF, 1, &myelinPlasticity, imageSize, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
+    	network.addReceptiveFields(rfSize, imageSize, imageSize, 1, &myelinPlasticity, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
     }
-	
+
     //  ----- CONNECTING THE NETWORK -----
 	for (auto& receptiveFieldI: network.getNeuronPopulations())
 	{
@@ -98,7 +97,7 @@ int main(int argc, char** argv)
 	        }
 	    }
 	}
-		
+
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(5000);

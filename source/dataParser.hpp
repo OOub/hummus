@@ -36,8 +36,8 @@ namespace adonis_c
     	// ----- CONSTRUCTOR -----
         DataParser(){}
 		
-		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y). For the 2D data, the width of the 2D patch needs to be included as a parameter
-        std::vector<input> readTrainingData(std::string filename, int width=24)
+		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y)
+        std::vector<input> readTrainingData(std::string filename)
         {
             dataFile.open(filename);
             
@@ -46,7 +46,7 @@ namespace adonis_c
 				std::vector<input> data;
 				std::string line;
 				bool dataType = false;
-				
+				double neuronCounter = 0;
 				std::cout << "Reading " << filename << std::endl;
 				while (std::getline(dataFile, line))
                 {
@@ -64,7 +64,8 @@ namespace adonis_c
                 		{
                 			dataType = true;
 						}
-                		data.push_back(input{std::stod(fields[0]), std::stod(fields[1])+width*std::stod(fields[2]), std::stod(fields[1]), std::stod(fields[2])});
+                		data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2])});
+                		neuronCounter++;
 					}
                 }
                 dataFile.close();
@@ -95,9 +96,9 @@ namespace adonis_c
 		
 		// reads test data in the same format as the training data, stops learning at the end of the training data time and shifts the test data timestamps accordingly
 		template<typename Network>
-		std::vector<input> readTestData(std::vector<input>* trainingData, Network* network, std::string filename, int width=24)
+		std::vector<input> readTestData(std::vector<input>* trainingData, Network* network, std::string filename)
 		{
-			auto data = readTrainingData(filename, width);
+			auto data = readTrainingData(filename);
 			network->turnOffLearning(trainingData->back().timestamp);
 			for (auto& input: data)
 			{
@@ -106,13 +107,14 @@ namespace adonis_c
 			return data;
 		}
 		
-		std::deque<input> readTeacherSignal(std::string filename)
+		// reads a teacher signal
+		std::deque<double> readTeacherSignal(std::string filename)
 		{
 		 dataFile.open(filename);
 			
             if (dataFile.good())
             {
-				std::deque<input> data;
+				std::deque<double> data;
 				std::string line;
 				
 				std::cout << "Reading teacher signal" << filename << std::endl;
@@ -121,17 +123,12 @@ namespace adonis_c
                 	std::vector<std::string> fields;
                 	split(fields, line, " ");
 					
-                	if (fields.size() == 2)
+                	if (fields.size() == 1)
                 	{
-						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1});
+						data.push_back(std::stod(fields[0]));
 					}
                 }
                 dataFile.close();
-				
-				std::sort(data.begin(), data.end(), [](input a, input b)
-				{
-					return a.timestamp < b.timestamp;
-				});
 			
 				std::cout << "Done." << std::endl;
 				return data;

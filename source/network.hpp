@@ -71,43 +71,42 @@ namespace adonis_c
 			neurons.push_back(receptiveField{std::move(temp),_rfID,_layerID});
         }
 		
-		// add neurons within receptive fields
-		void addReceptiveFields(int rfNumber, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int gridSize=0, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+		// add neurons within square non-overlapping receptive fields
+		void addReceptiveFields(int rfSize, int gridW, int gridH, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
-		    // error handling
-		    double d_sqrt = std::sqrt(rfNumber);
-            int i_sqrt = d_sqrt;
-            if (d_sqrt != i_sqrt)
-            {
-                throw std::logic_error("the number of receptive fields has to be a perfect square"); 
-            }
-            
-            double d_rfSize = gridSize/std::sqrt(rfNumber);
-            int i_rfSize = d_rfSize;
-            if (d_rfSize != i_rfSize)
-            {
-                throw std::logic_error("the size of the square grid does not match with the number of receptive fields");
-            }
-            
+			// error handling
+			double dW_check = gridW / rfSize;
+			double dH_check = gridW / rfSize;
+			
+			int iW_check = dW_check;
+			int iH_check = dH_check;
+			
+			if (dW_check != iW_check || dH_check != iH_check)
+			{
+			 throw std::logic_error("The width and height of the grid need to be divisible by the receptive field size");
+			}
+			
+		    int rfNumber = (gridW/rfSize) * (gridH/rfSize);
+
             // receptive field creation
 		    if (_numberOfNeurons == -1)
-		    { 
+		    {
 		        std::cout << "adding receptive fields with 2D neurons to the network" << std::endl;
 		        int16_t x = 0;
 		        int16_t y = 0;
-		        
+
 		        int ycount = 0;
 			    int xcount = 0;
 				int count = 0;
-			    int sq_rfNumber = std::sqrt(rfNumber);
+
 		        for (int16_t j=0; j<rfNumber; j++)
-		        {   
-		            if (j % sq_rfNumber == 0 && j != 0)
+		        {
+		            if (j % (gridW/rfSize) == 0 && j != 0)
 		            {
 		            	ycount = 0;
                         xcount++;
 		            }
-					
+
                 	unsigned long shift = 0;
                 	if (!neurons.empty())
                 	{
@@ -116,23 +115,23 @@ namespace adonis_c
 					        shift += it.rfNeurons.size();
 				        }
 			        }
-			
+
                 	std::vector<Neuron> temp;
 
-                	x=0+xcount*gridSize/sq_rfNumber;
-					
-			        for (auto i=0+shift; i < std::pow(gridSize/sq_rfNumber,2)+shift; i++)
+                	x=0+xcount*rfSize;
+
+			        for (auto i=0+shift; i < std::pow(rfSize,2)+shift; i++)
 			        {
-			            if (count % (gridSize/sq_rfNumber) == 0 && count != 0)
+			            if (count % rfSize == 0 && count != 0)
 			            {
-							y = 0+ycount*gridSize/sq_rfNumber;
+							y = 0+ycount*rfSize;
 			            }
 			            count++;
 				        temp.emplace_back(i,_layerID,j,_decayCurrent,_decayPotential,_refractoryPeriod, _eligibilityDecay,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,x,y,-1,_learningRuleHandler);
-						
+
 						y++;
 
-				        if (count % (gridSize/sq_rfNumber) == 0 && count != 0)
+				        if (count % rfSize == 0 && count != 0)
 			            {
 			                x++;
 			            }
@@ -319,14 +318,14 @@ namespace adonis_c
 		
 		// ----- SUPERVISED LEARNING METHODS -----
 		// add teacher signal for supervised learning
-        void injectTeacher(std::deque<input>* _teacher)
+        void injectTeacher(std::deque<double>* _teacher)
         {
             teacher = _teacher;
             teachingProgress = true;
         }
 		
 		// getter for the teacher signal
-        std::deque<input>* getTeacher() const
+        std::deque<double>* getTeacher() const
         {
             return teacher;
         }
@@ -411,6 +410,6 @@ namespace adonis_c
 		double                                 learningOffSignal;
 		
 		// ----- SUPERVISED LEARNING VARIABLES -----
-        std::deque<input>*                    teacher;
+        std::deque<double>*                    teacher;
     };
 }
