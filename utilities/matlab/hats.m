@@ -11,17 +11,14 @@
 
 % Information: hats calculates the histogram of averaged times surfaces specifically for the n-Cars database scaled to 64x56
 
-function [H, gridH] = hats(data, r, tau, dt, displayHistogram)
-    % data: 4-column array: [x y t p]
+function [H, gridH] = hats(data, r, tau, dt)
+    % data - 4-column array: [x y ts p]
     
-    % r: radius
+    % r - radius
     
-    % tau: decay of the time surface
+    % tau - decay of the time surface
     
-    % dt: temporal window of the local memory time surface
-
-    % displayHistogram: uses the imagesc function to display the histogram
-    % organised as a spatial grid
+    % dt - temporal window of the local memory time surface
     
     
     % handling optional arguments
@@ -29,16 +26,11 @@ function [H, gridH] = hats(data, r, tau, dt, displayHistogram)
         r = 3;
         tau = 1e9;
         dt = 1e5;
-        displayHistogram = false;
     elseif nargin < 3
         tau = 1e9;
         dt = 1e5;
-        displayHistogram = false;
     elseif nargin < 4
         dt = 1e5;
-        displayHistogram = false;
-    elseif nargin < 5
-        displayHistogram = false;
     end
     
     % scaled n-Cars database size
@@ -89,17 +81,13 @@ function [H, gridH] = hats(data, r, tau, dt, displayHistogram)
     end
     cells = reshape(cells, [cellW cellH])';
 
-    gridH = zeros(hc*cellW, hc*cellH);
+    gridH = zeros(hc*cellH, hc*cellW);
     for i = 1:size(cells,1)
         icount = hc*i;
         for j = 1:size(cells,2)
             jcount = hc*j;
             gridH(icount-(hc-1):icount,jcount-(hc-1):jcount) = cells{i,j};
         end
-    end
-    
-    if displayHistogram == true
-        imagesc(gridH)
     end
 end
 
