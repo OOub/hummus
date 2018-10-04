@@ -50,17 +50,18 @@ int main(int argc, char** argv)
 	
 	float eligibilityDecay = 40; // layer 1 temporal window
 
+	bool burstingActivity = false;
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
 	
 	//  ----- CREATING THE NETWORK -----
 	// input layer with 36 receptive fields (2D neurons)
-    network.addReceptiveFields(rfSize, imageSize, imageSize, 0, nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
+    network.addReceptiveFields(rfSize, imageSize, imageSize, 0, nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	// layer 1 with 36 receptive fields and a layer depth equal to 5 (1D neurons)
 	for (auto i=0; i<layer1Volume; i++)
 	{
-    	network.addReceptiveFields(rfSize, imageSize, imageSize, 1, &myelinPlasticity, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
+    	network.addReceptiveFields(rfSize, imageSize, imageSize, 1, &myelinPlasticity, layer1Neurons,decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
     }
 
     //  ----- CONNECTING THE NETWORK -----

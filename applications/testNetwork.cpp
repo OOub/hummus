@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     int inputNeurons = 2;
     int layer1Neurons = 1;
 	
-    float weight = 1;
+    float weight = 10;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::Stdp learningRule;
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 	network.addNeurons(0, nullptr, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
-	network.addNeurons(1, nullptr, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addNeurons(1, nullptr, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, true);
 
 
     //  ----- CONNECTING THE NETWORK -----
@@ -56,12 +56,11 @@ int main(int argc, char** argv)
 
     //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
-	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[1].prepareInitialSpike(23));
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(0);
+  	qtDisplay.trackNeuron(2);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

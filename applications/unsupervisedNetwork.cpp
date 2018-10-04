@@ -50,12 +50,14 @@ int main(int argc, char** argv)
 	float eligibilityDecay = 20;
     float weight = 1./10; // weight dependent on feature size
 
+	bool burstingActivity = false;
+	
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
 	
     //  ----- CREATING THE NETWORK -----
-	network.addNeurons(0, nullptr, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
-	network.addNeurons(1, &myelinPlasticity, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, eligibilityDecay);
+	network.addNeurons(0, nullptr, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addNeurons(1, &myelinPlasticity, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);

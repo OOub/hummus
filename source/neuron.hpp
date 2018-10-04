@@ -50,7 +50,7 @@ namespace adonis_c
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
+    	Neuron(int16_t _neuronID, int16_t _layerID, int16_t _rfID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
 			neuronID(_neuronID),
 			layerID(_layerID),
 			rfID(_rfID),
@@ -74,7 +74,8 @@ namespace adonis_c
             yCoordinate(_yCoordinate),
             zCoordinate(_zCoordinate),
 			learningRuleHandler(_learningRuleHandler),
-			plasticityTrace(0)
+			plasticityTrace(0),
+			burstingActivity(_burstingActivity)
 		
     	{
     		// error handling
@@ -216,7 +217,10 @@ namespace adonis_c
 				learn(timestamp, network);
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
-				current = 0;
+				if (!burstingActivity)
+				{
+					current = 0;
+				}
 				active = false;
 			}
 		}
@@ -438,6 +442,7 @@ namespace adonis_c
 		int16_t                                  xCoordinate;
 		int16_t                                  yCoordinate;
 		int16_t                                  zCoordinate;
+		bool                                     burstingActivity;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		projection                               activeProjection;
