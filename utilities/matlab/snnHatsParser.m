@@ -11,13 +11,17 @@
 
 % Dependencies: hats.m - load_atis_data.m
 
-function [output, gridH] = snnHatsParser(folderPath, baseFileNames, r, tau, dt, spikeConversionRule, repetitions, timeBetweenPresentations, boolRandomisePresentationOrder)
+function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercentage, r, tau, dt, spikeConversionRule, repetitions, timeBetweenPresentations, boolRandomisePresentationOrder, pathToBackgrounds)
     % folderPath - the path to the folder where all the recordings we want to parse are located
 
     % baseFileNames - the common name between all the files we want to feed
     % into the SNN so the dir method can locate them inside the folder
     % specified by the folderPath
 
+    % samplePercentage (optional) - randomly select a percentage of the
+    % files present in the data folder, in case we only want to train with
+    % a sample, and not the full data. 
+    
     % r (optional) - radius
     
     % tau (optional) - decay of the time surface
@@ -35,9 +39,12 @@ function [output, gridH] = snnHatsParser(folderPath, baseFileNames, r, tau, dt, 
     % boolRandomisePresentationOrder (optional) - bool to select whether to
     % randomise the order of appeance of the recordings
 
+    % pathToBackgrounds (optional) - in case we want to add the background
+    % to the data, for testing purposes
     
     % handling optional arguments
     if nargin < 3
+        samplePercentage = 100;
         r = 3;
         tau = 1e9;
         dt = 1e5;
@@ -45,38 +52,78 @@ function [output, gridH] = snnHatsParser(folderPath, baseFileNames, r, tau, dt, 
         repetitions = 1;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
     elseif nargin < 4
+        r = 3;
         tau = 1e9;
         dt = 1e5;
         spikeConversionRule = 1;
         repetitions = 1;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
     elseif nargin < 5
+        tau = 1e9;
         dt = 1e5;
         spikeConversionRule = 1;
         repetitions = 1;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
     elseif nargin < 6
+        dt = 1e5;
         spikeConversionRule = 1;
         repetitions = 1;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
     elseif nargin < 7
+        spikeConversionRule = 1;
         repetitions = 1;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
     elseif nargin < 8
+        repetitions = 1;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
     elseif nargin < 9
+        timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
+    elseif nargin < 10
+        boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
+    elseif nargin < 11
+        pathToBackgrounds = '';
     end
     
     % searching for all files fitting the description specified by the
     % folderPath and the baseFileNames
-    datasetDirectory = dir(strcat(folderPath,'*',baseFileNames, '*'));
+    datasetDirectory = dir(strcat(pathToCars,'*',baseFileNames, '*'));
+    
+    % take a sample from the folder
+    if samplePercentage < 100
+        numberOfSamples = floor((length(datasetDirectory)*samplePercentage)/100);
+        datasetDirectory = datasample(datasetDirectory, numberOfSamples);
+    end
+    
+    % add test data
+    if ~isempty(pathToBackgrounds)
+        testDirectory = dir(strcat(pathToBackgrounds,'*',baseFileNames, '*'));
+        if samplePercentage < 100
+            numberOfSamples = floor((length(testDirectory)*samplePercentage)/100);
+            testDirectory = datasample(testDirectory, numberOfSamples);
+        end
+        cars = ones(length(datasetDirectory),1);
+        backgrounds = zeros(length(testDirectory),1);
+        
+        datasetDirectory = [datasetDirectory;testDirectory];
+        labels = [cars;backgrounds];
+    end
+    
+    % convert data from TD to spikes
     H = {}; gridH = {}; spikeH = {};
     disp('files being parsed:')
     for i = 1:length(datasetDirectory)
@@ -104,12 +151,18 @@ function [output, gridH] = snnHatsParser(folderPath, baseFileNames, r, tau, dt, 
         end
         spikeH{i,1} = sortrows(temp,1);
     end
-
+    
     % generating the SNN input
     presentationOrder = repmat([1:length(spikeH)]',[repetitions 1]);
+    if ~isempty(pathToBackgrounds)
+        labels = repmat(labels, [repetitions 1]);
+    end
     
     if boolRandomisePresentationOrder == true
         presentationOrder = presentationOrder(randperm(size(presentationOrder,1)),:);
+        if ~isempty(pathToBackgrounds)
+            labels = labels(presentationOrder);
+        end
     end
     
     snnInput = []; spikeIntervals = [];
@@ -139,5 +192,9 @@ function [output, gridH] = snnHatsParser(folderPath, baseFileNames, r, tau, dt, 
         snnInput(index2(i-1):index2(i)-1,1) = snnInput(index2(i-1):index2(i)-1,1) + snnInput(index2(i-1)-1) + timeBetweenPresentations;
     end
     
-    output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
+    if isempty(pathToBackgrounds)
+        output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
+    else
+        output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder,'labels', labels);
+    end
 end
