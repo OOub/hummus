@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(runtime);
+  	qtDisplay.setTimeWindow(1000);
   	qtDisplay.trackLayer(2);
 	
     //  ----- RUNNING THE NETWORK -----
