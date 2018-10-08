@@ -1,5 +1,5 @@
 /*
- * testNetwork.cpp
+ * hatsNetwork.cpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.

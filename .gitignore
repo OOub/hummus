@@ -2,3 +2,9 @@
 build/
 
 \.~lock\.README\.md#
+
+data/poker_card_task/
+
+data/hats/
+
+data/1D_patterns/
