@@ -11,7 +11,7 @@
 
 % Dependencies: hats.m - load_atis_data.m
 
-function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercentage, r, tau, dt, spikeConversionRule, repetitions, timeBetweenPresentations, boolRandomisePresentationOrder, pathToBackgrounds)
+function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercentage, r, tau, dt, patternDuration, repetitions, timeJitter, timeBetweenPresentations, boolRandomisePresentationOrder, pathToBackgrounds)
     % folderPath - the path to the folder where all the recordings we want to parse are located
 
     % baseFileNames - the common name between all the files we want to feed
@@ -28,10 +28,12 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
     
     % dt (optional) - temporal window of the local memory time surface
     
-    % spikeConversionRule (optional) - 1 to convert HATS to spikes via delays and
-    % 2 to convert HATS to spikes via poissonian burts
+    % patternDuration (optional) - total duration of the patterns
     
     % repetitions (optional) - number of times each recording is presented
+
+    % timeJitter (optional) - adds time jitter to the recording. The value
+    % is the standard deviation for the gaussian centered around a spike time
     
     % timeBetweenPresentations (optional) - time in microseconds between each
     % repetition
@@ -48,8 +50,9 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         r = 3;
         tau = 1e9;
         dt = 1e5;
-        spikeConversionRule = 1;
+        patternDuration = 100;
         repetitions = 1;
+        timeJitter = 0;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
@@ -57,45 +60,55 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         r = 3;
         tau = 1e9;
         dt = 1e5;
-        spikeConversionRule = 1;
+        patternDuration = 100;
         repetitions = 1;
+        timeJitter = 0;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
     elseif nargin < 5
         tau = 1e9;
         dt = 1e5;
-        spikeConversionRule = 1;
+        patternDuration = 100;
         repetitions = 1;
+        timeJitter = 0;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
     elseif nargin < 6
         dt = 1e5;
-        spikeConversionRule = 1;
+        patternDuration = 100;
         repetitions = 1;
+        timeJitter = 0;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
     elseif nargin < 7
-        spikeConversionRule = 1;
+        patternDuration = 100;
         repetitions = 1;
+        timeJitter = 0;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
     elseif nargin < 8
         repetitions = 1;
+        timeJitter = 0;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
     elseif nargin < 9
+        timeJitter = 0;
         timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
     elseif nargin < 10
+        timeBetweenPresentations = 1000;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
     elseif nargin < 11
+        boolRandomisePresentationOrder = false;
+        pathToBackgrounds = '';
+    elseif nargin < 12
         pathToBackgrounds = '';
     end
     
@@ -130,22 +143,17 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         disp(strcat(datasetDirectory(i).folder, '/', datasetDirectory(i).name));
         data = load_atis_data(strcat(datasetDirectory(i).folder, '/', datasetDirectory(i).name));
         [H{i,1},gridH{i,1}] = hats([data.x, data.y, data.ts, data.p], r, tau, dt);
+        scaledH{i,1} = zeros(size(gridH{i,1},1), size(gridH{i,1},2));
+        
         temp = [];
-        count = 0;
         for j = 1:size(gridH{i,1},1)
             for k = 1:size(gridH{i,1},2)
                 % only making the active regions spike
-                if gridH{i,1}(j,k) > 0
-                    if spikeConversionRule == 1
-                        % histogram value defines the timestamps of the spikes
-                        % (higher values being closer to 0)
-                        temp(end+1,:) = [1/(0.1*gridH{i,1}(j,k)), j-1, k-1];   
-                    elseif spikeConversionRule == 2
-                        % histogram value as poisson bursting activity
-                        spikeNumber = round(gridH{i,1}(j,k))+1;
-                        temp(end+1:end+spikeNumber,:) = [poissrnd(3, [spikeNumber 1])+count, repmat(j-1, [spikeNumber 1]), repmat(k-1, [spikeNumber 1])];
-                    end
-                    count = count+1;
+                scaledH{i,1}(j,k) = floor((((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:)))) / 4);
+                if scaledH{i,1}(j,k) > 0
+                    % Poisson encoding
+                    spikeTrain = poissonSpikeGenerator(scaledH{i,1}(j,k), patternDuration);
+                    temp(end+1:end+length(spikeTrain), :) = [spikeTrain, repmat(j-1, [length(spikeTrain) 1]), repmat(k-1, [length(spikeTrain) 1])];
                 end
             end
         end
@@ -192,9 +200,30 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         snnInput(index2(i-1):index2(i)-1,1) = snnInput(index2(i-1):index2(i)-1,1) + snnInput(index2(i-1)-1) + timeBetweenPresentations;
     end
     
+    % adding time jitter
+    if timeJitter > 0
+        for i = 1:size(snnInput,1)
+            jitter = normrnd(snnInput(i,1), timeJitter);
+            while (jitter < 0)
+                jitter = normrnd(snnInput(i,1), timeJitter);
+            end
+            snnInput(i,1) = jitter;
+        end
+        snnInput = sortrows(snnInput,1);
+    end
+    
     if isempty(pathToBackgrounds)
         output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
     else
         output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder,'labels', labels);
     end
+end
+
+function [spikeTime] = poissonSpikeGenerator(fr, tSim)
+    tSim = tSim*1e-3;
+    dt = 1e-3;
+    nBins = floor(tSim/dt);
+    spikeMat = rand(1, nBins) < fr*dt;
+    tVec = 0:dt:tSim-dt;
+    spikeTime = find(spikeMat == 1)';
 end

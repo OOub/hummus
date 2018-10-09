@@ -106,6 +106,7 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
             end
             snnInput(i,1) = jitter;
         end
+        snnInput = sortrows(snnInput,1);
     end
     
     % creating the teacher signal

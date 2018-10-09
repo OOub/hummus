@@ -148,6 +148,7 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
             end
             snnInput(i,1) = jitter;
         end
+        snnInput = sortrows(snnInput,1);
     end
     
     % converting from microseconds

@@ -48,7 +48,6 @@ namespace adonis_c
 							{
 								postProjection->weight = 0;
 							}
-							std::cout << postProjection->weight << std::endl;
 						}
 					}
 				}
@@ -70,7 +69,6 @@ namespace adonis_c
 							{
 								preProjection->weight = 1/preProjection->preNeuron->getInputResistance();
 							}
-							std::cout << preProjection->weight << std::endl;
 						}
 					}
 				}

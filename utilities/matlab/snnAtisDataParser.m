@@ -10,6 +10,8 @@
 % be fed into the Adonis spiking neural network simulator. The recordings
 % can be presented multiple times in a randomised or sequential order. 
 
+% Dependencies: load_atis_data.m
+
 function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
     % folderPath - the path to the folder where all the recordings we want to parse are located
 
@@ -137,6 +139,7 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
             end
             snnInput(i,1) = jitter;
         end
+        snnInput = sortrows(snnInput,1);
     end
     
     % converting from microseconds
