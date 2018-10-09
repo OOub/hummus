@@ -44,7 +44,8 @@ namespace adonis_c
 			thDelegate(_thDelegate),
             teacher(nullptr),
 			teachingProgress(false),
-			learningStatus(true)
+			learningStatus(true),
+			learningOffSignal(-1)
 		{}
 		
 		Network(MainThreadNetworkDelegate* _thDelegate) : Network({}, _thDelegate)
@@ -218,7 +219,7 @@ namespace adonis_c
 				{
 					for (double i=0; i<_runtime; i+=_timestep)
 					{
-						if (learningOffSignal)
+						if (learningOffSignal != -1)
 						{
 							if (learningStatus==true && i >= learningOffSignal)
 							{

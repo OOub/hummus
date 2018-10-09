@@ -25,10 +25,10 @@ int main(int argc, char** argv)
 	adonis_c::SpikeLogger spikeLogger("spikeLog");
 	adonis_c::LearningLogger learningLogger("learningLog");
 	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
-	
+
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
-	float timestep = 0.1;
+	float timestep = 0.3;
 	
 	float decayCurrent = 10;
 	float potentialDecay = 20;
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 	network.addNeurons(0, nullptr, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
-	network.addNeurons(1, nullptr, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, true);
+	network.addNeurons(1, nullptr, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 
     //  ----- CONNECTING THE NETWORK -----

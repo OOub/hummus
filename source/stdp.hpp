@@ -19,7 +19,9 @@ namespace adonis_c
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Stdp(float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
+		Stdp(int _preLayer, int _postLayer, float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
+		preLayer(_preLayer),
+		postLayer(_postLayer),
 		A_plus(_A_plus),
 		A_minus(_A_minus),
 		tau_plus(_tau_plus),
@@ -28,26 +30,49 @@ namespace adonis_c
 		
 		// ----- PUBLIC METHODS -----
 		virtual void learn(double timestamp, Neuron* neuron, Network* network) override
-		{		
-			for (auto inputProjection: neuron->getPreProjections())
+		{
+			// LTD whenever a neuron from the presynaptic layer spikes
+			if (neuron->getLayerID() == preLayer)
 			{
-				if (inputProjection->preNeuron->getEligibilityTrace() > 0.1)
+				for (auto& postProjection: neuron->getPostProjections())
 				{
-					float preTrace = inputProjection->preNeuron->getPlasticityTrace()*A_plus*std::exp(-(timestamp - inputProjection->preNeuron->getLastSpikeTime())/tau_plus);
-					inputProjection->preNeuron->setPlasticityTrace(preTrace);
-					
-					inputProjection->weight += preTrace*(1/inputProjection->preNeuron->getInputResistance());
+					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive
+					if (postProjection->postNeuron->getEligibilityTrace() > 0.1)
+					{
+						float postTrace = (timestamp - postProjection->postNeuron->getLastSpikeTime())/tau_minus * -postProjection->postNeuron->getPlasticityTrace()*A_minus*std::exp(-(timestamp - postProjection->postNeuron->getLastSpikeTime())/tau_minus);
+						postProjection->postNeuron->setPlasticityTrace(postTrace);
+						if (postProjection->weight > 0)
+						{
+							postProjection->weight -= postTrace*(1/postProjection->postNeuron->getInputResistance());
+							if (postProjection->weight < 0)
+							{
+								postProjection->weight = 0;
+							}
+							std::cout << postProjection->weight << std::endl;
+						}
+					}
 				}
 			}
-		
-			for (auto& outputProjection: neuron->getPostProjections())
+			// LTP whenever a neuron from the postsynaptic layer spikes
+			else if (neuron->getLayerID() == postLayer)
 			{
-				if (outputProjection->postNeuron->getEligibilityTrace() > 0.1)
+				for (auto preProjection: neuron->getPreProjections())
 				{
-					float postTrace = outputProjection->postNeuron->getPlasticityTrace()*A_minus*std::exp(-(timestamp - outputProjection->postNeuron->getLastSpikeTime())/tau_minus);
-					outputProjection->postNeuron->setPlasticityTrace(postTrace);
-
-					outputProjection->weight -= postTrace*(1/outputProjection->postNeuron->getInputResistance());
+					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
+					if (preProjection->preNeuron->getEligibilityTrace() > 0.1)
+					{
+						float preTrace = -(preProjection->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * preProjection->preNeuron->getPlasticityTrace()*A_plus*std::exp((preProjection->preNeuron->getLastSpikeTime() - timestamp)/tau_plus);
+						preProjection->preNeuron->setPlasticityTrace(preTrace);
+						if (preProjection->weight < 1/preProjection->preNeuron->getInputResistance())
+						{
+							preProjection->weight += preTrace*(1/preProjection->preNeuron->getInputResistance());
+							if (preProjection->weight > 1/preProjection->preNeuron->getInputResistance())
+							{
+								preProjection->weight = 1/preProjection->preNeuron->getInputResistance();
+							}
+							std::cout << preProjection->weight << std::endl;
+						}
+					}
 				}
 			}
 		}
@@ -55,6 +80,9 @@ namespace adonis_c
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
+		int preLayer;
+		int postLayer;
+		
 		float A_plus;
 		float A_minus;
 		float tau_plus;

@@ -4,12 +4,14 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 31/05/2018
+ * Last Version: 09/10/2018
  *
  * Information: Example of a basic spiking neural network.
+ 
+ I think I'm connecting them wrong
  */
 
-#include <iostream>
+#include <iostream> 
 
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
@@ -29,34 +31,36 @@ int main(int argc, char** argv)
 	adonis_c::Network network({&spikeLogger}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
+    // IDs for each layer (the order is very important for the learning rule so to avoid mistakes we create variables for the IDs that will be used wherever required)
+    int layer0 = 0;
+    int layer1 = 1;
+    int layer2 = 2;
+	
 	float runtime = trainingData.back().timestamp+1;
 	float timestep = 0.1;
 	
 	int gridWidth = 42;
 	int gridHeight = 35;
-	int rfSize = 1;
+	int rfSize = 7;
 	
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
-	
-    int layer1Neurons = 1;
-    float weight = 1./5;
 
-	float eligibilityDecay = 100; // temporal window
+	float eligibilityDecay = 20;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(1, 1, 20, 20);
+	adonis_c::Stdp stdp(layer1, layer2);
 	
 	//  ----- CREATING THE NETWORK -----
 	// Input layer (2D neurons)
-	network.addReceptiveFields(rfSize, gridWidth, gridHeight, 0, &stdp, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
-
+	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer0, nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
+	
 	// Hidden layer 1
-	network.addReceptiveFields(rfSize, gridWidth, gridHeight, 1, &stdp, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
+	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer1, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 
 	// Output layer
-	network.addNeurons(2);
+	network.addNeurons(layer2, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 	
     //  ----- CONNECTING THE NETWORK -----
 	// input layer -> hidden layer 1
@@ -69,14 +73,27 @@ int main(int argc, char** argv)
 			{
 				if (receptiveFieldO.rfID == receptiveFieldI.rfID && receptiveFieldO.layerID == 1)
 				{
-					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, weight, false, 0);
+					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, 1, false, 0);
 				}
 			}
 	    }
 	}
 
 	// hidden layer 1 -> output layer
-	network.allToAllConnectivity(&network.getNeuronPopulations()[1].rfNeurons, &network.getNeuronPopulations()[2].rfNeurons, false, 1, false, 0);
+	for (auto& receptiveFieldI: network.getNeuronPopulations())
+	{
+	    // connecting input layer to layer 1
+	    if (receptiveFieldI.layerID == 1)
+	    {
+			for (auto& receptiveFieldO: network.getNeuronPopulations())
+			{
+				if (receptiveFieldO.layerID == 2)
+				{
+					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, 1, false, 0);
+				}
+			}
+	    }
+	}
 	
     //  ----- INJECTING SPIKES -----
 	for (auto& event: trainingData)
@@ -100,7 +117,8 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(1000);
-  	qtDisplay.trackLayer(2);
+  	qtDisplay.trackLayer(1);
+  	qtDisplay.trackNeuron(1500);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
