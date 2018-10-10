@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 	network.addNeurons(1, &myelinPlasticity, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
+	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);
 	
 	//  ----- INJECTING SPIKES -----
 	for (auto idx=0; idx<trainingData.size(); idx++)
