@@ -112,14 +112,9 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
     % creating the teacher signal
     if boolSupervisedLearning == true
         responseNeurons = numberOfNeurons:numberOfNeurons+numberOfPatterns-1;
-        count = 1;
         for i = 1:length(presentationOrder)
             % spike intervals as index + time in ms after the pattern as a desired
-            teacherSignal(i,1) = snnInput(spikeIntervals(i)) + 5*count;
-            count = count + 1;
-            if mod(i,4) == 0
-                count = 1;
-            end
+            teacherSignal(i,1) = snnInput(spikeIntervals(i));
         end
     end
     

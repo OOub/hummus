@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 09/01/2018
  *
- * Information: Example of a basic spiking neural network.
+ * Information: Example of a spiking neural network that can learn patterns and output a spike at a desired time.
  */
 
 #include <iostream>
@@ -23,10 +23,9 @@ int main(int argc, char** argv)
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/oneD_10neurons_4patterns.txt");
-	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/oneD_10neurons_4patterns_teacherSignal.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/jitter_2/oneD_10neurons_4patterns.txt");
+	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/jitter_2/oneD_10neurons_4patterns_teacherSignal.txt");
 	
-	std::cout << "HERE " << teacher.front() <<std::endl;
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::SpikeLogger spikeLogger("10neurons_4patterns_supervised_spikeLog.bin");
@@ -43,9 +42,9 @@ int main(int argc, char** argv)
 	float refractoryPeriod = 3;
 
     int inputNeurons = 10;
-    int layer1Neurons = 10;
+    int layer1Neurons = 4;
 	
-	float alpha = 1;
+	float alpha = 0.1;
 	float lambda = 0.1;
 	float eligibilityDecay = 20;
     float weight = 1./10;
@@ -60,7 +59,7 @@ int main(int argc, char** argv)
 	network.addNeurons(1, &myelinPlasticity, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20);
+	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
 	
 	//  ----- INJECTING SPIKES -----
 	for (auto idx=0; idx<trainingData.size(); idx++)
@@ -73,11 +72,11 @@ int main(int argc, char** argv)
 
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
-	qtDisplay.setTimeWindow(1000);
-	qtDisplay.trackNeuron(10);
+	qtDisplay.setTimeWindow(20000);
+	qtDisplay.trackNeuron(4);
 	
 	// to turn off learning and start testing
-	network.turnOffLearning(10000);
+//	network.turnOffLearning(80000);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

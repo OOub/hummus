@@ -48,9 +48,9 @@ namespace adonis_c
 					float change = 0;
 					if (network->getTeachingProgress()) // supervised learning
 					{
-						if (timestamp >= network->getTeacher()->front().timestamp-neuron->getDecayPotential() || timestamp <= network->getTeacher()->front().timestamp+neuron->getDecayPotential())
+						if (timestamp >= network->getTeacher()->front() - neuron->getDecayPotential() || timestamp <= network->getTeacher()->front()+neuron->getDecayPotential())
 						{
-							timeDifferences.push_back(network->getTeacher()->front().timestamp - inputProjection->lastInputTime - inputProjection->delay);
+							timeDifferences.push_back(network->getTeacher()->front() - inputProjection->lastInputTime - inputProjection->delay);
 							supervise = true;
 							if (timeDifferences.back() > 0)
 							{
