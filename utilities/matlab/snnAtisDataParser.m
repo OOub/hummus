@@ -12,7 +12,7 @@
 
 % Dependencies: load_atis_data.m
 
-function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
+function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop, save)
     % folderPath - the path to the folder where all the recordings we want to parse are located
 
     % baseFileNames - the common name between all the files we want to feed
@@ -36,6 +36,7 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
 
     % boolTemporalCrop (optional) - bool to select if we want to temporally crop the recordings
     
+    % save (optional) - true to save the files, false otherwise
     
     % handling optional arguments
     if nargin < 5
@@ -44,20 +45,27 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false; 
+        save = true;
     elseif nargin < 6
         conversionFactor = 10^-3;
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false; 
+        save = true;
     elseif nargin < 7
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false;  
+        save = true;
     elseif nargin < 8
         boolSpatialCrop = false;
         boolTemporalCrop = false;
+        save = true;
     elseif nargin < 9
         boolTemporalCrop = false;
+        save = true;
+    elseif nargin < 10
+        save = true;
     end
 
     % searching for all files fitting the description specified by the
@@ -151,6 +159,17 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
 
     output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder(:,1:2));
     recordings = struct('originalData',data,'parsedData',parsedData);
+    
+    if save == true
+        if boolRandomisePresentationOrder == true
+            order = 'shuffled';
+        else
+            order = '';
+        end
+        filename = strcat(baseFileNames, '_', num2str(timeJitter), 'jitter_',order);
+        dlmwrite(strcat(filename,'.txt'), snnInput, 'delimiter', ' ','precision','%f');
+        dlmwrite(strcat(filename,'Label.txt'), presentationOrder, 'delimiter', ' ','precision','%f');
+    end
 end
 
 function [output] = spatialCrop(filename, left, bottom, width, height)

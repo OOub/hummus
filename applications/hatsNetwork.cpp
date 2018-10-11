@@ -23,12 +23,11 @@ int main(int argc, char** argv)
 
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-	auto trainingData = dataParser.readTrainingData("../../data/hats/poisson/nCars_training_all_1rep_poisson.txt");
-	
+	auto trainingData = dataParser.readTrainingData("../../data/hats/poisson/nCars_training_sample_1rep_poisson.txt");
+
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::SpikeLogger spikeLogger("hatsPoissonSpikeLog.bin");
-	adonis_c::Network network({&spikeLogger}, &qtDisplay);
+	adonis_c::Network network(&qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
     // IDs for each layer (the order is very important for the learning rule so to avoid mistakes we create variables for the IDs that will be used wherever required)
@@ -36,18 +35,15 @@ int main(int argc, char** argv)
     int layer1 = 1;
     int layer2 = 2;
 	
-	float runtime = trainingData.back().timestamp+1;
-	float timestep = 0.1;
-	
 	int gridWidth = 42;
 	int gridHeight = 35;
 	int rfSize = 7;
 	
-	float decayCurrent = 10;
-	float potentialDecay = 20;
+	float decayCurrent = 5;
+	float potentialDecay = 10;
 	float refractoryPeriod = 3;
 
-	float eligibilityDecay = 20;
+	float eligibilityDecay = 10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::Stdp stdp(layer1, layer2);
@@ -57,7 +53,7 @@ int main(int argc, char** argv)
 	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer0, nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 	
 	// Hidden layer 1
-	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer1, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
+	network.addNeurons(layer1, &stdp, 10, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 
 	// Output layer
 	network.addNeurons(layer2, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
@@ -71,9 +67,9 @@ int main(int argc, char** argv)
 	    {
 			for (auto& receptiveFieldO: network.getNeuronPopulations())
 			{
-				if (receptiveFieldO.rfID == receptiveFieldI.rfID && receptiveFieldO.layerID == 1)
+				if (receptiveFieldO.layerID == 1)
 				{
-					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, 1, false, 0);
+					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, true, 1./30, false, 0);
 				}
 			}
 	    }
@@ -89,14 +85,35 @@ int main(int argc, char** argv)
 			{
 				if (receptiveFieldO.layerID == 2)
 				{
-					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, 1, false, 0);
+					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, true, 1./5, false, 0);
 				}
 			}
 	    }
 	}
 	
-    //  ----- INJECTING SPIKES -----
+	;
+    //  ----- INJECTING TRAINING SPIKES -----
 	for (auto& event: trainingData)
+	{
+	    for (auto& receptiveField: network.getNeuronPopulations())
+	    {
+	   	    if (receptiveField.layerID == 0)
+	        {
+	            for (auto& neuron: receptiveField.rfNeurons)
+	            {
+	                if (neuron.getX() == event.x && neuron.getY() == event.y)
+	                {
+                        network.injectSpike(neuron.prepareInitialSpike(event.timestamp));
+	                    break;
+	                }
+	            }
+	        }
+	    }
+	}
+	
+	auto testingData = dataParser.readTestData(&trainingData, &network, "../../data/hats/poisson/nCars_testing_sample_1rep_poisson.txt");
+	//  ----- INJECTING TESTING SPIKES -----
+	for (auto& event: testingData)
 	{
 	    for (auto& receptiveField: network.getNeuronPopulations())
 	    {
@@ -117,8 +134,11 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(1000);
-  	qtDisplay.trackLayer(1);
+  	qtDisplay.trackLayer(2);
   	qtDisplay.trackNeuron(1500);
+	
+	float runtime = trainingData.back().timestamp+testingData.back().timestamp+1;
+	float timestep = 0.1;
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

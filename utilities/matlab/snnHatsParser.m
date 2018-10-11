@@ -11,7 +11,7 @@
 
 % Dependencies: hats.m - load_atis_data.m
 
-function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercentage, r, tau, dt, patternDuration, repetitions, timeJitter, timeBetweenPresentations, boolRandomisePresentationOrder, pathToBackgrounds)
+function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercentage, r, tau, dt, patternDuration, repetitions, timeJitter, timeBetweenPresentations, boolRandomisePresentationOrder, pathToBackgrounds, save)
     % folderPath - the path to the folder where all the recordings we want to parse are located
 
     % baseFileNames - the common name between all the files we want to feed
@@ -44,6 +44,8 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
     % pathToBackgrounds (optional) - in case we want to add the background
     % to the data, for testing purposes
     
+    % save (optional) - true to save the files, false otherwise
+    
     % handling optional arguments
     if nargin < 3
         samplePercentage = 100;
@@ -53,9 +55,10 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         patternDuration = 100;
         repetitions = 1;
         timeJitter = 0;
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 4
         r = 3;
         tau = 1e9;
@@ -63,53 +66,64 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         patternDuration = 100;
         repetitions = 1;
         timeJitter = 0;
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 5
         tau = 1e9;
         dt = 1e5;
         patternDuration = 100;
         repetitions = 1;
         timeJitter = 0;
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 6
         dt = 1e5;
         patternDuration = 100;
         repetitions = 1;
         timeJitter = 0;
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 7
         patternDuration = 100;
         repetitions = 1;
         timeJitter = 0;
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 8
         repetitions = 1;
         timeJitter = 0;
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 9
         timeJitter = 0;
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 10
-        timeBetweenPresentations = 1000;
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 11
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
+        save = true;
     elseif nargin < 12
         pathToBackgrounds = '';
+        save = true;
+    elseif nargin < 12
+        save = true;
     end
     
     % searching for all files fitting the description specified by the
@@ -122,6 +136,7 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         datasetDirectory = datasample(datasetDirectory, numberOfSamples);
     end
     
+    labels = [];
     % add test data
     if ~isempty(pathToBackgrounds)
         testDirectory = dir(strcat(pathToBackgrounds,'*',baseFileNames, '*'));
@@ -129,11 +144,17 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
             numberOfSamples = floor((length(testDirectory)*samplePercentage)/100);
             testDirectory = datasample(testDirectory, numberOfSamples);
         end
-        cars = ones(length(datasetDirectory),1);
-        backgrounds = zeros(length(testDirectory),1);
+%         cars = ones(length(datasetDirectory),1);
+%         backgrounds = zeros(length(testDirectory),1);
+        
+        cars = cellstr(repmat('car',[length(datasetDirectory) 1]));
+        backgrounds = cellstr(repmat('bgd', [length(testDirectory) 1]));
         
         datasetDirectory = [datasetDirectory;testDirectory];
         labels = [cars;backgrounds];
+    else 
+        cars = cellstr(repmat('car',[length(datasetDirectory) 1]));
+        labels = cars;
     end
     
     % convert data from TD to spikes
@@ -149,7 +170,7 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         for j = 1:size(gridH{i,1},1)
             for k = 1:size(gridH{i,1},2)
                 % only making the active regions spike
-                scaledH{i,1}(j,k) = floor((((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:)))) / 4);
+                scaledH{i,1}(j,k) = (((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:)))) / 4;
                 if scaledH{i,1}(j,k) > 0
                     % Poisson encoding
                     spikeTrain = poissonSpikeGenerator(scaledH{i,1}(j,k), patternDuration);
@@ -162,15 +183,11 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
     
     % generating the SNN input
     presentationOrder = repmat([1:length(spikeH)]',[repetitions 1]);
-    if ~isempty(pathToBackgrounds)
-        labels = repmat(labels, [repetitions 1]);
-    end
+    labels = repmat(labels, [repetitions 1]);
     
     if boolRandomisePresentationOrder == true
         presentationOrder = presentationOrder(randperm(size(presentationOrder,1)),:);
-        if ~isempty(pathToBackgrounds)
-            labels = labels(presentationOrder);
-        end
+        labels = labels(presentationOrder);
     end
     
     snnInput = []; spikeIntervals = [];
@@ -211,11 +228,21 @@ function [output, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercen
         end
         snnInput = sortrows(snnInput,1);
     end
+
+    labelTimes = num2cell(snnInput(spikeIntervals, 1));
+
+    output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
+    labels = [labels,labelTimes];
     
-    if isempty(pathToBackgrounds)
-        output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
-    else
-        output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder,'labels', labels);
+    if save == true
+        if ~isempty(pathToBackgrounds)
+            databaseType = 'test_';
+        else
+            databaseType = 'train_';
+        end
+        filename = strcat('nCars_', databaseType, num2str(samplePercentage), 'samplePerc_', num2str(repetitions),'rep');
+        dlmwrite(strcat(filename,'.txt'), snnInput, 'delimiter', ' ', 'precision', '%f');
+        labelWriter(strcat(filename,'Label.txt'), labels);
     end
 end
 
@@ -226,4 +253,15 @@ function [spikeTime] = poissonSpikeGenerator(fr, tSim)
     spikeMat = rand(1, nBins) < fr*dt;
     tVec = 0:dt:tSim-dt;
     spikeTime = find(spikeMat == 1)';
+end
+
+function labelWriter(filename, labels)
+    fid = fopen(filename,'wt');
+    for row = 1:size(labels,1)
+        fprintf(fid,labels{row,1});
+        fprintf(fid, ' ');
+        fprintf(fid, num2str(labels{row,2}));
+        fprintf(fid, '\n');
+    end
+    fclose(fid);
 end

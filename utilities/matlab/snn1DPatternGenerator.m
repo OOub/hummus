@@ -8,7 +8,7 @@
 
 % Information: snn1DPatternGenerator is a function that generates simple one dimensional patterns to be used for testing the Adonis spiking neural network simulator
 
-function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, repetitions, patternMaxDuration, timeBetweenPresentations, timeJitter, boolRandomisePresentationOrder, boolSupervisedLearning)
+function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, repetitions, patternMaxDuration, timeBetweenPresentations, timeJitter, boolRandomisePresentationOrder, boolSupervisedLearning, save)
     % numberOfNeurons - the number of neurons in the patterns being generated
     
     % numberOfPatterns - number of patterns to be generated
@@ -30,6 +30,8 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
     % boolSupervisedLearning (optional) - creates a matrix of time and
     % neuronID to force certain neurons to fire at specific times (single layer support only)
     
+    % save (optional) - true to save the files, false otherwise
+    
     % handling optional arguments
     if nargin < 4
         patternMaxDuration = 20;
@@ -37,20 +39,27 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
         timeJitter = 1;
         boolRandomisePresentationOrder = false;
         boolSupervisedLearning = false;
+        save = true;
     elseif nargin < 5
         timeBetweenPresentations = 100;
         timeJitter = 1;
         boolRandomisePresentationOrder = false;
         boolSupervisedLearning = false;
+        save = true;
     elseif nargin < 6
         timeJitter = 1;
         boolRandomisePresentationOrder = false;
         boolSupervisedLearning = false;
+        save = true;
     elseif nargin < 7
         boolRandomisePresentationOrder = false;
         boolSupervisedLearning = false;
+        save = true;
     elseif nargin < 8
         boolSupervisedLearning = false;
+        save = true;
+    elseif nargin < 9
+        save = true;
     end
     
     % generating the patterns
@@ -118,9 +127,25 @@ function [output] = snn1DPatternGenerator(numberOfNeurons, numberOfPatterns, rep
         end
     end
     
+    if boolRandomisePresentationOrder == true
+        order = 'shuffled';
+    else
+        order = '';
+    end
+    filename = strcat('oneD_', num2str(numberOfNeurons), 'neurons_', num2str(numberOfPatterns), 'patterns_', order);
+    
     if boolSupervisedLearning == true
         output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder, 'teacherSignal', teacherSignal);
+        if save == true
+            dlmwrite(strcat(filename,'.txt'), snnInput, 'delimiter', ' ', 'precision', '%f');
+            dlmwrite(strcat(filename,'_teacherSignal.txt'), teacherSignal, 'delimiter', ' ', 'precision', '%f');
+            dlmwrite(strcat(filename,'_order.txt'), presentationOrder, 'delimiter', ' ', 'precision', '%f');
+        end
     else
         output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
+        if save == true
+            dlmwrite(strcat(filename,'.txt'), snnInput, 'delimiter', ' ', 'precision', '%f');
+            dlmwrite(strcat(filename,'_order.txt'), presentationOrder, 'delimiter', ' ', 'precision', '%f');
+        end
     end
 end

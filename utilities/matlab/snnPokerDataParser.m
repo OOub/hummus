@@ -9,7 +9,7 @@
 % Information: snnPokerDataParser is a function that parses the poker dataset (allcards.mat), so it can
 % be fed into the Adonis spiking neural network simulator 
 
-function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop)
+function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBetweenPresentations, timeJitter, conversionFactor, boolRandomisePresentationOrder, boolSpatialCrop, boolTemporalCrop, save)
     % allcards - path to the 'allcards.mat' file
     
     % repetitions - number of times each recording is presented
@@ -28,6 +28,7 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
 
     % boolTemporalCrop (optional) - bool to select if we want to temporally crop the recordings
     
+    % save (optional) - true to save the files, false otherwise
     
     % handling optional arguments
     if nargin < 4
@@ -36,20 +37,27 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false; 
+        save = true;
     elseif nargin < 5
         conversionFactor = 10^-3;
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false; 
+        save = true;
     elseif nargin < 6
         boolRandomisePresentationOrder = false;
         boolSpatialCrop = false;
         boolTemporalCrop = false;  
+        save = true;
     elseif nargin < 7
         boolSpatialCrop = false;
         boolTemporalCrop = false;
+        save = true;
     elseif nargin < 8
         boolTemporalCrop = false;
+        save = true;
+    elseif nargin < 9
+        save = true;
     end
     
     import = load(allcards);
@@ -158,8 +166,14 @@ function [output, recordings] = snnPokerDataParser(allcards, repetitions, timeBe
         presentationOrder(i,3) = snnInput(spikeIntervals(i),1);
     end
 
-    output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals);
-    recordings = struct('originalData',ROI,'parsedData',parsedData);
+    output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
+    recordings = struct('originalData',import.ROI,'parsedData',parsedData);
+    
+    if save == true
+        filename = strcat('pip', num2str(length(pipsUsed)),'_rep', num2str(repetitions), '_', 'jitter', num2str(timeJitter));
+        dlmwrite(strcat(filename,'.txt'), snnInput, 'delimiter', ' ', 'precision', '%f');
+        dlmwrite(strcat(filename,'Label.txt'), presentationOrder, 'delimiter', ' ', 'precision', '%f');
+    end
 end
         
 function [output] = spatialCrop(ROI, startingCoordinate, squareSize)
