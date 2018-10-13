@@ -122,7 +122,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
     elseif nargin < 12
         pathToBackgrounds = '';
         save = true;
-    elseif nargin < 12
+    elseif nargin < 13
         save = true;
     end
     
@@ -170,7 +170,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         for j = 1:size(gridH{i,1},1)
             for k = 1:size(gridH{i,1},2)
                 % only making the active regions spike
-                scaledH{i,1}(j,k) = (((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:)))) / 4;
+                scaledH{i,1}(j,k) = (((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:)))) / 6;
                 if scaledH{i,1}(j,k) > 0
                     % Poisson encoding
                     spikeTrain = poissonSpikeGenerator(scaledH{i,1}(j,k), patternDuration);
@@ -229,7 +229,8 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         snnInput = sortrows(snnInput,1);
     end
 
-    labelTimes = num2cell(snnInput(spikeIntervals, 1));
+    labelTimes = num2cell(snnInput(1, 1));
+    labelTimes = [labelTimes;num2cell(snnInput(spikeIntervals(1:end-1)+1, 1))];
 
     output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder);
     labels = [labels,labelTimes];

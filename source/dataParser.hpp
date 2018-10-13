@@ -22,6 +22,12 @@
 
 namespace adonis_c
 {
+	struct label
+	{
+		std::string name;
+		double onset;
+	};
+	
 	struct input
 	{
 		double timestamp;
@@ -34,10 +40,12 @@ namespace adonis_c
 	{
     public:
     	// ----- CONSTRUCTOR -----
-        DataParser(){}
+        DataParser() :
+        	timeShift(nullptr)
+        {}
 		
 		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y)
-        std::vector<input> readTrainingData(std::string filename)
+        std::vector<input> readTrainingData(std::string filename, bool changeTimeShift=true)
         {
             dataFile.open(filename);
             
@@ -84,27 +92,40 @@ namespace adonis_c
 				{
 					return a.timestamp < b.timestamp;
 				});
-			
+				
+				if (changeTimeShift)
+				{
+					timeShift = &data.back().timestamp;
+				}
+				
 				std::cout << "Done." << std::endl;
 				return data;
             }
             else
             {
-                throw std::runtime_error("the file could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName");
+                throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName"));
             }
         }
 		
 		// reads test data in the same format as the training data, stops learning at the end of the training data time and shifts the test data timestamps accordingly
 		template<typename Network>
-		std::vector<input> readTestData(std::vector<input>* trainingData, Network* network, std::string filename)
+		std::vector<input> readTestData(Network* network, std::string filename)
 		{
-			auto data = readTrainingData(filename);
-			network->turnOffLearning(trainingData->back().timestamp);
-			for (auto& input: data)
+			if (timeShift)
 			{
-				input.timestamp += trainingData->back().timestamp + 1000;
+				auto data = readTrainingData(filename, false);
+				network->turnOffLearning(*timeShift);
+				for (auto& input: data)
+				{
+					input.timestamp += *timeShift + 1000;
+				}
+				return data;
 			}
-			return data;
+			else
+			{
+				throw std::logic_error("are you sure training data was fed into the network via the readTrainingData() before starting to feed test data using readTestData()?");
+			}
+				
 		}
 		
 		// reads a teacher signal
@@ -117,7 +138,7 @@ namespace adonis_c
 				std::deque<double> data;
 				std::string line;
 				
-				std::cout << "Reading teacher signal" << filename << std::endl;
+				std::cout << "Reading teacher signal " << filename << std::endl;
 				while (std::getline(dataFile, line))
                 {
                 	std::vector<std::string> fields;
@@ -135,7 +156,82 @@ namespace adonis_c
             }
             else
             {
-                throw std::runtime_error("the file could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName");
+                throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName"));
+            }
+		}
+		
+		std::deque<label> readLabels(std::string trainingLabels = "", std::string testLabels = "")
+		{
+			if (trainingLabels.empty() && testLabels.empty())
+			{
+				throw std::logic_error("no files were passed to the readLabels() function. Therefore, there is nothing to do.");
+			}
+			else if (!trainingLabels.empty() && testLabels.empty())
+			{
+				return readLabelsHelper(trainingLabels);
+			}
+			else if (trainingLabels.empty() && !testLabels.empty())
+			{
+				if (timeShift)
+				{
+					std::deque<label> dataLabels = readLabelsHelper(testLabels);
+					for (auto& lbl: dataLabels)
+					{
+						lbl.onset += *timeShift + 1000;
+					}
+					return dataLabels;
+				}
+				else
+				{
+					throw std::logic_error("are you sure training data was fed into the network via the readTrainingData() before reading the test data labels?");
+				}
+				
+			}
+			else
+			{
+				if (timeShift)
+				{
+					std::deque<label> dataLabels = readLabelsHelper(trainingLabels);
+					std::deque<label> test = readLabelsHelper(testLabels);
+					for (auto& lbl: test)
+					{
+						lbl.onset += *timeShift + 1000;
+					}
+					dataLabels.insert(dataLabels.end(), test.begin(), test.end());
+					return dataLabels;
+
+				}
+				else
+				{
+					throw std::logic_error("are you sure training data was fed into the network via the readTrainingData() before reading the training and test data labels?");
+				}
+			}
+		}
+		
+		std::deque<label> readLabelsHelper(std::string filename)
+		{
+			dataFile.open(filename);
+			if (dataFile.good())
+            {
+            	std::deque<label> dataLabels;
+				std::string line;
+				std::cout << "Reading labels from " << filename << std::endl;
+				while (std::getline(dataFile, line))
+                {
+                	std::vector<std::string> fields;
+                	split(fields, line, " ");
+                	if (fields.size() == 2)
+                	{
+						dataLabels.push_back(label{fields[0], std::stod(fields[1])});
+					}
+                }
+                dataFile.close();
+                std::cout << "Done." << std::endl;
+				return dataLabels;
+            }
+			else
+            {
+                throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly"));
             }
 		}
 		
@@ -163,9 +259,10 @@ namespace adonis_c
 			while (next != Container::value_type::npos);
 			return result;
 		}
-
+	
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----
-        std::ifstream dataFile;
+        std::ifstream    dataFile;
+        double*          timeShift;
 	};
 }

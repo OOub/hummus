@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/jitter_2/oneD_10neurons_4patterns.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;

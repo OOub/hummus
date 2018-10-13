@@ -11,9 +11,11 @@
 
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include <thread>
 #include <chrono>
+#include <string>
 
 // QT5 Dependency
 #include <QtWidgets/QApplication>
@@ -46,6 +48,8 @@ namespace adonis_c
 
 			engine = new QQmlApplicationEngine();
 			engine->rootContext()->setContextProperty("layers", 1);
+			engine->rootContext()->setContextProperty("numberOfNeurons", 1);
+			
             engine->loadData(
 				#include "gui.qml"
             );
@@ -63,6 +67,8 @@ namespace adonis_c
             inputviewer = window->findChild<InputViewer*>("inputViewer");
             outputviewer = window->findChild<OutputViewer*>("outputViewer");
             potentialviewer = window->findChild<PotentialViewer*>("potentialViewer");
+			
+            inputviewer->getEngine(engine);
         }
 
     	// ----- PUBLIC DISPLAY METHODS -----
@@ -85,13 +91,21 @@ namespace adonis_c
 			potentialviewer->handleTimestep(timestamp, network, postNeuron);
 		}
 
-		void begin(int numberOfLayers, std::vector<int> neuronsInLayers) override
+		void begin(int64_t neuronNumber, int numberOfLayers, std::vector<int> neuronsInLayers) override
 		{
+			engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
 			engine->rootContext()->setContextProperty("layers", numberOfLayers);
         	outputviewer->setYLookup(neuronsInLayers);
 			app->exec();
 		}
+		
+		void labelUpdate(std::string label) override
+		{
+			inputviewer->handleLabel(label);
+//			engine->rootObjects().at(0)->setProperty("label",QVariant(label.c_str()));
 
+		}
+		
 		// ----- SETTERS -----
 		void useHardwareAcceleration(bool accelerate)
         {
@@ -116,7 +130,7 @@ namespace adonis_c
             outputviewer->setTimeWindow(newWindow);
             potentialviewer->setTimeWindow(newWindow);
         }
-
+		
     protected:
 
 		// ----- IMPLEMENTATION VARIABLES -----

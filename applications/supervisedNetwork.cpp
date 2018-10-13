@@ -23,8 +23,8 @@ int main(int argc, char** argv)
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/jitter_2/oneD_10neurons_4patterns.txt");
-	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/jitter_2/oneD_10neurons_4patterns_teacherSignal.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
+	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/oneD_10neurons_4patterns__teacherSignal.txt.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;

@@ -17,6 +17,7 @@
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <string>
 #include <deque>
 
 #include "neuron.hpp"
@@ -43,6 +44,7 @@ namespace adonis_c
             stdDelegates(_stdDelegates),
 			thDelegate(_thDelegate),
             teacher(nullptr),
+            labels(nullptr),
 			teachingProgress(false),
 			learningStatus(true),
 			learningOffSignal(-1)
@@ -186,6 +188,11 @@ namespace adonis_c
 			}
 		}
 		
+		void addLabels(std::deque<label>* _labels)
+		{
+			labels = _labels;
+		}
+		
 		// add spike to the network
 		void injectSpike(spike s)
         {
@@ -212,13 +219,23 @@ namespace adonis_c
 			std::thread spikeManager([this, _runtime, _timestep]
 			{
 				std::cout << "Running the network..." << std::endl;
-
 				std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
 
 				if (!neurons.empty())
 				{
 					for (double i=0; i<_runtime; i+=_timestep)
 					{
+					if (labels)
+					{
+						if (thDelegate)
+						{
+							if (labels->front().onset <= i)
+							{
+								thDelegate->labelUpdate(labels->front().name);
+								labels->pop_front();
+							}
+						}
+					}
 						if (learningOffSignal != -1)
 						{
 							if (learningStatus==true && i >= learningOffSignal)
@@ -275,8 +292,8 @@ namespace adonis_c
 						neuronsInLayers[i] += neuronsInLayers[i-1];
 					}
 				}
-			
-				thDelegate->begin(numberOfLayers, neuronsInLayers);
+				
+				thDelegate->begin(neurons.size(), numberOfLayers, neuronsInLayers);
 			}
 			spikeManager.join();
 		}
@@ -362,7 +379,7 @@ namespace adonis_c
 			}
 			else
 			{
-				neuron->update(time, timestep, spike({time, nullptr}), this); //if both are empty
+				neuron->update(time, timestep, spike({time, nullptr}), this);
 			}
 		}
 		
@@ -406,6 +423,7 @@ namespace adonis_c
         std::vector<StandardNetworkDelegate*>  stdDelegates;
         MainThreadNetworkDelegate*             thDelegate;
 		std::vector<receptiveField>            neurons;
+		std::deque<label>*                     labels;
 		bool                                   teachingProgress;
 		bool                                   learningStatus;
 		double                                 learningOffSignal;

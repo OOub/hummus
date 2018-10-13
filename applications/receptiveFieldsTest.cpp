@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 {
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-	auto trainingData = dataParser.readTrainingData("../../data/poker_card_task/2_classes/t10_1pip_2types_200reps.txt");
+	auto trainingData = dataParser.readTrainingData("../../data/poker_card_task/pip1_rep200_jitter0.txt");
 	
 	//  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;

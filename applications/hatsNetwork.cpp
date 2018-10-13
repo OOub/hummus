@@ -6,9 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 09/10/2018
  *
- * Information: Example of a basic spiking neural network.
- 
- I think I'm connecting them wrong
+ * Information: Spiking neural network running with histograms of averaged time surfaces converted into spikes.
  */
 
 #include <iostream> 
@@ -20,17 +18,13 @@
 
 int main(int argc, char** argv)
 {
-
-    //  ----- READING TRAINING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
-	auto trainingData = dataParser.readTrainingData("../../data/hats/poisson/nCars_training_sample_1rep_poisson.txt");
-
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::Network network(&qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
-    // IDs for each layer (the order is very important for the learning rule so to avoid mistakes we create variables for the IDs that will be used wherever required)
+	
+    // IDs for each layer (order is important)
     int layer0 = 0;
     int layer1 = 1;
     int layer2 = 2;
@@ -92,6 +86,11 @@ int main(int argc, char** argv)
 	}
 	
 	;
+	
+	//  ----- READING TRAINING DATA FROM FILE -----
+	adonis_c::DataParser dataParser;
+    auto trainingData = dataParser.readTrainingData("../../data/hats/poisson/nCars_train_10samplePerc_1rep.txt");
+	
     //  ----- INJECTING TRAINING SPIKES -----
 	for (auto& event: trainingData)
 	{
@@ -111,8 +110,10 @@ int main(int argc, char** argv)
 	    }
 	}
 	
-	auto testingData = dataParser.readTestData(&trainingData, &network, "../../data/hats/poisson/nCars_testing_sample_1rep_poisson.txt");
-	//  ----- INJECTING TESTING SPIKES -----
+	//  ----- READING TEST DATA FROM FILE -----
+	auto testingData = dataParser.readTestData(&network, "../../data/hats/poisson/nCars_test_10samplePerc_1rep.txt");
+	
+	//  ----- INJECTING TEST SPIKES -----
 	for (auto& event: testingData)
 	{
 	    for (auto& receptiveField: network.getNeuronPopulations())
@@ -131,16 +132,20 @@ int main(int argc, char** argv)
 	    }
 	}
 	
+//	//  ----- ADDING THE LABELS -----
+	auto labels = dataParser.readLabels("../../data/hats/poisson/nCars_train_10samplePerc_1repLabel.txt", "../../data/hats/poisson/nCars_test_10samplePerc_1repLabel.txt");
+	network.addLabels(&labels);
+	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(1000);
   	qtDisplay.trackLayer(2);
   	qtDisplay.trackNeuron(1500);
 	
-	float runtime = trainingData.back().timestamp+testingData.back().timestamp+1;
+    //  ----- RUNNING THE NETWORK -----
+    float runtime = trainingData.back().timestamp+testingData.back().timestamp+1;
 	float timestep = 0.1;
 	
-    //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 
     //  ----- EXITING APPLICATION -----

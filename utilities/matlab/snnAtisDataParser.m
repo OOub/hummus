@@ -153,9 +153,11 @@ function [output, recordings] = snnAtisDataParser(folderPath, baseFileNames, rep
     % converting from microseconds
     snnInput(:,1) = snnInput(:,1)*conversionFactor;
     
-    for i = 1:size(spikeIntervals)
-        presentationOrder(i,3) = snnInput(spikeIntervals(i),1);
+    temp = snnInput(1,1);
+    for i = 1:length(spikeIntervals)-1
+        temp(end+1,1) = snnInput(spikeIntervals(i)+1,1);
     end
+    presentationOrder(:,3) = temp;
 
     output = struct('snnInput',snnInput,'spikeIntervals',spikeIntervals,'presentationOrder', presentationOrder(:,1:2));
     recordings = struct('originalData',data,'parsedData',parsedData);
