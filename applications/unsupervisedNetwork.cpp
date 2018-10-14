@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 6/12/2017
  *
- * Information: Example of a basic spiking neural network.
+ * Information: Example of a spiking neural network that can learn one dimensional patterns.
  */
 
 #include <iostream>

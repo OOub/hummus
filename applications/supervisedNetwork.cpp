@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 09/01/2018
  *
- * Information: Example of a spiking neural network that can learn patterns and output a spike at a desired time.
+ * Information: Example of a spiking neural network that can learn one dimensional patterns and output a spike at a desired time.
  */
 
 #include <iostream>
