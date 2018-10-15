@@ -81,23 +81,7 @@ int main(int argc, char** argv)
 	}
 
 	//  ----- INJECTING SPIKES -----
-	for (auto& event: trainingData)
-	{
-	    for (auto& receptiveField: network.getNeuronPopulations())
-	    {
-	   	    if (receptiveField.layerID == 0)
-	        {
-	            for (auto& neuron: receptiveField.rfNeurons)
-	            {
-	                if (neuron.getX() == event.x && neuron.getY() == event.y)
-	                {
-                        network.injectSpike(neuron.prepareInitialSpike(event.timestamp));
-	                    break;
-	                }
-	            }
-	        }
-	    }
-	}
+	network.injectSpikeFromData(&trainingData);
 
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);

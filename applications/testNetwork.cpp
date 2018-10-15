@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     int inputNeurons = 2;
     int layer1Neurons = 1;
 	
-    float weight = 1./2;
+    float weight = 1/2;
 	
 	//  ----- CREATING THE NETWORK -----
 	// input neurons

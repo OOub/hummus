@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	adonis_c::DataParser dataParser;
 	
 	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
-	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/oneD_10neurons_4patterns__teacherSignal.txt.txt");
+	auto teacher = dataParser.readTeacherSignal("../../data/1D_patterns/oneD_10neurons_4patterns__teacherSignal.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
@@ -62,10 +62,7 @@ int main(int argc, char** argv)
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
 	
 	//  ----- INJECTING SPIKES -----
-	for (auto idx=0; idx<trainingData.size(); idx++)
-	{
-		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[trainingData[idx].neuronID].prepareInitialSpike(trainingData[idx].timestamp));
-    }
+	network.injectSpikeFromData(&trainingData);
 
 	// injecting the teacher signal for supervised threshold learning
   	network.injectTeacher(&teacher);

@@ -51,18 +51,13 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	network.addNeurons(0, &stdp, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
-
 	network.addNeurons(1, &stdp, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
-
 
     //  ----- CONNECTING THE NETWORK -----
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
 
 	//  ----- INJECTING SPIKES -----
-	for (auto idx=0; idx<trainingData.size(); idx++)
-	{
-		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[trainingData[idx].neuronID].prepareInitialSpike(trainingData[idx].timestamp));
-    }
+	network.injectSpikeFromData(&trainingData);
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);

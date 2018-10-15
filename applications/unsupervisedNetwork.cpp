@@ -63,10 +63,7 @@ int main(int argc, char** argv)
 	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
 	
 	//  ----- INJECTING SPIKES -----
-	for (auto idx=0; idx<trainingData.size(); idx++)
-	{
-		network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[trainingData[idx].neuronID].prepareInitialSpike(trainingData[idx].timestamp));
-    }
+	network.injectSpikeFromData(&trainingData);
 
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);

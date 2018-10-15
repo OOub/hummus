@@ -85,54 +85,20 @@ int main(int argc, char** argv)
 	    }
 	}
 	
-	;
-	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
     auto trainingData = dataParser.readTrainingData("../../data/hats/poisson/nCars_train_10samplePerc_1rep.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
-	for (auto& event: trainingData)
-	{
-	    for (auto& receptiveField: network.getNeuronPopulations())
-	    {
-	   	    if (receptiveField.layerID == 0)
-	        {
-	            for (auto& neuron: receptiveField.rfNeurons)
-	            {
-	                if (neuron.getX() == event.x && neuron.getY() == event.y)
-	                {
-                        network.injectSpike(neuron.prepareInitialSpike(event.timestamp));
-	                    break;
-	                }
-	            }
-	        }
-	    }
-	}
+	network.injectSpikeFromData(&trainingData);
 	
 	//  ----- READING TEST DATA FROM FILE -----
 	auto testingData = dataParser.readTestData(&network, "../../data/hats/poisson/nCars_test_10samplePerc_1rep.txt");
 	
 	//  ----- INJECTING TEST SPIKES -----
-	for (auto& event: testingData)
-	{
-	    for (auto& receptiveField: network.getNeuronPopulations())
-	    {
-	   	    if (receptiveField.layerID == 0)
-	        {
-	            for (auto& neuron: receptiveField.rfNeurons)
-	            {
-	                if (neuron.getX() == event.x && neuron.getY() == event.y)
-	                {
-                        network.injectSpike(neuron.prepareInitialSpike(event.timestamp));
-	                    break;
-	                }
-	            }
-	        }
-	    }
-	}
+	network.injectSpikeFromData(&testingData);
 	
-//	//  ----- ADDING THE LABELS -----
+	//  ----- ADDING THE LABELS -----
 	auto labels = dataParser.readLabels("../../data/hats/poisson/nCars_train_10samplePerc_1repLabel.txt", "../../data/hats/poisson/nCars_test_10samplePerc_1repLabel.txt");
 	network.addLabels(&labels);
 	
