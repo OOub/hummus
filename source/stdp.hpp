@@ -39,16 +39,17 @@ namespace adonis_c
 					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive
 					if (postProjection->postNeuron->getEligibilityTrace() > 0.1)
 					{
-						float postTrace = (timestamp - postProjection->postNeuron->getLastSpikeTime())/tau_minus * -postProjection->postNeuron->getPlasticityTrace()*A_minus*std::exp(-(timestamp - postProjection->postNeuron->getLastSpikeTime())/tau_minus);
-						postProjection->postNeuron->setPlasticityTrace(postTrace);
+						float postTrace = - (timestamp - postProjection->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postProjection->postNeuron->getLastSpikeTime())/tau_minus);
+
 						if (postProjection->weight > 0)
 						{
-							postProjection->weight -= postTrace*(1/postProjection->postNeuron->getInputResistance());
+							postProjection->weight += postTrace*(1/postProjection->postNeuron->getInputResistance());
 							if (postProjection->weight < 0)
 							{
 								postProjection->weight = 0;
 							}
 						}
+						postProjection->postNeuron->setPlasticityTrace(postTrace);
 					}
 				}
 			}
@@ -60,8 +61,8 @@ namespace adonis_c
 					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
 					if (preProjection->preNeuron->getEligibilityTrace() > 0.1)
 					{
-						float preTrace = -(preProjection->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * preProjection->preNeuron->getPlasticityTrace()*A_plus*std::exp((preProjection->preNeuron->getLastSpikeTime() - timestamp)/tau_plus);
-						preProjection->preNeuron->setPlasticityTrace(preTrace);
+						float preTrace = -(preProjection->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preProjection->preNeuron->getLastSpikeTime() - timestamp)/tau_plus);
+
 						if (preProjection->weight < 1/preProjection->preNeuron->getInputResistance())
 						{
 							preProjection->weight += preTrace*(1/preProjection->preNeuron->getInputResistance());
@@ -70,6 +71,7 @@ namespace adonis_c
 								preProjection->weight = 1/preProjection->preNeuron->getInputResistance();
 							}
 						}
+						preProjection->preNeuron->setPlasticityTrace(preTrace);
 					}
 				}
 			}

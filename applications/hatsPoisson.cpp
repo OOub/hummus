@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	
 	float decayCurrent = 5;
 	float potentialDecay = 10;
-	float refractoryPeriod = 3;
+	float refractoryPeriod = 200;
 
 	float eligibilityDecay = 10;
 	
@@ -44,13 +44,10 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// Input layer (2D neurons)
-	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer0, nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
+	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer0, &stdp, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 	
-	// Hidden layer 1
-	network.addNeurons(layer1, &stdp, 10, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
-
 	// Output layer
-	network.addNeurons(layer2, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
+	network.addNeurons(layer1, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 	
     //  ----- CONNECTING THE NETWORK -----
 	// input layer -> hidden layer 1
@@ -63,23 +60,7 @@ int main(int argc, char** argv)
 			{
 				if (receptiveFieldO.layerID == 1)
 				{
-					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, true, 1./30, false, 0);
-				}
-			}
-	    }
-	}
-
-	// hidden layer 1 -> output layer
-	for (auto& receptiveFieldI: network.getNeuronPopulations())
-	{
-	    // connecting input layer to layer 1
-	    if (receptiveFieldI.layerID == 1)
-	    {
-			for (auto& receptiveFieldO: network.getNeuronPopulations())
-			{
-				if (receptiveFieldO.layerID == 2)
-				{
-					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, true, 1./5, false, 0);
+					network.allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, false, 1./30, false, 0);
 				}
 			}
 	    }
@@ -105,8 +86,8 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(1000);
-  	qtDisplay.trackLayer(2);
-  	qtDisplay.trackNeuron(1500);
+  	qtDisplay.trackLayer(1);
+  	qtDisplay.trackNeuron(1470);
 	
     //  ----- RUNNING THE NETWORK -----
     float runtime = trainingData.back().timestamp+testingData.back().timestamp+1;
