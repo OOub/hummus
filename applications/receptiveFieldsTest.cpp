@@ -65,6 +65,7 @@ int main(int argc, char** argv)
     }
 
     //  ----- CONNECTING THE NETWORK -----
+    network.rfConnectivity(0, 1, false, layer1Weight, true, 40);
 	for (auto& receptiveFieldI: network.getNeuronPopulations())
 	{
 	    // connecting input layer to layer 1

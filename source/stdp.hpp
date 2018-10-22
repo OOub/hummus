@@ -53,6 +53,7 @@ namespace adonis_c
 					}
 				}
 			}
+			
 			// LTP whenever a neuron from the postsynaptic layer spikes
 			else if (neuron->getLayerID() == postLayer)
 			{

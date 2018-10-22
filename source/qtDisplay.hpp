@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include <atomic>
+#include <numeric>
 #include <vector>
 #include <thread>
 #include <chrono>
@@ -91,8 +91,9 @@ namespace adonis_c
 			potentialviewer->handleTimestep(timestamp, network, postNeuron);
 		}
 
-		void begin(int64_t neuronNumber, int numberOfLayers, std::vector<int> neuronsInLayers) override
+		void begin(int numberOfLayers, std::vector<int> neuronsInLayers) override
 		{
+			int neuronNumber = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.end(), 0);
 			engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
 			engine->rootContext()->setContextProperty("layers", numberOfLayers);
         	outputviewer->setYLookup(neuronsInLayers);
@@ -102,8 +103,6 @@ namespace adonis_c
 		void labelUpdate(std::string label) override
 		{
 			inputviewer->handleLabel(label);
-//			engine->rootObjects().at(0)->setProperty("label",QVariant(label.c_str()));
-
 		}
 		
 		// ----- SETTERS -----

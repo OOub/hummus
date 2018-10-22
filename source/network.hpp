@@ -188,6 +188,43 @@ namespace adonis_c
 			}
 		}
 		
+		// connecting two layers according to their receptive fields
+		void rfConnectivity(int _preLayer, int _postLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool flatten=false, bool redundantConnections=true)
+		{
+			if (!flatten)
+			{
+				for (auto& receptiveFieldI: neurons)
+				{
+					if (receptiveFieldI.layerID == _preLayer)
+					{
+						for (auto& receptiveFieldO: neurons)
+						{
+							if (receptiveFieldO.rfID == receptiveFieldI.rfID && receptiveFieldO.layerID == _postLayer)
+							{
+								allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, randomWeights, _weight, randomDelays, _delay, redundantConnections);
+							}
+						}
+					}
+				}
+			}
+			else if (flatten)
+			{
+				for (auto& receptiveFieldI: neurons)
+				{
+					if (receptiveFieldI.layerID == _preLayer)
+					{
+						for (auto& receptiveFieldO: neurons)
+						{
+							if (receptiveFieldO.layerID == _postLayer)
+							{
+								allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, randomWeights, _weight, randomDelays, _delay, redundantConnections);
+							}
+						}
+					}
+				}
+			}
+		}
+		
 		// add labels that can be displayed on the qtDisplay if it is being used
 		void addLabels(std::deque<label>* _labels)
 		{
@@ -259,17 +296,19 @@ namespace adonis_c
 				{
 					for (double i=0; i<_runtime; i+=_timestep)
 					{
-					if (labels)
-					{
-						if (thDelegate)
+					
+						if (labels)
 						{
-							if (labels->front().onset <= i)
+							if (labels->size() != 0)
 							{
-								thDelegate->labelUpdate(labels->front().name);
-								labels->pop_front();
+								if (labels->front().onset <= i)
+								{
+									std::cout << labels->front().name << " at t=" << i << std::endl;
+									labels->pop_front();
+								}
 							}
 						}
-					}
+						
 						if (learningOffSignal != -1)
 						{
 							if (learningStatus==true && i >= learningOffSignal)
@@ -327,7 +366,7 @@ namespace adonis_c
 					}
 				}
 				
-				thDelegate->begin(neurons.size(), numberOfLayers, neuronsInLayers);
+				thDelegate->begin(numberOfLayers, neuronsInLayers);
 			}
 			spikeManager.join();
 		}

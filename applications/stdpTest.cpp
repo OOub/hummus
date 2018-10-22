@@ -30,8 +30,7 @@ int main(int argc, char** argv)
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::SpikeLogger spikeLogger("stdpSpikeLog");
-	adonis_c::LearningLogger learningLogger("stdpLearningLog");
-	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+	adonis_c::Network network({&spikeLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	auto runtime = trainingData.back().timestamp+1;
@@ -44,7 +43,7 @@ int main(int argc, char** argv)
     int inputNeurons = 10;
     int layer1Neurons = 1;
 	
-    float weight = 1./5;
+    float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::Stdp stdp(0, 1);

@@ -113,12 +113,14 @@ namespace adonis_c
 		{
 			if (timeShift)
 			{
+				std::cout << *timeShift << std::endl;
 				auto data = readTrainingData(filename, false);
 				network->turnOffLearning(*timeShift);
 				for (auto& input: data)
 				{
 					input.timestamp += *timeShift + 1000;
 				}
+				std::cout << data.back().timestamp << std::endl;
 				return data;
 			}
 			else
