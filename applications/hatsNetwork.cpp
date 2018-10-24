@@ -44,10 +44,10 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// Input layer (2D neurons)
-	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer0,  nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
+	network.addContiguousReceptiveFields(rfSize, gridWidth, gridHeight, layer0,  nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 	
 	// convolution layer
-	network.addReceptiveFields(rfSize, gridWidth, gridHeight, layer1, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
+	network.addContiguousReceptiveFields(rfSize, gridWidth, gridHeight, layer1, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
 	
 	// flattening layer
 	network.addNeurons(layer2, &stdp, 30, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
