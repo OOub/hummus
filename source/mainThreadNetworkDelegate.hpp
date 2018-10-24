@@ -25,6 +25,5 @@ namespace adonis_c
 		virtual ~MainThreadNetworkDelegate(){}
 		
 		virtual void begin(int numberOfLayers, std::vector<int> neuronsInLayers){}
-		virtual void labelUpdate(std::string label){}
 	};
 }

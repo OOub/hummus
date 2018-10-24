@@ -120,17 +120,6 @@ ApplicationWindow
 					tickCount: inputRec.height/50
 				}
 
-				Text
-				{
-            		id: label
-            		text: ''
-            		color: "#BC4F46"
-            		font.pointSize: 26
-            		horizontalAlignment: Text.AlignHCenter
-            		anchors.fill: parent
-        		}
-
-
 				ScatterSeries
 				{
 					id: input

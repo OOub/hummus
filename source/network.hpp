@@ -74,6 +74,8 @@ namespace adonis_c
 			neurons.push_back(receptiveField{std::move(temp),_rfID,_layerID});
         }
 		
+		// add neurons within square overlapping receptive fields
+		
 		// add neurons within square non-overlapping receptive fields
 		void addReceptiveFields(int rfSize, int gridW, int gridH, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{

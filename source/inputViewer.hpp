@@ -47,7 +47,6 @@ namespace adonis_c
             openGL(false),
             isClosed(false),
             engine(nullptr),
-            label(""),
             maxX(1),
             minY(0),
             maxY(1)
@@ -83,11 +82,6 @@ namespace adonis_c
 			maxX = timestamp;
         }
 		
-		void handleLabel(std::string _label)
-		{
-			label = _label;
-		}
-		
 		// ----- SETTERS -----
         void setTimeWindow(double newWindow)
         {
@@ -122,7 +116,6 @@ namespace adonis_c
                 if (series)
                 {
                     while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-                    engine->rootObjects().at(0)->setProperty("label",QVariant(label.c_str()));
                     if (openGL)
                     {
                         series->setUseOpenGL(true);
@@ -154,7 +147,6 @@ namespace adonis_c
         int                   minY;
         int                   maxY;
         std::atomic_flag      atomicGuard;
-        std::string           label;
         QQmlApplicationEngine* engine;
     };
 }

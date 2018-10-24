@@ -100,11 +100,6 @@ namespace adonis_c
 			app->exec();
 		}
 		
-		void labelUpdate(std::string label) override
-		{
-			inputviewer->handleLabel(label);
-		}
-		
 		// ----- SETTERS -----
 		void useHardwareAcceleration(bool accelerate)
         {

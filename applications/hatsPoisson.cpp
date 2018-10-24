@@ -28,7 +28,6 @@ int main(int argc, char** argv)
     int layer0 = 0;
     int layer1 = 1;
     int layer2 = 2;
-	int layer3 = 3;
 	
 	int gridWidth = 42;
 	int gridHeight = 35;
