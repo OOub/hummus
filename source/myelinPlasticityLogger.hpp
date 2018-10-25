@@ -1,5 +1,5 @@
 /*
- * learningLogger.hpp
+ * myelinPlasticityLogger.hpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -22,11 +22,11 @@
 
 namespace adonis_c
 {
-    class LearningLogger : public StandardNetworkDelegate
+    class MyelinPlasticityLogger : public StandardNetworkDelegate
     {
     public:
     	// ----- CONSTRUCTOR -----
-        LearningLogger(std::string filename)
+        MyelinPlasticityLogger(std::string filename)
         {
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good())

@@ -31,7 +31,6 @@ ApplicationWindow
 	minimumHeight: 650
 	minimumWidth: 450
 	property int refresh: 1
-	property alias label: label.text
 	property int a: 0
 	property int b: 1
 	property bool pp: true

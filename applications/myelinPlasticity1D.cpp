@@ -16,7 +16,7 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/learningLogger.hpp"
+#include "../source/myelinPlasticityLogger.hpp"
 #include "../source/myelinPlasticity.hpp"
 
 int main(int argc, char** argv)
@@ -29,8 +29,8 @@ int main(int argc, char** argv)
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::SpikeLogger spikeLogger("10neurons_4patterns_unsupervised_spikeLog.bin");
-	adonis_c::LearningLogger learningLogger("10neurons_4patterns_unsupervised_learningLog.bin");
-	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+	adonis_c::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
+	adonis_c::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float runtime = trainingData.back().timestamp+1;

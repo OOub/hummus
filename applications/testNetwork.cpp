@@ -14,7 +14,6 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/learningLogger.hpp"
 #include "../source/stdp.hpp"
 
 int main(int argc, char** argv)
@@ -23,8 +22,7 @@ int main(int argc, char** argv)
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::SpikeLogger spikeLogger("spikeLog");
-	adonis_c::LearningLogger learningLogger("learningLog");
-	adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+	adonis_c::Network network({&spikeLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;

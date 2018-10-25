@@ -17,7 +17,7 @@
 #include "../source/qtDisplay.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/learningLogger.hpp"
+#include "../source/myelinPlasticityLogger.hpp"
 #include "../source/stdp.hpp"
 #include "../source/myelinPlasticity.hpp"
 #include "../source/myelinPlasticityReinforcement.hpp"
