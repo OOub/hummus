@@ -56,11 +56,11 @@ int main(int argc, char** argv)
 	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
 	
     //  ----- CREATING THE NETWORK -----
-	network.addNeurons(0, nullptr, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addNeurons(1, &myelinPlasticity, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(nullptr, 1, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(&myelinPlasticity, 1, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 10);
+	network.allToAll(network.getLayers()[0].sublayers[0].receptiveFields[0].neurons, network.getLayers()[1].sublayers[0].receptiveFields[0].neurons, false, weight, true, 10);
 	
 	//  ----- INJECTING SPIKES -----
 	network.injectSpikeFromData(&trainingData);

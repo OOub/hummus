@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(10));
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(15));
-	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(40));
+	network.injectSpike(network.getNeurons()[network.getLayers()[0].sublayers[0].receptiveFields[0].neurons[0]].prepareInitialSpike(40));
 
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
