@@ -57,7 +57,7 @@ ApplicationWindow
 			Button
 			{
 				id: play
-				text: "pause"
+				text: "play / pause"
 				anchors.centerIn: parent
 
 				style: ButtonStyle
@@ -72,12 +72,10 @@ ApplicationWindow
 				{
 					if (pp == true)
 					{
-						text = "play"
 						pp = false
 					}
 					else
 					{
-						text = "pause"
 						pp = true
 					}
 				}

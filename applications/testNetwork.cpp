@@ -39,26 +39,25 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	// input neurons
-	network.addNeurons(0, nullptr, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(nullptr, 1, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
-	network.addNeurons(1, nullptr, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
-
-
+	network.addLayer(nullptr, 1, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	
     //  ----- CONNECTING THE NETWORK -----
 	// input layer -> layer 1
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
+	network.allToAll(network.getLayers()[0].sublayers[0].receptiveFields[0].neurons, network.getLayers()[1].sublayers[0].receptiveFields[0].neurons, false, weight, false, 0);
 
     //  ----- INJECTING SPIKES -----
-	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
-	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(15));
-	network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(40));
-	
+	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(10));
+	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(15));
+	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(40));
+
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
   	qtDisplay.trackNeuron(2);
-	
+
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 
