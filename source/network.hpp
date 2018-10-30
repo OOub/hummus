@@ -69,7 +69,6 @@ namespace adonis_c
 		// add neurons
 		void addLayer(int16_t layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
         {
-        	// finding the layer ID according the layers vector size
         	unsigned long shift = 0;
         	if (!layers.empty())
         	{
@@ -107,109 +106,118 @@ namespace adonis_c
 			layers.emplace_back(layer{subTemp, layerID});
         }
 		
-//		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, int overlap=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
-//		{
-//			// error handling
-//			if (windowSize < 0 || windowSize >= gridW || windowSize >= gridH)
-//			{
-//				throw std::logic_error("the selected window size is not valid");
-//			}
-//
-//			for (auto i=0; i<_sublayerNumber; i++)
-//			{
-//				bool grid = true;
-//				while (grid)
-//				{
-//
-//				}
-//			}
-//		}
-		
-//		// add neurons within square non-overlapping receptive fields (x are rows and y are columns)
-//		void addContiguousReceptiveFields(int rfSize, int gridW, int gridH, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
-//		{
-//			// error handling
-//			double dW_check = gridW / rfSize;
-//			double dH_check = gridW / rfSize;
-//
-//			int iW_check = dW_check;
-//			int iH_check = dH_check;
-//
-//			if (dW_check != iW_check || dH_check != iH_check)
-//			{
-//				throw std::logic_error("The width and height of the grid need to be divisible by the receptive field size");
-//			}
-//
-//		    int rfNumber = (gridW/rfSize) * (gridH/rfSize);
-//
-//            // receptive field creation
-//		    if (_numberOfNeurons == -1)
-//		    {
-//		        std::cout << "adding receptive fields with 2D neurons to the network" << std::endl;
-//		        int16_t x = 0;
-//		        int16_t y = 0;
-//
-//		        int ycount = 0;
-//			    int xcount = 0;
-//				int count = 0;
-//
-//		        for (int16_t j=0; j<rfNumber; j++)
-//		        {
-//		            if (j % (gridW/rfSize) == 0 && j != 0)
-//		            {
-//		            	ycount = 0;
-//                        xcount++;
-//		            }
-//
-//                	unsigned long shift = 0;
-//                	if (!receptiveFields.empty())
-//                	{
-//				        for (auto& it: receptiveFields)
-//				        {
-//					        shift += it.neurons.size();
-//				        }
-//			        }
-//
-//                	std::vector<Neuron*> temp;
-//
-//                	x=0+xcount*rfSize;
-//
-//			        for (auto i=0+shift; i < std::pow(rfSize,2)+shift; i++)
-//			        {
-//			            if (count % rfSize == 0 && count != 0)
-//			            {
-//							y = 0+ycount*rfSize;
-//			            }
-//			            count++;
-//
-//				        neurons.emplace_back(i,_layerID,j,_decayCurrent,_decayPotential,_refractoryPeriod,_burstingActivity, _eligibilityDecay,_threshold,_restingPotential,_resetPotential,_inputResistance, _externalCurrent,x,y,-1,_learningRuleHandler);
-//
-//				        temp.emplace_back(&neurons.back());
-//
-//						y++;
-//
-//				        if (count % rfSize == 0 && count != 0)
-//			            {
-//			                x++;
-//			            }
-//			        }
-//					ycount++;
-//			        receptiveFields.push_back(receptiveField{std::move(temp),j,_layerID});
-//		        }
-//            }
-//            else if (_numberOfNeurons > 0)
-//            {
-//                std::cout << "adding receptive fields with 1D neurons to the network" << std::endl;
-//                for (auto j=0; j<rfNumber; j++)
-//		        {
-//                    addNeurons(_layerID, _learningRuleHandler,_numberOfNeurons, _decayCurrent,_decayPotential,_refractoryPeriod,_burstingActivity,_eligibilityDecay,_threshold,_restingPotential,_resetPotential,_inputResistance,_externalCurrent,j);
-//                }
-//            }
-//            else
-//            {
-//                throw std::logic_error("the number of neurons to add cannot be less than or equal to 0");
-//            }
-//		}
+		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, bool overlap=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+		{
+			// error handling
+			if (windowSize <= 0 || windowSize >= gridW || windowSize >= gridH)
+			{
+				throw std::logic_error("the selected window size is not valid");
+			}
+
+			int overlapSize = 0;
+			if (overlap)
+			{
+				if (windowSize > 1)
+				{
+					overlapSize = windowSize-1;
+				}
+				else if (windowSize == 1)
+				{
+					throw std::logic_error("For a window szie equal to 1, consider using a layer with contiguous receptive fields by setting the overlap to false");
+				}
+			}
+			else
+			{
+				double dW_check = gridW / windowSize;
+				double dH_check = gridH / windowSize;
+
+				int iW_check = dW_check;
+				int iH_check = dH_check;
+
+				if (dW_check != iW_check || dH_check != iH_check)
+				{
+					throw std::logic_error("With contiguous receptive fields, the width and height of the grid need to be divisible by the receptive field size");
+				}
+			}
+			
+			unsigned long shift = 0;
+			if (!layers.empty())
+			{
+				for (auto& l: layers)
+				{
+					for (auto& s: l.sublayers)
+					{
+						for (auto& r: s.receptiveFields)
+						{
+							shift += r.neurons.size();
+						}
+					}
+				}
+			}
+			
+			std::vector<sublayer> subTemp;
+			for (auto i=0; i<_sublayerNumber; i++)
+			{
+				int x = 0;
+				int y = 0;
+				
+				int col = 0;
+				int row = 0;
+				
+				int rowShift = 0;
+				int colShift = 0;
+				
+				bool grid = true;
+				int rfCounter = 0;
+				unsigned long neuronCounter = shift;
+				
+				std::vector<std::size_t> neuronTemp;
+				std::vector<receptiveField> rfTemp;
+				while (grid)
+				{
+					if (x == gridW-1 && y != gridH-1 && col == 0 && row == 0)
+					{
+						colShift = 0;
+						rowShift += windowSize-overlapSize;
+					}
+					
+					x = col+colShift;
+					y = row+rowShift;
+					
+					neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, -1, _learningRuleHandler);
+					
+					neuronCounter += 1;
+					
+					neuronTemp.emplace_back(neurons.size()-1);
+					
+					col += 1;
+					if (col == windowSize && row != windowSize-1)
+					{
+						col = 0;
+						row += 1;
+					}
+					else if (col == windowSize && row == windowSize-1)
+					{
+						col = 0;
+						row = 0;
+						colShift += windowSize-overlapSize;
+						rfCounter += 1;
+						rfTemp.emplace_back(receptiveField{neuronTemp, rfCounter});
+						neuronTemp.clear();
+					}
+					
+					if (x == gridW-1 && y == gridH-1)
+					{
+						rfCounter += 1;
+						rfTemp.emplace_back(receptiveField{neuronTemp, rfCounter});
+						neuronTemp.clear();
+						grid = false;
+					}
+				}
+				subTemp.emplace_back(sublayer{rfTemp, i});
+			}
+			layers.emplace_back(layer{subTemp, layerID});
+		}
 		
 		// all to all connections (for everything including sublayers and receptive fields)
     	void allToAll(layer presynapticLayer, layer postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)

@@ -27,14 +27,14 @@ int main(int argc, char** argv)
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
 	float timestep = 0.1;
-	
+
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
-	
+
     int inputNeurons = 2;
     int layer1Neurons = 1;
-	
+
     float weight = 1./2;
 	
 	//  ----- CREATING THE NETWORK -----
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 
 	// layer 1 neurons
 	network.addLayer(1, nullptr, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
-	
+
     //  ----- CONNECTING THE NETWORK -----
 	// input layer -> layer 1
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, false, 0);
