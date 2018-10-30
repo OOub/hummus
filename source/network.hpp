@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 01/06/2018
+ * Last Version: 29/10/2018
  *
  * Information: The Network class acts as a spike manager.
  */
@@ -67,14 +67,12 @@ namespace adonis_c
 		// ----- PUBLIC NETWORK METHODS -----
 		
 		// add neurons
-		void addLayer(LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, int neuronNumber=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
+		void addLayer(int16_t layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
         {
         	// finding the layer ID according the layers vector size
-        	int16_t layerID = 0;
         	unsigned long shift = 0;
         	if (!layers.empty())
         	{
-        		layerID = layers.size();
         		for (auto& l: layers)
         		{
         			for (auto& s: l.sublayers)
@@ -91,23 +89,41 @@ namespace adonis_c
 			std::vector<sublayer> subTemp;
         	for (auto i=0; i<_sublayerNumber; i++)
         	{
-				std::vector<std::size_t> neuronTemp;
-				for (auto j=0+shift; j<neuronNumber+shift; j++)
-				{
-					neurons.emplace_back(j, 0, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,-1,_learningRuleHandler);
-					
-					
-					neuronTemp.emplace_back(neurons.size()-1);
+        		std::vector<receptiveField> rfTemp;
+        		for (auto j=0; j<rfNumber; j++)
+        		{
+					std::vector<std::size_t> neuronTemp;
+					for (auto k=0+shift; k<neuronNumber+shift; k++)
+					{
+						neurons.emplace_back(k, j, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,-1,_learningRuleHandler);
+						
+						
+						neuronTemp.emplace_back(neurons.size()-1);
+					}
+					rfTemp.emplace_back(receptiveField{neuronTemp, j});
 				}
-				subTemp.emplace_back(sublayer{{receptiveField{neuronTemp, 0}}, i});
+				subTemp.emplace_back(sublayer{rfTemp, i});
 			}
 			layers.emplace_back(layer{subTemp, layerID});
         }
 		
-//		// add neurons within square overlapping receptive fields (x are rows and y are columns)
-//		void addOverlappingReceptiveFields(int rfSize, int gridW, int gridH, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
-//		{}
-		
+//		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, int overlap=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+//		{
+//			// error handling
+//			if (windowSize < 0 || windowSize >= gridW || windowSize >= gridH)
+//			{
+//				throw std::logic_error("the selected window size is not valid");
+//			}
+//
+//			for (auto i=0; i<_sublayerNumber; i++)
+//			{
+//				bool grid = true;
+//				while (grid)
+//				{
+//
+//				}
+//			}
+//		}
 		
 //		// add neurons within square non-overlapping receptive fields (x are rows and y are columns)
 //		void addContiguousReceptiveFields(int rfSize, int gridW, int gridH, int16_t _layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int _numberOfNeurons=-1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
@@ -195,33 +211,45 @@ namespace adonis_c
 //            }
 //		}
 		
-		// standard all to all connectivity
-    	void allToAll(std::vector<std::size_t> presynapticLayer, std::vector<std::size_t> postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
+		// all to all connections (for everything including sublayers and receptive fields)
+    	void allToAll(layer presynapticLayer, layer postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
     	{
     		int delay = 0;
     		float weight = 0;
-    		for (auto pre: presynapticLayer)
+    		for (auto& preSub: presynapticLayer.sublayers)
     		{
-    			for (auto post: postsynapticLayer)
+    			for (auto& preRF: preSub.receptiveFields)
     			{
-    				if (randomDelays)
-    				{
-    					delay = std::rand() % _delay;
-					}
-					else
+					for (auto& pre: preRF.neurons)
 					{
-    					delay = _delay;
+						for (auto& postSub: postsynapticLayer.sublayers)
+						{
+							for (auto& postRF: postSub.receptiveFields)
+    						{
+    							for (auto& post: postRF.neurons)
+								{
+									if (randomDelays)
+									{
+										delay = std::rand() % _delay;
+									}
+									else
+									{
+										delay = _delay;
+									}
+
+									if (randomWeights)
+									{
+										weight = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX/_weight));
+									}
+									else
+									{
+										weight = _weight;
+									}
+									neurons[pre].addProjection(&neurons[post], weight, delay, redundantConnections);
+								}
+							}
+						}
 					}
-					
-					if (randomWeights)
-					{
-						weight = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX/_weight));
-					}
-					else
-					{
-						weight = _weight;
-					}
-					neurons[pre].addProjection(&neurons[post], weight, delay, redundantConnections);
 				}
 			}
 		}

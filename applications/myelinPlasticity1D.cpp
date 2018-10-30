@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 6/12/2017
+ * Last Version: 29/10/2018
  *
  * Information: Example of a spiking neural network that can learn one dimensional patterns.
  */
@@ -56,11 +56,11 @@ int main(int argc, char** argv)
 	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
 	
     //  ----- CREATING THE NETWORK -----
-	network.addLayer(nullptr, 1, inputNeurons,decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(&myelinPlasticity, 1, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(0, nullptr, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(1, &myelinPlasticity, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0].sublayers[0].receptiveFields[0].neurons, network.getLayers()[1].sublayers[0].receptiveFields[0].neurons, false, weight, true, 10);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, true, 10);
 	
 	//  ----- INJECTING SPIKES -----
 	network.injectSpikeFromData(&trainingData);

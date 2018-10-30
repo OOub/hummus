@@ -45,14 +45,14 @@ int main(int argc, char** argv)
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(0, 1);
+	adonis_c::Stdp stdp(0,1);
 	
 	//  ----- CREATING THE NETWORK -----
-	network.addNeurons(0, &stdp, inputNeurons, decayCurrent, potentialDecay, refractoryPeriod);
-	network.addNeurons(1, &stdp, layer1Neurons, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(0, &stdp, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(1, &stdp, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-	network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, false, 0);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, false, 0);
 
 	//  ----- INJECTING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
