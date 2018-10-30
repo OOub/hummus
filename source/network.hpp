@@ -106,7 +106,7 @@ namespace adonis_c
 			layers.emplace_back(layer{subTemp, layerID});
         }
 		
-		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, bool overlap=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, int _numberOfNeurons=-1, bool overlap=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
 			// error handling
 			if (windowSize <= 0 || windowSize >= gridW || windowSize >= gridH)
@@ -114,6 +114,11 @@ namespace adonis_c
 				throw std::logic_error("the selected window size is not valid");
 			}
 
+			if (_numberOfNeurons != -1 && _numberOfNeurons <= 0)
+			{
+				throw std::logic_error("the number of neurons selected is wrong");
+			}
+			
 			int overlapSize = 0;
 			if (overlap)
 			{
@@ -184,11 +189,14 @@ namespace adonis_c
 					x = col+colShift;
 					y = row+rowShift;
 					
-					neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, -1, _learningRuleHandler);
+					if (_numberOfNeurons == -1)
+					{
+						neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, -1, _learningRuleHandler);
 					
-					neuronCounter += 1;
+						neuronCounter += 1;
 					
-					neuronTemp.emplace_back(neurons.size()-1);
+						neuronTemp.emplace_back(neurons.size()-1);
+					}
 					
 					col += 1;
 					if (col == windowSize && row != windowSize-1)
@@ -201,15 +209,37 @@ namespace adonis_c
 						col = 0;
 						row = 0;
 						colShift += windowSize-overlapSize;
-						rfCounter += 1;
+						if (_numberOfNeurons > 0)
+						{
+							for (auto j = 0; j < _numberOfNeurons; j++)
+							{
+								neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, -1, _learningRuleHandler);
+								
+								neuronCounter += 1;
+								
+								neuronTemp.emplace_back(neurons.size()-1);
+							}
+						}
 						rfTemp.emplace_back(receptiveField{neuronTemp, rfCounter});
+						rfCounter += 1;
 						neuronTemp.clear();
 					}
 					
 					if (x == gridW-1 && y == gridH-1)
 					{
-						rfCounter += 1;
+						if (_numberOfNeurons > 0)
+						{
+							for (auto j = 0; j < _numberOfNeurons; j++)
+							{
+								neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, -1, _learningRuleHandler);
+								
+								neuronCounter += 1;
+								
+								neuronTemp.emplace_back(neurons.size()-1);
+							}
+						}
 						rfTemp.emplace_back(receptiveField{neuronTemp, rfCounter});
+						rfCounter += 1;
 						neuronTemp.clear();
 						grid = false;
 					}
