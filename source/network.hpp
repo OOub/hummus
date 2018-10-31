@@ -292,42 +292,60 @@ namespace adonis_c
 			}
 		}
 		
-//		// connecting two layers according to their receptive fields
-//		void rfConnectivity(int _preLayer, int _postLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool flatten=false, bool redundantConnections=true)
-//		{
-//			if (!flatten)
-//			{
-//				for (auto& receptiveFieldI: neurons)
-//				{
-//					if (receptiveFieldI.layerID == _preLayer)
-//					{
-//						for (auto& receptiveFieldO: neurons)
-//						{
-//							if (receptiveFieldO.rfID == receptiveFieldI.rfID && receptiveFieldO.layerID == _postLayer)
-//							{
-//								allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, randomWeights, _weight, randomDelays, _delay, redundantConnections);
-//							}
-//						}
-//					}
-//				}
-//			}
-//			else if (flatten)
-//			{
-//				for (auto& receptiveFieldI: neurons)
-//				{
-//					if (receptiveFieldI.layerID == _preLayer)
-//					{
-//						for (auto& receptiveFieldO: neurons)
-//						{
-//							if (receptiveFieldO.layerID == _postLayer)
-//							{
-//								allToAllConnectivity(&receptiveFieldI.rfNeurons, &receptiveFieldO.rfNeurons, randomWeights, _weight, randomDelays, _delay, redundantConnections);
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
+		// connecting two layers according to their receptive fields
+		void convolution(layer presynapticLayer, layer postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
+		{
+			int delay = 0;
+    		float weight = 0;
+			
+			for (auto& preSub: presynapticLayer.sublayers)
+    		{
+    			for (auto& preRF: preSub.receptiveFields)
+    			{
+    				for (auto& postSub: postsynapticLayer.sublayers)
+					{
+						for (auto& postRF: postSub.receptiveFields)
+						{
+							if (preRF.ID == postRF.ID)
+							{
+								for (auto& pre: preRF.neurons)
+								{
+									for (auto& post: postRF.neurons)
+									{
+										if (randomDelays)
+										{
+											delay = std::rand() % _delay;
+										}
+										else
+										{
+											delay = _delay;
+										}
+
+										if (randomWeights)
+										{
+											weight = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX/_weight));
+										}
+										else
+										{
+											weight = _weight;
+										}
+										neurons[pre].addProjection(&neurons[post], weight, delay, redundantConnections);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		// subsampling connection of receptive fields
+		void pooling(layer presynapticLayer, layer postsynapticLayer)
+		{
+			// get size of each layer
+			// calculate a pooling factor
+			// connect receptive fields together (via the ID)
+		}
 		
 		// add labels that can be displayed on the qtDisplay if it is being used
 		void addLabels(std::deque<label>* _labels)
