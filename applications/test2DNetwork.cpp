@@ -18,35 +18,18 @@
 
 int main(int argc, char** argv)
 {
-
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::SpikeLogger spikeLogger("spikeLog");
-	adonis_c::Network network({&spikeLogger}, &qtDisplay);
+	adonis_c::Network network({}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
 	float timestep = 0.1;
 
-	float decayCurrent = 10;
-	float potentialDecay = 20;
-	float refractoryPeriod = 3;
-
-    int inputNeurons = 2;
-    int layer1Neurons = 1;
-
-    float weight = 1./2;
-
 	//  ----- CREATING THE NETWORK -----
-	// input neurons
-	network.addLayer(0, nullptr, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
-
-	// layer 1 neurons
-	network.addLayer(1, nullptr, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
-
-    //  ----- CONNECTING THE NETWORK -----
-	// input layer -> layer 1
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, false, 0);
+	network.add2dLayer(0, 4, 8, 8, nullptr, 1);
+	network.add2dLayer(1, 4, 8, 8, nullptr, 1, 1);
+	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1./2, false, 0);
 
     //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(10));
@@ -56,7 +39,7 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(2);
+  	qtDisplay.trackNeuron(64);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
