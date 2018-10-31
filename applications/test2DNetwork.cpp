@@ -19,27 +19,24 @@
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network({}, &qtDisplay);
+	adonis_c::Network network;
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
 	float timestep = 0.1;
 
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(0, 4, 8, 8, nullptr, 1);
-	network.add2dLayer(1, 4, 8, 8, nullptr, 1, 1);
-	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1./2, false, 0);
-
+	network.add2dLayer(0, 2, 8, 8, nullptr, 1);
+	network.add2dLayer(1, 2, 8, 8, nullptr, 1, 1);
+	network.add2dLayer(2, 2, 4, 4, nullptr, 1);
+	
+	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1, false, 0);
+	network.pooling(network.getLayers()[1], network.getLayers()[2], false, 1, false, 0);
+	
     //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(10));
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(15));
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(40));
-
-    //  ----- DISPLAY SETTINGS -----
-  	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(64);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

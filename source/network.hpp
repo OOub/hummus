@@ -44,6 +44,10 @@ namespace adonis_c
 	{
 		std::vector<sublayer> sublayers;
 		int                   ID;
+		int                   width;
+		int                   height;
+		int                   rfSize;
+		bool                  overlap;
 	};
 	
     class Network
@@ -103,13 +107,13 @@ namespace adonis_c
 				}
 				subTemp.emplace_back(sublayer{rfTemp, i});
 			}
-			layers.emplace_back(layer{subTemp, layerID});
+			layers.emplace_back(layer{subTemp, layerID, -1, -1, -1, false});
         }
 		
 		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, int _numberOfNeurons=-1, bool overlap=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
 			// error handling
-			if (windowSize <= 0 || windowSize >= gridW || windowSize >= gridH)
+			if (windowSize <= 0 || windowSize > gridW || windowSize > gridH)
 			{
 				throw std::logic_error("the selected window size is not valid");
 			}
@@ -128,14 +132,14 @@ namespace adonis_c
 				}
 				else if (windowSize == 1)
 				{
-					throw std::logic_error("For a window szie equal to 1, consider using a layer with contiguous receptive fields by setting the overlap to false");
+					throw std::logic_error("For a window size equal to 1, consider using a layer with contiguous receptive fields by setting the overlap to false");
 				}
 			}
 			else
 			{
-				double dW_check = gridW / windowSize;
-				double dH_check = gridH / windowSize;
-
+				double dW_check = gridW / static_cast<double>(windowSize);
+				double dH_check = gridH / static_cast<double>(windowSize);
+				
 				int iW_check = dW_check;
 				int iH_check = dH_check;
 
@@ -172,13 +176,12 @@ namespace adonis_c
 				int rowShift = 0;
 				int colShift = 0;
 				
-				bool grid = true;
 				int rfCounter = 0;
 				unsigned long neuronCounter = shift;
 				
 				std::vector<std::size_t> neuronTemp;
 				std::vector<receptiveField> rfTemp;
-				while (grid)
+				while (true)
 				{
 					if (x == gridW-1 && y != gridH-1 && col == 0 && row == 0)
 					{
@@ -227,26 +230,17 @@ namespace adonis_c
 					
 					if (x == gridW-1 && y == gridH-1)
 					{
-						if (_numberOfNeurons > 0)
-						{
-							for (auto j = 0; j < _numberOfNeurons; j++)
-							{
-								neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, -1, _learningRuleHandler);
-								
-								neuronCounter += 1;
-								
-								neuronTemp.emplace_back(neurons.size()-1);
-							}
-						}
-						rfTemp.emplace_back(receptiveField{neuronTemp, rfCounter});
-						rfCounter += 1;
-						neuronTemp.clear();
-						grid = false;
+						break;
+					}
+					
+					if (x > gridW-1 || y > gridH-1)
+					{
+						throw std::logic_error("the window and the grid do not match. recheck the size parameters");
 					}
 				}
 				subTemp.emplace_back(sublayer{rfTemp, i});
 			}
-			layers.emplace_back(layer{subTemp, layerID});
+			layers.emplace_back(layer{subTemp, layerID, gridW, gridH, windowSize, overlap});
 		}
 		
 		// all to all connections (for everything including sublayers and receptive fields)
@@ -340,11 +334,40 @@ namespace adonis_c
 		}
 		
 		// subsampling connection of receptive fields
-		void pooling(layer presynapticLayer, layer postsynapticLayer)
+		void pooling(layer presynapticLayer, layer postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
 		{
-			// get size of each layer
-			// calculate a pooling factor
-			// connect receptive fields together (via the ID)
+			for (auto& preSub: presynapticLayer.sublayers)
+			{
+				for (auto& postSub: postsynapticLayer.sublayers)
+				{
+					// each presynaptic sublayer connects to the same postsynaptic sublayer
+					if (preSub.ID == postSub.ID)
+					{
+						for (auto& preRF: preSub.receptiveFields)
+						{
+							std::cout << "pre: " << preRF.ID << std::endl;
+						}
+						
+						for (auto& postRF: postSub.receptiveFields)
+						{
+							std::cout << "post: " << postRF.ID << std::endl;
+						}
+					}
+				}
+			}
+//			// add verification for proportionality
+//			// add support for overlapping RF
+//
+//			int preColRf = presynapticLayer.width / presynapticLayer.rfSize;
+//			int preRowRf = presynapticLayer.height / presynapticLayer.rfSize;
+//
+//			int postColRf = postsynapticLayer.width / postsynapticLayer.rfSize;
+//			int postRowRf = postsynapticLayer.height / postsynapticLayer.rfSize;
+//
+//			int colScaling = preColRf / postColRf;
+//			int rowScaling = preRowRf / postRowRf;
+//
+//			// create a lookup table
 		}
 		
 		// add labels that can be displayed on the qtDisplay if it is being used
