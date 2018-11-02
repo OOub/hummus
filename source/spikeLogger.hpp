@@ -38,7 +38,7 @@ namespace adonis_c
 		// ----- PUBLIC SPIKE LOGGER METHODS -----
 		void incomingSpike(double timestamp, projection* p, Network* network) override
         {
-			std::array<char, 32> bytes;
+			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
 			copy_to(bytes.data() + 8, p->delay);
 			copy_to(bytes.data() + 12, p->weight);
@@ -46,15 +46,16 @@ namespace adonis_c
 			copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
 			copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
 			copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
-			copy_to(bytes.data() + 26, p->postNeuron->getRFID());
-			copy_to(bytes.data() + 28, p->postNeuron->getX());
-			copy_to(bytes.data() + 30, p->postNeuron->getY());
+			copy_to(bytes.data() + 26, p->postNeuron->getRfRow());
+			copy_to(bytes.data() + 28, p->postNeuron->getRfCol());
+			copy_to(bytes.data() + 30, p->postNeuron->getX());
+			copy_to(bytes.data() + 32, p->postNeuron->getY());
 			saveFile.write(bytes.data(), bytes.size());
         }
 		
 		void neuronFired(double timestamp, projection* p, Network* network) override
         {
-			std::array<char, 32> bytes;
+			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
 			copy_to(bytes.data() + 8, p->delay);
 			copy_to(bytes.data() + 12, p->weight);
@@ -62,9 +63,10 @@ namespace adonis_c
 			copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
 			copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
 			copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
-			copy_to(bytes.data() + 26, p->postNeuron->getRFID());
-			copy_to(bytes.data() + 28, p->postNeuron->getX());
-			copy_to(bytes.data() + 30, p->postNeuron->getY());
+			copy_to(bytes.data() + 26, p->postNeuron->getRfRow());
+			copy_to(bytes.data() + 28, p->postNeuron->getRfCol());
+			copy_to(bytes.data() + 30, p->postNeuron->getX());
+			copy_to(bytes.data() + 32, p->postNeuron->getY());
 			saveFile.write(bytes.data(), bytes.size());
         }
 		

@@ -31,23 +31,22 @@ namespace adonis_c
 	struct receptiveField
 	{
 		std::vector<std::size_t> neurons;
-		int                      ID;
+		int16_t                  row;
+		int16_t                  col;
 	};
 	
 	struct sublayer
 	{
 		std::vector<receptiveField> receptiveFields;
-		int                         ID;
+		int16_t                     ID;
 	};
 	
 	struct layer
 	{
 		std::vector<sublayer> sublayers;
-		int                   ID;
+		int16_t               ID;
 		int                   width;
 		int                   height;
-		int                   rfSize;
-		bool                  overlap;
 	};
 	
     class Network
@@ -90,24 +89,24 @@ namespace adonis_c
 
 			// building a layer of one dimensional sublayers with no receptiveFields
 			std::vector<sublayer> subTemp;
-        	for (auto i=0; i<_sublayerNumber; i++)
+        	for (int16_t i=0; i<_sublayerNumber; i++)
         	{
         		std::vector<receptiveField> rfTemp;
-        		for (auto j=0; j<rfNumber; j++)
+        		for (int16_t j=0; j<rfNumber; j++)
         		{
 					std::vector<std::size_t> neuronTemp;
 					for (auto k=0+shift; k<neuronNumber+shift; k++)
 					{
-						neurons.emplace_back(k, j, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,-1,_learningRuleHandler);
+						neurons.emplace_back(k, j, 0, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler);
 						
 						
 						neuronTemp.emplace_back(neurons.size()-1);
 					}
-					rfTemp.emplace_back(receptiveField{neuronTemp, j});
+					rfTemp.emplace_back(receptiveField{neuronTemp, j, 0});
 				}
 				subTemp.emplace_back(sublayer{rfTemp, i});
 			}
-			layers.emplace_back(layer{subTemp, layerID, -1, -1, -1, false});
+			layers.emplace_back(layer{subTemp, layerID, -1, -1});
         }
 		
 		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, int _numberOfNeurons=-1, bool overlap=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
@@ -165,7 +164,7 @@ namespace adonis_c
 			}
 			
 			std::vector<sublayer> subTemp;
-			for (auto i=0; i<_sublayerNumber; i++)
+			for (int16_t i=0; i<_sublayerNumber; i++)
 			{
 				int x = 0;
 				int y = 0;
@@ -176,7 +175,8 @@ namespace adonis_c
 				int rowShift = 0;
 				int colShift = 0;
 				
-				int rfCounter = 0;
+				int16_t rfCol = 0;
+				int16_t rfRow = 0;
 				unsigned long neuronCounter = shift;
 				
 				std::vector<std::size_t> neuronTemp;
@@ -185,6 +185,8 @@ namespace adonis_c
 				{
 					if (x == gridW-1 && y != gridH-1 && col == 0 && row == 0)
 					{
+						rfCol = 0;
+						rfRow += 1;
 						colShift = 0;
 						rowShift += windowSize-overlapSize;
 					}
@@ -194,7 +196,7 @@ namespace adonis_c
 					
 					if (_numberOfNeurons == -1)
 					{
-						neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, -1, _learningRuleHandler);
+						neurons.emplace_back(neuronCounter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, _learningRuleHandler);
 					
 						neuronCounter += 1;
 					
@@ -216,15 +218,15 @@ namespace adonis_c
 						{
 							for (auto j = 0; j < _numberOfNeurons; j++)
 							{
-								neurons.emplace_back(neuronCounter, rfCounter, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, -1, _learningRuleHandler);
+								neurons.emplace_back(neuronCounter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, _learningRuleHandler);
 								
 								neuronCounter += 1;
 								
 								neuronTemp.emplace_back(neurons.size()-1);
 							}
 						}
-						rfTemp.emplace_back(receptiveField{neuronTemp, rfCounter});
-						rfCounter += 1;
+						rfTemp.emplace_back(receptiveField{neuronTemp, rfRow, rfCol});
+						rfCol += 1;
 						neuronTemp.clear();
 					}
 					
@@ -240,7 +242,7 @@ namespace adonis_c
 				}
 				subTemp.emplace_back(sublayer{rfTemp, i});
 			}
-			layers.emplace_back(layer{subTemp, layerID, gridW, gridH, windowSize, overlap});
+			layers.emplace_back(layer{subTemp, layerID, gridW, gridH});
 		}
 		
 		// all to all connections (for everything including sublayers and receptive fields)
@@ -289,6 +291,12 @@ namespace adonis_c
 		// connecting two layers according to their receptive fields
 		void convolution(layer presynapticLayer, layer postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
 		{
+			// restrict to layers of the same size
+			if (presynapticLayer.width != postsynapticLayer.width || presynapticLayer.height != postsynapticLayer.height)
+			{
+				throw std::logic_error("Convoluting two layers requires them to be the same size");
+			}
+			
 			int delay = 0;
     		float weight = 0;
 			
@@ -300,7 +308,7 @@ namespace adonis_c
 					{
 						for (auto& postRF: postSub.receptiveFields)
 						{
-							if (preRF.ID == postRF.ID)
+							if (preRF.row == postRF.row && preRF.col == postRF.col)
 							{
 								for (auto& pre: preRF.neurons)
 								{
@@ -336,6 +344,26 @@ namespace adonis_c
 		// subsampling connection of receptive fields
 		void pooling(layer presynapticLayer, layer postsynapticLayer, bool randomWeights, float _weight, bool randomDelays, int _delay=0, bool redundantConnections=true)
 		{
+			auto preMaxRows = presynapticLayer.sublayers[0].receptiveFields.back().row+1;
+			auto preMaxColumns = presynapticLayer.sublayers[0].receptiveFields.back().col+1;
+			
+			auto postMaxRows = postsynapticLayer.sublayers[0].receptiveFields.back().row+1;
+			auto postMaxColumns = postsynapticLayer.sublayers[0].receptiveFields.back().col+1;
+			
+			float fRow_check = preMaxRows / static_cast<float>(postMaxRows);
+			float fCol_check = preMaxColumns / static_cast<float>(postMaxColumns);
+			
+			int rowPoolingFactor = fRow_check;
+			int colPoolingFactor = fCol_check;
+			
+			if (rowPoolingFactor != fRow_check || colPoolingFactor != fCol_check)
+			{
+				throw std::logic_error("the number of receptive fields in each layer is not proportional. The pooling factor cannot be calculated");
+			}
+			
+			int delay = 0;
+    		float weight = 0;
+			
 			for (auto& preSub: presynapticLayer.sublayers)
 			{
 				for (auto& postSub: postsynapticLayer.sublayers)
@@ -343,31 +371,50 @@ namespace adonis_c
 					// each presynaptic sublayer connects to the same postsynaptic sublayer
 					if (preSub.ID == postSub.ID)
 					{
-						for (auto& preRF: preSub.receptiveFields)
+						int rowShift = 0;
+						int colShift = 0;
+						for (auto& postRf: postSub.receptiveFields)
 						{
-							std::cout << "pre: " << preRF.ID << std::endl;
-						}
-						
-						for (auto& postRF: postSub.receptiveFields)
-						{
-							std::cout << "post: " << postRF.ID << std::endl;
+							for (auto& preRf: preSub.receptiveFields)
+							{
+								if ( preRf.row >= 0+rowShift && preRf.row < rowPoolingFactor+rowShift && preRf.col >= 0+colShift && preRf.col < colPoolingFactor+colShift)
+								{
+									for (auto& pre: preRf.neurons)
+									{
+										for (auto& post: postRf.neurons)
+										{
+											if (randomDelays)
+											{
+												delay = std::rand() % _delay;
+											}
+											else
+											{
+												delay = _delay;
+											}
+
+											if (randomWeights)
+											{
+												weight = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX/_weight));
+											}
+											else
+											{
+												weight = _weight;
+											}
+											neurons[pre].addProjection(&neurons[post], weight, delay, redundantConnections);
+										}
+									}
+								}
+							}
+							colShift += colPoolingFactor;
+							if (postRf.col == postMaxColumns-1)
+							{
+								colShift = 0;
+								rowShift += rowPoolingFactor;
+							}
 						}
 					}
 				}
 			}
-//			// add verification for proportionality
-//			// add support for overlapping RF
-//
-//			int preColRf = presynapticLayer.width / presynapticLayer.rfSize;
-//			int preRowRf = presynapticLayer.height / presynapticLayer.rfSize;
-//
-//			int postColRf = postsynapticLayer.width / postsynapticLayer.rfSize;
-//			int postRowRf = postsynapticLayer.height / postsynapticLayer.rfSize;
-//
-//			int colScaling = preColRf / postColRf;
-//			int rowScaling = preRowRf / postRowRf;
-//
-//			// create a lookup table
 		}
 		
 		// add labels that can be displayed on the qtDisplay if it is being used
@@ -384,6 +431,12 @@ namespace adonis_c
 
 		void injectSpikeFromData(std::vector<input>* data)
 		{
+			// error handling
+			if (neurons.empty())
+			{
+				throw std::logic_error("add neurons before injecting spikes");
+			}
+			
 			if ((*data)[1].x == -1 && (*data)[1].y == -1)
 			{
 				for (auto idx=0; idx<data->size(); idx++)

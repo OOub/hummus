@@ -23,12 +23,12 @@ int main(int argc, char** argv)
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
-	float timestep = 0.1;
+	float timestep = 1;
 
 	//  ----- CREATING THE NETWORK -----
 	network.add2dLayer(0, 2, 8, 8, nullptr, 1);
 	network.add2dLayer(1, 2, 8, 8, nullptr, 1, 1);
-	network.add2dLayer(2, 2, 4, 4, nullptr, 1);
+	network.add2dLayer(2, 2, 4, 4, nullptr, 1, 1);
 	
 	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1, false, 0);
 	network.pooling(network.getLayers()[1], network.getLayers()[2], false, 1, false, 0);

@@ -50,9 +50,10 @@ namespace adonis_c
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _rfID=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, int16_t _zCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
+    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
 			neuronID(_neuronID),
-			rfID(_rfID),
+			rfRow(_rfRow),
+			rfCol(_rfCol),
 			sublayerID(_sublayerID),
 			layerID(_layerID),
 			decayCurrent(_decayCurrent),
@@ -73,7 +74,6 @@ namespace adonis_c
             eligibilityDecay(_eligibilityDecay),
             xCoordinate(_xCoordinate),
             yCoordinate(_yCoordinate),
-            zCoordinate(_zCoordinate),
 			learningRuleHandler(_learningRuleHandler),
 			plasticityTrace(0),
 			burstingActivity(_burstingActivity)
@@ -240,9 +240,14 @@ namespace adonis_c
             return neuronID;
         }
 		
-		int16_t getRFID() const
+		int16_t getRfRow() const
 		{
-			return rfID;
+			return rfRow;
+		}
+		
+		int16_t getRfCol() const
+		{
+			return rfCol;
 		}
 		
 		int16_t getSublayerID() const
@@ -313,11 +318,6 @@ namespace adonis_c
 		int16_t getY() const
 		{
 		    return yCoordinate;
-		}
-		
-		int16_t getZ() const
-		{
-		    return zCoordinate;
 		}
 		
 		std::vector<projection*>& getPreProjections()
@@ -413,7 +413,7 @@ namespace adonis_c
 			// clearing generated spike list
 			for (auto i=0; i<network->getGeneratedSpikes().size(); i++)
 			{
-				if (network->getGeneratedSpikes()[i].postProjection->postNeuron->getLayerID() == layerID && network->getGeneratedSpikes()[i].postProjection->postNeuron->getRFID() == rfID)
+				if (network->getGeneratedSpikes()[i].postProjection->postNeuron->layerID == layerID && network->getGeneratedSpikes()[i].postProjection->postNeuron->sublayerID == sublayerID && network->getGeneratedSpikes()[i].postProjection->postNeuron->rfRow == rfRow && network->getGeneratedSpikes()[i].postProjection->postNeuron->rfCol == rfCol)
 				{
 					network->getGeneratedSpikes().erase(network->getGeneratedSpikes().begin()+i);
 				}
@@ -428,7 +428,8 @@ namespace adonis_c
 		
 		// ----- NEURON PARAMETERS -----
 		int16_t                                  neuronID;
-		int16_t                                  rfID;
+		int16_t                                  rfRow;
+		int16_t                                  rfCol;
 		int16_t                                  sublayerID;
 		int16_t                                  layerID;
 		float                                    decayCurrent;
@@ -447,7 +448,6 @@ namespace adonis_c
 		float                                    eligibilityDecay;
 		int16_t                                  xCoordinate;
 		int16_t                                  yCoordinate;
-		int16_t                                  zCoordinate;
 		bool                                     burstingActivity;
 		
 		// ----- IMPLEMENTATION VARIABLES -----

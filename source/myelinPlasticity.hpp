@@ -29,7 +29,7 @@ namespace adonis_c
 		{
 			std::vector<double> timeDifferences;
 			std::vector<int16_t> plasticID;
-			std::vector<std::vector<int16_t>> plasticCoordinates(3);
+			std::vector<std::vector<int16_t>> plasticCoordinates(4);
 			bool supervise = false;
 			#ifndef NDEBUG
 			std::cout << "New learning epoch at t=" << timestamp << std::endl;
@@ -43,8 +43,9 @@ namespace adonis_c
 					plasticID.push_back(inputProjection->preNeuron->getNeuronID());
 					plasticCoordinates[0].push_back(inputProjection->preNeuron->getX());
 					plasticCoordinates[1].push_back(inputProjection->preNeuron->getY());
-					plasticCoordinates[2].push_back(inputProjection->preNeuron->getRFID());
-
+					plasticCoordinates[2].push_back(inputProjection->preNeuron->getRfRow());
+					plasticCoordinates[3].push_back(inputProjection->preNeuron->getRfCol());
+					
 					float change = 0;
 					if (network->getTeachingProgress()) // supervised learning
 					{

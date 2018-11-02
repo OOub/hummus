@@ -43,23 +43,7 @@ int main(int argc, char** argv)
 	adonis_c::Stdp stdp(layer0, layer1);
 	
 	//  ----- CREATING THE NETWORK -----
-	// Input layer (2D neurons)
-	network.addContiguousReceptiveFields(rfSize, gridWidth, gridHeight, layer0,  nullptr, -1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
-	
-	// convolution layer
-	network.addContiguousReceptiveFields(rfSize, gridWidth, gridHeight, layer1, &stdp, 1, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
-	
-	// flattening layer
-	network.addNeurons(layer2, &stdp, 30, decayCurrent, potentialDecay, refractoryPeriod, false, eligibilityDecay);
-	
-    //  ----- CONNECTING THE NETWORK -----
-	// connecting input layer to convolution layer
-	network.rfConnectivity(layer0, layer1, false, 1./30, false, 0);
-	
-	// connecting convolution layer to output layer
-	network.rfConnectivity(layer1, layer2, true, 1./5, true, 20, true);
-	
-	// connecting output and inhibition layer
+	// need to create the feature maps before creating the network
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
@@ -71,7 +55,7 @@ int main(int argc, char** argv)
 	//  ----- READING TEST DATA FROM FILE -----
 	auto testingData = dataParser.readTestData(&network, "../../data/hats/poisson/one/nCars_test_100samplePerc_1rep.txt");
 	
-	//  ----- INJECTING TEST SPIKES -----
+//	//  ----- INJECTING TEST SPIKES -----
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
@@ -87,7 +71,7 @@ int main(int argc, char** argv)
     //  ----- RUNNING THE NETWORK -----
     float runtime = testingData.back().timestamp+1;
     std::cout << runtime << std::endl;
-	float timestep = 0.1;
+	float timestep = 0.5;
 	
     network.run(runtime, timestep);
 

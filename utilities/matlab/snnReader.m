@@ -11,11 +11,16 @@
 % bool = false for spikeLogger file and bool = true for learningLogger file
 
 
-function [output] = snnReader(filename, bool)    
+function [output] = snnReader(filename, bool)  
+    % handling optional arguments
+    if nargin < 2
+        bool = false;
+    end
+        
     fileID = fopen(filename,'rb');
     if bool == false
         disp("reading spike logger")
-        timestamp = []; delay = []; potential = []; preN = []; postN = []; layerID = []; rfID = []; weight = []; X = []; Y = [];
+        timestamp = []; delay = []; potential = []; preN = []; postN = []; layerID = []; rfRow = []; rfCol = []; weight = []; X = []; Y = [];
         
         while ~feof(fileID)
             currentPosition = ftell(fileID);
@@ -29,7 +34,8 @@ function [output] = snnReader(filename, bool)
                 preN(end+1) = fread(fileID,1,'int16');
                 postN(end+1) = fread(fileID,1,'int16');
                 layerID(end+1) = fread(fileID,1,'int16');
-                rfID(end+1) = fread(fileID,1,'int16');
+                rfRow(end+1) = fread(fileID,1,'int16');
+                rfCol(end+1) = fread(fileID,1,'int16');
                 X(end+1) = fread(fileID,1,'int16');
                 Y(end+1) = fread(fileID,1,'int16');
             else
@@ -39,8 +45,8 @@ function [output] = snnReader(filename, bool)
         end
         fclose(fileID);
         
-        variableNames = {'timestamp','delay','weight','preN','postN','potential','layerID','rfID','X','Y'};
-        output = table(timestamp',delay',weight',preN',postN',potential',layerID',rfID',X',Y','VariableNames',variableNames);
+        variableNames = {'timestamp','delay','weight','preN','postN','potential','layerID','rfRow','rfCol','X','Y'};
+        output = table(timestamp',delay',weight',preN',postN',potential',layerID',rfRow',rfCol',X',Y','VariableNames',variableNames);
     elseif bool == true
         disp("reading learning logger")
         output = {};
@@ -55,16 +61,18 @@ function [output] = snnReader(filename, bool)
                 timestamp = fread(fileID,1,'float64');
                 winnerID = fread(fileID,1,'int16');
                 layerID = fread(fileID,1,'int16');
-                rfID = fread(fileID,1,'int16');
+                rfRow = fread(fileID,1,'int16');
+                rfCol = fread(fileID,1,'int16');
                 
-                for i = 1:(bitSize-22)/14
+                for i = 1:(bitSize-24)/16
                     plasticNeurons(end+1,1) = fread(fileID,1,'float64');
                     plasticNeurons(end,2) = fread(fileID,1,'int16');
                     plasticNeurons(end,3) = fread(fileID,1,'int16');
                     plasticNeurons(end,4) = fread(fileID,1,'int16');
+                    plasticNeurons(end,5) = fread(fileID,1,'int16');
                 end
                 
-                output{end+1,1} = struct('timestamp', timestamp, 'winnerID', winnerID, 'layerID', layerID, 'rfID', rfID, 'plasticNeurons', plasticNeurons);
+                output{end+1,1} = struct('timestamp', timestamp, 'winnerID', winnerID, 'layerID', layerID, 'rfRow', rfRow,'rfCol', rfCol, 'plasticNeurons', plasticNeurons);
                 plasticNeurons = [];
             else
                 disp("finished reading")
