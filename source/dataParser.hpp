@@ -34,6 +34,7 @@ namespace adonis_c
 		double neuronID;
 		double x;
 		double y;
+		double sublayerID;
 	};
 	
 	class DataParser
@@ -44,7 +45,7 @@ namespace adonis_c
         	timeShift(nullptr)
         {}
 		
-		// reading 1D (timestamp, Index) or 2D data (timestamp, X, Y)
+		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data divided into sublayers (timestamp, X, Y, sublayerID)
         std::vector<input> readTrainingData(std::string filename, bool changeTimeShift=true)
         {
             dataFile.open(filename);
@@ -53,7 +54,7 @@ namespace adonis_c
             {
 				std::vector<input> data;
 				std::string line;
-				bool dataType = false;
+				int dataType = 0;
 				double neuronCounter = 0;
 				std::cout << "Reading " << filename << std::endl;
 				while (std::getline(dataFile, line))
@@ -63,29 +64,37 @@ namespace adonis_c
                 	// 1D data
                 	if (fields.size() == 2)
                 	{
-						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1});
+                		dataType = 0;
+						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1, 0});
 					}
 					// 2D data
                 	else if (fields.size() == 3)
                 	{
-                		if (!dataType)
-                		{
-                			dataType = true;
-						}
-                		data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2])});
+                		dataType = 1;
+                		data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), 0});
+                		neuronCounter++;
+					}
+					else if (fields.size() == 4)
+					{
+						dataType = 2;
+						data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
                 		neuronCounter++;
 					}
                 }
                 dataFile.close();
 				
 				
-				if (dataType)
+				if (dataType == 0)
+				{
+					std::cout << "1D data detected" << std::endl;
+				}
+				else if (dataType == 1)
 				{
 					std::cout << "2D data detected" << std::endl;
 				}
-				else
+				else if (dataType == 2)
 				{
-					std::cout << "1D data detected" << std::endl;
+					std::cout << "2D data divided into sublayers detected" << std::endl;
 				}
 				
 				std::sort(data.begin(), data.end(), [](input a, input b)
