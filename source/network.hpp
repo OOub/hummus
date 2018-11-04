@@ -443,23 +443,31 @@ namespace adonis_c
 				{
 					for (auto& l: layers[0].sublayers)
 					{
-						if (l.ID == event.sublayerID)
+						if (event.sublayerID == l.ID)
 						{
 							for (auto& r: l.receptiveFields)
 							{
-								injectSpike(neurons[r.neurons[event.neuronID]].prepareInitialSpike(event.timestamp));
+								for (auto& n: r.neurons)
+								{
+									if (neurons[n].getNeuronID() == event.neuronID)
+									{
+										injectSpike(neurons[n].prepareInitialSpike(event.timestamp));
+									}
+								}
 							}
 						}
-						else if (l.ID == -1)
+						else if (event.sublayerID == -1)
 						{
 							for (auto& r: l.receptiveFields)
 							{
-								injectSpike(neurons[r.neurons[event.neuronID]].prepareInitialSpike(event.timestamp));
+								for (auto& n: r.neurons)
+								{
+									if (neurons[n].getNeuronID() == event.neuronID)
+									{
+										injectSpike(neurons[n].prepareInitialSpike(event.timestamp));
+									}
+								}
 							}
-						}
-						else
-						{
-							continue;
 						}
 					}
 				}
@@ -470,7 +478,7 @@ namespace adonis_c
 				{
 					for (auto& l: layers[0].sublayers)
 					{
-						if (l.ID == event.sublayerID)
+						if (event.sublayerID == l.ID)
 						{
 							for (auto& r: l.receptiveFields)
 							{
@@ -484,7 +492,7 @@ namespace adonis_c
 								}
 							}
 						}
-						else if (l.ID == -1)
+						else if (event.sublayerID == -1)
 						{
 							for (auto& r: l.receptiveFields)
 							{
@@ -497,10 +505,6 @@ namespace adonis_c
 									}
 								}
 							}
-						}
-						else
-						{
-							continue;
 						}
 					}
 				}

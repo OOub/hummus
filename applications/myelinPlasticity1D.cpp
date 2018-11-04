@@ -32,6 +32,7 @@ int main(int argc, char** argv)
 	adonis_c::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
 	adonis_c::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
 
+
     //  ----- NETWORK PARAMETERS -----
 	float runtime = trainingData.back().timestamp+1;
 

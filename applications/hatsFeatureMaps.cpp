@@ -55,25 +55,29 @@ int main(int argc, char** argv)
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/feature_maps/");
+    auto trainingData = dataParser.readTrainingData("../../data/hats/feature_maps/nCars_train_10samplePerc_50rep.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/");
+	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/nCars_test_train_10samplePerc_1rep");
+//	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/nCars_test_10samplePerc_1rep.txt");
 	
 //	//  ----- INJECTING TEST SPIKES -----
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/feature_maps/" , "../../data/hats/feature_maps/");
+	auto labels = dataParser.readLabels("../../data/hats/feature_maps/nCars_train_10samplePerc_50repLabel.txt" , "../../data/hats/feature_maps/nCars_test_train_10samplePerc_1repLabel.txt");
+	
+//	auto labels = dataParser.readLabels("../../data/hats/feature_maps/nCars_train_10samplePerc_50repLabel.txt" , "../../data/hats/feature_maps/nCars_test_10samplePerc_1repLabel.txt");
+	
 	network.addLabels(&labels);
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(2000);
-  	qtDisplay.trackLayer(1);
+  	qtDisplay.setTimeWindow(10000);
+  	qtDisplay.trackLayer(2);
   	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----

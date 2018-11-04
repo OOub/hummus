@@ -38,7 +38,7 @@ namespace adonis_c
 	// ----- PUBLIC LOGGER METHODS -----
 	void learningEpoch(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) override
 	{
-		const int64_t bitSize = 24+8*timeDifferences.size()+6*plasticNeurons[0].size();
+		const int64_t bitSize = 24+8*timeDifferences.size()+8*plasticNeurons[0].size();
 		std::vector<char> bytes(bitSize);
 		SpikeLogger::copy_to(bytes.data() + 0, bitSize);
 		SpikeLogger::copy_to(bytes.data() + 8, timestamp);

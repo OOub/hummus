@@ -44,9 +44,9 @@ int main(int argc, char** argv)
 	adonis_c::Stdp stdp(layer0, layer1);
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 1, -1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, &stdp, 1, 1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.add2dLayer(layer2, rfSize, gridWidth/2, gridHeight/2, nullptr, 1, 1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, &stdp, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer2, rfSize, gridWidth/2, gridHeight/2, nullptr, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	network.addLayer(layer3, nullptr, 1, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	network.convolution(network.getLayers()[layer0], network.getLayers()[layer1], false, 1./8, false, 0);
@@ -55,25 +55,27 @@ int main(int argc, char** argv)
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/native/");
+    auto trainingData = dataParser.readTrainingData("../../data/hats/native/nCars_native_train.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/native/");
+	auto testingData = dataParser.readTestData(&network, "../../data/hats/native/nCars_native_test_train.txt");
+//	auto testingData = dataParser.readTestData(&network, "../../data/hats/native/nCars_native_test_test.txt");
 	
 //	//  ----- INJECTING TEST SPIKES -----
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/native/" , "../../data/hats/native/");
+	auto labels = dataParser.readLabels("" , "../../data/hats/native/nCars_native_test_train_Label.txt");
+//	auto labels = dataParser.readLabels("" , "../../data/hats/native/nCars_native_test_test_Label.txt");
 	network.addLabels(&labels);
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(2000);
-  	qtDisplay.trackLayer(1);
+  	qtDisplay.setTimeWindow(1000);
+  	qtDisplay.trackLayer(2);
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
