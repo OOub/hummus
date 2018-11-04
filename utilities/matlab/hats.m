@@ -46,7 +46,8 @@ function [H, gridH] = hats(data, r, tau, dt)
 
     timeSurface = zeros(hc,hc);
     H = zeros(cellH*cellW*hc*hc,1);
-
+    
+     hcpt = zeros(cellW*cellH, 1);
     for i = 1:size(data,1)
         if (data(i,1) > r && data(i,1) <= cellW*10) && (data(i,2) > r && data(i,2) <= cellH*10)
 
@@ -60,14 +61,25 @@ function [H, gridH] = hats(data, r, tau, dt)
                 lst = find(abs(data(1:i-1,1)-data(i,1))<=r & abs(data(1:i-1,2)-data(i,2))<=r & (data(i,3)-data(1:i-1,3))<=dt & data(1:i-1,4)==data(i,4));
 
                 if ~isempty(lst)
+                    cpt = zeros(size(timeSurface));
                     for j = 1:size(lst,1)
                         % computing the time surface
                         timeSurface(data(lst(j),2)-data(i,2)+r+1,data(lst(j),1)-data(i,1)+r+1) = timeSurface(data(lst(j),2)-data(i,2)+r+1,data(lst(j),1)-data(i,1)+r+1) + exp(-(data(i,3)-data(lst(j),3))/tau);
+                        cpt(data(lst(j),2)-data(i,2)+r+1,data(lst(j),1)-data(i,1)+r+1) = cpt(data(lst(j),2)-data(i,2)+r+1,data(lst(j),1)-data(i,1)+r+1) + 1;
                     end
-
-                    % summing time surfaces into histograms and normalising by the number of events
+                    
+                    % time surface normalization by the number of events used to create them
+                    for j = 1:length(cpt)
+                        if cpt(j) ~= 0
+                            timeSurface(j) = timeSurface(j) / cpt(j);
+                        end
+                    end
+                    
+                    % summing time surfaces into histograms and normalising
+                    % by the number of time surfaces
                     H((cellID-1)*hc^2+1:cellID*hc^2) = H((cellID-1)*hc^2+1:cellID*hc^2) + timeSurface(:) / length(lst);
-
+                    hcpt(cellID) = hcpt(cellID) + 1;
+                    
                     % resetting time surfaces for next cell
                     timeSurface = zeros(hc,hc);
                 end
@@ -75,19 +87,39 @@ function [H, gridH] = hats(data, r, tau, dt)
         end
     end
   
-    temp = reshape(H, [hc^2 length(H)/hc^2]);
-    for i = 1:size(temp,2)
-        cells{i,1} = reshape(temp(:,i), [hc hc])'; 
-    end
-    cells = reshape(cells, [cellW cellH])';
+%     for i = 1:length(hcpt)
+%         if hcpt ~= 0
+%             H((i-1)*hc^2+1:i*hc^2) = H((i-1)*hc^2+1:i*hc^2) / hcpt(i);
+%         end
+%     end
+        
+    gridH = zeros(hc*cellW, hc*cellH);
 
-    gridH = zeros(hc*cellH, hc*cellW);
-    for i = 1:size(cells,1)
-        icount = hc*i;
-        for j = 1:size(cells,2)
-            jcount = hc*j;
-            gridH(icount-(hc-1):icount,jcount-(hc-1):jcount) = cells{i,j};
+    col = 0;
+    row = 1;
+    for i = 1:length(H)
+        col = col + 1;
+        gridH(row, col) = H(i);
+        if mod(i,hc*cellH) == 0
+            col = 0;
+            row = row+1;
         end
     end
+    gridH = gridH';
+%     temp = reshape(H, [hc^2 length(H)/hc^2]);
+%     for i = 1:size(temp,2)
+%         cells{i,1} = reshape(temp(:,i), [hc hc])'; 
+%     end
+%     cells = reshape(cells, [cellW cellH])';
+% 
+%     gridH = zeros(hc*cellH, hc*cellW);
+%     for i = 1:size(cells,1)
+%         icount = hc*i;
+%         for j = 1:size(cells,2)
+%             jcount = hc*j;
+%             gridH(icount-(hc-1):icount,jcount-(hc-1):jcount) = cells{i,j};
+%         end
+%     end
+
 end
 

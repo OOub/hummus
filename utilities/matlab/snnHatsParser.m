@@ -11,7 +11,7 @@
 
 % Dependencies: hats.m - load_atis_data.m
 
-function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samplePercentage, r, tau, dt, patternDuration, repetitions, timeJitter, timeBetweenPresentations, boolRandomisePresentationOrder, pathToBackgrounds, save)
+function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, encodingStrategy, samplePercentage, r, tau, dt, patternDuration, repetitions, timeJitter, timeBetweenPresentations, boolRandomisePresentationOrder, pathToBackgrounds, save)
     % folderPath - the path to the folder where all the recordings we want to parse are located
 
     % baseFileNames - the common name between all the files we want to feed
@@ -48,6 +48,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
     
     % handling optional arguments
     if nargin < 3
+        encodingStrategy = 1;
         samplePercentage = 100;
         r = 3;
         tau = 1e9;
@@ -60,6 +61,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 4
+        samplePercentage = 100;
         r = 3;
         tau = 1e9;
         dt = 1e5;
@@ -71,6 +73,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 5
+        r = 3;
         tau = 1e9;
         dt = 1e5;
         patternDuration = 100;
@@ -81,6 +84,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 6
+        tau = 1e9;
         dt = 1e5;
         patternDuration = 100;
         repetitions = 1;
@@ -90,6 +94,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 7
+        dt = 1e5;
         patternDuration = 100;
         repetitions = 1;
         timeJitter = 0;
@@ -98,6 +103,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 8
+        patternDuration = 100;
         repetitions = 1;
         timeJitter = 0;
         timeBetweenPresentations = 100;
@@ -105,24 +111,31 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 9
+        repetitions = 1;
         timeJitter = 0;
         timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 10
+        timeJitter = 0;
         timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 11
+        timeBetweenPresentations = 100;
         boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 12
+        boolRandomisePresentationOrder = false;
         pathToBackgrounds = '';
         save = true;
     elseif nargin < 13
+        pathToBackgrounds = '';
+        save = true;
+    elseif nargin < 14
         save = true;
     end
     
@@ -144,9 +157,6 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
             numberOfSamples = floor((length(testDirectory)*samplePercentage)/100);
             testDirectory = datasample(testDirectory, numberOfSamples);
         end
-%         cars = ones(length(datasetDirectory),1);
-%         backgrounds = zeros(length(testDirectory),1);
-        
         cars = cellstr(repmat('car',[length(datasetDirectory) 1]));
         backgrounds = cellstr(repmat('bgd', [length(testDirectory) 1]));
         
@@ -158,9 +168,31 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
     end
     
     % convert data from TD to spikes
-    H = {}; gridH = {}; spikeH = {};
+    H = {}; gridH = {}; spikeH = {}; crossing = 0; crossingTimer = [];
+ 
+    if encodingStrategy == 1
+        disp('Poisson encoding');
+    elseif encodingStrategy == 2
+        disp('Intensity-to-latency encoding');
+    elseif encodingStrategy == 3
+        disp('Feature maps encoding');
+        prompt = 'Number of feature maps: ';
+        title = 'Feature Map Encoding';
+        dims = [1 35];
+        definput = {'3'};
+        levels = inputdlg(prompt,title,dims,definput);
+        levels = str2double(levels{1});
+        for j = 1:levels
+            crossing(end+1,:) = 255/levels*j;
+        end
+    end
+    patternCounter = 1;
     disp('files being parsed:')
     for i = 1:length(datasetDirectory)
+        
+        if encodingStrategy == 3
+            crossingTimer = zeros(length(crossing)-1, 1);
+        end
         disp(strcat(datasetDirectory(i).folder, '/', datasetDirectory(i).name));
         data = load_atis_data(strcat(datasetDirectory(i).folder, '/', datasetDirectory(i).name));
         [H{i,1},gridH{i,1}] = hats([data.x, data.y, data.ts, data.p], r, tau, dt);
@@ -170,15 +202,26 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         for j = 1:size(gridH{i,1},1)
             for k = 1:size(gridH{i,1},2)
                 % only making the active regions spike
-                scaledH{i,1}(j,k) = (((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:)))) / 6;
+                scaledH{i,1}(j,k) = (((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:))));
                 if scaledH{i,1}(j,k) > 0
                     % Poisson encoding
-                    spikeTrain = poissonSpikeGenerator(scaledH{i,1}(j,k), patternDuration);
-                    temp(end+1:end+length(spikeTrain), :) = [spikeTrain, repmat(j-1, [length(spikeTrain) 1]), repmat(k-1, [length(spikeTrain) 1])];
+                    if encodingStrategy == 1
+                        spikeTrain = poissonSpikeGenerator(scaledH{i,1}(j,k), patternDuration);
+                        temp(end+1:end+length(spikeTrain), :) = [spikeTrain, repmat(j-1, [length(spikeTrain) 1]), repmat(k-1, [length(spikeTrain) 1]), patternCounter];
+                    % intensity to latency encoding
+                    elseif encodingStrategy == 2
+                        spikeTrain = intensityToLatencyEncoder(scaledH{i,1}(j,k), patternDuration, 0.02);
+                        temp(end+1, :) = [spikeTrain, j-1, k-1, patternCounter];
+                    % feature maps encoding
+                    elseif encodingStrategy == 3
+                        [spikeTrain, mapID, crossingTimer] = featureMapEncoder(scaledH{i,1}(j,k), crossing, crossingTimer);
+                        temp(end+1, :) = [spikeTrain, j-1, k-1, mapID, patternCounter];
+                    end
                 end
             end
         end
         spikeH{i,1} = sortrows(temp,1);
+        patternCounter = patternCounter+1;
     end
     
     % generating the SNN input
@@ -192,15 +235,24 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
     
     snnInput = []; spikeIntervals = [];
     for i = 1:length(presentationOrder)
-        snnInput = [double(snnInput); double(spikeH{presentationOrder(i)}(:,1)), double(spikeH{presentationOrder(i)}(:,2)), double(spikeH{presentationOrder(i)}(:,3))];
+        if encodingStrategy == 1 || encodingStrategy == 2
+            snnInput = [double(snnInput); double(spikeH{presentationOrder(i)}(:,1)), double(spikeH{presentationOrder(i)}(:,2)), double(spikeH{presentationOrder(i)}(:,3)), double(spikeH{presentationOrder(i)}(:,4))];
+        elseif encodingStrategy == 3
+            snnInput = [double(snnInput); double(spikeH{presentationOrder(i)}(:,1)), double(spikeH{presentationOrder(i)}(:,2)), double(spikeH{presentationOrder(i)}(:,3)), double(spikeH{presentationOrder(i)}(:,4)), double(spikeH{presentationOrder(i)}(:,5))];
+        end
         spikeIntervals(end+1,:) = length(snnInput(1:end,1));
     end
 
     % Shifting the timestamps so the presentations are sequential
     firstRowData = []; index = [];
     for i = 1:length(spikeH)
-        firstRowData(end+1,:) = [spikeH{i}(1,1), spikeH{i}(1,2), spikeH{i}(1,3)];
-        temp = find(snnInput(:,1) == firstRowData(end,1) & snnInput(:,2) == firstRowData(end,2) & snnInput(:,3) == firstRowData(end,3));
+        if encodingStrategy == 1 || encodingStrategy == 2
+            firstRowData(end+1,:) = [spikeH{i}(1,1), spikeH{i}(1,2), spikeH{i}(1,3), spikeH{i}(1,4)];
+            temp = find(snnInput(:,1) == firstRowData(end,1) & snnInput(:,2) == firstRowData(end,2) & snnInput(:,3) == firstRowData(end,3) & snnInput(:,4) == firstRowData(end,4));
+        elseif encodingStrategy == 3
+            firstRowData(end+1,:) = [spikeH{i}(1,1), spikeH{i}(1,2), spikeH{i}(1,3), spikeH{i}(1,4), spikeH{i}(1,5)];
+            temp = find(snnInput(:,1) == firstRowData(end,1) & snnInput(:,2) == firstRowData(end,2) & snnInput(:,3) == firstRowData(end,3) & snnInput(:,4) == firstRowData(end,4) & snnInput(:,5) == firstRowData(end,5));
+        end
         index = [index;temp];
     end
     index = sort(index);
@@ -229,6 +281,12 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, samp
         snnInput = sortrows(snnInput,1);
     end
 
+    if encodingStrategy == 1 || encodingStrategy == 2
+        snnInput = snnInput(:, 1:3);
+    elseif encodingStrategy == 3
+        snnInput = snnInput(:, 1:4);
+    end
+    
     labelTimes = num2cell(snnInput(1, 1));
     labelTimes = [labelTimes;num2cell(snnInput(spikeIntervals(1:end-1)+1, 1))];
 
@@ -254,6 +312,28 @@ function [spikeTime] = poissonSpikeGenerator(fr, tSim)
     spikeMat = rand(1, nBins) < fr*dt;
     tVec = 0:dt:tSim-dt;
     spikeTime = find(spikeMat == 1)';
+end
+
+function [spikeTime] = intensityToLatencyEncoder(fr, tSim, lambda)
+    spikeTime = tSim*exp(-lambda*fr);
+end
+
+function [spikeTime, mapID, crossingTimer] = featureMapEncoder(fr, crossing, crossingTimer)
+    mapID = -1;
+    spikeTime = -1;
+    for i = 2:length(crossing)
+        if fr <= crossing(i) && fr > crossing(i-1)
+            mapID = i-2;
+            spikeTime = crossingTimer(i-1);
+            crossingTimer(i-1) = crossingTimer(i-1)+1;
+        elseif fr == 0
+            mapID = 0;
+            spikeTime = crossingTimer(1);
+            crossingTimer(1) = crossingTimer(1)+1;
+        else
+            continue;
+        end
+    end
 end
 
 function labelWriter(filename, labels)
