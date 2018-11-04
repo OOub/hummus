@@ -20,7 +20,8 @@ int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network(&qtDisplay);
+	adonis_c::SpikeLogger spikeLogger("hatsFeatureMaps.bin");
+	adonis_c::Network network({&spikeLogger}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	

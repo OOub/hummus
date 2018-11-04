@@ -49,7 +49,7 @@ namespace adonis_c
             maxX(1),
             minY(0),
             maxY(1),
-            sublayerTracker(1)
+            sublayerTracker(0)
         {
             qRegisterMetaType<QtCharts::QAbstractSeries*>();
             qRegisterMetaType<QtCharts::QValueAxis*>();

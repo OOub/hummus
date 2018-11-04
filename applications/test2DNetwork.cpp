@@ -27,8 +27,8 @@ int main(int argc, char** argv)
 	float timestep = 1;
 
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(0, 2, 8, 8, nullptr, 2);
-	network.add2dLayer(1, 2, 8, 8, nullptr, 2, 1);
+	network.add2dLayer(0, 2, 8, 8, nullptr, 1);
+	network.add2dLayer(1, 2, 8, 8, nullptr, 1, 1);
 	network.add2dLayer(2, 2, 4, 4, nullptr, 2, 1);
 	
 	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1, false, 0);
@@ -39,6 +39,12 @@ int main(int argc, char** argv)
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(15));
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(40));
 
+	//  ----- DISPLAY SETTINGS -----
+  	qtDisplay.useHardwareAcceleration(true);
+  	qtDisplay.setTimeWindow(runtime);
+  	qtDisplay.trackLayer(2);
+	qtDisplay.trackNeuron(0);
+	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);
 

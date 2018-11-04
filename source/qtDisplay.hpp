@@ -114,11 +114,6 @@ namespace adonis_c
 		{
 			outputviewer->changeLayer(layerToTrack);
 		}
-
-		void trackSublayer(int sublayerToTrack)
-		{
-			outputviewer->changeSublayer(sublayerToTrack);
-		}
 		
         void trackNeuron(int neuronToTrack)
         {

@@ -20,7 +20,8 @@ int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network(&qtDisplay);
+	adonis_c::SpikeLogger spikeLogger("hatsNative.bin");
+	adonis_c::Network network({&spikeLogger}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(1000);
-  	qtDisplay.trackLayer(2);
+  	qtDisplay.trackLayer(1);
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
