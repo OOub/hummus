@@ -439,13 +439,27 @@ namespace adonis_c
 			
 			if ((*data)[1].x == -1 && (*data)[1].y == -1)
 			{
-				for (auto idx=0; idx<data->size(); idx++)
+				for (auto& event: *data)
 				{
 					for (auto& l: layers[0].sublayers)
 					{
-						for (auto& r: l.receptiveFields)
+						if (l.ID == event.sublayerID)
 						{
-							injectSpike(neurons[r.neurons[(*data)[idx].neuronID]].prepareInitialSpike((*data)[idx].timestamp));
+							for (auto& r: l.receptiveFields)
+							{
+								injectSpike(neurons[r.neurons[event.neuronID]].prepareInitialSpike(event.timestamp));
+							}
+						}
+						else if (l.ID == -1)
+						{
+							for (auto& r: l.receptiveFields)
+							{
+								injectSpike(neurons[r.neurons[event.neuronID]].prepareInitialSpike(event.timestamp));
+							}
+						}
+						else
+						{
+							continue;
 						}
 					}
 				}
@@ -456,16 +470,37 @@ namespace adonis_c
 				{
 					for (auto& l: layers[0].sublayers)
 					{
-						for (auto& r: l.receptiveFields)
+						if (l.ID == event.sublayerID)
 						{
-							for (auto& n: r.neurons)
+							for (auto& r: l.receptiveFields)
 							{
-								if (neurons[n].getX() == event.x && neurons[n].getY() == event.y)
+								for (auto& n: r.neurons)
 								{
-									injectSpike(neurons[n].prepareInitialSpike(event.timestamp));
-									break;
+									if (neurons[n].getX() == event.x && neurons[n].getY() == event.y)
+									{
+										injectSpike(neurons[n].prepareInitialSpike(event.timestamp));
+										break;
+									}
 								}
 							}
+						}
+						else if (l.ID == -1)
+						{
+							for (auto& r: l.receptiveFields)
+							{
+								for (auto& n: r.neurons)
+								{
+									if (neurons[n].getX() == event.x && neurons[n].getY() == event.y)
+									{
+										injectSpike(neurons[n].prepareInitialSpike(event.timestamp));
+										break;
+									}
+								}
+							}
+						}
+						else
+						{
+							continue;
 						}
 					}
 				}

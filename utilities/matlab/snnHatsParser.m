@@ -207,7 +207,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, enco
                     % Poisson encoding
                     if encodingStrategy == 1
                         spikeTrain = poissonSpikeGenerator(scaledH{i,1}(j,k), patternDuration);
-                        temp(end+1:end+length(spikeTrain), :) = [spikeTrain, repmat(j-1, [length(spikeTrain) 1]), repmat(k-1, [length(spikeTrain) 1]), patternCounter];
+                        temp(end+1:end+length(spikeTrain), :) = [spikeTrain, repmat(j-1, [length(spikeTrain) 1]), repmat(k-1, [length(spikeTrain) 1]), repmat(patternCounter, [length(spikeTrain) 1])];
                     % intensity to latency encoding
                     elseif encodingStrategy == 2
                         spikeTrain = intensityToLatencyEncoder(scaledH{i,1}(j,k), patternDuration, 0.02);
