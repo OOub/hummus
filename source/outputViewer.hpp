@@ -49,7 +49,7 @@ namespace adonis_c
             maxY(1),
             layerTracker(1),
 			sublayerTracker(0),
-			maxSublayers(1)
+			maxSublayers(0)
         {
             atomicGuard.clear(std::memory_order_release);
         }
@@ -120,7 +120,7 @@ namespace adonis_c
 			    layerTracker = newLayer;
 			    if (!sublayerLookupTable.empty())
 			    {
-			    	maxSublayers = sublayerLookupTable[newLayer];
+			    	maxSublayers = sublayerLookupTable[newLayer]-1;
 			    	engine->rootContext()->setContextProperty("sublayers", maxSublayers);
 				}
 			    minY = 0;

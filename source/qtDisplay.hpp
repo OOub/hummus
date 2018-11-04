@@ -95,8 +95,8 @@ namespace adonis_c
 		{
 			int neuronNumber = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.end(), 0);
 			engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
-			engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]);
-			engine->rootContext()->setContextProperty("layers", numberOfLayers);
+			engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
+			engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
         	outputviewer->setYLookup(neuronsInLayers);
 			outputviewer->setSublayer(sublayerInLayers, engine);
 			app->exec();
