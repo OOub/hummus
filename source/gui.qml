@@ -117,6 +117,26 @@ ApplicationWindow
 					tickCount: inputRec.height/50
 				}
 
+				Text
+				{
+					id: sublayerLegend1
+					text: "sublayers"
+					font.pointSize: 16
+				}
+
+				SpinBox
+				{
+					id: sublayerbox1
+					minimumValue: 0
+					maximumValue: inputSublayer
+					anchors.left: sublayerLegend1.right
+					anchors.leftMargin: 5
+					onEditingFinished:
+					{
+						inputViewer.changeSublayer(value)
+					}
+				}
+
 				ScatterSeries
 				{
 					id: input
@@ -198,6 +218,28 @@ ApplicationWindow
 					onEditingFinished:
 					{
 						outputViewer.changeLayer(value)
+					}
+				}
+
+				Text
+				{
+					id: sublayerLegend
+					text: "sublayers"
+					anchors.left: layerbox.right
+					anchors.leftMargin: 5
+					font.pointSize: 16
+				}
+
+				SpinBox
+				{
+					id: sublayerbox
+					minimumValue: 0
+					maximumValue: sublayers
+					anchors.left: sublayerLegend.right
+					anchors.leftMargin: 5
+					onEditingFinished:
+					{
+						outputViewer.changeSublayer(value)
 					}
 				}
 

@@ -48,6 +48,8 @@ namespace adonis_c
 
 			engine = new QQmlApplicationEngine();
 			engine->rootContext()->setContextProperty("layers", 1);
+			engine->rootContext()->setContextProperty("inputSublayer", 1);
+			engine->rootContext()->setContextProperty("sublayers", 1);
 			engine->rootContext()->setContextProperty("numberOfNeurons", 1);
 			
             engine->loadData(
@@ -66,9 +68,7 @@ namespace adonis_c
 
             inputviewer = window->findChild<InputViewer*>("inputViewer");
             outputviewer = window->findChild<OutputViewer*>("outputViewer");
-            potentialviewer = window->findChild<PotentialViewer*>("potentialViewer");
-			
-            inputviewer->getEngine(engine);
+            potentialviewer = window->findChild<PotentialViewer*>("potentialViewer");			
         }
 
     	// ----- PUBLIC DISPLAY METHODS -----
@@ -91,12 +91,14 @@ namespace adonis_c
 			potentialviewer->handleTimestep(timestamp, network, postNeuron);
 		}
 
-		void begin(int numberOfLayers, std::vector<int> neuronsInLayers) override
+		void begin(int numberOfLayers, std::vector<int> sublayerInLayers, std::vector<int> neuronsInLayers) override
 		{
 			int neuronNumber = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.end(), 0);
 			engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
+			engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]);
 			engine->rootContext()->setContextProperty("layers", numberOfLayers);
         	outputviewer->setYLookup(neuronsInLayers);
+			outputviewer->setSublayer(sublayerInLayers, engine);
 			app->exec();
 		}
 		
@@ -113,6 +115,11 @@ namespace adonis_c
 			outputviewer->changeLayer(layerToTrack);
 		}
 
+		void trackSublayer(int sublayerToTrack)
+		{
+			outputviewer->changeSublayer(sublayerToTrack);
+		}
+		
         void trackNeuron(int neuronToTrack)
         {
             potentialviewer->trackNeuron(neuronToTrack);

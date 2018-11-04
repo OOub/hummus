@@ -47,8 +47,9 @@ namespace adonis_c
             input(0),
             minY(0),
             maxY(1),
-            layerTracker(1)
-    
+            layerTracker(1),
+			sublayerTracker(1),
+			maxSublayers(1)
         {
             atomicGuard.clear(std::memory_order_release);
         }
@@ -60,21 +61,24 @@ namespace adonis_c
         {
 			if (p->postNeuron->getLayerID() == layerTracker)
 			{
-				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-				if (!isClosed)
+				if (p->postNeuron->getSublayerID() == sublayerTracker)
 				{
-					points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
-					maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
-					if (yLookupTable.size() > 0)
+					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
+					if (!isClosed)
 					{
-						minY = yLookupTable[layerTracker-1];
+						points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
+						maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
+						if (yLookupTable.size() > 0)
+						{
+							minY = yLookupTable[layerTracker-1];
+						}
 					}
+					else
+					{
+						points.clear();
+					}
+					atomicGuard.clear(std::memory_order_release);
 				}
-				else
-				{
-					points.clear();
-				}
-				atomicGuard.clear(std::memory_order_release);
 			}
         }
 		
@@ -99,6 +103,12 @@ namespace adonis_c
 		    yLookupTable = newLookup;
 		}
 		
+		void setSublayer(std::vector<int> newLookup, QQmlApplicationEngine* _engine)
+		{
+		    sublayerLookupTable = newLookup;
+		    engine = _engine;
+		}
+		
     Q_SIGNALS:
     public slots:
 		
@@ -108,8 +118,18 @@ namespace adonis_c
 		    if (layerTracker != newLayer)
 		    {
 			    layerTracker = newLayer;
+			    maxSublayers = sublayerLookupTable[newLayer];
+			    engine->rootContext()->setContextProperty("sublayers", maxSublayers);
 			    minY = 0;
 			    maxY = 1;
+			}
+		}
+		
+		void changeSublayer(int newSublayer)
+		{
+		    if (sublayerTracker != newSublayer)
+		    {
+			    sublayerTracker = newSublayer;
 			}
 		}
 		
@@ -150,15 +170,19 @@ namespace adonis_c
     protected:
 		
     	// ----- IMPLEMENTATION VARIABLES -----
-        bool                  openGL;
-        bool                  isClosed;
-        double                timeWindow;
-        QVector<QPointF>      points;
-        float                 input;
-        int                   minY;
-        int                   maxY;
-        std::atomic_flag      atomicGuard;
-        int                   layerTracker;
-        std::vector<int>      yLookupTable;
+        bool                   openGL;
+        bool                   isClosed;
+        double                 timeWindow;
+        QVector<QPointF>       points;
+        float                  input;
+        int                    minY;
+        int                    maxY;
+        std::atomic_flag       atomicGuard;
+        int                    layerTracker;
+        int                    sublayerTracker;
+        std::vector<int>       yLookupTable;
+        std::vector<int>       sublayerLookupTable;
+        int                    maxSublayers;
+        QQmlApplicationEngine* engine;
     };
 }

@@ -46,10 +46,10 @@ namespace adonis_c
             timeWindow(100),
             openGL(false),
             isClosed(false),
-            engine(nullptr),
             maxX(1),
             minY(0),
-            maxY(1)
+            maxY(1),
+            sublayerTracker(1)
         {
             qRegisterMetaType<QtCharts::QAbstractSeries*>();
             qRegisterMetaType<QtCharts::QValueAxis*>();
@@ -63,17 +63,20 @@ namespace adonis_c
         {
 			if (p->postNeuron->getInitialProjection()->postNeuron)
 			{
-				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-				if (!isClosed)
+				if (p->postNeuron->getInitialProjection()->postNeuron->getSublayerID() == sublayerTracker)
 				{
-					points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
-					maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
+					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
+					if (!isClosed)
+					{
+						points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
+						maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
+					}
+					else
+					{
+						points.clear();
+					}
+					atomicGuard.clear(std::memory_order_release);
 				}
-				else
-				{
-					points.clear();
-				}
-				atomicGuard.clear(std::memory_order_release);
 			}
         }
 		
@@ -93,15 +96,18 @@ namespace adonis_c
             openGL = accelerate;
         }
 		
-        void getEngine(QQmlApplicationEngine* _engine)
-		{
-			engine = _engine;
-		}
-		
     Q_SIGNALS:
     public slots:
 		
     	// ----- QT-RELATED METHODS -----
+    	void changeSublayer(int newSublayer)
+		{
+		    if (sublayerTracker != newSublayer)
+		    {
+			    sublayerTracker = newSublayer;
+			}
+		}
+		
         void disable()
         {
             while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
@@ -147,6 +153,6 @@ namespace adonis_c
         int                   minY;
         int                   maxY;
         std::atomic_flag      atomicGuard;
-        QQmlApplicationEngine* engine;
+        int                   sublayerTracker;
     };
 }

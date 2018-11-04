@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 	network.injectSpikeFromData(&trainingData);
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/nCars_test_train_10samplePerc_1rep");
+	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/nCars_test_train_10samplePerc_1rep.txt");
 //	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/nCars_test_10samplePerc_1rep.txt");
 	
 //	//  ----- INJECTING TEST SPIKES -----

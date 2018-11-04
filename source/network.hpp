@@ -587,6 +587,13 @@ namespace adonis_c
 				// finding the number of layers in the network
 				int numberOfLayers = static_cast<int>(layers.size());
 			
+				// number of sublayers in each layer
+				std::vector<int> sublayerInLayers;
+				for (auto& l: layers)
+				{
+					sublayerInLayers.emplace_back(l.sublayers.size());
+				}
+				
 				// number of neurons in each layer
 				std::vector<int> neuronsInLayers;
 				for (auto& l: layers)
@@ -601,8 +608,7 @@ namespace adonis_c
 					}
 					neuronsInLayers.emplace_back(count);
 				}
-				
-				thDelegate->begin(numberOfLayers, neuronsInLayers);
+				thDelegate->begin(numberOfLayers, sublayerInLayers, neuronsInLayers);
 			}
 			spikeManager.join();
 		}
