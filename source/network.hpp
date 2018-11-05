@@ -591,7 +591,6 @@ namespace adonis_c
 				std::vector<int> sublayerInLayers;
 				for (auto& l: layers)
 				{
-					std::cout << l.sublayers.size() << std::endl;
 					sublayerInLayers.emplace_back(l.sublayers.size());
 				}
 				

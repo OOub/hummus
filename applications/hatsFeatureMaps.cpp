@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/feature_maps/nCars_train_10samplePerc_50rep.txt");
+    auto trainingData = dataParser.readTrainingData("../../data/hats/feature_maps/nCars_train_10samplePerc_1rep.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/feature_maps/nCars_train_10samplePerc_50repLabel.txt" , "../../data/hats/feature_maps/nCars_test_train_10samplePerc_1repLabel.txt");
+	auto labels = dataParser.readLabels("" , "../../data/hats/feature_maps/nCars_test_train_10samplePerc_1repLabel.txt");
 	
 //	auto labels = dataParser.readLabels("../../data/hats/feature_maps/nCars_train_10samplePerc_50repLabel.txt" , "../../data/hats/feature_maps/nCars_test_10samplePerc_1repLabel.txt");
 	

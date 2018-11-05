@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 1, -1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, &stdp, 1, 1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	network.add2dLayer(layer2, rfSize, gridWidth/7, gridHeight/7, nullptr, 1, 1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer3, nullptr, 1, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(layer3, nullptr, 1, 1, 1, decayCurrent, decayPotential, 1200, burstingActivity, eligibilityDecay);
 	
 	network.convolution(network.getLayers()[layer0], network.getLayers()[layer1], false, 1./8, false, 0);
 	network.pooling(network.getLayers()[layer1], network.getLayers()[layer2], false, 1., false, 0);
@@ -55,19 +55,19 @@ int main(int argc, char** argv)
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/latency/");
+    auto trainingData = dataParser.readTrainingData("../../data/hats/latency/nCars_train_1samplePerc_10rep.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/latency/");
+	auto testingData = dataParser.readTestData(&network, "../../data/hats/latency/nCars_ftest_10samplePerc_1rep.txt");
 	
 //	//  ----- INJECTING TEST SPIKES -----
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/latency/" , "../../data/hats/latency/");
+	auto labels = dataParser.readLabels("" , "../../data/hats/latency/nCars_ftest_10samplePerc_1repLabel.txt");
 	network.addLabels(&labels);
 	
     //  ----- DISPLAY SETTINGS -----
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 	
     //  ----- RUNNING THE NETWORK -----
     float runtime = testingData.back().timestamp+1;
-	float timestep = 0.1;
+	float timestep = 0.5;
 	
     network.run(runtime, timestep);
 
