@@ -88,6 +88,7 @@ namespace adonis_c
 			}
 
 			// building a layer of one dimensional sublayers with no receptiveFields
+			int counter = 0;
 			std::vector<sublayer> subTemp;
         	for (int16_t i=0; i<_sublayerNumber; i++)
         	{
@@ -97,14 +98,14 @@ namespace adonis_c
 					std::vector<std::size_t> neuronTemp;
 					for (auto k=0+shift; k<neuronNumber+shift; k++)
 					{
-						neurons.emplace_back(k, j, 0, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler);
-						
+						neurons.emplace_back(k+counter, j, 0, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler);
 						
 						neuronTemp.emplace_back(neurons.size()-1);
 					}
 					rfTemp.emplace_back(receptiveField{neuronTemp, j, 0});
 				}
 				subTemp.emplace_back(sublayer{rfTemp, i});
+				counter += neuronNumber;
 			}
 			layers.emplace_back(layer{subTemp, layerID, -1, -1});
         }
@@ -163,6 +164,7 @@ namespace adonis_c
 				}
 			}
 			
+			int counter = 0;
 			std::vector<sublayer> subTemp;
 			for (int16_t i=0; i<_sublayerNumber; i++)
 			{
@@ -196,7 +198,7 @@ namespace adonis_c
 					
 					if (_numberOfNeurons == -1)
 					{
-						neurons.emplace_back(neuronCounter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, _learningRuleHandler);
+						neurons.emplace_back(neuronCounter+counter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, _learningRuleHandler);
 					
 						neuronCounter += 1;
 					
@@ -218,7 +220,7 @@ namespace adonis_c
 						{
 							for (auto j = 0; j < _numberOfNeurons; j++)
 							{
-								neurons.emplace_back(neuronCounter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, _learningRuleHandler);
+								neurons.emplace_back(neuronCounter+counter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, _learningRuleHandler);
 								
 								neuronCounter += 1;
 								
@@ -241,6 +243,7 @@ namespace adonis_c
 					}
 				}
 				subTemp.emplace_back(sublayer{rfTemp, i});
+				counter += neuronCounter;
 			}
 			layers.emplace_back(layer{subTemp, layerID, gridW, gridH});
 		}

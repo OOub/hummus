@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/latency/nCars_train_1samplePerc_10rep.txt");
+    auto trainingData = dataParser.readTrainingData("../../data/hats/latency/nCars_train_10samplePerc_10rep.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
