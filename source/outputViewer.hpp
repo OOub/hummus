@@ -173,19 +173,19 @@ namespace adonis_c
     protected:
 		
     	// ----- IMPLEMENTATION VARIABLES -----
-        bool                   openGL;
-        bool                   isClosed;
-        double                 timeWindow;
-        QVector<QPointF>       points;
-        float                  input;
-        int                    minY;
-        int                    maxY;
-        std::atomic_flag       atomicGuard;
-        int                    layerTracker;
-        int                    sublayerTracker;
-        std::vector<int>       yLookupTable;
-        std::vector<int>       sublayerLookupTable;
-        int                    maxSublayers;
-        QQmlApplicationEngine* engine;
+        bool                          openGL;
+        bool                          isClosed;
+        double                        timeWindow;
+        QVector<QPointF>              points;
+        float                         input;
+        int                           minY;
+        int                           maxY;
+        std::atomic_flag              atomicGuard;
+        int                           layerTracker;
+        int                           sublayerTracker;
+        std::vector<int>              yLookupTable;
+        std::vector<int>              sublayerLookupTable;
+        int                           maxSublayers;
+        QQmlApplicationEngine*        engine;
     };
 }
