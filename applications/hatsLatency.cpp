@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 	//  ----- CREATING THE NETWORK -----
 	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	network.addLayer(layer1, &stdp, 30, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer2, nullptr, 1, 1, 1, decayCurrent, decayPotential, 900, burstingActivity, eligibilityDecay);
+	network.addLayer(layer2, nullptr, 2, 1, 1, decayCurrent, decayPotential, 900, burstingActivity, eligibilityDecay);
 	
 	network.allToAll(network.getLayers()[layer0], network.getLayers()[layer1], false, 1./100, false);
 	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], false, 1./18, false);
@@ -62,19 +62,19 @@ int main(int argc, char** argv)
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/latency/nCars_train_100samplePerc_50rep.txt");
+    auto trainingData = dataParser.readTrainingData("../../data/hats/latency/nCars_10samplePerc_1rep.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/latency/nCars_test_100samplePerc_1rep.txt");
+	auto testingData = dataParser.readTestData(&network, "../../data/hats/latency/nCars_1samplePerc_1rep.txt");
 	
 //	//  ----- INJECTING TEST SPIKES -----
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("" , "../../data/hats/latency/nCars_test_100samplePerc_1repLabel.txt");
+	auto labels = dataParser.readLabels("" , "../../data/hats/latency/nCars_1samplePerc_1repLabel.txt");
 	network.addLabels(&labels);
 	
     //  ----- DISPLAY SETTINGS -----

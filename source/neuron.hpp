@@ -68,6 +68,8 @@ namespace adonis_c
 			current(0),
 			potential(_restingPotential),
 			active(true),
+			inhibited(false),
+			inhibitionTime(0),
 			initialProjection{nullptr, nullptr, 100/_inputResistance, 0, -1},
             lastSpikeTime(0),
             eligibilityTrace(0),
@@ -136,7 +138,12 @@ namespace adonis_c
 		
 		template<typename Network>
 		void update(double timestamp, float timestep, spike s, Network* network)
-		{			
+		{
+			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
+			{
+				inhibited = false;
+			}
+			
             if (timestamp - lastSpikeTime >= refractoryPeriod)
             {
                 active = true;
@@ -149,8 +156,8 @@ namespace adonis_c
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
 			
-			// neuron inactive during refractory period this is the problem
-			if (active)
+			// neuron inactive during refractory period
+			if (active && !inhibited)
 			{
 				if (s.postProjection)
 				{
@@ -164,7 +171,7 @@ namespace adonis_c
 			if (s.postProjection)
 			{
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (s.postProjection->preNeuron ? s.postProjection->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.postProjection->weight << " d=" << s.postProjection->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
+				std::cout << "t=" << timestamp << " " << (s.postProjection->preNeuron ? s.postProjection->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.postProjection->weight << " d=" << s.postProjection->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << " active " << active << std::endl;
 				#endif
 				for (auto delegate: network->getStandardDelegates())
 				{
@@ -178,7 +185,6 @@ namespace adonis_c
 					network->getMainThreadDelegate()->incomingSpike(timestamp, s.postProjection, network);
 				}
 			}
-			
 			else
 			{
 				for (auto delegate: network->getStandardDelegates())
@@ -197,7 +203,7 @@ namespace adonis_c
 				plasticityTrace += 1;
 				
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
+				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << " active " << active << std::endl;
 				#endif
 				
 				for (auto delegate: network->getStandardDelegates())
@@ -215,6 +221,7 @@ namespace adonis_c
 				}
 			
 				learn(timestamp, network);
+				
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				if (!burstingActivity)
@@ -235,6 +242,11 @@ namespace adonis_c
         }
 	
     	// ----- SETTERS AND GETTERS -----
+		bool getActivity() const
+		{
+			return active;
+		}
+		
 		int16_t getNeuronID() const
         {
             return neuronID;
@@ -372,7 +384,7 @@ namespace adonis_c
 		
 	protected:
 		
-		// ----- THE LEARNING RULE -----
+		// ----- LEARNING RULE -----
 		
 		// calls a learningRuleHandler to add a learning rule to the neuron
 		template<typename Network>
@@ -385,13 +397,13 @@ namespace adonis_c
 					learningRuleHandler->learn(timestamp, this, network);
 				}
 			}
-			lateralInhibition(network);
+			lateralInhibition(timestamp, network);
 			resetLearning(network);
 		}
 		
 		// ----- NEURON BEHAVIOR -----
 		template<typename Network>
-		void lateralInhibition(Network* network)
+		void lateralInhibition(double timestamp, Network* network)
 		{
 			if (preProjections.size() > 0)
 			{
@@ -399,9 +411,14 @@ namespace adonis_c
 				{
 					if (projReset->postNeuron->neuronID != neuronID)
 					{
-						projReset->postNeuron->active = false;
+						projReset->postNeuron->inhibited = true;
+						projReset->postNeuron->inhibitionTime = timestamp;
 						projReset->postNeuron->setCurrent(0);
 						projReset->postNeuron->setPotential(restingPotential);
+					}
+					if (projReset->postNeuron->layerID == 2)
+					{
+						std::cout << projReset->postNeuron->neuronID << " " << projReset->postNeuron->active << std::endl;
 					}
 				}
 			}
@@ -442,6 +459,9 @@ namespace adonis_c
         float                                    current;
         float                                    potential;
 		bool                                     active;
+		bool                                     inhibited;
+		double                                   inhibitionTime;
+		
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
 		float                                    eligibilityTrace;
