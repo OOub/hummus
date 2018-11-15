@@ -28,27 +28,26 @@ int main(int argc, char** argv)
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 40;
-	float timestep = 0.5;
+	float timestep = 0.1;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::Stdp stdp(0, 1);
 	
 	//  ----- CREATING THE NETWORK -----
 	network.add2dLayer(0, 2, 8, 8, nullptr, 2);
-	network.add2dLayer(1, 2, 8, 8, nullptr, 1, 1);
+	network.add2dLayer(1, 2, 8, 8, nullptr, 2, 1);
 	network.addLayer(2, nullptr, 1, 1, 1);
-	
-	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1./2, false, 0);
+		
+	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1., false, 0);
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], false, 1., false, 0);
 	
     //  ----- INJECTING SPIKES -----	
 	network.injectSpikeFromData(&trainingData);
 
 	//  ----- DISPLAY SETTINGS -----
-  	qtDisplay.useHardwareAcceleration(true);
+  	qtDisplay.useHardwareAcceleration(false);
   	qtDisplay.setTimeWindow(runtime);
   	qtDisplay.trackLayer(1);
-  	qtDisplay.trackInputSublayer(1);
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----

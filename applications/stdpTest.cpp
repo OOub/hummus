@@ -61,6 +61,7 @@ int main(int argc, char** argv)
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(100);
   	qtDisplay.trackNeuron(10);
+  	qtDisplay.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

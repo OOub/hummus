@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(2);
+  	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 
     //  ----- RUNNING THE NETWORK -----
     network.run(runtime, timestep);

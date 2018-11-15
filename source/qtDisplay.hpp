@@ -35,7 +35,11 @@ namespace adonis_c
     public:
 
     	// ----- CONSTRUCTOR -----
-        QtDisplay()
+        QtDisplay() :
+			neuronToTrack(-1),
+			inputSublayerToTrack(0),
+			outputLayerToTrack(1),
+			outputSublayerToTrack(0)
         {
         	static int argc = 1;
 			static char* argv[1] = {NULL};
@@ -91,14 +95,62 @@ namespace adonis_c
 			potentialviewer->handleTimestep(timestamp, network, postNeuron);
 		}
 
-		void begin(int numberOfLayers, std::vector<int> sublayerInLayers, std::vector<int> neuronsInLayers) override
+		void begin(Network* network) override
 		{
+			// finding the number of layers in the network
+			int numberOfLayers = static_cast<int>(network->getLayers().size());
+			
+			// number of sublayers in each layer
+			std::vector<int> sublayerInLayers;
+			for (auto& l: network->getLayers())
+			{
+				sublayerInLayers.emplace_back(l.sublayers.size());
+			}
+			
+			// number of neurons in each layer
+			std::vector<int> neuronsInLayers;
+			for (auto& l: network->getLayers())
+			{
+				int count = 0;
+				for (auto& s: l.sublayers)
+				{
+					for (auto& r: s.receptiveFields)
+					{
+						count += r.neurons.size();
+					}
+				}
+				neuronsInLayers.emplace_back(count);
+			}
+			
+			// number of neurons in each sublayer
+			std::vector<std::vector<int>> neuronsInSublayers(numberOfLayers);
+			for (auto i=0; i<network->getLayers().size(); i++)
+			{
+				for (auto& s: network->getLayers()[i].sublayers)
+				{
+					int count = 0;
+					for (auto& r: s.receptiveFields)
+					{
+						count += r.neurons.size();
+					}
+					neuronsInSublayers[i].emplace_back(count);
+				}
+			}
+			
 			int neuronNumber = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.end(), 0);
 			engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
 			engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
 			engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
-        	outputviewer->setYLookup(neuronsInLayers);
-			outputviewer->setSublayer(sublayerInLayers, engine);
+			
+			inputviewer->setYLookup(neuronsInSublayers[0]);
+			outputviewer->setEngine(engine);
+        	outputviewer->setYLookup(neuronsInSublayers, neuronsInLayers);
+		
+			inputviewer->changeSublayer(inputSublayerToTrack);
+			outputviewer->changeLayer(outputLayerToTrack);
+			outputviewer->changeSublayer(outputSublayerToTrack);
+			potentialviewer->trackNeuron(neuronToTrack);
+			
 			app->exec();
 		}
 		
@@ -112,22 +164,22 @@ namespace adonis_c
 
 		void trackLayer(int layerToTrack)
 		{
-			outputviewer->changeLayer(layerToTrack);
+			outputLayerToTrack = layerToTrack;
 		}
 		
 		void trackInputSublayer(int sublayerToTrack)
 		{
-			inputviewer->changeSublayer(sublayerToTrack);
+			inputSublayerToTrack = sublayerToTrack;
 		}
 		
 		void trackOutputSublayer(int sublayerToTrack)
 		{
-			outputviewer->changeSublayer(sublayerToTrack);
+			outputSublayerToTrack = sublayerToTrack;
 		}
 		
-        void trackNeuron(int neuronToTrack)
+        void trackNeuron(int _neuronToTrack)
         {
-            potentialviewer->trackNeuron(neuronToTrack);
+        	neuronToTrack = _neuronToTrack;
         }
 
 		void setTimeWindow(double newWindow)
@@ -145,5 +197,9 @@ namespace adonis_c
         InputViewer*                           inputviewer;
         OutputViewer*                          outputviewer;
         PotentialViewer*                       potentialviewer;
+        int                                    neuronToTrack;
+        int                                    inputSublayerToTrack;
+        int                                    outputLayerToTrack;
+        int                                    outputSublayerToTrack;
     };
 }

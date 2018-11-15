@@ -12,6 +12,7 @@
 #pragma once
 
 #include <algorithm>
+#include <numeric>
 #include <atomic>
 
 // QT5 and QT Charts Dependency
@@ -48,8 +49,7 @@ namespace adonis_c
             minY(0),
             maxY(1),
             layerTracker(1),
-			sublayerTracker(0),
-			maxSublayers(0)
+			sublayerTracker(0)
         {
             atomicGuard.clear(std::memory_order_release);
         }
@@ -68,10 +68,6 @@ namespace adonis_c
 					{
 						points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
 						maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
-						if (yLookupTable.size() > 0)
-						{
-							minY = yLookupTable[layerTracker-1];
-						}
 					}
 					else
 					{
@@ -88,6 +84,11 @@ namespace adonis_c
         }
 		
 		// ----- SETTERS -----
+		void setEngine(QQmlApplicationEngine* _engine)
+		{
+			engine = _engine;
+		}
+		
 		void setTimeWindow(float newWindow)
         {
             timeWindow = newWindow;
@@ -98,15 +99,10 @@ namespace adonis_c
             openGL = accelerate;
         }
 		
-		void setYLookup(std::vector<int> newLookup)
+		void setYLookup(std::vector<std::vector<int>> newLookup, std::vector<int> _neuronsInLayers)
 		{
 		    yLookupTable = newLookup;
-		}
-		
-		void setSublayer(std::vector<int> newLookup, QQmlApplicationEngine* _engine)
-		{
-		    sublayerLookupTable = newLookup;
-		    engine = _engine;
+		    neuronsInLayers = _neuronsInLayers;
 		}
 		
     Q_SIGNALS:
@@ -115,25 +111,22 @@ namespace adonis_c
     	// ----- QT-RELATED METHODS -----
 		void changeLayer(int newLayer)
 		{
-		    if (layerTracker != newLayer)
-		    {
-			    layerTracker = newLayer;
-			    if (!sublayerLookupTable.empty())
-			    {
-			    	maxSublayers = sublayerLookupTable[newLayer]-1;
-			    	engine->rootContext()->setContextProperty("sublayers", maxSublayers);
-				}
-			    minY = 0;
-			    maxY = 1;
-			}
+			layerTracker = newLayer;
+			sublayerTracker = 0;
+			engine->rootContext()->setContextProperty("sublayers", static_cast<int>(yLookupTable[layerTracker].size()-1));
+			int previousLayerNeurons = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.begin()+layerTracker, 0);
+			
+			minY = previousLayerNeurons;
+			maxY = minY+1;
 		}
 		
 		void changeSublayer(int newSublayer)
 		{
-		    if (sublayerTracker != newSublayer)
-		    {
-			    sublayerTracker = newSublayer;
-			}
+			sublayerTracker = newSublayer;
+			int previousLayerNeurons = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.begin()+layerTracker, 0);
+			int previousSublayerNeurons = std::accumulate(yLookupTable[layerTracker].begin(), yLookupTable[layerTracker].begin()+sublayerTracker, 0);
+			minY = previousLayerNeurons+previousSublayerNeurons;
+			maxY = minY+1;
 		}
 		
         void disable()
@@ -163,7 +156,7 @@ namespace adonis_c
                         points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
             
                         static_cast<QtCharts::QXYSeries *>(series)->replace(points);
-                        axisY->setRange(minY-1,maxY+1);
+                        axisY->setRange(minY,maxY);
                     }
                 }
                 atomicGuard.clear(std::memory_order_release);
@@ -183,9 +176,8 @@ namespace adonis_c
         std::atomic_flag              atomicGuard;
         int                           layerTracker;
         int                           sublayerTracker;
-        std::vector<int>              yLookupTable;
-        std::vector<int>              sublayerLookupTable;
-        int                           maxSublayers;
+        std::vector<std::vector<int>> yLookupTable;
+        std::vector<int>              neuronsInLayers;
         QQmlApplicationEngine*        engine;
     };
 }

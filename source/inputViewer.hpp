@@ -91,21 +91,33 @@ namespace adonis_c
             timeWindow = newWindow;
         }
 		
+        void setYLookup(std::vector<int> newLookup)
+		{
+		    yLookupTable = newLookup;
+		}
+		
 		void useHardwareAcceleration(bool accelerate)
         {
             openGL = accelerate;
         }
-		
+
     Q_SIGNALS:
     public slots:
 		
     	// ----- QT-RELATED METHODS -----
     	void changeSublayer(int newSublayer)
 		{
-		    if (sublayerTracker != newSublayer)
-		    {
-			    sublayerTracker = newSublayer;
+			sublayerTracker = newSublayer;
+			
+			if (newSublayer > 0)
+			{
+				minY = std::accumulate(yLookupTable.begin(), yLookupTable.begin()+sublayerTracker, 0);
 			}
+			else
+			{
+				minY = 0;
+			}
+			maxY = minY+1;
 		}
 		
         void disable()
@@ -135,7 +147,7 @@ namespace adonis_c
                         points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
             
                         static_cast<QtCharts::QXYSeries *>(series)->replace(points);
-                        axisY->setRange(minY-1,maxY+1);
+                        axisY->setRange(minY,maxY);
                     }
                     atomicGuard.clear(std::memory_order_release);
                 }
@@ -154,5 +166,6 @@ namespace adonis_c
         int                   maxY;
         std::atomic_flag      atomicGuard;
         int                   sublayerTracker;
+        std::vector<int>      yLookupTable;
     };
 }

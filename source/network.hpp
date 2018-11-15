@@ -587,31 +587,7 @@ namespace adonis_c
 			
 			if (thDelegate)
 			{
-				// finding the number of layers in the network
-				int numberOfLayers = static_cast<int>(layers.size());
-			
-				// number of sublayers in each layer
-				std::vector<int> sublayerInLayers;
-				for (auto& l: layers)
-				{
-					sublayerInLayers.emplace_back(l.sublayers.size());
-				}
-				
-				// number of neurons in each layer
-				std::vector<int> neuronsInLayers;
-				for (auto& l: layers)
-				{
-					int count = 0;
-					for (auto& s: l.sublayers)
-					{
-						for (auto& r: s.receptiveFields)
-						{
-							count += r.neurons.size();
-						}
-					}
-					neuronsInLayers.emplace_back(count);
-				}
-				thDelegate->begin(numberOfLayers, sublayerInLayers, neuronsInLayers);
+				thDelegate->begin(this);
 			}
 			spikeManager.join();
 		}
