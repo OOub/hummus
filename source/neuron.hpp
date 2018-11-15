@@ -171,7 +171,7 @@ namespace adonis_c
 			if (s.postProjection)
 			{
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (s.postProjection->preNeuron ? s.postProjection->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.postProjection->weight << " d=" << s.postProjection->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << " active " << active << std::endl;
+				std::cout << "t=" << timestamp << " " << (s.postProjection->preNeuron ? s.postProjection->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.postProjection->weight << " d=" << s.postProjection->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
 				#endif
 				for (auto delegate: network->getStandardDelegates())
 				{
@@ -203,7 +203,7 @@ namespace adonis_c
 				plasticityTrace += 1;
 				
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << " active " << active << std::endl;
+				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
 				
 				for (auto delegate: network->getStandardDelegates())
@@ -415,10 +415,6 @@ namespace adonis_c
 						projReset->postNeuron->inhibitionTime = timestamp;
 						projReset->postNeuron->setCurrent(0);
 						projReset->postNeuron->setPotential(restingPotential);
-					}
-					if (projReset->postNeuron->layerID == 2)
-					{
-						std::cout << projReset->postNeuron->neuronID << " " << projReset->postNeuron->active << std::endl;
 					}
 				}
 			}

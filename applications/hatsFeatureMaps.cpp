@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 	float eligibilityDecay = 20;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(layer0, layer1, 1, 1);
+	adonis_c::Stdp stdp(layer0, layer1);
 	
 	//  ----- CREATING THE NETWORK -----
 	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 3, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
