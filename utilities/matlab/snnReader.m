@@ -8,17 +8,18 @@
 
 % Information: snnReader is a function that reads a binary file originating
 % from the Adonis spiking neural network simulators
-% bool = false for spikeLogger file and bool = true for learningLogger file
+% fileType = 0 for spikeLogger file
+% fileType = 1 for learningLogger file
+% fileType = 2 for testOutputLogger file
 
-
-function [output] = snnReader(filename, bool)  
+function [output] = snnReader(filename, fileType)  
     % handling optional arguments
     if nargin < 2
-        bool = false;
+        fileType = 0;
     end
         
     fileID = fopen(filename,'rb');
-    if bool == false
+    if fileType == 0
         disp("reading spike logger")
         timestamp = []; delay = []; potential = []; preN = []; postN = []; layerID = []; rfRow = []; rfCol = []; weight = []; X = []; Y = [];
         
@@ -47,7 +48,8 @@ function [output] = snnReader(filename, bool)
         
         variableNames = {'timestamp','delay','weight','preN','postN','potential','layerID','rfRow','rfCol','X','Y'};
         output = table(timestamp',delay',weight',preN',postN',potential',layerID',rfRow',rfCol',X',Y','VariableNames',variableNames);
-    elseif bool == true
+        
+    elseif fileType == 1
         disp("reading learning logger")
         output = {};
         plasticNeurons = [];
@@ -79,5 +81,38 @@ function [output] = snnReader(filename, bool)
                 break;
             end
         end
+        fclose(fileID);
+        
+    elseif fileType == 2
+        disp("reading test output logger")
+        timestamp = []; delay = []; potential = []; preN = []; postN = []; layerID = []; rfRow = []; rfCol = []; weight = []; X = []; Y = [];
+        
+        learningOffSignal = fread(fileID,1,'float64');
+        while ~feof(fileID)
+            currentPosition = ftell(fileID);
+            exitTest = fread(fileID,1);
+            if ~isempty(exitTest)
+                fseek(fileID,currentPosition,'bof');
+                timestamp(end+1) = fread(fileID,1,'float64');
+                delay(end+1) = fread(fileID,1,'float32');
+                weight(end+1) = fread(fileID,1,'float32');
+                potential(end+1) = fread(fileID,1,'float32');
+                preN(end+1) = fread(fileID,1,'int16');
+                postN(end+1) = fread(fileID,1,'int16');
+                layerID(end+1) = fread(fileID,1,'int16');
+                rfRow(end+1) = fread(fileID,1,'int16');
+                rfCol(end+1) = fread(fileID,1,'int16');
+                X(end+1) = fread(fileID,1,'int16');
+                Y(end+1) = fread(fileID,1,'int16');
+            else
+                disp("finished reading")
+                break;
+            end
+        end
+        fclose(fileID);
+        
+        variableNames = {'timestamp','delay','weight','preN','postN','potential','layerID','rfRow','rfCol','X','Y'};
+        temp = table(timestamp',delay',weight',preN',postN',potential',layerID',rfRow',rfCol',X',Y','VariableNames',variableNames);
+        output = struct('outputSpikes', temp, 'learningOffSignal', learningOffSignal);
     end
 end

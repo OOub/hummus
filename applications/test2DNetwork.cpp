@@ -14,6 +14,7 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
+#include "../source/testOutputLogger.hpp"
 #include "../source/stdp.hpp"
 
 int main(int argc, char** argv)
@@ -24,7 +25,8 @@ int main(int argc, char** argv)
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network(&qtDisplay);
+	adonis_c::TestOutputLogger testOutputLogger("testlog.bin");
+	adonis_c::Network network({&testOutputLogger}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 40;
@@ -43,11 +45,12 @@ int main(int argc, char** argv)
 	
     //  ----- INJECTING SPIKES -----	
 	network.injectSpikeFromData(&trainingData);
-
+	network.turnOffLearning(0);
+	
 	//  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(false);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackLayer(1);
+  	qtDisplay.trackLayer(2);
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----

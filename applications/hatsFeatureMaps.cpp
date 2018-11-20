@@ -13,14 +13,15 @@
 
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
-#include "../source/spikeLogger.hpp"
+#include "../source/testOutputLogger.hpp"
 #include "../source/stdp.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network(&qtDisplay);
+//	adonis_c::QtDisplay qtDisplay;
+	adonis_c::TestOutputLogger testOutputLogger("hatsFeatureMaps.bin");
+	adonis_c::Network network({&testOutputLogger});
 	
     //  ----- NETWORK PARAMETERS -----
 	
@@ -63,17 +64,17 @@ int main(int argc, char** argv)
 	//  ----- INJECTING TEST SPIKES -----
 	network.injectSpikeFromData(&testingData);
 
-	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("" , "../../data/hats/feature_maps/nCars_1samplePerc_1repLabel.txt");
+//	// ----- ADDING LABELS
+//	auto labels = dataParser.readLabels("" , "../../data/hats/feature_maps/nCars_1samplePerc_1repLabel.txt");
 
-	network.addLabels(&labels);
+//	network.addLabels(&labels);
 	
-    //  ----- DISPLAY SETTINGS -----
-  	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(5000);
-  	qtDisplay.trackLayer(2);
-  	qtDisplay.trackInputSublayer(0);
-  	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
+//    //  ----- DISPLAY SETTINGS -----
+//  	qtDisplay.useHardwareAcceleration(true);
+//  	qtDisplay.setTimeWindow(5000);
+//  	qtDisplay.trackLayer(2);
+//  	qtDisplay.trackInputSublayer(0);
+//  	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
     float runtime = testingData.back().timestamp+1000;

@@ -168,7 +168,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, enco
     end
     
     % convert data from TD to spikes
-    H = {}; gridH = {}; spikeH = {}; crossing = 0; crossingTimer = [];
+    H = {}; gridH = {}; spikeH = {}; crossing = 0;
  
     if encodingStrategy == 1
         disp('Poisson encoding');
@@ -176,33 +176,34 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, enco
         disp('Intensity-to-latency encoding');
     elseif encodingStrategy == 3
         disp('Feature maps encoding');
-        prompt = 'Number of feature maps: ';
+        prompt = {'Number of feature maps: ', 'Receptive field size: '};
         title = 'Feature Map Encoding';
         dims = [1 35];
-        definput = {'3'};
-        levels = inputdlg(prompt,title,dims,definput);
-        levels = str2double(levels{1});
+        definput = {'3', '7'};
+        answer = inputdlg(prompt,title,dims,definput);
+        rfSize = str2double(answer{2});
+        levels = str2double(answer{1});
         for j = 1:levels
             crossing(end+1,:) = 255/levels*j;
         end
+        timeWindow = 20;
     end
     patternCounter = 1;
     disp('files being parsed:')
     for i = 1:length(datasetDirectory)
-        
-        if encodingStrategy == 3
-            crossingTimer = zeros(length(crossing)-1, 1);
-        end
         disp(strcat(datasetDirectory(i).folder, '/', datasetDirectory(i).name));
         data = load_atis_data(strcat(datasetDirectory(i).folder, '/', datasetDirectory(i).name));
         [H{i,1},gridH{i,1}] = hats([data.x, data.y, data.ts, data.p], r, tau, dt);
         scaledH{i,1} = zeros(size(gridH{i,1},1), size(gridH{i,1},2));
         
-        temp = [];
+        maxRow = size(gridH{i,1},1);
+        maxCol = size(gridH{i,1},2);
+        
+        temp = []; colShift = 0; rowShift = 0;
         for j = 1:size(gridH{i,1},1)
             for k = 1:size(gridH{i,1},2)
                 % only making the active regions spike
-                scaledH{i,1}(j,k) = (((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:))));
+                scaledH{i,1}(j,k) = (((gridH{i,1}(j,k) - min(gridH{i,1}(:))) * 255) / (max(gridH{i,1}(:)) - min(gridH{i,1}(:)))) / 4;
                 if scaledH{i,1}(j,k) > 0
                     % Poisson encoding
                     if encodingStrategy == 1
@@ -212,9 +213,12 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, enco
                     elseif encodingStrategy == 2
                         spikeTrain = intensityToLatencyEncoder(scaledH{i,1}(j,k), patternDuration, 0.02);
                         temp(end+1, :) = [spikeTrain, j-1, k-1, patternCounter];
-                    % feature maps encoding
-                    elseif encodingStrategy == 3
-                        [spikeTrain, mapID, crossingTimer] = featureMapEncoder(scaledH{i,1}(j,k), crossing, crossingTimer);
+                    end
+                end
+                % feature maps encoding
+                if encodingStrategy == 3
+                    [spikeTrain, mapID, colShift, rowShift] = featureMapEncoder(scaledH{i,1}(j,k), crossing, j, k, maxRow, maxCol, rfSize, colShift, rowShift, timeWindow);
+                    if ~isnan(spikeTrain)
                         temp(end+1, :) = [spikeTrain, j-1, k-1, mapID, patternCounter];
                     end
                 end
@@ -294,12 +298,7 @@ function [output, labels, gridH] = snnHatsParser(pathToCars, baseFileNames, enco
     labels = [labels,labelTimes];
     
     if save == true
-        if ~isempty(pathToBackgrounds)
-            databaseType = 'test_';
-        else
-            databaseType = 'train_';
-        end
-        filename = strcat('nCars_', databaseType, num2str(samplePercentage), 'samplePerc_', num2str(repetitions),'rep');
+        filename = strcat('nCars_', num2str(samplePercentage), 'samplePerc_', num2str(repetitions),'rep');
         dlmwrite(strcat(filename,'.txt'), snnInput, 'delimiter', ' ', 'precision', '%f');
         labelWriter(strcat(filename,'Label.txt'), labels);
     end
@@ -318,20 +317,35 @@ function [spikeTime] = intensityToLatencyEncoder(fr, tSim, lambda)
     spikeTime = tSim*exp(-lambda*fr);
 end
 
-function [spikeTime, mapID, crossingTimer] = featureMapEncoder(fr, crossing, crossingTimer)
-    mapID = -1;
-    spikeTime = -1;
-    for i = 2:length(crossing)
-        if fr <= crossing(i) && fr > crossing(i-1)
-            mapID = i-2;
-            spikeTime = crossingTimer(i-1);
-            crossingTimer(i-1) = crossingTimer(i-1)+1;
-        elseif fr == 0
-            mapID = 0;
-            spikeTime = crossingTimer(1);
-            crossingTimer(1) = crossingTimer(1)+1;
+function [spikeTime, mapID, colShift, rowShift] = featureMapEncoder(fr, crossing, currentRow, currentCol, maxRow, maxCol, rfSize, colShift, rowShift, timeWindow) 
+    if fr > 0
+        % level crossing
+        mapID = -1;
+        for i = 2:length(crossing)
+            if fr <= crossing(i) && fr > crossing(i-1)
+                mapID = i-2;
+            end
+        end
+
+        % Timestamp according to receptive field size
+        spikeTime = randi([0+colShift timeWindow+colShift]);
+    else
+        mapID = NaN;
+        spikeTime = NaN;
+    end
+    
+    if currentCol ~= maxCol
+        if fr > 0
+            if mod(currentCol, rfSize) == 0
+                colShift = colShift + timeWindow*2;
+            end
+        end
+    else
+        if mod(currentRow, rfSize) ~= 0
+            colShift = rowShift;
         else
-            continue;
+%             rowShift = rowShift + timeWindow*2;
+            colShift = 0;
         end
     end
 end

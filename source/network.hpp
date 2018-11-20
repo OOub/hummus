@@ -557,6 +557,11 @@ namespace adonis_c
 						{
 							if (learningStatus==true && i >= learningOffSignal)
 							{
+								for (auto delegate: stdDelegates)
+								{
+									delegate->learningTurnedOff(i);
+								}
+				
 								std::cout << "learning turned off at t=" << i << std::endl;
 								learningStatus = false;
 
