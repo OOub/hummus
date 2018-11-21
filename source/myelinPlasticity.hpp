@@ -18,7 +18,7 @@ namespace adonis_c
 	class MyelinPlasticity : public LearningRuleHandler
 	{
 	public:
-		// ----- CONSTRUCTOR AND DESTRUCTOR -----
+		// ----- CONSTRUCTOR -----
 		MyelinPlasticity(float _alpha=1, float _lambda=1) :
 		alpha(_alpha),
 		lambda(_lambda)
@@ -30,7 +30,6 @@ namespace adonis_c
 			std::vector<double> timeDifferences;
 			std::vector<int16_t> plasticID;
 			std::vector<std::vector<int16_t>> plasticCoordinates(4);
-			bool supervise = false;
 			#ifndef NDEBUG
 			std::cout << "New learning epoch at t=" << timestamp << std::endl;
 			#endif
@@ -47,64 +46,28 @@ namespace adonis_c
 					plasticCoordinates[3].push_back(inputProjection->preNeuron->getRfCol());
 					
 					float change = 0;
-					if (network->getTeachingProgress()) // supervised learning
+					
+					timeDifferences.push_back(timestamp - inputProjection->lastInputTime - inputProjection->delay);
+					if (timeDifferences.back() > 0)
 					{
-						if (timestamp >= network->getTeacher()->front() - neuron->getDecayPotential() || timestamp <= network->getTeacher()->front() + neuron->getDecayPotential())
-						{
-							timeDifferences.push_back(network->getTeacher()->front() - inputProjection->lastInputTime - inputProjection->delay);
-							supervise = true;
-							if (timeDifferences.back() > 0)
-							{
-								change = lambda*(neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(-alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(-alpha*timeDifferences.back()/neuron->getDecayPotential()))*neuron->getSynapticEfficacy();
-								inputProjection->delay += change;
-								#ifndef NDEBUG
-								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << " weight: " << inputProjection->weight << std::endl;
-								#endif
-							}
-
-							else if (timeDifferences.back() < 0)
-							{
-								change = -lambda*((neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(alpha*timeDifferences.back()/neuron->getDecayPotential())))*neuron->getSynapticEfficacy();
-								inputProjection->delay += change;
-								#ifndef NDEBUG
-								std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << " weight: " << inputProjection->weight << std::endl;
-								#endif
-							}
-						}
-						else
-						{
-							timeDifferences.push_back(0);
-						}
-						neuron->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+						change = lambda*(neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(-alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(-alpha*timeDifferences.back()/neuron->getDecayPotential()))*neuron->getSynapticEfficacy();
+						inputProjection->delay += change;
+						#ifndef NDEBUG
+						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						#endif
 					}
-					else // unsupervised learning
+
+					else if (timeDifferences.back() < 0)
 					{
-						timeDifferences.push_back(timestamp - inputProjection->lastInputTime - inputProjection->delay);
-						if (timeDifferences.back() > 0)
-						{
-							change = lambda*(neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(-alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(-alpha*timeDifferences.back()/neuron->getDecayPotential()))*neuron->getSynapticEfficacy();
-							inputProjection->delay += change;
-							#ifndef NDEBUG
-							std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-							#endif
-						}
-
-						else if (timeDifferences.back() < 0)
-						{
-							change = -lambda*((neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(alpha*timeDifferences.back()/neuron->getDecayPotential())))*neuron->getSynapticEfficacy();
-							inputProjection->delay += change;
-							#ifndef NDEBUG
-							std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
-							#endif
-						}
-						neuron->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+						change = -lambda*((neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(alpha*timeDifferences.back()/neuron->getDecayPotential())))*neuron->getSynapticEfficacy();
+						inputProjection->delay += change;
+						#ifndef NDEBUG
+						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						#endif
 					}
+					neuron->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+
 				}
-			}
-			
-			if (supervise)
-			{
-				network->getTeacher()->pop_front();
 			}
 			
 			for (auto delegate: network->getStandardDelegates())

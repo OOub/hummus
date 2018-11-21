@@ -57,8 +57,8 @@ int main(int argc, char** argv)
 	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
 	
     //  ----- CREATING THE NETWORK -----
-	network.addLayer(0, nullptr, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(1, &myelinPlasticity, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(0, {}, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(1, {&myelinPlasticity}, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, true, 10);

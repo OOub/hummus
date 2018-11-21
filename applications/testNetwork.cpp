@@ -39,10 +39,10 @@ int main(int argc, char** argv)
 
 	//  ----- CREATING THE NETWORK -----
 	// input neurons
-	network.addLayer(0, nullptr, inputNeurons, 1, 2, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(0, {}, inputNeurons, 1, 2, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
-	network.addLayer(1, nullptr, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(1, {}, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
 	// input layer -> layer 1

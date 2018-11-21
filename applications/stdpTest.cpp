@@ -17,6 +17,7 @@
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
 #include "../source/stdp.hpp"
+#include "../source/supervisedWTA.hpp"
 
 int main(int argc, char** argv)
 {
@@ -46,10 +47,11 @@ int main(int argc, char** argv)
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::Stdp stdp(0,1);
+	adonis_c::SupervisedWTA wta;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.addLayer(0, &stdp, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
-	network.addLayer(1, &stdp, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(0, {&stdp}, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(1, {&stdp, &wta}, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, false, 0);

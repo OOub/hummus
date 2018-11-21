@@ -45,10 +45,10 @@ int main(int argc, char** argv)
 	adonis_c::Stdp stdp(layer0, layer1);
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, &stdp, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.add2dLayer(layer2, rfSize, gridWidth/2, gridHeight/2, nullptr, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer3, nullptr, 1, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, {&stdp}, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, {&stdp}, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer2, rfSize, gridWidth/2, gridHeight/2, {}, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(layer3, {}, 1, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	network.convolution(network.getLayers()[layer0], network.getLayers()[layer1], false, 1./8, false, 0);
 	network.pooling(network.getLayers()[layer1], network.getLayers()[layer2], false, 1., false, 0);
@@ -69,8 +69,8 @@ int main(int argc, char** argv)
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("" , "../../data/hats/native/nCars_native_test_train_Label.txt");
-//	auto labels = dataParser.readLabels("" , "../../data/hats/native/nCars_native_test_test_Label.txt");
+	auto labels = dataParser.readLabels("../../data/hats/native/nCars_native_test_train_Label.txt");
+//	auto labels = dataParser.readLabels("../../data/hats/native/nCars_native_test_test_Label.txt");
 	network.addLabels(&labels);
 	
     //  ----- DISPLAY SETTINGS -----

@@ -49,6 +49,12 @@ namespace adonis_c
 		int                   height;
 	};
 	
+	struct supervisedOutput
+	{
+		int16_t neuron;
+		std::string label;
+	};
+	
     class Network
     {
     public:
@@ -57,7 +63,6 @@ namespace adonis_c
         Network(std::vector<StandardNetworkDelegate*> _stdDelegates = {}, MainThreadNetworkDelegate* _thDelegate = nullptr) :
             stdDelegates(_stdDelegates),
 			thDelegate(_thDelegate),
-            teacher(nullptr),
             labels(nullptr),
 			teachingProgress(false),
 			learningStatus(true),
@@ -70,7 +75,7 @@ namespace adonis_c
 		// ----- PUBLIC NETWORK METHODS -----
 		
 		// add neurons
-		void addLayer(int16_t layerID, LearningRuleHandler* _learningRuleHandler=nullptr, int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
+		void addLayer(int16_t layerID, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
         {
         	unsigned long shift = 0;
         	if (!layers.empty())
@@ -110,7 +115,7 @@ namespace adonis_c
 			layers.emplace_back(layer{subTemp, layerID, -1, -1});
         }
 		
-		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, LearningRuleHandler* _learningRuleHandler=nullptr, int _sublayerNumber=1, int _numberOfNeurons=-1, bool overlap=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _sublayerNumber=1, int _numberOfNeurons=-1, bool overlap=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
 			// error handling
 			if (windowSize <= 0 || windowSize > gridW || windowSize > gridH)
@@ -420,9 +425,10 @@ namespace adonis_c
 			}
 		}
 		
-		// add labels that can be displayed on the qtDisplay if it is being used
+		// add labels used for supervised training
 		void addLabels(std::deque<label>* _labels)
 		{
+			std::cout << "an output neuron will be assigned for each class" << std::endl;
 			labels = _labels;
 		}
 
@@ -531,25 +537,24 @@ namespace adonis_c
 		// clock-based running through the network
         void run(double _runtime, float _timestep)
         {
+			assignLabelsToNeurons();
+			
 			std::thread spikeManager([this, _runtime, _timestep]
 			{
 				std::cout << "Running the network..." << std::endl;
 				std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-
+				
 				if (!neurons.empty())
 				{
 					for (double i=0; i<_runtime; i+=_timestep)
 					{
-					
-						if (labels)
+						// new pattern onset
+						if (labels && !labels->empty())
 						{
-							if (labels->size() != 0)
+							if (labels->front().onset <= i)
 							{
-								if (labels->front().onset <= i)
-								{
-									std::cout << labels->front().name << " at t=" << i << std::endl;
-									labels->pop_front();
-								}
+								currentLabel = labels->front().name;
+								labels->pop_front();
 							}
 						}
 						
@@ -564,13 +569,6 @@ namespace adonis_c
 				
 								std::cout << "learning turned off at t=" << i << std::endl;
 								learningStatus = false;
-
-								if (teachingProgress==true)
-								{
-									std::cout << "teacher signal stopped at t=" << i << std::endl;
-									teachingProgress = false;
-									teacher->clear();
-								}
 							}
 						}
 						for (auto& n: neurons)
@@ -623,34 +621,25 @@ namespace adonis_c
             return generatedSpikes;
         }
 		
-		bool getTeachingProgress() const
-        {
-            return teachingProgress;
-        }
-		
 		bool getLearningStatus() const
         {
             return learningStatus;
         }
 		
-		void setTeachingProgress(bool status)
-        {
-            teachingProgress = status;
-        }
+		std::deque<label>* getLabels()
+		{
+			return labels;
+		}
 		
-		// ----- SUPERVISED LEARNING METHODS -----
-		// add teacher signal for supervised learning
-        void injectTeacher(std::deque<double>* _teacher)
-        {
-            teacher = _teacher;
-            teachingProgress = true;
-        }
+		std::string getCurrentLabel() const
+		{
+			return currentLabel;
+		}
 		
-		// getter for the teacher signal
-        std::deque<double>* getTeacher() const
-        {
-            return teacher;
-        }
+		std::vector<supervisedOutput> getSupervisedNeurons()
+		{
+			return supervisedNeurons;
+		}
 		
     protected:
     
@@ -721,6 +710,47 @@ namespace adonis_c
 			}
 		}
 		
+		void assignLabelsToNeurons()
+		{
+			if (labels)
+			{
+				// number of classes
+				std::vector<std::string> uniqueLabels;
+				for (auto& label: *labels)
+				{
+					if (std::find(uniqueLabels.begin(), uniqueLabels.end(), label.name) == uniqueLabels.end())
+					{
+						uniqueLabels.emplace_back(label.name);
+					}
+				}
+
+				// output neuron indices;
+				std::vector<int16_t> outputNeurons;
+				for (auto& s: layers.back().sublayers)
+				{
+					for (auto& r: s.receptiveFields)
+					{
+						for (auto& neuron: r.neurons)
+						{
+							outputNeurons.emplace_back(neurons[neuron].getNeuronID());
+						}
+					}
+				}
+				
+				// error handling
+				if (outputNeurons.size() != uniqueLabels.size())
+				{
+					throw std::logic_error("You have less output neurons than classes. Classification cannot occur.");
+				}
+				
+				// assigning labels to output neurons
+				for (auto i=0; i<uniqueLabels.size(); i++)
+				{
+					supervisedNeurons.emplace_back(supervisedOutput{outputNeurons[i], uniqueLabels[i]});
+				}
+			}
+		}
+		
 		// ----- IMPLEMENTATION VARIABLES -----
 		std::deque<spike>                      initialSpikes;
         std::deque<spike>                      generatedSpikes;
@@ -732,8 +762,7 @@ namespace adonis_c
 		bool                                   teachingProgress;
 		bool                                   learningStatus;
 		double                                 learningOffSignal;
-		
-		// ----- SUPERVISED LEARNING VARIABLES -----
-        std::deque<double>*                    teacher;
+		std::vector<supervisedOutput>          supervisedNeurons;
+		std::string                            currentLabel;
     };
 }

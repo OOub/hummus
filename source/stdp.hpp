@@ -18,7 +18,7 @@ namespace adonis_c
 	class Stdp : public LearningRuleHandler
 	{
 	public:
-		// ----- CONSTRUCTOR AND DESTRUCTOR -----
+		// ----- CONSTRUCTOR -----
 		Stdp(int _preLayer, int _postLayer, float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
 		preLayer(_preLayer),
 		postLayer(_postLayer),

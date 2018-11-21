@@ -137,83 +137,15 @@ namespace adonis_c
 				
 		}
 		
-		// reads a teacher signal
-		std::deque<double> readTeacherSignal(std::string filename)
+		std::deque<label> readLabels(std::string trainingLabels = "")
 		{
-		 dataFile.open(filename);
-			
-            if (dataFile.good())
-            {
-				std::deque<double> data;
-				std::string line;
-				
-				std::cout << "Reading teacher signal " << filename << std::endl;
-				while (std::getline(dataFile, line))
-                {
-                	std::vector<std::string> fields;
-                	split(fields, line, " ");
-					
-                	if (fields.size() == 1)
-                	{
-						data.push_back(std::stod(fields[0]));
-					}
-                }
-                dataFile.close();
-			
-				std::cout << "Done." << std::endl;
-				return data;
-            }
-            else
-            {
-                throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName"));
-            }
-		}
-		
-		std::deque<label> readLabels(std::string trainingLabels = "", std::string testLabels = "")
-		{
-			if (trainingLabels.empty() && testLabels.empty())
+			if (trainingLabels.empty())
 			{
-				throw std::logic_error("no files were passed to the readLabels() function. Therefore, there is nothing to do.");
-			}
-			else if (!trainingLabels.empty() && testLabels.empty())
-			{
-				return readLabelsHelper(trainingLabels);
-			}
-			else if (trainingLabels.empty() && !testLabels.empty())
-			{
-				if (timeShift)
-				{
-					std::deque<label> dataLabels = readLabelsHelper(testLabels);
-					for (auto& lbl: dataLabels)
-					{
-						lbl.onset += *timeShift + 1000;
-					}
-					return dataLabels;
-				}
-				else
-				{
-					throw std::logic_error("are you sure training data was fed into the network via the readTrainingData() before reading the test data labels?");
-				}
-				
+				throw std::logic_error("no files were passed to the readLabels() function. There is nothing to do.");
 			}
 			else
 			{
-				if (timeShift)
-				{
-					std::deque<label> dataLabels = readLabelsHelper(trainingLabels);
-					std::deque<label> test = readLabelsHelper(testLabels);
-					for (auto& lbl: test)
-					{
-						lbl.onset += *timeShift + 1000;
-					}
-					dataLabels.insert(dataLabels.end(), test.begin(), test.end());
-					return dataLabels;
-
-				}
-				else
-				{
-					throw std::logic_error("are you sure training data was fed into the network via the readTrainingData() before reading the training and test data labels?");
-				}
+				return readLabelsHelper(trainingLabels);
 			}
 		}
 		

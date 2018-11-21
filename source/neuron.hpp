@@ -50,7 +50,7 @@ namespace adonis_c
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, LearningRuleHandler* _learningRuleHandler=nullptr) :
+    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}) :
 			neuronID(_neuronID),
 			rfRow(_rfRow),
 			rfCol(_rfCol),
@@ -392,9 +392,12 @@ namespace adonis_c
 		{
 			if (network->getLearningStatus())
 			{
-				if (learningRuleHandler)
+				if (!learningRuleHandler.empty())
 				{
-					learningRuleHandler->learn(timestamp, this, network);
+					for (auto& learningRule: learningRuleHandler)
+					{
+						learningRule->learn(timestamp, this, network);
+					}
 				}
 			}
 			lateralInhibition(timestamp, network);
@@ -472,7 +475,7 @@ namespace adonis_c
         std::vector<projection*>                 preProjections;
         projection                               initialProjection;
         double                                   lastSpikeTime;
-        LearningRuleHandler*                     learningRuleHandler;
+        std::vector<LearningRuleHandler*>        learningRuleHandler;
 		
         // ----- LEARNING RULE VARIABLES -----
         float                                    plasticityTrace;

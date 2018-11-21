@@ -28,7 +28,6 @@ int main(int argc, char** argv)
     int layer0 = 0;
     int layer1 = 1;
     int layer2 = 2;
-	int layer3 = 3;
 	
 	int gridWidth = 42;
 	int gridHeight = 35;
@@ -44,9 +43,9 @@ int main(int argc, char** argv)
 	adonis_c::Stdp stdp(layer0, layer1);
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer1, &stdp, 30, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer2, nullptr, 2, 1, 1, decayCurrent, decayPotential, 100, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, {&stdp}, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(layer1, {&stdp}, 30, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(layer2, {}, 2, 1, 1, decayCurrent, decayPotential, 100, burstingActivity, eligibilityDecay);
 	
 	network.allToAll(network.getLayers()[layer0], network.getLayers()[layer1], false, 1./20, false);
 	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], false, 1./15, false);
@@ -74,7 +73,7 @@ int main(int argc, char** argv)
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("" , "../../data/hats/poisson/nCars_1samplePerc_1repLabel.txt");
+	auto labels = dataParser.readLabels("../../data/hats/poisson/nCars_10samplePerc_1repLabel.txt");
 	network.addLabels(&labels);
 	
     //  ----- DISPLAY SETTINGS -----
