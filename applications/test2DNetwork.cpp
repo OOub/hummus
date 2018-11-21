@@ -14,7 +14,6 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/testOutputLogger.hpp"
 #include "../source/stdp.hpp"
 
 int main(int argc, char** argv)
@@ -25,8 +24,7 @@ int main(int argc, char** argv)
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::TestOutputLogger testOutputLogger("testlog.bin");
-	adonis_c::Network network({&testOutputLogger}, &qtDisplay);
+	adonis_c::Network network(&qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 40;
