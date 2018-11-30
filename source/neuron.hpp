@@ -42,7 +42,7 @@ namespace adonis_c
 	struct spike
     {
         double      timestamp;
-        projection* postProjection;
+        projection* postProjection; // axon
     };
 	
     class Neuron

@@ -40,7 +40,7 @@ namespace adonis_c
 							// positive reinforcement for correct label
 							if (network->getSupervisedNeurons()[idx].label == network->getCurrentLabel())
 							{
-								preProjection->weight += (preProjection->weight*10)/100;
+								preProjection->weight += (preProjection->weight*20)/100;
 								if (preProjection->weight > 1/preProjection->preNeuron->getInputResistance())
 								{
 									preProjection->weight = 1/preProjection->preNeuron->getInputResistance();
@@ -51,7 +51,7 @@ namespace adonis_c
 							{
 								if (preProjection->weight > 0)
 								{
-									preProjection->weight -= (preProjection->weight*10)/100;
+									preProjection->weight -= (preProjection->weight*20)/100;
 									if (preProjection->weight < 0)
 									{
 										preProjection->weight = 0;
@@ -63,12 +63,12 @@ namespace adonis_c
 				}
 				else
 				{
-					throw std::logic_error("The supervised WTA learning rule cannot be used without first adding labels, before runnning the network");
+					throw std::logic_error("The supervised reinforcement learning rule cannot be used without first adding labels, before runnning the network");
 				}
 			}
 			else
 			{
-				throw std::logic_error("The supervised WTA learning rule can only be used on the output layer");
+				throw std::logic_error("The supervised reinforcement learning rule can only be used on the output layer");
 			}
 		}
 		

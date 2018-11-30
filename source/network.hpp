@@ -586,6 +586,11 @@ namespace adonis_c
 
 				std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
 				std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
+				
+				for (auto delegate: stdDelegates)
+				{
+					delegate->simulationOver(_runtime, this);
+				}
 			});
 			
 			if (thDelegate)
@@ -740,7 +745,7 @@ namespace adonis_c
 				// error handling
 				if (outputNeurons.size() != uniqueLabels.size())
 				{
-					throw std::logic_error("You have less output neurons than classes. Classification cannot occur.");
+					throw std::logic_error("You either have less output neurons than classes or your labels are empty. Classification cannot occur.");
 				}
 				
 				// assigning labels to output neurons
