@@ -69,22 +69,21 @@ namespace adonis_c
 			}
 		}
 		
-		void learningTurnedOff(double timestamp) override
+		void simulationComplete(Network* network) override
 		{
-			for (auto& label: labels)
-			{
-				label.onset += timestamp + 1000;
-			}
-		}
-		
-		void simulationOver(double timestamp, Network* network) override
-		{
-			labels.emplace_back(label{"end", timestamp});
 			for (auto i=1; i<labels.size(); i++)
 			{
-				double nextLabel = labels[i].onset;
-				double currentLabel = labels[i-1].onset;
-				auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [currentLabel, nextLabel](spike a){return a.timestamp >= currentLabel && a.timestamp < nextLabel;});
+				if (i = labels.size()-1)
+				{
+					double currentLabel = labels[i-1].onset;
+					auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [currentLabel](spike a){return a.timestamp >= currentLabel;});
+				}
+				else
+				{
+					double nextLabel = labels[i].onset;
+					double currentLabel = labels[i-1].onset;
+					auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [currentLabel, nextLabel](spike a){return a.timestamp >= currentLabel && a.timestamp < nextLabel;});
+				}
 
 				if (it != predictedSpikes.end())
 				{

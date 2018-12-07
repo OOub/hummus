@@ -11,11 +11,10 @@ R""(
  * Information: QML file that defines the GUI.
  */
 
-import QtQuick 2.7
-import QtQuick.Controls 1.4
-import QtQuick.Controls.Styles 1.4
-import QtQuick.Layouts 1.3
-import QtQuick.Window 2.2
+import QtQuick 2.11
+import QtQuick.Controls 2.4
+import QtQuick.Layouts 1.11
+import QtQuick.Window 2.11
 import QtCharts 2.2
 
 import InputViewer 1.0
@@ -35,7 +34,8 @@ ApplicationWindow
 	property int b: 1
 	property bool pp: true
 	visible: true
-	color: "#363636"
+	color: "#FFFFFF"
+	flags: Qt.Window | Qt.WindowFullscreenButtonHint
 
 	ColumnLayout
 	{
@@ -45,7 +45,7 @@ ApplicationWindow
 		Rectangle
 		{
 			id: menu
-    		color: "#363636"
+    		color: "#FFFFFF"
     		Layout.alignment: Qt.AlignCenter
 			Layout.topMargin: 5
 			Layout.leftMargin: 5
@@ -54,29 +54,43 @@ ApplicationWindow
 			Layout.minimumHeight: 27
     		radius: 2
 
-			Button
+			RoundButton
 			{
 				id: play
-				text: "play / pause"
+				text: qsTr("\u25B6")
 				anchors.centerIn: parent
 
-				style: ButtonStyle
+				contentItem: Text
 				{
-       				background: Rectangle
-       				{
-               			color: play.pressed ? '#B3AEA3' : '#FFFAEF';
-                		radius: 2;
-            		}
-   				}
+					text: play.text
+					font.pointSize: 17
+					color: play.down ? "#000000" : "#363636"
+					horizontalAlignment: Text.AlignHCenter
+        			verticalAlignment: Text.AlignVCenter
+					elide: Text.ElideRight
+				}
+
+				background: Rectangle
+				{
+					color: play.down ? "#bdbebf" : "#FFFFFF"
+					implicitWidth: 35
+					implicitHeight: 35
+					border.width: 1
+					border.color: "#bdbebf"
+					radius: 17.5
+				}
+
 				onClicked:
 				{
 					if (pp == true)
 					{
 						pp = false
+						play.text = qsTr("\u2759\u2759")
 					}
 					else
 					{
 						pp = true
+						play.text = qsTr("\u25B6")
 					}
 				}
 			}
@@ -85,8 +99,16 @@ ApplicationWindow
 
 		Rectangle
 		{
+			color: "#bdbebf"
+			Layout.minimumWidth: mainGrid.width
+			Layout.minimumHeight: 1
+			Layout.alignment: Qt.AlignCenter
+		}
+
+		Rectangle
+		{
 			id: inputRec
-			color: '#FFFAEF'
+			color: '#FFFFFF'
 			Layout.alignment: Qt.AlignCenter
 			Layout.topMargin: 5
 			Layout.leftMargin: 5
@@ -101,7 +123,7 @@ ApplicationWindow
 				title: "Input Neurons"
 				anchors.fill: parent
 				antialiasing: true
-				backgroundColor: '#FFFAEF'
+				backgroundColor: '#FFFFFF'
 				legend.visible: false
 				dropShadowEnabled: false
 
@@ -121,19 +143,51 @@ ApplicationWindow
 				{
 					id: sublayerLegend1
 					text: "sublayers"
-					font.pointSize: 16
 				}
 
 				SpinBox
 				{
 					id: sublayerbox1
-					minimumValue: 0
-					maximumValue: inputSublayer
+					from: 0
+					to: inputSublayer
 					anchors.left: sublayerLegend1.right
 					anchors.leftMargin: 5
-					onEditingFinished:
+
+					onValueModified:
 					{
 						inputViewer.changeSublayer(value)
+					}
+
+					up.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.top: parent.top
+						implicitHeight: 20
+						implicitWidth: 20
+						color: sublayerbox1.up.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '+'
+							anchors.centerIn: parent
+						}
+    				}
+
+					down.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.bottom: parent.bottom
+						implicitHeight: 20
+						implicitWidth: 20
+						color: sublayerbox1.down.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '-'
+							anchors.centerIn: parent
+						}
 					}
 				}
 
@@ -170,8 +224,16 @@ ApplicationWindow
 
 		Rectangle
 		{
+			color: "#bdbebf"
+			Layout.minimumWidth: mainGrid.width
+			Layout.minimumHeight: 1
+			Layout.alignment: Qt.AlignCenter
+		}
+
+		Rectangle
+		{
 			id: outputRec
-			color: '#FFFAEF'
+			color: '#FFFFFF'
 			Layout.alignment: Qt.AlignCenter
 			Layout.leftMargin: 5
 			Layout.rightMargin: 5
@@ -185,7 +247,7 @@ ApplicationWindow
 				title: "Output Neurons"
 				anchors.fill: parent
 				antialiasing: true
-				backgroundColor: '#FFFAEF'
+				backgroundColor: '#FFFFFF'
 				legend.visible: false
 				dropShadowEnabled: false
 
@@ -205,19 +267,50 @@ ApplicationWindow
 				{
 					id: layerLegend
 					text: "layer"
-					font.pointSize: 16
 				}
 
 				SpinBox
 				{
 					id: layerbox
-					minimumValue: 1
-					maximumValue: layers
+					from: 1
+					to: layers
 					anchors.left: layerLegend.right
 					anchors.leftMargin: 5
-					onEditingFinished:
+					onValueModified:
 					{
 						outputViewer.changeLayer(value)
+					}
+
+					up.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.top: parent.top
+						implicitHeight: 20
+						implicitWidth: 20
+						color: layerbox.up.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '+'
+							anchors.centerIn: parent
+						}
+    				}
+
+					down.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.bottom: parent.bottom
+						implicitHeight: 20
+						implicitWidth: 20
+						color: layerbox.down.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '-'
+							anchors.centerIn: parent
+						}
 					}
 				}
 
@@ -227,19 +320,50 @@ ApplicationWindow
 					text: "sublayers"
 					anchors.left: layerbox.right
 					anchors.leftMargin: 5
-					font.pointSize: 16
 				}
 
 				SpinBox
 				{
 					id: sublayerbox
-					minimumValue: 0
-					maximumValue: sublayers
+					from: 0
+					to: sublayers
 					anchors.left: sublayerLegend.right
 					anchors.leftMargin: 5
-					onEditingFinished:
+					onValueModified:
 					{
 						outputViewer.changeSublayer(value)
+					}
+
+					up.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.top: parent.top
+						implicitHeight: 20
+						implicitWidth: 20
+						color: sublayerbox.up.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '+'
+							anchors.centerIn: parent
+						}
+    				}
+
+					down.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.bottom: parent.bottom
+						implicitHeight: 20
+						implicitWidth: 20
+						color: sublayerbox.down.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '-'
+							anchors.centerIn: parent
+						}
 					}
 				}
 
@@ -277,8 +401,16 @@ ApplicationWindow
 
 		Rectangle
 		{
+			color: "#bdbebf"
+			Layout.minimumWidth: mainGrid.width
+			Layout.minimumHeight: 1
+			Layout.alignment: Qt.AlignCenter
+		}
+
+		Rectangle
+		{
 			id: potentialRec
-			color: '#FFFAEF'
+			color: '#FFFFFF'
 			Layout.alignment: Qt.AlignCenter
 			Layout.bottomMargin: 5
 			Layout.leftMargin: 5
@@ -293,7 +425,7 @@ ApplicationWindow
 				title: "Membrane Potential"
 				anchors.fill: parent
 				antialiasing: true
-				backgroundColor: '#FFFAEF'
+				backgroundColor: '#FFFFFF'
 				legend.visible: false
 				dropShadowEnabled: false
 
@@ -313,18 +445,49 @@ ApplicationWindow
 				{
 					id: neuronLegend
 					text: "neuron"
-					font.pointSize: 16
 				}
 
 				SpinBox
 				{
 					id: spinbox
-                    maximumValue: numberOfNeurons
+                    to: numberOfNeurons
                     anchors.left: neuronLegend.right
 					anchors.leftMargin: 5
-					onEditingFinished:
+					onValueModified:
 					{
 						potentialViewer.changeTrackedNeuron(value)
+					}
+
+					up.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.top: parent.top
+						implicitHeight: 20
+						implicitWidth: 20
+						color: spinbox.up.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '+'
+							anchors.centerIn: parent
+						}
+    				}
+
+					down.indicator: Rectangle
+					{
+						height: parent.height / 2
+						anchors.right: parent.right
+						anchors.bottom: parent.bottom
+						implicitHeight: 20
+						implicitWidth: 20
+						color: spinbox.down.pressed ? "#e4e4e4" : "#f6f6f6"
+						border.color: "#bdbebf"
+						Text
+						{
+							text: '-'
+							anchors.centerIn: parent
+						}
 					}
 				}
 
@@ -341,6 +504,7 @@ ApplicationWindow
 					id: threshold
 					axisX: mX
 					axisY: mY
+					color: "#ED6A56"
 				}
 
 				Timer

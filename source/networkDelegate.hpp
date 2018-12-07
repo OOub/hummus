@@ -26,8 +26,7 @@ namespace adonis_c
 		virtual ~NetworkDelegate(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual void simulationOver(double timestamp, Network* network){}
-		virtual void learningTurnedOff(double timestamp){}
+		virtual void simulationComplete(Network* network){}
 		virtual void incomingSpike(double timestamp, projection* p, Network* network){}
 		virtual void neuronFired(double timestamp, projection* p, Network* network){}
 		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}

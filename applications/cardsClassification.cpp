@@ -1,15 +1,15 @@
 /*
- * hatsNetwork.cpp
+ * cardsClassification.cpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 09/10/2018
+ * Last Version: 05/12/2018
  *
- * Information: Spiking neural network running with histograms of averaged time surfaces converted into spikes.
+ * Information: Spiking neural network classifying the poker-DVS dataset
  */
 
-#include <iostream> 
+#include <iostream>
 
 #include "../source/network.hpp"
 #include "../source/analysis.hpp"
@@ -22,9 +22,9 @@ int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Analysis analysis("../../data/hats/feature_maps/nCars_100samplePerc_1repLabel.txt");
-	adonis_c::TestOutputLogger testOutputLogger("hatsFeatureMaps.bin");
-	adonis_c::Network network({&testOutputLogger, &analysis});
+	adonis_c::Analysis analysis("../../data/cards/test_pip4_rep10_jitter0Label.txt");
+	adonis_c::TestOutputLogger testOutputLogger("cardsClassification.bin");
+	adonis_c::Network network({&testOutputLogger, &analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	
@@ -33,14 +33,14 @@ int main(int argc, char** argv)
     int layer1 = 1;
     int layer2 = 2;
 	
-	int gridWidth = 42;
-	int gridHeight = 35;
-	int rfSize = 7;
+	int gridWidth = 24;
+	int gridHeight = 24;
+	int rfSize = 4;
 	
 	float decayCurrent = 10;
 	float decayPotential = 20;
 	float refractoryPeriod = 3;
-	bool burstingActivity = false;
+	bool  burstingActivity = false;
 	float eligibilityDecay = 20;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	adonis_c::SupervisedReinforcement supervisedReinforcement;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, {}, 3, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, {}, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, {}, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	network.addLayer(layer2, {}, 2, 1, 1, decayCurrent, decayPotential, 1000, burstingActivity, eligibilityDecay);
 
@@ -57,19 +57,19 @@ int main(int argc, char** argv)
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/feature_maps/nCars_100samplePerc_10rep.txt");
+    auto trainingData = dataParser.readTrainingData("../../data/cards/train_pip4_rep10_jitter0.txt");
 	
     //  ----- INJECTING TRAINING SPIKES -----
 	network.injectSpikeFromData(&trainingData);
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/nCars_100samplePerc_1rep.txt");
+	auto testingData = dataParser.readTestData(&network, "../../data/cards/test_pip4_rep10_jitter0.txt");
 	
 	//  ----- INJECTING TEST SPIKES -----
 	network.injectSpikeFromData(&testingData);
 	
 	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/feature_maps/nCars_100samplePerc_10repLabel.txt");
+	auto labels = dataParser.readLabels("../../data/cards/train_pip4_rep10_jitter0Label.txt");
 	network.addLabels(&labels);
 	
 	//  ----- DISPLAY SETTINGS -----

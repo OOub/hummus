@@ -36,13 +36,6 @@ namespace adonis_c
             }
         }
 		
-		void learningTurnedOff(double timestamp) override
-		{
-			std::array<char, 8> bytes;
-			SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-			saveFile.write(bytes.data(), bytes.size());
-		}
-		
 		// ----- PUBLIC LOGGER METHODS -----
 		void neuronFired(double timestamp, projection* p, Network* network) override
 		{

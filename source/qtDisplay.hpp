@@ -21,7 +21,6 @@
 #include <QtWidgets/QApplication>
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
-#include <QQmlContext>
 
 #include "network.hpp"
 #include "inputViewer.hpp"
@@ -49,8 +48,9 @@ namespace adonis_c
             qmlRegisterType<InputViewer>("InputViewer", 1, 0, "InputViewer");
             qmlRegisterType<OutputViewer>("OutputViewer", 1, 0, "OutputViewer");
             qmlRegisterType<PotentialViewer>("PotentialViewer", 1, 0, "PotentialViewer");
-
+						
 			engine = new QQmlApplicationEngine();
+			
 			engine->rootContext()->setContextProperty("layers", 1);
 			engine->rootContext()->setContextProperty("inputSublayer", 1);
 			engine->rootContext()->setContextProperty("sublayers", 1);
@@ -67,12 +67,11 @@ namespace adonis_c
             format.setVersion(3, 3);
             format.setProfile(QSurfaceFormat::CompatibilityProfile);
             window->setFormat(format);
-
             window->show();
 
             inputviewer = window->findChild<InputViewer*>("inputViewer");
             outputviewer = window->findChild<OutputViewer*>("outputViewer");
-            potentialviewer = window->findChild<PotentialViewer*>("potentialViewer");			
+            potentialviewer = window->findChild<PotentialViewer*>("potentialViewer");
         }
 
     	// ----- PUBLIC DISPLAY METHODS -----
@@ -141,11 +140,11 @@ namespace adonis_c
 			engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
 			engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
 			engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
-			
+
 			inputviewer->setYLookup(neuronsInSublayers[0]);
 			outputviewer->setEngine(engine);
         	outputviewer->setYLookup(neuronsInSublayers, neuronsInLayers);
-		
+
 			inputviewer->changeSublayer(inputSublayerToTrack);
 			outputviewer->changeLayer(outputLayerToTrack);
 			outputviewer->changeSublayer(outputSublayerToTrack);

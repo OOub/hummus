@@ -21,8 +21,7 @@ int main(int argc, char** argv)
 
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::SpikeLogger spikeLogger("spikeLog");
-	adonis_c::Network network({&spikeLogger}, &qtDisplay);
+	adonis_c::Network network(&qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
@@ -39,7 +38,7 @@ int main(int argc, char** argv)
 
 	//  ----- CREATING THE NETWORK -----
 	// input neurons
-	network.addLayer(0, {}, inputNeurons, 1, 2, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(0, {}, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
 
 	// layer 1 neurons
 	network.addLayer(1, {}, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
@@ -59,7 +58,7 @@ int main(int argc, char** argv)
   	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(runtime, timestep);
+    network.run(timestep, runtime);
 
     //  ----- EXITING APPLICATION -----
     return 0;

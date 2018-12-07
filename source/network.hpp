@@ -64,10 +64,10 @@ namespace adonis_c
             stdDelegates(_stdDelegates),
 			thDelegate(_thDelegate),
             labels(nullptr),
-			teachingProgress(false),
 			learningStatus(true),
 			learningOffSignal(-1)
-		{}
+		{
+		}
 		
 		Network(MainThreadNetworkDelegate* _thDelegate) : Network({}, _thDelegate)
 		{}
@@ -535,11 +535,10 @@ namespace adonis_c
 		}
 		
 		// clock-based running through the network
-        void run(double _runtime, float _timestep)
+        void run(double _timestep, double _runtime)
         {
-			assignLabelsToNeurons();
 			
-			std::thread spikeManager([this, _runtime, _timestep]
+			std::thread spikeManager([this, _timestep, _runtime]
 			{
 				std::cout << "Running the network..." << std::endl;
 				std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
@@ -562,15 +561,11 @@ namespace adonis_c
 						{
 							if (learningStatus==true && i >= learningOffSignal)
 							{
-								for (auto delegate: stdDelegates)
-								{
-									delegate->learningTurnedOff(i);
-								}
-				
 								std::cout << "learning turned off at t=" << i << std::endl;
 								learningStatus = false;
 							}
 						}
+						
 						for (auto& n: neurons)
 						{
 							update(&n, i, _timestep);
@@ -589,7 +584,38 @@ namespace adonis_c
 				
 				for (auto delegate: stdDelegates)
 				{
-					delegate->simulationOver(_runtime, this);
+					delegate->simulationComplete(this);
+				}
+			});
+			
+			if (thDelegate)
+			{
+				thDelegate->begin(this);
+			}
+			
+			spikeManager.join();
+		}
+		
+		// running through the network and segregating between a training phase and a classification phase
+        void run(float _timestep, std::vector<input>* trainingData, std::vector<input>* testData=nullptr)
+        {
+			
+			std::thread spikeManager([this, _timestep, trainingData, testData]
+			{
+				// importing training data and running the network through the data
+				train(_timestep, trainingData);
+				
+				// importing test data and running the network through the data
+				if (testData)
+				{
+					// if labels have been added to the network then assign labels to the best matching output neuron
+					assignLabelsToNeurons();
+					predict(_timestep, testData);
+				}
+				
+				for (auto delegate: stdDelegates)
+				{
+					delegate->simulationComplete(this);
 				}
 			});
 			
@@ -598,6 +624,61 @@ namespace adonis_c
 				thDelegate->begin(this);
 			}
 			spikeManager.join();
+		}
+		
+		// importing training data and running the network through the data
+		void train(double timestep, std::vector<input>* trainingData)
+		{
+			injectSpikeFromData(trainingData);
+			
+			std::cout << "Training the network..." << std::endl;
+			std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+			if (!neurons.empty())
+			{
+				for (double i=0; i<trainingData->back().timestamp; i+= timestep)
+				{
+					// new pattern onset
+					if (labels && !labels->empty())
+					{
+						if (labels->front().onset <= i)
+						{
+							currentLabel = labels->front().name;
+							labels->pop_front();
+						}
+					}
+				
+					if (learningOffSignal != -1)
+					{
+						if (learningStatus==true && i >= learningOffSignal)
+						{
+							learningStatus = false;
+							std::cout << "learning turned off at t=" << i << std::endl;
+						}
+					}
+				
+					for (auto& n: neurons)
+					{
+						update(&n, i, timestep);
+					}
+				}
+			}
+			else
+			{
+				throw std::runtime_error("add neurons to the network before running it");
+			}
+			std::cout << "Done." << std::endl;
+			std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
+			std::cout << "it took " << elapsed_seconds.count() << "s for the training phase." << std::endl;
+		}
+		
+		// importing test data and running the network through the data to classify it
+		void predict(double timestep, std::vector<input>* testData)
+		{
+			learningStatus = false;
+			initialSpikes.clear();
+			generatedSpikes.clear();
+			std::cout << "Running prediction based on a trained network..." << std::endl;
+			std::cout << "Done." << std::endl;
 		}
 		
 		// ----- SETTERS AND GETTERS -----
@@ -715,6 +796,7 @@ namespace adonis_c
 			}
 		}
 		
+		// if labels have been added to the network then assign labels to the best matching output neuron
 		void assignLabelsToNeurons()
 		{
 			if (labels)
@@ -764,7 +846,6 @@ namespace adonis_c
         std::vector<layer>                     layers;
 		std::vector<Neuron>                    neurons;
 		std::deque<label>*                     labels;
-		bool                                   teachingProgress;
 		bool                                   learningStatus;
 		double                                 learningOffSignal;
 		std::vector<supervisedOutput>          supervisedNeurons;

@@ -11,6 +11,7 @@
 
 #include <iostream> 
 
+#include "../source/qtDisplay.hpp"
 #include "../source/network.hpp"
 #include "../source/testOutputLogger.hpp"
 #include "../source/analysis.hpp"
@@ -20,9 +21,10 @@
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
+    adonis_c::QtDisplay qtDisplay;
 	adonis_c::TestOutputLogger testOutputLogger("hatsLatency.bin");
 	adonis_c::Analysis analysis("../../data/hats/latency/test_nCars_10samplePerc_1repLabel.txt");
-	adonis_c::Network network({&testOutputLogger, &analysis});
+	adonis_c::Network network({&testOutputLogger, &analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	
@@ -38,13 +40,13 @@ int main(int argc, char** argv)
 	float eligibilityDecay = 20;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(layer0, layer1);
+//	adonis_c::Stdp stdp(layer0, layer1);
 	adonis_c::SupervisedReinforcement supervisedReinforcement;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.addLayer(layer0, {&stdp}, 4116, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer1, {&stdp}, 100, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer2, {&supervisedReinforcement}, 2, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(layer0, {}, 4116, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(layer1, {}, 100, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer(layer2, {}, 2, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
 	
 	network.allToAll(network.getLayers()[layer0], network.getLayers()[layer1], true, 1., true, 5);
 	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], true, 1., true, 5);
@@ -65,6 +67,12 @@ int main(int argc, char** argv)
 	// ----- ADDING LABELS
 	auto labels = dataParser.readLabels("../../data/hats/latency/train_nCars_10samplePerc_1repLabel.txt");
 	network.addLabels(&labels);
+	
+	//  ----- DISPLAY SETTINGS -----
+  	qtDisplay.useHardwareAcceleration(true);
+  	qtDisplay.setTimeWindow(5000);
+  	qtDisplay.trackLayer(2);
+	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
     float runtime = testingData.back().timestamp+1;

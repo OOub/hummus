@@ -4,9 +4,9 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 31/05/2018
+ * Last Version: 06/12/2018
  *
- * Information: The DataParser class is used to input data from files into a vector.
+ * Information: The DataParser class is used to read datasets and labels
  */
 
 #pragma once
@@ -41,12 +41,10 @@ namespace adonis_c
 	{
     public:
     	// ----- CONSTRUCTOR -----
-        DataParser() :
-        	timeShift(nullptr)
-        {}
+        DataParser() = default;
 		
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data divided into sublayers (timestamp, X, Y, sublayerID)
-        std::vector<input> readTrainingData(std::string filename, bool changeTimeShift=true)
+        std::vector<input> readData(std::string filename)
         {
             dataFile.open(filename);
             
@@ -102,11 +100,6 @@ namespace adonis_c
 					return a.timestamp < b.timestamp;
 				});
 				
-				if (changeTimeShift)
-				{
-					timeShift = &data.back().timestamp;
-				}
-				
 				std::cout << "Done." << std::endl;
 				return data;
             }
@@ -116,68 +109,42 @@ namespace adonis_c
             }
         }
 		
-		// reads test data in the same format as the training data, stops learning at the end of the training data time and shifts the test data timestamps accordingly
-		template<typename Network>
-		std::vector<input> readTestData(Network* network, std::string filename)
+		std::deque<label> readLabels(std::string labels = "")
 		{
-			if (timeShift)
-			{
-				auto data = readTrainingData(filename, false);
-				network->turnOffLearning(*timeShift);
-				for (auto& input: data)
-				{
-					input.timestamp += *timeShift + 1000;
-				}
-				return data;
-			}
-			else
-			{
-				throw std::logic_error("are you sure training data was fed into the network via the readTrainingData() before starting to feed test data using readTestData()?");
-			}
-				
-		}
-		
-		std::deque<label> readLabels(std::string trainingLabels = "")
-		{
-			if (trainingLabels.empty())
+			if (labels.empty())
 			{
 				throw std::logic_error("no files were passed to the readLabels() function. There is nothing to do.");
 			}
 			else
 			{
-				return readLabelsHelper(trainingLabels);
+				dataFile.open(labels);
+				if (dataFile.good())
+				{
+					std::deque<label> dataLabels;
+					std::string line;
+					std::cout << "Reading labels from " << labels << std::endl;
+					while (std::getline(dataFile, line))
+					{
+						std::vector<std::string> fields;
+						split(fields, line, " ");
+						if (fields.size() == 2)
+						{
+							dataLabels.push_back(label{fields[0], std::stod(fields[1])});
+						}
+					}
+					dataFile.close();
+					std::cout << "Done." << std::endl;
+					return dataLabels;
+				}
+				else
+				{
+					throw std::runtime_error(labels.append(" could not be opened. Please check that the path is set correctly"));
+				}
 			}
 		}
 		
-		std::deque<label> readLabelsHelper(std::string filename)
-		{
-			dataFile.open(filename);
-			if (dataFile.good())
-            {
-            	std::deque<label> dataLabels;
-				std::string line;
-				std::cout << "Reading labels from " << filename << std::endl;
-				while (std::getline(dataFile, line))
-                {
-                	std::vector<std::string> fields;
-                	split(fields, line, " ");
-                	if (fields.size() == 2)
-                	{
-						dataLabels.push_back(label{fields[0], std::stod(fields[1])});
-					}
-                }
-                dataFile.close();
-                std::cout << "Done." << std::endl;
-				return dataLabels;
-            }
-			else
-            {
-                throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly"));
-            }
-		}
-		
 		template <typename Container>
-		Container& split(Container& result, const typename Container::value_type& s, const typename Container::value_type& delimiters)
+		static Container& split(Container& result, const typename Container::value_type& s, const typename Container::value_type& delimiters)
 		{
 			result.clear();
 			size_t current;
@@ -204,6 +171,5 @@ namespace adonis_c
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----
         std::ifstream    dataFile;
-        double*          timeShift;
 	};
 }
