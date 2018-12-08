@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto trainingData = dataParser.readTrainingData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
+	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 	network.turnOffLearning(80000);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(runtime, timestep);
+    network.run(timestep, runtime);
 	
     //  ----- EXITING APPLICATION -----
     return 0;

@@ -48,7 +48,7 @@ namespace adonis_c
             qmlRegisterType<InputViewer>("InputViewer", 1, 0, "InputViewer");
             qmlRegisterType<OutputViewer>("OutputViewer", 1, 0, "OutputViewer");
             qmlRegisterType<PotentialViewer>("PotentialViewer", 1, 0, "PotentialViewer");
-						
+			
 			engine = new QQmlApplicationEngine();
 			
 			engine->rootContext()->setContextProperty("layers", 1);

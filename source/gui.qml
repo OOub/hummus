@@ -13,6 +13,7 @@ R""(
 
 import QtQuick 2.11
 import QtQuick.Controls 2.4
+import QtQuick.Controls 1.4 as OldCtrl
 import QtQuick.Layouts 1.11
 import QtQuick.Window 2.11
 import QtCharts 2.2
@@ -36,7 +37,7 @@ ApplicationWindow
 	visible: true
 	color: "#FFFFFF"
 	flags: Qt.Window | Qt.WindowFullscreenButtonHint
-
+    
 	ColumnLayout
 	{
 		id: mainGrid
@@ -57,7 +58,7 @@ ApplicationWindow
 			RoundButton
 			{
 				id: play
-				text: qsTr("\u25B6")
+				text: qsTr("\u2759\u2759")
 				anchors.centerIn: parent
 
 				contentItem: Text
@@ -85,12 +86,12 @@ ApplicationWindow
 					if (pp == true)
 					{
 						pp = false
-						play.text = qsTr("\u2759\u2759")
+						play.text = qsTr("\u25B6")
 					}
 					else
 					{
 						pp = true
-						play.text = qsTr("\u25B6")
+						play.text = qsTr("\u2759\u2759")
 					}
 				}
 			}
@@ -121,6 +122,7 @@ ApplicationWindow
 			{
 				id: inputChart
 				title: "Input Neurons"
+				titleFont : Qt.font({bold: true})
 				anchors.fill: parent
 				antialiasing: true
 				backgroundColor: '#FFFFFF'
@@ -145,49 +147,17 @@ ApplicationWindow
 					text: "sublayers"
 				}
 
-				SpinBox
+				OldCtrl.SpinBox
 				{
 					id: sublayerbox1
-					from: 0
-					to: inputSublayer
+					minimumValue: 0
+					maximumValue: inputSublayer
 					anchors.left: sublayerLegend1.right
 					anchors.leftMargin: 5
 
-					onValueModified:
+					onEditingFinished:
 					{
 						inputViewer.changeSublayer(value)
-					}
-
-					up.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.top: parent.top
-						implicitHeight: 20
-						implicitWidth: 20
-						color: sublayerbox1.up.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '+'
-							anchors.centerIn: parent
-						}
-    				}
-
-					down.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.bottom: parent.bottom
-						implicitHeight: 20
-						implicitWidth: 20
-						color: sublayerbox1.down.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '-'
-							anchors.centerIn: parent
-						}
 					}
 				}
 
@@ -245,6 +215,7 @@ ApplicationWindow
 			{
 				id: outputChart
 				title: "Output Neurons"
+				titleFont : Qt.font({bold: true})
 				anchors.fill: parent
 				antialiasing: true
 				backgroundColor: '#FFFFFF'
@@ -269,48 +240,16 @@ ApplicationWindow
 					text: "layer"
 				}
 
-				SpinBox
+				OldCtrl.SpinBox
 				{
 					id: layerbox
-					from: 1
-					to: layers
+					minimumValue: 1
+					maximumValue: layers
 					anchors.left: layerLegend.right
 					anchors.leftMargin: 5
-					onValueModified:
+					onEditingFinished:
 					{
 						outputViewer.changeLayer(value)
-					}
-
-					up.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.top: parent.top
-						implicitHeight: 20
-						implicitWidth: 20
-						color: layerbox.up.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '+'
-							anchors.centerIn: parent
-						}
-    				}
-
-					down.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.bottom: parent.bottom
-						implicitHeight: 20
-						implicitWidth: 20
-						color: layerbox.down.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '-'
-							anchors.centerIn: parent
-						}
 					}
 				}
 
@@ -319,51 +258,19 @@ ApplicationWindow
 					id: sublayerLegend
 					text: "sublayers"
 					anchors.left: layerbox.right
-					anchors.leftMargin: 5
+					anchors.leftMargin: 20
 				}
 
-				SpinBox
+				OldCtrl.SpinBox
 				{
 					id: sublayerbox
-					from: 0
-					to: sublayers
+					minimumValue: 0
+					maximumValue: sublayers
 					anchors.left: sublayerLegend.right
 					anchors.leftMargin: 5
-					onValueModified:
+					onEditingFinished:
 					{
 						outputViewer.changeSublayer(value)
-					}
-
-					up.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.top: parent.top
-						implicitHeight: 20
-						implicitWidth: 20
-						color: sublayerbox.up.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '+'
-							anchors.centerIn: parent
-						}
-    				}
-
-					down.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.bottom: parent.bottom
-						implicitHeight: 20
-						implicitWidth: 20
-						color: sublayerbox.down.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '-'
-							anchors.centerIn: parent
-						}
 					}
 				}
 
@@ -422,7 +329,8 @@ ApplicationWindow
 			ChartView
 			{
 				id: membraneChart
-				title: "Membrane Potential"
+				title: "Membrane Potential (mV)"
+				titleFont : Qt.font({bold: true})
 				anchors.fill: parent
 				antialiasing: true
 				backgroundColor: '#FFFFFF'
@@ -447,47 +355,15 @@ ApplicationWindow
 					text: "neuron"
 				}
 
-				SpinBox
+				OldCtrl.SpinBox
 				{
 					id: spinbox
-                    to: numberOfNeurons
+                    maximumValue: numberOfNeurons
                     anchors.left: neuronLegend.right
 					anchors.leftMargin: 5
-					onValueModified:
+					onEditingFinished:
 					{
 						potentialViewer.changeTrackedNeuron(value)
-					}
-
-					up.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.top: parent.top
-						implicitHeight: 20
-						implicitWidth: 20
-						color: spinbox.up.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '+'
-							anchors.centerIn: parent
-						}
-    				}
-
-					down.indicator: Rectangle
-					{
-						height: parent.height / 2
-						anchors.right: parent.right
-						anchors.bottom: parent.bottom
-						implicitHeight: 20
-						implicitWidth: 20
-						color: spinbox.down.pressed ? "#e4e4e4" : "#f6f6f6"
-						border.color: "#bdbebf"
-						Text
-						{
-							text: '-'
-							anchors.centerIn: parent
-						}
 					}
 				}
 

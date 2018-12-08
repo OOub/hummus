@@ -22,7 +22,6 @@
 #include <QtQuick/QQuickView>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QtQuick>
-
 #include <QtCharts/QAbstractSeries>
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QAreaSeries>
