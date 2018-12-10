@@ -29,7 +29,7 @@
 
 namespace adonis_c
 {
-    class QtDisplay : public MainThreadNetworkDelegate
+    class QtDisplay : public MainThreadNetworkAddOn
     {
     public:
 
@@ -75,16 +75,16 @@ namespace adonis_c
         }
 
     	// ----- PUBLIC DISPLAY METHODS -----
-		void incomingSpike(double timestamp, projection* p, Network* network) override
+		void incomingSpike(double timestamp, axon* a, Network* network) override
 		{
-			potentialviewer->handleData(timestamp, p, network);
+			potentialviewer->handleData(timestamp, a, network);
 		}
 
-        void neuronFired(double timestamp, projection* p, Network* network) override
+        void neuronFired(double timestamp, axon* a, Network* network) override
         {
-			inputviewer->handleData(timestamp, p, network);
-			outputviewer->handleData(timestamp, p, network);
-			potentialviewer->handleData(timestamp, p, network);
+			inputviewer->handleData(timestamp, a, network);
+			outputviewer->handleData(timestamp, a, network);
+			potentialviewer->handleData(timestamp, a, network);
 		}
 
 		void timestep(double timestamp, Network* network, Neuron* postNeuron) override

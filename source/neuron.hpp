@@ -23,14 +23,14 @@
 #include <cmath>
 #include <deque>
 
-#include "networkDelegate.hpp"
+#include "networkAddOn.hpp"
 #include "learningRuleHandler.hpp"
 
 namespace adonis_c
 {
 	class Neuron;
 	
-	struct projection
+	struct axon
 	{
 		Neuron*     preNeuron;
 		Neuron*     postNeuron;
@@ -42,7 +42,7 @@ namespace adonis_c
 	struct spike
     {
         double      timestamp;
-        projection* postProjection;
+        axon*       axon;
     };
 	
     class Neuron
@@ -70,7 +70,7 @@ namespace adonis_c
 			active(true),
 			inhibited(false),
 			inhibitionTime(0),
-			initialProjection{nullptr, nullptr, 100/_inputResistance, 0, -1},
+			initialAxon{nullptr, nullptr, 100/_inputResistance, 0, -1},
             lastSpikeTime(0),
             eligibilityTrace(0),
             eligibilityDecay(_eligibilityDecay),
@@ -103,31 +103,31 @@ namespace adonis_c
         Neuron& operator=(Neuron&&) = default; // move assign constructor
 		
 		// ----- PUBLIC NEURON METHODS -----
-		void addProjection(Neuron* postNeuron, float weight, float delay, bool redundantConnections=true)
+		void addAxon(Neuron* postNeuron, float weight, float delay, bool redundantConnections=true)
         {
             if (postNeuron)
             {
                 if (redundantConnections == false)
                 {
                     int16_t ID = postNeuron->neuronID;
-                    auto result = std::find_if(postProjections.begin(), postProjections.end(), [ID](const std::unique_ptr<projection>& p){return p->postNeuron->neuronID == ID;});
+                    auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](const std::unique_ptr<axon>& p){return p->postNeuron->neuronID == ID;});
                     
-                    if (result == postProjections.end()) 
+                    if (result == postAxons.end())
                     {
-                        postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight, delay, -1}));
-                        postNeuron->preProjections.push_back(postProjections.back().get());
+                        postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
+                        postNeuron->preAxons.push_back(postAxons.back().get());
                     }
                     else
                     {
                         #ifndef NDEBUG
-                        std::cout << "projection " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
+                        std::cout << "axon " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
                         #endif
                     }
                 }
                 else
                 {
-                    postProjections.emplace_back(std::unique_ptr<projection>(new projection{this, postNeuron, weight*(1/inputResistance), delay, -1}));
-                    postNeuron->preProjections.push_back(postProjections.back().get());
+                    postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
+                    postNeuron->preAxons.push_back(postAxons.back().get());
                 }
             }
             else
@@ -159,41 +159,41 @@ namespace adonis_c
 			// neuron inactive during refractory period
 			if (active && !inhibited)
 			{
-				if (s.postProjection)
+				if (s.axon)
 				{
-					current += externalCurrent*s.postProjection->weight;
-					activeProjection = *s.postProjection;
-					s.postProjection->lastInputTime = timestamp;
+					current += externalCurrent*s.axon->weight;
+					activeAxon = *s.axon;
+					s.axon->lastInputTime = timestamp;
 				}
 				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 			}
 			
-			if (s.postProjection)
+			if (s.axon)
 			{
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (s.postProjection->preNeuron ? s.postProjection->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.postProjection->weight << " d=" << s.postProjection->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
+				std::cout << "t=" << timestamp << " " << (s.axon->preNeuron ? s.axon->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.axon->weight << " d=" << s.axon->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
 				#endif
-				for (auto delegate: network->getStandardDelegates())
+				for (auto addon: network->getStandardAddOns())
 				{
 					if (potential < threshold)
 					{
-						delegate->incomingSpike(timestamp, s.postProjection, network);
+						addon->incomingSpike(timestamp, s.axon, network);
 					}
 				}
-				if (network->getMainThreadDelegate())
+				if (network->getMainThreadAddOn())
 				{
-					network->getMainThreadDelegate()->incomingSpike(timestamp, s.postProjection, network);
+					network->getMainThreadAddOn()->incomingSpike(timestamp, s.axon, network);
 				}
 			}
 			else
 			{
-				for (auto delegate: network->getStandardDelegates())
+				for (auto addon: network->getStandardAddOns())
 				{
-					delegate->timestep(timestamp, network, this);
+					addon->timestep(timestamp, network, this);
 				}
-				if (network->getMainThreadDelegate())
+				if (network->getMainThreadAddOn())
 				{
-					network->getMainThreadDelegate()->timestep(timestamp, network, this);
+					network->getMainThreadAddOn()->timestep(timestamp, network, this);
 				}
 			}
 			
@@ -203,19 +203,19 @@ namespace adonis_c
 				plasticityTrace += 1;
 				
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (activeProjection.preNeuron ? activeProjection.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeProjection.weight << " d=" << activeProjection.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
+				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
 				
-				for (auto delegate: network->getStandardDelegates())
+				for (auto addon: network->getStandardAddOns())
 				{
-					delegate->neuronFired(timestamp, &activeProjection, network);
+					addon->neuronFired(timestamp, &activeAxon, network);
 				}
-				if (network->getMainThreadDelegate())
+				if (network->getMainThreadAddOn())
 				{
-					network->getMainThreadDelegate()->neuronFired(timestamp, &activeProjection, network);
+					network->getMainThreadAddOn()->neuronFired(timestamp, &activeAxon, network);
 				}
 				
-				for (auto& p : postProjections)
+				for (auto& p : postAxons)
 				{
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
@@ -234,11 +234,11 @@ namespace adonis_c
 		
 		spike prepareInitialSpike(double timestamp)
         {
-            if (!initialProjection.postNeuron)
+            if (!initialAxon.postNeuron)
             {
-                initialProjection.postNeuron = this;
+                initialAxon.postNeuron = this;
             }
-            return spike{timestamp, &initialProjection};
+            return spike{timestamp, &initialAxon};
         }
 	
     	// ----- SETTERS AND GETTERS -----
@@ -332,14 +332,14 @@ namespace adonis_c
 		    return yCoordinate;
 		}
 		
-		std::vector<projection*>& getPreProjections()
+		std::vector<axon*>& getPreAxons()
 		{
-			return preProjections;
+			return preAxons;
 		}
 		
-		std::vector<std::unique_ptr<projection>>& getPostProjections()
+		std::vector<std::unique_ptr<axon>>& getPostAxons()
 		{
-			return postProjections;
+			return postAxons;
 		}
 		
 		float getEligibilityTrace() const
@@ -377,9 +377,9 @@ namespace adonis_c
 			return lastSpikeTime;
 		}
 		
-		projection* getInitialProjection()
+		axon* getInitialAxon()
 		{
-			return &initialProjection;
+			return &initialAxon;
 		}
 		
 	protected:
@@ -408,9 +408,9 @@ namespace adonis_c
 		template<typename Network>
 		void lateralInhibition(double timestamp, Network* network)
 		{
-			if (preProjections.size() > 0)
+			if (preAxons.size() > 0)
 			{
-				for (auto& projReset: preProjections[0]->preNeuron->postProjections)
+				for (auto& projReset: preAxons[0]->preNeuron->postAxons)
 				{
 					if (projReset->postNeuron->neuronID != neuronID)
 					{
@@ -429,16 +429,16 @@ namespace adonis_c
 			// clearing generated spike list
 			for (auto i=0; i<network->getGeneratedSpikes().size(); i++)
 			{
-				if (network->getGeneratedSpikes()[i].postProjection->postNeuron->layerID == layerID && network->getGeneratedSpikes()[i].postProjection->postNeuron->sublayerID == sublayerID && network->getGeneratedSpikes()[i].postProjection->postNeuron->rfRow == rfRow && network->getGeneratedSpikes()[i].postProjection->postNeuron->rfCol == rfCol)
+				if (network->getGeneratedSpikes()[i].axon->postNeuron->layerID == layerID && network->getGeneratedSpikes()[i].axon->postNeuron->sublayerID == sublayerID && network->getGeneratedSpikes()[i].axon->postNeuron->rfRow == rfRow && network->getGeneratedSpikes()[i].axon->postNeuron->rfCol == rfCol)
 				{
 					network->getGeneratedSpikes().erase(network->getGeneratedSpikes().begin()+i);
 				}
 			}
 			
 			// resetting plastic neurons
-			for (auto& inputProjection: preProjections)
+			for (auto& inputAxon: preAxons)
 			{
-				inputProjection->preNeuron->eligibilityTrace = 0;
+				inputAxon->preNeuron->eligibilityTrace = 0;
 			}
 		}
 		
@@ -470,10 +470,10 @@ namespace adonis_c
 		bool                                     burstingActivity;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
-		projection                               activeProjection;
-        std::vector<std::unique_ptr<projection>> postProjections;
-        std::vector<projection*>                 preProjections;
-        projection                               initialProjection;
+		axon                                     activeAxon;
+        std::vector<std::unique_ptr<axon>> postAxons;
+        std::vector<axon*>                 preAxons;
+        axon                                     initialAxon;
         double                                   lastSpikeTime;
         std::vector<LearningRuleHandler*>        learningRuleHandler;
 		

@@ -34,74 +34,74 @@ namespace adonis_c
 			std::cout << "New learning epoch at t=" << timestamp << std::endl;
 			#endif
 			
-			for (auto inputProjection: neuron->getPreProjections())
+			for (auto inputAxon: neuron->getPreAxons())
 			{
 				// selecting plastic neurons
-				if (inputProjection->preNeuron->getEligibilityTrace() > 0.1)
+				if (inputAxon->preNeuron->getEligibilityTrace() > 0.1)
 				{
-					plasticID.push_back(inputProjection->preNeuron->getNeuronID());
-					plasticCoordinates[0].push_back(inputProjection->preNeuron->getX());
-					plasticCoordinates[1].push_back(inputProjection->preNeuron->getY());
-					plasticCoordinates[2].push_back(inputProjection->preNeuron->getRfRow());
-					plasticCoordinates[3].push_back(inputProjection->preNeuron->getRfCol());
+					plasticID.push_back(inputAxon->preNeuron->getNeuronID());
+					plasticCoordinates[0].push_back(inputAxon->preNeuron->getX());
+					plasticCoordinates[1].push_back(inputAxon->preNeuron->getY());
+					plasticCoordinates[2].push_back(inputAxon->preNeuron->getRfRow());
+					plasticCoordinates[3].push_back(inputAxon->preNeuron->getRfCol());
 
 					float change = 0;
 
-					timeDifferences.push_back(timestamp - inputProjection->lastInputTime - inputProjection->delay);
+					timeDifferences.push_back(timestamp - inputAxon->lastInputTime - inputAxon->delay);
 					if (timeDifferences.back() > 0)
 					{
 						change = lambda*(neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(-alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(-alpha*timeDifferences.back()/neuron->getDecayPotential()))*neuron->getSynapticEfficacy();
-						inputProjection->delay += change;
+						inputAxon->delay += change;
 						#ifndef NDEBUG
-						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						std::cout << inputAxon->preNeuron->getLayerID() << " " << inputAxon->preNeuron->getNeuronID() << " " << inputAxon->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 						#endif
 					}
 
 					else if (timeDifferences.back() < 0)
 					{
 						change = -lambda*((neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(alpha*timeDifferences.back()/neuron->getDecayPotential())))*neuron->getSynapticEfficacy();
-						inputProjection->delay += change;
+						inputAxon->delay += change;
 						#ifndef NDEBUG
-						std::cout << inputProjection->preNeuron->getLayerID() << " " << inputProjection->preNeuron->getNeuronID() << " " << inputProjection->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
+						std::cout << inputAxon->preNeuron->getLayerID() << " " << inputAxon->preNeuron->getNeuronID() << " " << inputAxon->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
 						#endif
 					}
 					neuron->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
 				}
 			}
 			
-			for (auto delegate: network->getStandardDelegates())
+			for (auto addon: network->getStandardAddOns())
 			{
-				delegate->learningEpoch(timestamp, network, neuron, timeDifferences, plasticCoordinates);
+				addon->learningEpoch(timestamp, network, neuron, timeDifferences, plasticCoordinates);
 			}
 			
-			if (network->getMainThreadDelegate())
+			if (network->getMainThreadAddOn())
 			{
-				network->getMainThreadDelegate()->learningEpoch(timestamp, network, neuron, timeDifferences, plasticCoordinates);
+				network->getMainThreadAddOn()->learningEpoch(timestamp, network, neuron, timeDifferences, plasticCoordinates);
 			}
 			
 			// weight reinforcement
-			// looping through all projections from the winner
-            for (auto& allProjections: neuron->getPreProjections())
+			// looping through all axons from the winner
+            for (auto& allAxons: neuron->getPreAxons())
             {
-                int16_t ID = allProjections->preNeuron->getNeuronID();
-                // if the projection is plastic
+                int16_t ID = allAxons->preNeuron->getNeuronID();
+                // if the axon is plastic
                 if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
                 {
-					// positive reinforcement on winner projections
-					if (allProjections->weight < (1/neuron->getInputResistance())/plasticID.size())
+					// positive reinforcement on winner axons
+					if (allAxons->weight < (1/neuron->getInputResistance())/plasticID.size())
                     {
-                     	allProjections->weight += allProjections->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
+                     	allAxons->weight += allAxons->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
                     }
                 }
                 else
                 {
-                    if (allProjections->weight > 0)
+                    if (allAxons->weight > 0)
                     {
-                        // negative reinforcement on other projections going towards the winner to prevent other neurons from triggering it
-                        allProjections->weight -= allProjections->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
-						if (allProjections->weight < 0)
+                        // negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
+                        allAxons->weight -= allAxons->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
+						if (allAxons->weight < 0)
 						{
-							allProjections->weight = 0;
+							allAxons->weight = 0;
 						}
                     }
 				}

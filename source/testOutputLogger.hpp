@@ -23,7 +23,7 @@
 
 namespace adonis_c
 {
-    class TestOutputLogger : public StandardNetworkDelegate
+    class TestOutputLogger : public StandardNetworkAddOn
     {
     public:
     	// ----- CONSTRUCTOR -----
@@ -37,7 +37,7 @@ namespace adonis_c
         }
 		
 		// ----- PUBLIC LOGGER METHODS -----
-		void neuronFired(double timestamp, projection* p, Network* network) override
+		void neuronFired(double timestamp, axon* a, Network* network) override
 		{
 			// logging only after learning is stopped
 			if (!network->getLearningStatus())
@@ -47,8 +47,8 @@ namespace adonis_c
 				{	
 					std::array<char, 12> bytes;
 					SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-					SpikeLogger::copy_to(bytes.data() + 8, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
-					SpikeLogger::copy_to(bytes.data() + 10, p->postNeuron->getNeuronID());
+					SpikeLogger::copy_to(bytes.data() + 8, a->preNeuron ? a->preNeuron->getNeuronID() : -1);
+					SpikeLogger::copy_to(bytes.data() + 10, a->postNeuron->getNeuronID());
 					saveFile.write(bytes.data(), bytes.size());
 				}
 			}

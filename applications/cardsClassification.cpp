@@ -23,8 +23,7 @@ int main(int argc, char** argv)
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::Analysis analysis("../../data/cards/test_pip4_rep10_jitter0Label.txt");
-	adonis_c::TestOutputLogger testOutputLogger("cardsClassification.bin");
-	adonis_c::Network network({&testOutputLogger, &analysis}, &qtDisplay);
+	adonis_c::Network network({&analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	
@@ -55,18 +54,10 @@ int main(int argc, char** argv)
 	network.convolution(network.getLayers()[layer0], network.getLayers()[layer1], true, 1., true, 20);
 	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], true, 1., true, 20);
 	
-	//  ----- READING TRAINING DATA FROM FILE -----
+	//  ----- READING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/cards/train_pip4_rep10_jitter0.txt");
-	
-    //  ----- INJECTING TRAINING SPIKES -----
-	network.injectSpikeFromData(&trainingData);
-	
-	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/cards/test_pip4_rep10_jitter0.txt");
-	
-	//  ----- INJECTING TEST SPIKES -----
-	network.injectSpikeFromData(&testingData);
+    auto trainingData = dataParser.readData("../../data/cards/train_pip4_rep10_jitter0.txt");
+	auto testData = dataParser.readData("../../data/cards/test_pip4_rep10_jitter0.txt");
 	
 	// ----- ADDING LABELS
 	auto labels = dataParser.readLabels("../../data/cards/train_pip4_rep10_jitter0Label.txt");
@@ -79,10 +70,7 @@ int main(int argc, char** argv)
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
-    float runtime = testingData.back().timestamp+1000;
-	float timestep = 0.1;
-	
-    network.run(runtime, timestep);
+    network.run(0.1, &trainingData, &testData);
 	analysis.accuracy();
 	
     //  ----- EXITING APPLICATION -----

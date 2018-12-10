@@ -19,7 +19,7 @@
 
 namespace adonis_c
 {
-	class Analysis : public StandardNetworkDelegate
+	class Analysis : public StandardNetworkAddOn
 	{
 	public:
 		// ----- CONSTRUCTOR -----
@@ -56,7 +56,7 @@ namespace adonis_c
 			}
 		}
 		
-		void neuronFired(double timestamp, projection* p, Network* network) override
+		void neuronFired(double timestamp, axon* p, Network* network) override
 		{
 			// logging only after learning is stopped
 			if (!network->getLearningStatus())
@@ -73,16 +73,14 @@ namespace adonis_c
 		{
 			for (auto i=1; i<labels.size(); i++)
 			{
-				if (i = labels.size()-1)
+				auto it = predictedSpikes.end();
+				if (i == labels.size()-1)
 				{
-					double currentLabel = labels[i-1].onset;
-					auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [currentLabel](spike a){return a.timestamp >= currentLabel;});
+					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset;});
 				}
 				else
 				{
-					double nextLabel = labels[i].onset;
-					double currentLabel = labels[i-1].onset;
-					auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [currentLabel, nextLabel](spike a){return a.timestamp >= currentLabel && a.timestamp < nextLabel;});
+					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
 				}
 
 				if (it != predictedSpikes.end())
@@ -90,7 +88,7 @@ namespace adonis_c
 					auto idx = std::distance(predictedSpikes.begin(), it);
 					for (auto n: network->getSupervisedNeurons())
 					{
-						if (n.neuron == predictedSpikes[idx].postProjection->postNeuron->getNeuronID())
+						if (n.neuron == predictedSpikes[idx].axon->postNeuron->getNeuronID())
 						{
 							predictedLabels.emplace_back(n.label);
 						}

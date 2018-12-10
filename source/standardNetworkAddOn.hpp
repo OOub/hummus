@@ -1,5 +1,5 @@
 /*
- * standardNetworkDelegate.hpp
+ * standardNetworkAddOn.hpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -11,15 +11,15 @@
 
 #pragma once
 
-#include "networkDelegate.hpp"
+#include "networkAddOn.hpp"
 
 namespace adonis_c
 {
-	class StandardNetworkDelegate : public NetworkDelegate
+	class StandardNetworkAddOn : public NetworkAddOn
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		StandardNetworkDelegate() = default;
-		virtual ~StandardNetworkDelegate(){}
+		StandardNetworkAddOn() = default;
+		virtual ~StandardNetworkAddOn(){}
 	};
 }

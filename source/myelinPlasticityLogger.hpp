@@ -22,7 +22,7 @@
 
 namespace adonis_c
 {
-    class MyelinPlasticityLogger : public StandardNetworkDelegate
+    class MyelinPlasticityLogger : public StandardNetworkAddOn
     {
     public:
     	// ----- CONSTRUCTOR -----

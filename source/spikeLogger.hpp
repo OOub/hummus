@@ -22,7 +22,7 @@
 
 namespace adonis_c
 {
-    class SpikeLogger : public StandardNetworkDelegate
+    class SpikeLogger : public StandardNetworkAddOn
     {
     public:
     	// ----- CONSTRUCTOR -----
@@ -36,37 +36,37 @@ namespace adonis_c
         }
 		
 		// ----- PUBLIC SPIKE LOGGER METHODS -----
-		void incomingSpike(double timestamp, projection* p, Network* network) override
+		void incomingSpike(double timestamp, axon* a, Network* network) override
         {
 			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
-			copy_to(bytes.data() + 8, p->delay);
-			copy_to(bytes.data() + 12, p->weight);
-			copy_to(bytes.data() + 16, p->postNeuron->getPotential());
-			copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
-			copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
-			copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
-			copy_to(bytes.data() + 26, p->postNeuron->getRfRow());
-			copy_to(bytes.data() + 28, p->postNeuron->getRfCol());
-			copy_to(bytes.data() + 30, p->postNeuron->getX());
-			copy_to(bytes.data() + 32, p->postNeuron->getY());
+			copy_to(bytes.data() + 8, a->delay);
+			copy_to(bytes.data() + 12, a->weight);
+			copy_to(bytes.data() + 16, a->postNeuron->getPotential());
+			copy_to(bytes.data() + 20, a->preNeuron ? a->preNeuron->getNeuronID() : -1);
+			copy_to(bytes.data() + 22, a->postNeuron->getNeuronID());
+			copy_to(bytes.data() + 24, a->postNeuron->getLayerID());
+			copy_to(bytes.data() + 26, a->postNeuron->getRfRow());
+			copy_to(bytes.data() + 28, a->postNeuron->getRfCol());
+			copy_to(bytes.data() + 30, a->postNeuron->getX());
+			copy_to(bytes.data() + 32, a->postNeuron->getY());
 			saveFile.write(bytes.data(), bytes.size());
         }
 		
-		void neuronFired(double timestamp, projection* p, Network* network) override
+		void neuronFired(double timestamp, axon* a, Network* network) override
         {
 			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
-			copy_to(bytes.data() + 8, p->delay);
-			copy_to(bytes.data() + 12, p->weight);
-			copy_to(bytes.data() + 16, p->postNeuron->getPotential());
-			copy_to(bytes.data() + 20, p->preNeuron ? p->preNeuron->getNeuronID() : -1);
-			copy_to(bytes.data() + 22, p->postNeuron->getNeuronID());
-			copy_to(bytes.data() + 24, p->postNeuron->getLayerID());
-			copy_to(bytes.data() + 26, p->postNeuron->getRfRow());
-			copy_to(bytes.data() + 28, p->postNeuron->getRfCol());
-			copy_to(bytes.data() + 30, p->postNeuron->getX());
-			copy_to(bytes.data() + 32, p->postNeuron->getY());
+			copy_to(bytes.data() + 8, a->delay);
+			copy_to(bytes.data() + 12, a->weight);
+			copy_to(bytes.data() + 16, a->postNeuron->getPotential());
+			copy_to(bytes.data() + 20, a->preNeuron ? a->preNeuron->getNeuronID() : -1);
+			copy_to(bytes.data() + 22, a->postNeuron->getNeuronID());
+			copy_to(bytes.data() + 24, a->postNeuron->getLayerID());
+			copy_to(bytes.data() + 26, a->postNeuron->getRfRow());
+			copy_to(bytes.data() + 28, a->postNeuron->getRfCol());
+			copy_to(bytes.data() + 30, a->postNeuron->getX());
+			copy_to(bytes.data() + 32, a->postNeuron->getY());
 			saveFile.write(bytes.data(), bytes.size());
         }
 		

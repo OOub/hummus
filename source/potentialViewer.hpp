@@ -56,15 +56,15 @@ namespace adonis_c
         virtual ~PotentialViewer(){}
 		
     	// ----- PUBLIC POTENTIALVIEWER METHODS -----
-		void handleData(double timestamp, projection* p, Network* network)
+		void handleData(double timestamp, axon* a, Network* network)
 		{
-			if (p->postNeuron->getNeuronID() == neuronTracker)
+			if (a->postNeuron->getNeuronID() == neuronTracker)
 			{
 				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed)
 				{
-					potential = p->postNeuron->getPotential();
-					threshold = p->postNeuron->getThreshold();
+					potential = a->postNeuron->getPotential();
+					threshold = a->postNeuron->getThreshold();
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));
 					minY = std::min(minY, static_cast<float>(potential));

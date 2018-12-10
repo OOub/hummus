@@ -59,17 +59,17 @@ namespace adonis_c
         virtual ~InputViewer(){}
 		
     	// ----- PUBLIC INPUTVIEWER METHODS -----
-		void handleData(double timestamp, projection* p, Network* network)
+		void handleData(double timestamp, axon* a, Network* network)
         {
-			if (p->postNeuron->getInitialProjection()->postNeuron)
+			if (a->postNeuron->getInitialAxon()->postNeuron)
 			{
-				if (p->postNeuron->getInitialProjection()->postNeuron->getSublayerID() == sublayerTracker)
+				if (a->postNeuron->getInitialAxon()->postNeuron->getSublayerID() == sublayerTracker)
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)
 					{
-						points.append(QPointF(timestamp, p->postNeuron->getNeuronID()));
-						maxY = std::max(static_cast<float>(maxY), static_cast<float>(p->postNeuron->getNeuronID()));
+						points.append(QPointF(timestamp, a->postNeuron->getNeuronID()));
+						maxY = std::max(static_cast<float>(maxY), static_cast<float>(a->postNeuron->getNeuronID()));
 					}
 					else
 					{
