@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 31/05/2018
+ * Last Version: 11/12/2018
  *
  * Information: Example of a basic spiking neural network.
  */
@@ -14,7 +14,8 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/stdp.hpp"
+#include "../source/rewardModulatedSTDP.hpp"
+
 
 int main(int argc, char** argv)
 {
@@ -27,35 +28,26 @@ int main(int argc, char** argv)
 	float runtime = 100;
 	float timestep = 0.1;
 
-	float decayCurrent = 10;
-	float potentialDecay = 20;
-	float refractoryPeriod = 3;
-
-    int inputNeurons = 2;
-    int layer1Neurons = 1;
-
-    float weight = 1./2;
-
 	//  ----- CREATING THE NETWORK -----
+
 	// input neurons
-	network.addLayer(0, {}, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(0, {}, 1, 1, 1, false);
 
 	// layer 1 neurons
-	network.addLayer(1, {}, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer(1, {}, 2, 1, 1, false);
 
     //  ----- CONNECTING THE NETWORK -----
-	// input layer -> layer 1
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, false, 0);
-
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0, 10, 2);
+	network.lateralInhibition(network.getLayers()[1], -1);
+	
     //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(10));
-	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(15));
-	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(40));
-
+	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(30));
+	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
+  	qtDisplay.trackNeuron(2);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(timestep, runtime);

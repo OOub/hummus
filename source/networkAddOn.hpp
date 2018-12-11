@@ -26,7 +26,7 @@ namespace adonis_c
 		virtual ~NetworkAddOn(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual void simulationComplete(Network* network){}
+		virtual void onCompleted(Network* network){}
 		virtual void incomingSpike(double timestamp, axon* a, Network* network){}
 		virtual void neuronFired(double timestamp, axon* a, Network* network){}
 		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}

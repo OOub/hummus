@@ -14,7 +14,7 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/stdp.hpp"
+#include "../source/STDP.hpp"
 
 int main(int argc, char** argv)
 {
@@ -27,18 +27,20 @@ int main(int argc, char** argv)
 	adonis_c::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(0, 2, 8, 8, {}, 2);
-	network.add2dLayer(1, 2, 8, 8, {}, 2, 1);
-	network.addLayer(2, {}, 1, 1, 1);
+	network.add2dLayer(0, 2, 8, 8, {}, 2, -1, false);
+	network.add2dLayer(1, 2, 8, 8, {}, 2, 1, false);
+	network.addLayer(2, {}, 1, 1, 1,  false);
 		
-	network.convolution(network.getLayers()[0], network.getLayers()[1], false, 1., false, 0);
-	network.allToAll(network.getLayers()[1], network.getLayers()[2], false, 1., false, 0);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1, 0);
+
 	
 	//  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(20);
-  	qtDisplay.trackLayer(2);
-	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
+  	qtDisplay.setTimeWindow(50);
+  	qtDisplay.trackInputSublayer(0);
+  	qtDisplay.trackLayer(1);
+	qtDisplay.trackNeuron(2);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(0.1, &trainingData);

@@ -1,12 +1,12 @@
 /*
- * testOutputLogger.hpp
+ * predictionLogger.hpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 20/11/2018
  *
- * Information: Add-on to the Network class, used to log the spikes from the output layer during the testing phase
+ * Information: Add-on to the Network class, used to log the spikes from the output layer when the learning is off
  */
 
 #pragma once
@@ -23,11 +23,11 @@
 
 namespace adonis_c
 {
-    class TestOutputLogger : public StandardNetworkAddOn
+    class PredictionLogger : public StandardNetworkAddOn
     {
     public:
     	// ----- CONSTRUCTOR -----
-        TestOutputLogger(std::string filename)
+        PredictionLogger(std::string filename)
         {
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good())

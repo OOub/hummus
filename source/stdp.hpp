@@ -1,12 +1,12 @@
 /*
- * stdp.hpp
+ * STDP.hpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 25/09/2018
  *
- * Information: The Stdp class
+ * Information: The STDP class
  */
 
 #pragma once
@@ -15,11 +15,11 @@ namespace adonis_c
 {
 	class Neuron;
 	
-	class Stdp : public LearningRuleHandler
+	class STDP : public LearningRuleHandler
 	{
 	public:
 		// ----- CONSTRUCTOR -----
-		Stdp(int _preLayer, int _postLayer, float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
+		STDP(int _preLayer, int _postLayer, float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
 		preLayer(_preLayer),
 		postLayer(_postLayer),
 		A_plus(_A_plus),

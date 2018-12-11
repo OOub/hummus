@@ -94,7 +94,7 @@ namespace adonis_c
 			potentialviewer->handleTimestep(timestamp, network, postNeuron);
 		}
 
-		void begin(Network* network) override
+		void begin(Network* network, std::mutex* sync) override
 		{
 			// finding the number of layers in the network
 			int numberOfLayers = static_cast<int>(network->getLayers().size());
@@ -150,6 +150,8 @@ namespace adonis_c
 			outputviewer->changeSublayer(outputSublayerToTrack);
 			potentialviewer->trackNeuron(neuronToTrack);
 			
+			sync->unlock();
+
 			app->exec();
 		}
 		

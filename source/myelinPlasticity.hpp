@@ -19,9 +19,10 @@ namespace adonis_c
 	{
 	public:
 		// ----- CONSTRUCTOR -----
-		MyelinPlasticity(float _alpha=1, float _lambda=1) :
+		MyelinPlasticity(float _alpha=1, float _lambda=1, bool _weightReinforcement=false) :
 		alpha(_alpha),
-		lambda(_lambda)
+		lambda(_lambda),
+		weightReinforcement(_weightReinforcement)
 		{}
 		
 		// ----- PUBLIC METHODS -----
@@ -79,6 +80,37 @@ namespace adonis_c
 			{
 				network->getMainThreadAddOn()->learningEpoch(timestamp, network, neuron, timeDifferences, plasticCoordinates);
 			}
+			
+			// weight reinforcement
+			if (weightReinforcement)
+			{
+				// looping through all axons from the winner
+				for (auto& allAxons: neuron->getPreAxons())
+				{
+					int16_t ID = allAxons->preNeuron->getNeuronID();
+					// if the axon is plastic
+					if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
+					{
+						// positive reinforcement on winner axons
+						if (allAxons->weight < (1/neuron->getInputResistance())/plasticID.size())
+						{
+							allAxons->weight += allAxons->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
+						}
+					}
+					else
+					{
+						if (allAxons->weight > 0)
+						{
+							// negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
+							allAxons->weight -= allAxons->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
+							if (allAxons->weight < 0)
+							{
+								allAxons->weight = 0;
+							}
+						}
+					}
+				}
+            }
 		}
 		
 	protected:
@@ -86,5 +118,6 @@ namespace adonis_c
 		// ----- LEARNING RULE PARAMETERS -----
 		float alpha;
 		float lambda;
+		bool  weightReinforcement;
 	};
 }

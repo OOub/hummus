@@ -69,36 +69,38 @@ namespace adonis_c
 			}
 		}
 		
-		void simulationComplete(Network* network) override
+		/// cannot use labels as they are. need an error signal instead
+		void onCompleted(Network* network) override
 		{
-			for (auto i=1; i<labels.size(); i++)
-			{
-				auto it = predictedSpikes.end();
-				if (i == labels.size()-1)
-				{
-					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset;});
-				}
-				else
-				{
-					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
-				}
-
-				if (it != predictedSpikes.end())
-				{
-					auto idx = std::distance(predictedSpikes.begin(), it);
-					for (auto n: network->getSupervisedNeurons())
-					{
-						if (n.neuron == predictedSpikes[idx].axon->postNeuron->getNeuronID())
-						{
-							predictedLabels.emplace_back(n.label);
-						}
-					}
-				}
-				else
-				{
-					predictedLabels.emplace_back("NaN");
-				}
-			}
+//			// add condition if predictedSpikes is not empty
+//			for (auto i=1; i<labels.size(); i++)
+//			{
+//				auto it = predictedSpikes.end();
+//				if (i == labels.size()-1)
+//				{
+//					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset;});
+//				}
+//				else
+//				{
+//					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
+//				}
+//
+//				if (it != predictedSpikes.end())
+//				{
+//					auto idx = std::distance(predictedSpikes.begin(), it);
+//					for (auto n: network->getSupervisedNeurons())
+//					{
+//						if (n.neuron == predictedSpikes[idx].axon->postNeuron->getNeuronID())
+//						{
+//							predictedLabels.emplace_back(n.label);
+//						}
+//					}
+//				}
+//				else
+//				{
+//					predictedLabels.emplace_back("NaN");
+//				}
+//			}
 		}
 		
 	protected:

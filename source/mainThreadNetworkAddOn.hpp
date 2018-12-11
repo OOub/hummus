@@ -22,6 +22,6 @@ namespace adonis_c
 		MainThreadNetworkAddOn() = default;
 		virtual ~MainThreadNetworkAddOn(){}
 		
-		virtual void begin(Network* network){}
+		virtual void begin(Network* network, std::mutex* sync){}
 	};
 }

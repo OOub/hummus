@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 25/09/2018
+ * Last Version: 11/12/2018
  *
  * Information: The Neuron class defines a neuron and its parameters. It can take in a pointer to a LearningRuleHandler object to define which learning rule it follows. The weight is automatically scaled depending on the input resistance used
  */
@@ -23,7 +23,6 @@
 #include <cmath>
 #include <deque>
 
-#include "networkAddOn.hpp"
 #include "learningRuleHandler.hpp"
 
 namespace adonis_c
@@ -35,7 +34,7 @@ namespace adonis_c
 		Neuron*     preNeuron;
 		Neuron*     postNeuron;
 		float       weight;
-		float       delay;
+		int         delay;
 		double      lastInputTime;
 	};
 	
@@ -50,7 +49,7 @@ namespace adonis_c
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}) :
+    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, std::string _classLabel="") :
 			neuronID(_neuronID),
 			rfRow(_rfRow),
 			rfCol(_rfCol),
@@ -68,8 +67,6 @@ namespace adonis_c
 			current(0),
 			potential(_restingPotential),
 			active(true),
-			inhibited(false),
-			inhibitionTime(0),
 			initialAxon{nullptr, nullptr, 100/_inputResistance, 0, -1},
             lastSpikeTime(0),
             eligibilityTrace(0),
@@ -78,7 +75,12 @@ namespace adonis_c
             yCoordinate(_yCoordinate),
 			learningRuleHandler(_learningRuleHandler),
 			plasticityTrace(0),
-			burstingActivity(_burstingActivity)
+			burstingActivity(_burstingActivity),
+			homeostasis(_homeostasis),
+			restingThreshold(-50),
+			decayHomeostasis(_decayHomeostasis),
+			homeostasisBeta(_homeostasisBeta),
+			classLabel(_classLabel)
     	{
     		// error handling
 			if (decayCurrent == decayPotential)
@@ -103,31 +105,34 @@ namespace adonis_c
         Neuron& operator=(Neuron&&) = default; // move assign constructor
 		
 		// ----- PUBLIC NEURON METHODS -----
-		void addAxon(Neuron* postNeuron, float weight, float delay, bool redundantConnections=true)
+		void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true)
         {
             if (postNeuron)
             {
-                if (redundantConnections == false)
-                {
-                    int16_t ID = postNeuron->neuronID;
-                    auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](const std::unique_ptr<axon>& p){return p->postNeuron->neuronID == ID;});
-                    
-                    if (result == postAxons.end())
-                    {
-                        postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
-                        postNeuron->preAxons.push_back(postAxons.back().get());
-                    }
-                    else
-                    {
-                        #ifndef NDEBUG
-                        std::cout << "axon " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
-                        #endif
-                    }
-                }
-                else
-                {
-                    postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
-                    postNeuron->preAxons.push_back(postAxons.back().get());
+            	if (connectionProbability(probability))
+            	{
+					if (redundantConnections == false)
+					{
+						int16_t ID = postNeuron->neuronID;
+						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](const std::unique_ptr<axon>& p){return p->postNeuron->neuronID == ID;});
+						
+						if (result == postAxons.end())
+						{
+							postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
+							postNeuron->preAxons.push_back(postAxons.back().get());
+						}
+						else
+						{
+							#ifndef NDEBUG
+							std::cout << "axon " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
+							#endif
+						}
+					}
+					else
+					{
+						postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
+						postNeuron->preAxons.push_back(postAxons.back().get());
+					}
                 }
             }
             else
@@ -139,11 +144,6 @@ namespace adonis_c
 		template<typename Network>
 		void update(double timestamp, float timestep, spike s, Network* network)
 		{
-			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
-			{
-				inhibited = false;
-			}
-			
             if (timestamp - lastSpikeTime >= refractoryPeriod)
             {
                 active = true;
@@ -156,11 +156,22 @@ namespace adonis_c
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
 			
+			// threshold decay
+			if (homeostasis)
+			{
+				threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
+			}
+			
 			// neuron inactive during refractory period
-			if (active && !inhibited)
+			if (active)
 			{
 				if (s.axon)
 				{
+					// increase the threshold
+					if (homeostasis)
+					{
+						threshold += homeostasisBeta/decayHomeostasis;
+					}
 					current += externalCurrent*s.axon->weight;
 					activeAxon = *s.axon;
 					s.axon->lastInputTime = timestamp;
@@ -382,6 +393,21 @@ namespace adonis_c
 			return &initialAxon;
 		}
 		
+		std::string getClassLabel() const
+		{
+			return classLabel;
+		}
+		
+		void setClassLabel(std::string newLabel)
+		{
+			classLabel = newLabel;
+		}
+		
+		std::vector<LearningRuleHandler*> getLearningRuleHandler() const
+		{
+			return learningRuleHandler;
+		}
+		
 	protected:
 		
 		// ----- LEARNING RULE -----
@@ -400,46 +426,28 @@ namespace adonis_c
 					}
 				}
 			}
-			lateralInhibition(timestamp, network);
 			resetLearning(network);
 		}
 		
 		// ----- NEURON BEHAVIOR -----
-		template<typename Network>
-		void lateralInhibition(double timestamp, Network* network)
-		{
-			if (preAxons.size() > 0)
-			{
-				for (auto& projReset: preAxons[0]->preNeuron->postAxons)
-				{
-					if (projReset->postNeuron->neuronID != neuronID)
-					{
-						projReset->postNeuron->inhibited = true;
-						projReset->postNeuron->inhibitionTime = timestamp;
-						projReset->postNeuron->setCurrent(0);
-						projReset->postNeuron->setPotential(restingPotential);
-					}
-				}
-			}
-		}
 		
 		template<typename Network>
 		void resetLearning(Network* network)
 		{
-			// clearing generated spike list
-			for (auto i=0; i<network->getGeneratedSpikes().size(); i++)
-			{
-				if (network->getGeneratedSpikes()[i].axon->postNeuron->layerID == layerID && network->getGeneratedSpikes()[i].axon->postNeuron->sublayerID == sublayerID && network->getGeneratedSpikes()[i].axon->postNeuron->rfRow == rfRow && network->getGeneratedSpikes()[i].axon->postNeuron->rfCol == rfCol)
-				{
-					network->getGeneratedSpikes().erase(network->getGeneratedSpikes().begin()+i);
-				}
-			}
-			
 			// resetting plastic neurons
 			for (auto& inputAxon: preAxons)
 			{
 				inputAxon->preNeuron->eligibilityTrace = 0;
 			}
+		}
+		
+		// -----PROTECTED NEURON METHODS -----
+		static bool connectionProbability(int probability)
+		{
+			std::random_device device;
+			std::mt19937 randomEngine(device());
+			std::bernoulli_distribution dist(probability/100.);
+			return dist(randomEngine);
 		}
 		
 		// ----- NEURON PARAMETERS -----
@@ -458,8 +466,6 @@ namespace adonis_c
         float                                    current;
         float                                    potential;
 		bool                                     active;
-		bool                                     inhibited;
-		double                                   inhibitionTime;
 		
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
@@ -468,16 +474,21 @@ namespace adonis_c
 		int16_t                                  xCoordinate;
 		int16_t                                  yCoordinate;
 		bool                                     burstingActivity;
+		bool                                     homeostasis;
+		float                                    restingThreshold;
+		float                                    decayHomeostasis;
+		float                                    homeostasisBeta;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		axon                                     activeAxon;
-        std::vector<std::unique_ptr<axon>> postAxons;
-        std::vector<axon*>                 preAxons;
+        std::vector<std::unique_ptr<axon>>       postAxons;
+        std::vector<axon*>                       preAxons;
         axon                                     initialAxon;
         double                                   lastSpikeTime;
         std::vector<LearningRuleHandler*>        learningRuleHandler;
 		
         // ----- LEARNING RULE VARIABLES -----
         float                                    plasticityTrace;
+        std::string                              classLabel;
     };
 }
