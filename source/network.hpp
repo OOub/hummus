@@ -67,12 +67,14 @@ namespace adonis_c
 		Network(MainThreadNetworkAddOn* _thAddOn) : Network({}, _thAddOn)
 		{}
 		
-		// ----- PUBLIC NETWORK METHODS -----
+		// ----- NEURON CREATION METHODS -----
 		
 		// add neurons
-		void addLayer(int16_t layerID, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
+		void addLayer(std::vector<LearningRuleHandler*> _learningRuleHandler={}, int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _rfID=0)
         {
         	unsigned long shift = 0;
+			
+        	int16_t layerID = 0;
         	if (!layers.empty())
         	{
         		for (auto& l: layers)
@@ -85,8 +87,9 @@ namespace adonis_c
 						}
 					}
 				}
+				layerID = layers.back().ID+1;
 			}
-
+			
 			// building a layer of one dimensional sublayers with no receptiveFields
 			int counter = 0;
 			std::vector<sublayer> subTemp;
@@ -98,7 +101,7 @@ namespace adonis_c
 					std::vector<std::size_t> neuronTemp;
 					for (auto k=0+shift; k<neuronNumber+shift; k++)
 					{
-						neurons.emplace_back(k+counter, j, 0, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta);
+						neurons.emplace_back(k+counter, j, 0, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta, _wta);
 						
 						neuronTemp.emplace_back(neurons.size()-1);
 					}
@@ -110,7 +113,8 @@ namespace adonis_c
 			layers.emplace_back(layer{subTemp, layerID, -1, -1});
         }
 		
-		void addDecisionMakingLayer(int16_t layerID, std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+		// add a one dimnetional layer of neurons that are labelled according to the provided labels
+		void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=1000, bool _wta=true, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
 			DataParser dataParser;
 			trainingLabels = dataParser.readLabels(trainingLabelFilename);
@@ -127,6 +131,7 @@ namespace adonis_c
 			
 			// add decision-making neurons
 			unsigned long shift = 0;
+			int16_t layerID = 0;
         	if (!layers.empty())
         	{
         		for (auto& l: layers)
@@ -139,19 +144,21 @@ namespace adonis_c
 						}
 					}
 				}
+				layerID = layers.back().ID+1;
 			}
 
 			std::vector<std::size_t> neuronTemp;
 			for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++)
 			{
-				neurons.emplace_back(k, 0, 0, 0, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta, uniqueLabels[k-shift]);
+				neurons.emplace_back(k, 0, 0, 0, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta, _wta, uniqueLabels[k-shift]);
 				
 				neuronTemp.emplace_back(neurons.size()-1);
 			}
 			layers.emplace_back(layer{{sublayer{{receptiveField{neuronTemp, 0, 0}}, 0}}, layerID, -1, -1});
 		}
 		
-		void add2dLayer(int16_t layerID, int windowSize, int gridW, int gridH, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _sublayerNumber=1, int _numberOfNeurons=-1, bool overlap=false, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+		// adds a 2 dimentional grid of neurons
+		void add2dLayer(int windowSize, int gridW, int gridH, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _sublayerNumber=1, int _numberOfNeurons=-1, bool overlap=false, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
 			// error handling
 			if (windowSize <= 0 || windowSize > gridW || windowSize > gridH)
@@ -191,6 +198,7 @@ namespace adonis_c
 			}
 			
 			unsigned long shift = 0;
+			int16_t layerID = 0;
 			if (!layers.empty())
 			{
 				for (auto& l: layers)
@@ -203,6 +211,7 @@ namespace adonis_c
 						}
 					}
 				}
+				layerID = layers.back().ID+1;
 			}
 			
 			int counter = 0;
@@ -239,7 +248,7 @@ namespace adonis_c
 					
 					if (_numberOfNeurons == -1)
 					{
-						neurons.emplace_back(neuronCounter+counter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, _learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta);
+						neurons.emplace_back(neuronCounter+counter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, x, y, _learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta, _wta);
 					
 						neuronCounter += 1;
 					
@@ -261,7 +270,7 @@ namespace adonis_c
 						{
 							for (auto j = 0; j < _numberOfNeurons; j++)
 							{
-								neurons.emplace_back(neuronCounter+counter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, _learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta);
+								neurons.emplace_back(neuronCounter+counter, rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, _learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta, _wta);
 								
 								neuronCounter += 1;
 								
@@ -288,6 +297,8 @@ namespace adonis_c
 			}
 			layers.emplace_back(layer{subTemp, layerID, gridW, gridH});
 		}
+		
+		// ----- LAYER CONNECTION METHODS -----
 		
 		// all to all connections (for everything including sublayers and receptive fields)
     	void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, int _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
@@ -465,6 +476,8 @@ namespace adonis_c
 			}
 		}
 
+		// ----- PUBLIC NETWORK METHODS -----
+		
 		// add spike to the network
 		void injectSpike(spike s)
         {
@@ -573,6 +586,11 @@ namespace adonis_c
         {
 			globalLearningRuleMonitor();
 			
+			for (auto addon: stdAddOns)
+			{
+				addon->onStart(this);
+			}
+			
         	std::mutex sync;
         	if (thAddOn)
 			{
@@ -643,6 +661,11 @@ namespace adonis_c
         void run(float _timestep, std::vector<input>* trainingData, std::vector<input>* testData=nullptr, int shift=20)
         {
 			globalLearningRuleMonitor();
+			
+			for (auto addon: stdAddOns)
+			{
+				addon->onStart(this);
+			}
 			
         	std::mutex sync;
         	if (thAddOn)
@@ -776,6 +799,10 @@ namespace adonis_c
 			learningStatus = false;
 			initialSpikes.clear();
 			generatedSpikes.clear();
+			for (auto& n: neurons)
+			{
+				n.resetNeuron();
+			}
 			
 			injectSpikeFromData(testData);
 			

@@ -4,12 +4,14 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 25/09/2018
+ * Last Version: 11/12/2018
  *
- * Information: The MyelinPlasticity class
+ * Information: The MyelinPlasticity learning rule
  */
 
 #pragma once
+
+#include "myelinPlasticityLogger.hpp"
 
 namespace adonis_c
 {
@@ -73,12 +75,10 @@ namespace adonis_c
 			
 			for (auto addon: network->getStandardAddOns())
 			{
-				addon->learningEpoch(timestamp, network, neuron, timeDifferences, plasticCoordinates);
-			}
-			
-			if (network->getMainThreadAddOn())
-			{
-				network->getMainThreadAddOn()->learningEpoch(timestamp, network, neuron, timeDifferences, plasticCoordinates);
+				if(MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon))
+				{
+					dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, network, neuron, timeDifferences, plasticCoordinates);
+				}
 			}
 			
 			// weight reinforcement

@@ -4,24 +4,24 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 25/09/2018
+ * Last Version: 12/12/2018
  *
- * Information: The STDP class
+ * Information: The STDP learning rule has to be on a postsynaptic layer because it automatically detects the presynaptic layer.
  */
 
 #pragma once
+
+#include "globalLearningRuleHandler.hpp"
 
 namespace adonis_c
 {
 	class Neuron;
 	
-	class STDP : public LearningRuleHandler
+	class STDP : public GlobalLearningRuleHandler
 	{
 	public:
 		// ----- CONSTRUCTOR -----
-		STDP(int _preLayer, int _postLayer, float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
-		preLayer(_preLayer),
-		postLayer(_postLayer),
+		STDP(float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
 		A_plus(_A_plus),
 		A_minus(_A_minus),
 		tau_plus(_tau_plus),
@@ -29,6 +29,39 @@ namespace adonis_c
 		{}
 		
 		// ----- PUBLIC METHODS -----
+		virtual void onStart(Network* network) override
+		{
+			for (auto& n: network->getNeurons())
+			{
+				for (auto& rule: n.getLearningRuleHandler())
+				{
+					if(rule == this)
+					{
+						if (n.getLayerID() > 0)
+						{
+						postLayer = n.getLayerID();
+						preLayer = postLayer-1;
+						}
+						else
+						{
+							throw std::logic_error("the STDP learning rule has to be on a postsynaptic layer");
+						}
+					}
+				}
+			}
+			
+			for (auto& sub: network->getLayers()[preLayer].sublayers)
+			{
+				for (auto& rf: sub.receptiveFields)
+				{
+					for (auto& n: rf.neurons)
+					{
+						network->getNeurons()[n].addLearningRule(this);
+					}
+				}
+			}
+		}
+		
 		virtual void learn(double timestamp, Neuron* neuron, Network* network) override
 		{
 			// LTD whenever a neuron from the presynaptic layer spikes
@@ -83,7 +116,6 @@ namespace adonis_c
 		// ----- LEARNING RULE PARAMETERS -----
 		int preLayer;
 		int postLayer;
-		
 		float A_plus;
 		float A_minus;
 		float tau_plus;

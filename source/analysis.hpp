@@ -56,51 +56,45 @@ namespace adonis_c
 			}
 		}
 		
-		void neuronFired(double timestamp, axon* p, Network* network) override
+		void neuronFired(double timestamp, axon* a, Network* network) override
 		{
 			// logging only after learning is stopped
 			if (!network->getLearningStatus())
 			{
-				// restrict only to the output layer
-				if (p->postNeuron->getLayerID() == network->getLayers().back().ID)
+				// restrict only to the decision-making layer
+				if (a->postNeuron->getLayerID() == network->getLayers().back().ID)
 				{
-					predictedSpikes.emplace_back(spike{timestamp, p});
+					if (a->postNeuron->getClassLabel() != "")
+					{
+						predictedSpikes.emplace_back(spike{timestamp, a});
+					}
+					else
+					{
+						throw std::logic_error("the output neurons are unlabelled. Please use the addDecisionMakingLayer method to create the output layer");
+					}
 				}
 			}
 		}
 		
-		/// cannot use labels as they are. need an error signal instead
+		// cannot use labels as they are. need an error signal instead
 		void onCompleted(Network* network) override
 		{
-//			// add condition if predictedSpikes is not empty
-//			for (auto i=1; i<labels.size(); i++)
-//			{
-//				auto it = predictedSpikes.end();
-//				if (i == labels.size()-1)
-//				{
-//					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset;});
-//				}
-//				else
-//				{
-//					it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
-//				}
-//
-//				if (it != predictedSpikes.end())
-//				{
-//					auto idx = std::distance(predictedSpikes.begin(), it);
-//					for (auto n: network->getSupervisedNeurons())
-//					{
-//						if (n.neuron == predictedSpikes[idx].axon->postNeuron->getNeuronID())
-//						{
-//							predictedLabels.emplace_back(n.label);
-//						}
-//					}
-//				}
-//				else
-//				{
-//					predictedLabels.emplace_back("NaN");
-//				}
-//			}
+			labels.emplace_back(label{"end", labels.back().onset+10000});
+			
+			// add condition if predictedSpikes is not empty
+			for (auto i=1; i<labels.size(); i++)
+			{
+				auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
+				if (it != predictedSpikes.end())
+				{
+					auto idx = std::distance(predictedSpikes.begin(), it);
+					predictedLabels.emplace_back(predictedSpikes[idx].axon->postNeuron->getClassLabel());
+				}
+				else
+				{
+					predictedLabels.emplace_back("NaN");
+				}
+			}
 		}
 		
 	protected:

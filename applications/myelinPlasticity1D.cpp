@@ -16,6 +16,7 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
+#include "../source/STDP.hpp"
 #include "../source/myelinPlasticityLogger.hpp"
 #include "../source/myelinPlasticity.hpp"
 
@@ -32,49 +33,41 @@ int main(int argc, char** argv)
 	adonis_c::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
 	adonis_c::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
 
-
     //  ----- NETWORK PARAMETERS -----
-	float runtime = trainingData.back().timestamp+1;
-
-	float timestep = 0.1;
-
 	float decayCurrent = 10;
 	float potentialDecay = 20;
-	
 	float refractoryPeriod = 3;
 
     int inputNeurons = 10;
     int layer1Neurons = 4;
 	
-	float alpha = 1;
-	float lambda = 0.1;
 	float eligibilityDecay = 20;
-    float weight = 1./10; // weight dependent on feature size
-
-	bool burstingActivity = false;
+    float weight = 1./10;
+	
+	bool wta = true;
+	bool burst = false;
+	bool homeostasis = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::MyelinPlasticity myelinPlasticity(alpha, lambda);
+	adonis_c::MyelinPlasticity myelinPlasticity;
+	adonis_c::STDP stdp;
 	
     //  ----- CREATING THE NETWORK -----
-	network.addLayer(0, {}, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(1, {&myelinPlasticity}, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod, wta, false, eligibilityDecay);
+	network.addLayer({&myelinPlasticity}, layer1Neurons, 1, 1, homeostasis, decayCurrent, potentialDecay, 100, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, true, 10);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 3);
 	
-	//  ----- INJECTING SPIKES -----
-	network.injectSpikeFromData(&trainingData);
-
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
-	qtDisplay.setTimeWindow(20000);
+	qtDisplay.setTimeWindow(5000);
 	qtDisplay.trackNeuron(11);
 
 	network.turnOffLearning(80000);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(timestep, runtime);
+    network.run(0.1, &trainingData);
 	
     //  ----- EXITING APPLICATION -----
     return 0;

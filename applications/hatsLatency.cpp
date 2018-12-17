@@ -13,60 +13,46 @@
 
 #include "../source/qtDisplay.hpp"
 #include "../source/network.hpp"
-#include "../source/testOutputLogger.hpp"
+#include "../source/predictionLogger.hpp"
 #include "../source/analysis.hpp"
-#include "../source/stdp.hpp"
-#include "../source/supervisedReinforcement.hpp"
+#include "../source/STDP.hpp"
+#include "../source/rewardModulatedSTDP.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
     adonis_c::QtDisplay qtDisplay;
-	adonis_c::TestOutputLogger testOutputLogger("hatsLatency.bin");
+	adonis_c::PredictionLogger predictionLogger("hatsLatency.bin");
 	adonis_c::Analysis analysis("../../data/hats/latency/test_nCars_10samplePerc_1repLabel.txt");
-	adonis_c::Network network({&testOutputLogger, &analysis}, &qtDisplay);
+	adonis_c::Network network({&predictionLogger, &analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
-	
-    // IDs for each layer (order is important)
-    int layer0 = 0;
-    int layer1 = 1;
-    int layer2 = 2;
-	
 	float decayCurrent = 10;
 	float decayPotential = 20;
 	float refractoryPeriod = 3;
-	bool burstingActivity = false;
 	float eligibilityDecay = 20;
 	
+	bool burstingActivity = false;
+	bool homeostasis = false;
+	bool wta = true;
+	
 	//  ----- INITIALISING THE LEARNING RULE -----
-//	adonis_c::Stdp stdp(layer0, layer1);
-	adonis_c::SupervisedReinforcement supervisedReinforcement;
+	adonis_c::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.addLayer(layer0, {}, 4116, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer1, {}, 100, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer2, {}, 2, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
+	network.addLayer({}, 4116, 1, 1, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burstingActivity, eligibilityDecay);
+	network.addLayer({&stdp}, 100, 1, 1, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burstingActivity, eligibilityDecay);
+	network.addDecisionMakingLayer("../../data/hats/latency/train_nCars_10samplePerc_1repLabel.txt", {});
 	
-	network.allToAll(network.getLayers()[layer0], network.getLayers()[layer1], true, 1., true, 5);
-	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], true, 1., true, 5);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.5, 0.3, 5, 2);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.5, 0.3, 5, 2);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/latency/train_nCars_10samplePerc_1rep.txt");
-	
-    //  ----- INJECTING TRAINING SPIKES -----
-	network.injectSpikeFromData(&trainingData);
+    auto trainingData = dataParser.readData("../../data/hats/latency/train_nCars_10samplePerc_1rep.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/latency/test_nCars_10samplePerc_1rep.txt");
-	
-//	//  ----- INJECTING TEST SPIKES -----
-	network.injectSpikeFromData(&testingData);
-	
-	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/latency/train_nCars_10samplePerc_1repLabel.txt");
-	network.addLabels(&labels);
+	auto testingData = dataParser.readData("../../data/hats/latency/test_nCars_10samplePerc_1rep.txt");
 	
 	//  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
@@ -75,10 +61,7 @@ int main(int argc, char** argv)
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
-    float runtime = testingData.back().timestamp+1;
-	float timestep = 1;
-	
-    network.run(runtime, timestep);
+    network.run(1, &trainingData, &testingData);
 	analysis.accuracy();
 	
     //  ----- EXITING APPLICATION -----

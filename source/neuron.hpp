@@ -49,7 +49,7 @@ namespace adonis_c
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, std::string _classLabel="") :
+    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, bool _wta=false, std::string _classLabel="") :
 			neuronID(_neuronID),
 			rfRow(_rfRow),
 			rfCol(_rfCol),
@@ -80,7 +80,10 @@ namespace adonis_c
 			restingThreshold(-50),
 			decayHomeostasis(_decayHomeostasis),
 			homeostasisBeta(_homeostasisBeta),
-			classLabel(_classLabel)
+			classLabel(_classLabel),
+			inhibited(false),
+			inhibitionTime(0),
+			wta(_wta)
     	{
     		// error handling
 			if (decayCurrent == decayPotential)
@@ -144,6 +147,11 @@ namespace adonis_c
 		template<typename Network>
 		void update(double timestamp, float timestep, spike s, Network* network)
 		{
+			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
+			{
+				inhibited = false;
+			}
+			
             if (timestamp - lastSpikeTime >= refractoryPeriod)
             {
                 active = true;
@@ -163,7 +171,7 @@ namespace adonis_c
 			}
 			
 			// neuron inactive during refractory period
-			if (active)
+			if (active && !inhibited)
 			{
 				if (s.axon)
 				{
@@ -252,6 +260,17 @@ namespace adonis_c
             return spike{timestamp, &initialAxon};
         }
 	
+		void resetNeuron()
+		{
+			lastSpikeTime = 0;
+			current = 0;
+			potential = restingPotential;
+			eligibilityTrace = 0;
+			inhibited = false;
+			active = true;
+			threshold = restingThreshold;
+		}
+		
     	// ----- SETTERS AND GETTERS -----
 		bool getActivity() const
 		{
@@ -408,6 +427,17 @@ namespace adonis_c
 			return learningRuleHandler;
 		}
 		
+		void addLearningRule(LearningRuleHandler* newRule)
+		{
+			learningRuleHandler.emplace_back(newRule);
+		}
+		
+		void setInhibition(double timestamp, bool inhibitionStatus)
+		{
+			inhibitionTime = timestamp;
+			inhibited = inhibitionStatus;
+		}
+		
 	protected:
 		
 		// ----- LEARNING RULE -----
@@ -426,13 +456,32 @@ namespace adonis_c
 					}
 				}
 			}
-			resetLearning(network);
+			if (wta)
+			{
+				WTA(timestamp);
+			}
+			resetLearning();
 		}
 		
 		// ----- NEURON BEHAVIOR -----
+		void WTA(double timestamp)
+		{
+			if (preAxons.size() > 0)
+			{
+				for (auto& projReset: preAxons[0]->preNeuron->postAxons)
+				{
+					if (projReset->postNeuron->neuronID != neuronID)
+					{
+						projReset->postNeuron->inhibited = true;
+						projReset->postNeuron->inhibitionTime = timestamp;
+						projReset->postNeuron->current = 0;
+						projReset->postNeuron->potential = restingPotential;
+					}
+				}
+			}
+		}
 		
-		template<typename Network>
-		void resetLearning(Network* network)
+		void resetLearning()
 		{
 			// resetting plastic neurons
 			for (auto& inputAxon: preAxons)
@@ -466,6 +515,8 @@ namespace adonis_c
         float                                    current;
         float                                    potential;
 		bool                                     active;
+		bool                                     inhibited;
+		double                                   inhibitionTime;
 		
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
@@ -478,6 +529,7 @@ namespace adonis_c
 		float                                    restingThreshold;
 		float                                    decayHomeostasis;
 		float                                    homeostasisBeta;
+		bool                                     wta;
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		axon                                     activeAxon;

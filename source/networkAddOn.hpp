@@ -26,10 +26,10 @@ namespace adonis_c
 		virtual ~NetworkAddOn(){}
 		
 		// ----- PUBLIC METHODS -----
+		virtual void onStart(Network* network){}
 		virtual void onCompleted(Network* network){}
 		virtual void incomingSpike(double timestamp, axon* a, Network* network){}
 		virtual void neuronFired(double timestamp, axon* a, Network* network){}
 		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}
-		virtual void learningEpoch(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons){}
 	};
 }

@@ -13,24 +13,20 @@
 
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
-#include "../source/testOutputLogger.hpp"
-#include "../source/supervisedReinforcement.hpp"
-#include "../source/stdp.hpp"
+#include "../source/predictionLogger.hpp"
+#include "../source/analysis.hpp"
+#include "../source/rewardModulatedSTDP.hpp"
+#include "../source/STDP.hpp"
 #include "../source/myelinPlasticity.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::TestOutputLogger testOutputLogger("hatsNative.bin");
-	adonis_c::Network network({&testOutputLogger});
+    adonis_c::Analysis analysis("../../data/hats/native/nCars_100samplePerc_1repLabel.txt");
+	adonis_c::PredictionLogger predictionLogger("hatsNative.bin");
+	adonis_c::Network network({&analysis, &predictionLogger});
 	
     //  ----- NETWORK PARAMETERS -----
-	
-    // IDs for each layer (order is important)
-    int layer0 = 0;
-    int layer1 = 1;
-    int layer2 = 2;
-	
 	int gridWidth = 60;
 	int gridHeight = 50;
 	int rfSize = 10;
@@ -38,45 +34,40 @@ int main(int argc, char** argv)
 	float decayCurrent = 10;
 	float decayPotential = 20;
 	float refractoryPeriod = 3;
-	bool burstingActivity = false;
 	float eligibilityDecay = 20;
 	
+	bool burst = false;
+	bool wta = false;
+	bool homeostasis = false;
+	bool overlap = false;
+	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(layer1, layer2);
+	adonis_c::STDP stdp;
 	adonis_c::MyelinPlasticity myelinPlasticity(1, 1);
-	adonis_c::SupervisedReinforcement supervisedReinforcement;
+	adonis_c::RewardModulatedSTDP rstdp;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, {&stdp}, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, {&stdp}, 1, 1, false, decayCurrent+10, decayPotential+10, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer2, {}, 2, 1, 1, decayCurrent+20, decayPotential+20, 1200, burstingActivity, eligibilityDecay);
+	network.add2dLayer(rfSize, gridWidth, gridHeight, {}, 1, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
+	network.add2dLayer(rfSize, gridWidth, gridHeight, {&stdp}, 1, 1, overlap, homeostasis, decayCurrent+10, decayPotential+10, refractoryPeriod, wta, burst, eligibilityDecay);
+	network.addDecisionMakingLayer("../../data/hats/native/nCars_100samplePerc_10repLabel.txt", {});
 	
-	network.allToAll(network.getLayers()[layer0], network.getLayers()[layer1], true, 1., true, 10);
-	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], true, 1., true, 20);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.5, 0.5);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.5, 0.5);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/native/nCars_100samplePerc_10rep.txt");
-	
-    //  ----- INJECTING TRAINING SPIKES -----
-	network.injectSpikeFromData(&trainingData);
+    auto trainingData = dataParser.readData("../../data/hats/native/nCars_100samplePerc_10rep.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/native/nCars_100samplePerc_1rep.txt");
+	auto testData = dataParser.readData("../../data/hats/native/nCars_100samplePerc_1rep.txt");
 	
-//	//  ----- INJECTING TEST SPIKES -----
-	network.injectSpikeFromData(&testingData);
-	
-	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/native/nCars_100samplePerc_10repLabel.txt");
-	network.addLabels(&labels);
+	//  ----- INJECTING TEST SPIKES -----
+	network.injectSpikeFromData(&testData);
 	
     //  ----- RUNNING THE NETWORK -----
-    float runtime = testingData.back().timestamp+1;
-	float timestep = 0.1;
+    network.run(0.5, &trainingData, &testData);
+	analysis.accuracy();
 	
-    network.run(runtime, timestep);
-
     //  ----- EXITING APPLICATION -----
     return 0;
 }

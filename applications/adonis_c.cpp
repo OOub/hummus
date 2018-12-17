@@ -1,5 +1,5 @@
 /*
- * testNetwork.cpp
+ * adonic_c.cpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -12,15 +12,14 @@
 #include <string>
 #include <iostream>
 
-#include "../source/json.hpp"
+#include "../source/dependencies/json.hpp"
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/spikeLogger.hpp"
 #include "../source/myelinPlasticityLogger.hpp"
-#include "../source/stdp.hpp"
+#include "../source/STDP.hpp"
 #include "../source/myelinPlasticity.hpp"
-#include "../source/myelinPlasticityReinforcement.hpp"
 
 using json = nlohmann::json;
 

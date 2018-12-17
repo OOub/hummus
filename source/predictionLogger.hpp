@@ -43,7 +43,7 @@ namespace adonis_c
 			if (!network->getLearningStatus())
 			{
 				// restrict only to the output layer
-				if (p->postNeuron->getLayerID() == network->getLayers().back().ID)
+				if (a->postNeuron->getLayerID() == network->getLayers().back().ID)
 				{	
 					std::array<char, 12> bytes;
 					SpikeLogger::copy_to(bytes.data() + 0, timestamp);

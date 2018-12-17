@@ -14,24 +14,19 @@
 #include "../source/network.hpp"
 #include "../source/analysis.hpp"
 #include "../source/qtDisplay.hpp"
-#include "../source/testOutputLogger.hpp"
-#include "../source/supervisedReinforcement.hpp"
-#include "../source/stdp.hpp"
+#include "../source/predictionLogger.hpp"
+#include "../source/rewardModulatedSTDP.hpp"
+#include "../source/STDP.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
 	adonis_c::Analysis analysis("../../data/hats/feature_maps/nCars_100samplePerc_1repLabel.txt");
-	adonis_c::TestOutputLogger testOutputLogger("hatsFeatureMaps.bin");
-	adonis_c::Network network({&testOutputLogger, &analysis});
+	adonis_c::PredictionLogger predictionLogger("hatsFeatureMaps.bin");
+	adonis_c::Network network({&predictionLogger, &analysis});
 	
     //  ----- NETWORK PARAMETERS -----
-	
-    // IDs for each layer (order is important)
-    int layer0 = 0;
-    int layer1 = 1;
-    int layer2 = 2;
 	
 	int gridWidth = 42;
 	int gridHeight = 35;
@@ -40,37 +35,31 @@ int main(int argc, char** argv)
 	float decayCurrent = 10;
 	float decayPotential = 20;
 	float refractoryPeriod = 3;
-	bool burstingActivity = false;
 	float eligibilityDecay = 20;
 	
+	bool burst = false;
+	bool overlap = false;
+	bool wta = false;
+	bool homeostasis = false;
+	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(layer0, layer1);
-	adonis_c::SupervisedReinforcement supervisedReinforcement;
+	adonis_c::STDP stdp;
+	adonis_c::RewardModulatedSTDP rstdp;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, {}, 3, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, {}, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer2, {}, 2, 1, 1, decayCurrent, decayPotential, 1000, burstingActivity, eligibilityDecay);
+	network.add2dLayer(rfSize, gridWidth, gridHeight, {}, 3, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
+	network.add2dLayer(rfSize, gridWidth, gridHeight, {}, 1, 1, overlap, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
+	network.addDecisionMakingLayer("../../data/hats/feature_maps/nCars_100samplePerc_10repLabel.txt", {}, decayCurrent, decayPotential, 1000);
 
-	network.convolution(network.getLayers()[layer0], network.getLayers()[layer1], true, 1., true, 20);
-	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], true, 1., true, 20);
+	network.convolution(network.getLayers()[0], network.getLayers()[1], 1., 0, 20, 0);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1., 0, 20, 0);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/feature_maps/nCars_100samplePerc_10rep.txt");
-	
-    //  ----- INJECTING TRAINING SPIKES -----
-	network.injectSpikeFromData(&trainingData);
+    auto trainingData = dataParser.readData("../../data/hats/feature_maps/nCars_100samplePerc_10rep.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/feature_maps/nCars_100samplePerc_1rep.txt");
-	
-	//  ----- INJECTING TEST SPIKES -----
-	network.injectSpikeFromData(&testingData);
-	
-	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/feature_maps/nCars_100samplePerc_10repLabel.txt");
-	network.addLabels(&labels);
+	auto testData = dataParser.readData("../../data/hats/feature_maps/nCars_100samplePerc_1rep.txt");
 	
 	//  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
@@ -79,10 +68,7 @@ int main(int argc, char** argv)
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
-    float runtime = testingData.back().timestamp+1000;
-	float timestep = 0.1;
-	
-    network.run(runtime, timestep);
+    network.run(0.1, &trainingData, &testData);
 	analysis.accuracy();
 	
     //  ----- EXITING APPLICATION -----

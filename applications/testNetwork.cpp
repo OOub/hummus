@@ -14,8 +14,8 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/rewardModulatedSTDP.hpp"
 
+#include "../source/STDP.hpp"
 
 int main(int argc, char** argv)
 {
@@ -29,12 +29,13 @@ int main(int argc, char** argv)
 	float timestep = 0.1;
 
 	//  ----- CREATING THE NETWORK -----
-
-	// input neurons
-	network.addLayer(0, {}, 1, 1, 1, false);
-
-	// layer 1 neurons
-	network.addLayer(1, {}, 2, 1, 1, false);
+	
+	// initialising a learning rule
+	adonis_c::STDP stdp;
+	
+	// creating layers of neurons
+	network.addLayer({}, 1, 1, 1, false);
+	network.addLayer({&stdp}, 1, 1, 1, false);
 
     //  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0, 10, 2);
@@ -47,7 +48,7 @@ int main(int argc, char** argv)
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(2);
+  	qtDisplay.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(timestep, runtime);

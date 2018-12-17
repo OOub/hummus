@@ -14,21 +14,17 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/stdp.hpp"
+#include "../source/STDP.hpp"
+#include "../source/analysis.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network(&qtDisplay);
+	adonis_c::Analysis analysis("../../data/hats/poisson/nCars_1samplePerc_1repLabel.txt");
+	adonis_c::Network network({}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
-	
-    // IDs for each layer (order is important)
-    int layer0 = 0;
-    int layer1 = 1;
-    int layer2 = 2;
-	
 	int gridWidth = 42;
 	int gridHeight = 35;
 	int rfSize = 7;
@@ -36,45 +32,29 @@ int main(int argc, char** argv)
 	float decayCurrent = 20;
 	float decayPotential = 40;
 	float refractoryPeriod = 3;
-	bool burstingActivity = false;
 	float eligibilityDecay = 40;
 	
+	bool burst = false;
+	bool homeostasis = false;
+	bool wta = false;
+	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(layer0, layer1);
+	adonis_c::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, {&stdp}, 1, -1, false, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer1, {&stdp}, 30, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-	network.addLayer(layer2, {}, 2, 1, 1, decayCurrent, decayPotential, 100, burstingActivity, eligibilityDecay);
+	network.add2dLayer(rfSize, gridWidth, gridHeight, {}, 1, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
+	network.addLayer({&stdp}, 30, 1, 1, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
+	network.addDecisionMakingLayer("../../data/hats/poisson/nCars_10samplePerc_1repLabel.txt", {}, decayCurrent, decayPotential, 100);
 	
-	network.allToAll(network.getLayers()[layer0], network.getLayers()[layer1], false, 1./20, false);
-	network.allToAll(network.getLayers()[layer1], network.getLayers()[layer2], false, 1./15, false);
-	
-//	network.add2dLayer(layer0, rfSize, gridWidth, gridHeight, &stdp, 1, -1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-//	network.add2dLayer(layer1, rfSize, gridWidth, gridHeight, &stdp, 1, 1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-//	network.add2dLayer(layer2, rfSize, gridWidth/7, gridHeight/7, nullptr, 1, 1, true, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-//	network.addLayer(layer3, nullptr, 1, 1, 1, decayCurrent, decayPotential, refractoryPeriod, burstingActivity, eligibilityDecay);
-//
-//	network.convolution(network.getLayers()[layer0], network.getLayers()[layer1], false, 1./8, false, 0);
-//	network.pooling(network.getLayers()[layer1], network.getLayers()[layer2], false, 1., false, 0);
-//	network.allToAll(network.getLayers()[layer2], network.getLayers()[layer3], false, 1./15, false, 0);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./20, 3);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1./15, 3);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readTrainingData("../../data/hats/poisson/nCars_10samplePerc_1rep.txt");
-	
-    //  ----- INJECTING TRAINING SPIKES -----
-	network.injectSpikeFromData(&trainingData);
+    auto trainingData = dataParser.readData("../../data/hats/poisson/nCars_10samplePerc_1rep.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readTestData(&network, "../../data/hats/poisson/nCars_1samplePerc_1rep.txt");
-	
-//	//  ----- INJECTING TEST SPIKES -----
-	network.injectSpikeFromData(&testingData);
-	
-	// ----- ADDING LABELS
-	auto labels = dataParser.readLabels("../../data/hats/poisson/nCars_10samplePerc_1repLabel.txt");
-	network.addLabels(&labels);
+	auto testData = dataParser.readData("../../data/hats/poisson/nCars_1samplePerc_1rep.txt");
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
@@ -84,11 +64,9 @@ int main(int argc, char** argv)
   	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
-    float runtime = testingData.back().timestamp+1000;
-	float timestep = 0.1;
+    network.run(0.1, &trainingData, &testData);
+	analysis.accuracy();
 	
-    network.run(runtime, timestep);
-
     //  ----- EXITING APPLICATION -----
     return 0;
 }

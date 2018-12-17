@@ -16,7 +16,7 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/stdp.hpp"
+#include "../source/STDP.hpp"
 
 int main(int argc, char** argv)
 {
@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
 	
-	auto trainingData = dataParser.readTrainingData("../../data/stdpTest.txt");
+	auto trainingData = dataParser.readData("../../data/stdpTest.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
@@ -32,30 +32,24 @@ int main(int argc, char** argv)
 	adonis_c::Network network({&spikeLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
-	auto runtime = trainingData.back().timestamp+1;
-	float timestep = 0.1;
-	
 	float decayCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 3;
 	
     int inputNeurons = 10;
-    int layer1Neurons = 2;
+    int layer1Neurons = 1;
 	
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::Stdp stdp(0,1);
+	adonis_c::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.addLayer(0, {&stdp}, inputNeurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
-	network.addLayer(1, {&stdp}, layer1Neurons, 1, 1, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod);
+	network.addLayer({&stdp}, layer1Neurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], false, weight, false, 0);
-
-	//  ----- INJECTING SPIKES -----
-	network.injectSpikeFromData(&trainingData);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0);
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
@@ -64,7 +58,7 @@ int main(int argc, char** argv)
   	qtDisplay.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(runtime, timestep);
+    network.run(0.1, &trainingData);
 
     //  ----- EXITING APPLICATION -----
     return 0;
