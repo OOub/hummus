@@ -151,25 +151,25 @@ namespace adonis_c
 			{
 				inhibited = false;
 			}
-			
+
             if (timestamp - lastSpikeTime >= refractoryPeriod)
             {
                 active = true;
             }
-			
+
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
 			eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
-			
+
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
-			
+
 			// threshold decay
 			if (homeostasis)
 			{
 				threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
 			}
-			
+
 			// neuron inactive during refractory period
 			if (active && !inhibited)
 			{
@@ -186,7 +186,7 @@ namespace adonis_c
 				}
 				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 			}
-			
+
 			if (s.axon)
 			{
 				#ifndef NDEBUG
@@ -215,16 +215,16 @@ namespace adonis_c
 					network->getMainThreadAddOn()->timestep(timestamp, network, this);
 				}
 			}
-			
+
 			if (potential >= threshold)
 			{
 				eligibilityTrace = 1;
 				plasticityTrace += 1;
-				
+
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
 				#endif
-				
+
 				for (auto addon: network->getStandardAddOns())
 				{
 					addon->neuronFired(timestamp, &activeAxon, network);
@@ -233,14 +233,14 @@ namespace adonis_c
 				{
 					network->getMainThreadAddOn()->neuronFired(timestamp, &activeAxon, network);
 				}
-				
+
 				for (auto& p : postAxons)
 				{
 					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
-			
+
 				learn(timestamp, network);
-				
+
 				lastSpikeTime = timestamp;
 				potential = resetPotential;
 				if (!burstingActivity)
@@ -538,6 +538,7 @@ namespace adonis_c
         axon                                     initialAxon;
         double                                   lastSpikeTime;
         std::vector<LearningRuleHandler*>        learningRuleHandler;
+        
 		
         // ----- LEARNING RULE VARIABLES -----
         float                                    plasticityTrace;

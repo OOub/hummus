@@ -114,7 +114,7 @@ namespace adonis_c
         }
 		
 		// add a one dimnetional layer of neurons that are labelled according to the provided labels
-		void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=1000, bool _wta=true, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+		void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool homeostasis=false, float _decayCurrent=10, float _decayPotential=20, bool _wta=true, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
 		{
 			DataParser dataParser;
 			trainingLabels = dataParser.readLabels(trainingLabelFilename);

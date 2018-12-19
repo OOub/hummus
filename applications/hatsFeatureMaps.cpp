@@ -48,11 +48,11 @@ int main(int argc, char** argv)
 	
 	//  ----- CREATING THE NETWORK -----
 	network.add2dLayer(rfSize, gridWidth, gridHeight, {}, 3, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
-	network.add2dLayer(rfSize, gridWidth, gridHeight, {}, 1, 1, overlap, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
-	network.addDecisionMakingLayer("../../data/hats/feature_maps/nCars_100samplePerc_10repLabel.txt", {}, decayCurrent, decayPotential, 1000);
-
-	network.convolution(network.getLayers()[0], network.getLayers()[1], 1., 0, 20, 0);
-	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1., 0, 20, 0);
+	network.add2dLayer(rfSize, gridWidth, gridHeight, {&stdp}, 1, 1, overlap, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
+	network.addDecisionMakingLayer("../../data/hats/feature_maps/nCars_100samplePerc_10repLabel.txt", {}, 1000);
+	
+	network.convolution(network.getLayers()[0], network.getLayers()[1], 0.6, 0.4, 5, 3);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4, 5, 3);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 	float decayCurrent = 10;
 	float decayPotential = 20;
 	float refractoryPeriod = 3;
-	float eligibilityDecay = 20;
+	float eligibilityDecay = 100;
 	
 	bool burstingActivity = false;
 	bool homeostasis = false;
@@ -40,12 +40,12 @@ int main(int argc, char** argv)
 	adonis_c::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.addLayer({}, 4116, 1, 1, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burstingActivity, eligibilityDecay);
-	network.addLayer({&stdp}, 100, 1, 1, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burstingActivity, eligibilityDecay);
+	network.addLayer({}, 4116, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
+	network.addLayer({&stdp}, 10, 1, 1, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burstingActivity, eligibilityDecay);
 	network.addDecisionMakingLayer("../../data/hats/latency/train_nCars_10samplePerc_1repLabel.txt", {});
 	
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.5, 0.3, 5, 2);
-	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.5, 0.3, 5, 2);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.6, 0.4, 5, 3);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4, 5, 3);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
