@@ -121,7 +121,7 @@ namespace adonis_c
 						
 						if (result == postAxons.end())
 						{
-							postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
+							postAxons.emplace_back(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1});
 							postNeuron->preAxons.push_back(postAxons.back().get());
 						}
 						else
@@ -133,7 +133,7 @@ namespace adonis_c
 					}
 					else
 					{
-						postAxons.emplace_back(std::unique_ptr<axon>(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1}));
+						postAxons.emplace_back(new axon{this, postNeuron, weight*(1/inputResistance), delay, -1});
 						postNeuron->preAxons.push_back(postAxons.back().get());
 					}
                 }
