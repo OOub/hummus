@@ -1,6 +1,6 @@
 /*
- * adonic_c.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * adonic.cpp
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr

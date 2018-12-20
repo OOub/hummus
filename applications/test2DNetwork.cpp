@@ -1,6 +1,6 @@
 /*
  * testNetwork.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -19,12 +19,12 @@
 int main(int argc, char** argv)
 {
 	//  ----- READING TRAINING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
+	adonis::DataParser dataParser;
 	auto trainingData = dataParser.readData("../../data/2Dtest.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network(&qtDisplay);
+	adonis::QtDisplay qtDisplay;
+	adonis::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
 	network.add2dLayer(2, 8, 8, {}, 2, -1);

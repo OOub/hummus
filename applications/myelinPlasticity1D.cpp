@@ -1,6 +1,6 @@
 /*
  * unsupervisedNetwork.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -23,15 +23,15 @@
 int main(int argc, char** argv)
 {
     //  ----- READING TRAINING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
+	adonis::DataParser dataParser;
 	
 	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::QtDisplay qtDisplay;
-	adonis_c::SpikeLogger spikeLogger("10neurons_4patterns_unsupervised_spikeLog.bin");
-	adonis_c::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
-	adonis_c::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
+	adonis::QtDisplay qtDisplay;
+	adonis::SpikeLogger spikeLogger("10neurons_4patterns_unsupervised_spikeLog.bin");
+	adonis::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
+	adonis::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
@@ -49,8 +49,8 @@ int main(int argc, char** argv)
 	bool homeostasis = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::MyelinPlasticity myelinPlasticity;
-	adonis_c::STDP stdp;
+	adonis::MyelinPlasticity myelinPlasticity;
+	adonis::STDP stdp;
 	
     //  ----- CREATING THE NETWORK -----
 	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod, wta, false, eligibilityDecay);

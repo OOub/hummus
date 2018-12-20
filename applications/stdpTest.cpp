@@ -1,6 +1,6 @@
 /*
  * stdpPotentiation.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -22,14 +22,14 @@ int main(int argc, char** argv)
 {
 
     //  ----- READING TRAINING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
+	adonis::DataParser dataParser;
 	
 	auto trainingData = dataParser.readData("../../data/stdpTest.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::QtDisplay qtDisplay;
-	adonis_c::SpikeLogger spikeLogger("stdpSpikeLog");
-	adonis_c::Network network({&spikeLogger}, &qtDisplay);
+	adonis::QtDisplay qtDisplay;
+	adonis::SpikeLogger spikeLogger("stdpSpikeLog");
+	adonis::Network network({&spikeLogger}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::STDP stdp;
+	adonis::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
 	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod);

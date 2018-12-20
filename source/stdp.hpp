@@ -1,6 +1,6 @@
 /*
  * STDP.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -13,7 +13,7 @@
 
 #include "globalLearningRuleHandler.hpp"
 
-namespace adonis_c
+namespace adonis
 {
 	class Neuron;
 	
@@ -33,13 +33,13 @@ namespace adonis_c
 		{
 			for (auto& n: network->getNeurons())
 			{
-				for (auto& rule: n.getLearningRuleHandler())
+				for (auto& rule: n->getLearningRuleHandler())
 				{
 					if(rule == this)
 					{
-						if (n.getLayerID() > 0)
+						if (n->getLayerID() > 0)
 						{
-						postLayer = n.getLayerID();
+						postLayer = n->getLayerID();
 						preLayer = postLayer-1;
 						}
 						else
@@ -56,7 +56,7 @@ namespace adonis_c
 				{
 					for (auto& n: rf.neurons)
 					{
-						network->getNeurons()[n].addLearningRule(this);
+						network->getNeurons()[n]->addLearningRule(this);
 					}
 				}
 			}

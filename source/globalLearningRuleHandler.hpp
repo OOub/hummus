@@ -1,6 +1,6 @@
 /*
  * globalLearningRuleHandler.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -11,12 +11,12 @@
 
 #pragma once
 
-#include "networkAddOn.hpp"
+#include "addOn.hpp"
 #include "learningRuleHandler.hpp"
 
-namespace adonis_c
+namespace adonis
 {
-	class GlobalLearningRuleHandler : public LearningRuleHandler, public StandardNetworkAddOn
+	class GlobalLearningRuleHandler : public LearningRuleHandler, public StandardAddOn
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----

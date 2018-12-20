@@ -1,6 +1,6 @@
 /*
  * spikeLogger.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -18,11 +18,11 @@
 #include <stdexcept>
 
 
-#include "network.hpp"
+#include "core.hpp"
 
-namespace adonis_c
+namespace adonis
 {
-    class SpikeLogger : public StandardNetworkAddOn
+    class SpikeLogger : public StandardAddOn
     {
     public:
     	// ----- CONSTRUCTOR -----

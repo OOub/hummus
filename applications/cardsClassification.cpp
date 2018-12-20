@@ -1,6 +1,6 @@
 /*
  * cardsClassification.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-#include "../source/network.hpp"
+#include "../source/core.hpp"
 #include "../source/analysis.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/STDP.hpp"
@@ -21,9 +21,9 @@
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-    adonis_c::QtDisplay qtDisplay;
-	adonis_c::Analysis analysis("../../data/cards/test_nooff_pip2_rep10_jitter0Label.txt");
-	adonis_c::Network network({&analysis}, &qtDisplay);
+    adonis::QtDisplay qtDisplay;
+	adonis::Analysis analysis("../../data/cards/test_nooff_pip2_rep10_jitter0Label.txt");
+	adonis::Network network({&analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
@@ -37,8 +37,8 @@ int main(int argc, char** argv)
 	bool burst = false;
 	
 	//  ----- CREATING THE NETWORK -----
-	adonis_c::STDP stdp;
-	adonis_c::RewardModulatedSTDP rstdp;
+	adonis::STDP stdp;
+	adonis::RewardModulatedSTDP rstdp;
 	
 	network.add2dLayer(1, 24, 24, {}, 1, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
 	network.add2dLayer(4, 24, 24, {}, 1, 1, overlap, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 	network.lateralInhibition(network.getLayers()[2], -1);
 	
 	//  ----- READING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
+	adonis::DataParser dataParser;
     auto trainingData = dataParser.readData("../../data/cards/train_nooff_pip2_rep50_jitter0.txt");
 	auto testData = dataParser.readData("../../data/cards/test_nooff_pip2_rep10_jitter0.txt");
 	

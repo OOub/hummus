@@ -1,6 +1,6 @@
 /*
  * hatsNetwork.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -21,10 +21,10 @@
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Analysis analysis("../../data/hats/feature_maps/nCars_100samplePerc_1repLabel.txt");
-	adonis_c::PredictionLogger predictionLogger("hatsFeatureMaps.bin");
-	adonis_c::Network network({&predictionLogger, &analysis});
+	adonis::QtDisplay qtDisplay;
+	adonis::Analysis analysis("../../data/hats/feature_maps/nCars_100samplePerc_1repLabel.txt");
+	adonis::PredictionLogger predictionLogger("hatsFeatureMaps.bin");
+	adonis::Network network({&predictionLogger, &analysis});
 	
     //  ----- NETWORK PARAMETERS -----
 	
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4, 5, 3);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
+	adonis::DataParser dataParser;
     auto trainingData = dataParser.readData("../../data/hats/feature_maps/nCars_100samplePerc_10rep.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----

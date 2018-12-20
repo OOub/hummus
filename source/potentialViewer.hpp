@@ -1,6 +1,6 @@
 /*
  * potentialViewer.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -28,9 +28,9 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-#include "network.hpp"
+#include "core.hpp"
 
-namespace adonis_c
+namespace adonis
 {
     class PotentialViewer : public QObject
     {

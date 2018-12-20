@@ -1,6 +1,6 @@
 /*
  * myelinPlasticityLogger.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -17,12 +17,12 @@
 #include <array>
 #include <stdexcept>
 
-#include "network.hpp"
+#include "core.hpp"
 #include "spikeLogger.hpp"
 
-namespace adonis_c
+namespace adonis
 {
-    class MyelinPlasticityLogger : public StandardNetworkAddOn
+    class MyelinPlasticityLogger : public StandardAddOn
     {
     public:
     	// ----- CONSTRUCTOR -----

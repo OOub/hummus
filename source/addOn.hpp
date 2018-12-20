@@ -1,29 +1,29 @@
 /*
- * networkAddOn.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * addOn.hpp
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 17/01/2018
  *
- * Information: The NetworkAddOn class is polymorphic class to handle add-ons
+ * Information: The addOn class is polymorphic class to handle add-ons
  */
 
 #pragma once
 
-namespace adonis_c
+namespace adonis
 {
-	class Network;
 	class Neuron;
+	class Network;
 	struct axon;
 	
 	// polymorphic class for add-ons
-	class NetworkAddOn
+	class AddOn
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		NetworkAddOn() = default;
-		virtual ~NetworkAddOn(){}
+		AddOn() = default;
+		virtual ~AddOn(){}
 		
 		// ----- PUBLIC METHODS -----
 		virtual void onStart(Network* network){}

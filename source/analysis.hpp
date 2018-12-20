@@ -1,6 +1,6 @@
 /*
  * analysis.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -13,13 +13,12 @@
 
 #include <vector>
 
-#include "neuron.hpp"
-#include "network.hpp"
+#include "core.hpp"
 #include "dataParser.hpp"
 
-namespace adonis_c
+namespace adonis
 {
-	class Analysis : public StandardNetworkAddOn
+	class Analysis : public StandardAddOn
 	{
 	public:
 		// ----- CONSTRUCTOR -----

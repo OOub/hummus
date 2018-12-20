@@ -1,6 +1,6 @@
 /*
  * outputViewer.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -29,9 +29,9 @@
 #include <QtCharts/QChart>
 #include <QtWidgets/QSpinBox>
 
-#include "network.hpp"
+#include "core.hpp"
 
-namespace adonis_c
+namespace adonis
 {
     class OutputViewer : public QObject
     {

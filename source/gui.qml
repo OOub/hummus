@@ -2,7 +2,7 @@ R""(
 
 /*
  * gui.qml
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr

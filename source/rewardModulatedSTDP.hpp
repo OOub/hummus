@@ -1,6 +1,6 @@
 /*
  * rewardModulatedSTDP.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -13,7 +13,7 @@
 
 #include "globalLearningRuleHandler.hpp"
 
-namespace adonis_c
+namespace adonis
 {
 	struct reinforcementLayers
 	{
@@ -49,13 +49,13 @@ namespace adonis_c
 		{
 			for (auto& l: network->getLayers())
 			{
-				for (auto& rule: network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]].getLearningRuleHandler())
+				for (auto& rule: network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLearningRuleHandler())
 				{
 					if (rule == this)
 					{
-						if (network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]].getLayerID()-1 >= 0)
+						if (network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLayerID()-1 >= 0)
 						{
-							rl.emplace_back(reinforcementLayers{network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]].getLayerID(), network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]].getLayerID()-1});
+							rl.emplace_back(reinforcementLayers{network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLayerID(), network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLayerID()-1});
 						}
 						else
 						{
@@ -72,9 +72,9 @@ namespace adonis_c
 				{
 					for (auto& n: rf.neurons)
 					{
-						if (network->getNeurons()[n].getClassLabel() != "")
+						if (network->getNeurons()[n]->getClassLabel() != "")
 						{
-							network->getNeurons()[n].addLearningRule(this);
+							network->getNeurons()[n]->addLearningRule(this);
 						}
 					}
 				}
@@ -107,9 +107,9 @@ namespace adonis_c
 						{
 							for (auto& n: rf.neurons)
 							{
-								if (network->getNeurons()[n].getEligibilityTrace() > 0.1)
+								if (network->getNeurons()[n]->getEligibilityTrace() > 0.1)
 								{
-									for (auto& postAxon: network->getNeurons()[n].getPostAxons())
+									for (auto& postAxon: network->getNeurons()[n]->getPostAxons())
 									{
 										if (postAxon->postNeuron->getEligibilityTrace() > 0.1)
 										{
@@ -129,9 +129,9 @@ namespace adonis_c
 						{
 							for (auto& n: rf.neurons)
 							{
-								if (network->getNeurons()[n].getEligibilityTrace() > 0.1)
+								if (network->getNeurons()[n]->getEligibilityTrace() > 0.1)
 								{
-									for (auto& preAxon: network->getNeurons()[n].getPreAxons())
+									for (auto& preAxon: network->getNeurons()[n]->getPreAxons())
 									{
 										if (preAxon->preNeuron->getEligibilityTrace() > 0.1)
 										{

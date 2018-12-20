@@ -1,6 +1,6 @@
 /*
  * hatsNetwork.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -21,10 +21,10 @@
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-    adonis_c::QtDisplay qtDisplay;
-	adonis_c::PredictionLogger predictionLogger("hatsLatency.bin");
-	adonis_c::Analysis analysis("../../data/hats/latency/test_nCars_10samplePerc_1repLabel.txt");
-	adonis_c::Network network({&predictionLogger, &analysis}, &qtDisplay);
+    adonis::QtDisplay qtDisplay;
+	adonis::PredictionLogger predictionLogger("hatsLatency.bin");
+	adonis::Analysis analysis("../../data/hats/latency/test_nCars_10samplePerc_1repLabel.txt");
+	adonis::Network network({&predictionLogger, &analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 	bool wta = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::STDP stdp;
+	adonis::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
 	network.addLayer({}, 4116, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4, 5, 3);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
+	adonis::DataParser dataParser;
     auto trainingData = dataParser.readData("../../data/hats/latency/train_nCars_10samplePerc_1rep.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----

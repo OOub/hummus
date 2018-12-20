@@ -1,6 +1,6 @@
 /*
  * inputViewer.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -28,12 +28,12 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-#include "network.hpp"
+#include "core.hpp"
 
 Q_DECLARE_METATYPE(QtCharts::QAbstractSeries *)
 Q_DECLARE_METATYPE(QtCharts::QValueAxis *)
 
-namespace adonis_c
+namespace adonis
 {
     class InputViewer : public QObject
     {

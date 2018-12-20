@@ -1,6 +1,6 @@
 /*
  * hatsNetwork.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -22,9 +22,9 @@
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-    adonis_c::Analysis analysis("../../data/hats/native/nCars_100samplePerc_1repLabel.txt");
-	adonis_c::PredictionLogger predictionLogger("hatsNative.bin");
-	adonis_c::Network network({&analysis, &predictionLogger});
+    adonis::Analysis analysis("../../data/hats/native/nCars_100samplePerc_1repLabel.txt");
+	adonis::PredictionLogger predictionLogger("hatsNative.bin");
+	adonis::Network network({&analysis, &predictionLogger});
 	
     //  ----- NETWORK PARAMETERS -----
 	int gridWidth = 60;
@@ -42,9 +42,9 @@ int main(int argc, char** argv)
 	bool overlap = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::STDP stdp;
-	adonis_c::MyelinPlasticity myelinPlasticity(1, 1);
-	adonis_c::RewardModulatedSTDP rstdp;
+	adonis::STDP stdp;
+	adonis::MyelinPlasticity myelinPlasticity(1, 1);
+	adonis::RewardModulatedSTDP rstdp;
 	
 	//  ----- CREATING THE NETWORK -----
 	network.add2dLayer(rfSize, gridWidth, gridHeight, {}, 1, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.5, 0.5);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
-	adonis_c::DataParser dataParser;
+	adonis::DataParser dataParser;
     auto trainingData = dataParser.readData("../../data/hats/native/nCars_100samplePerc_10rep.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----

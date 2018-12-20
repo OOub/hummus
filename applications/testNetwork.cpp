@@ -1,6 +1,6 @@
 /*
  * testNetwork.cpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -11,18 +11,17 @@
 
 #include <iostream>
 
-#include "../source/network.hpp"
+#include "../source/core.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-
 #include "../source/STDP.hpp"
 
 int main(int argc, char** argv)
 {
 
     //  ----- INITIALISING THE NETWORK -----
-	adonis_c::QtDisplay qtDisplay;
-	adonis_c::Network network(&qtDisplay);
+	adonis::QtDisplay qtDisplay;
+	adonis::Network network(&qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float runtime = 100;
@@ -31,7 +30,7 @@ int main(int argc, char** argv)
 	//  ----- CREATING THE NETWORK -----
 	
 	// initialising a learning rule
-	adonis_c::STDP stdp;
+	adonis::STDP stdp;
 	
 	// creating layers of neurons
 	network.addLayer({}, 1, 1, 1, false);
@@ -42,8 +41,8 @@ int main(int argc, char** argv)
 	network.lateralInhibition(network.getLayers()[1], -1);
 	
     //  ----- INJECTING SPIKES -----
-	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(10));
-	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(30));
+	network.injectSpike(network.getNeurons()[0]->prepareInitialSpike(10));
+	network.injectSpike(network.getNeurons()[0]->prepareInitialSpike(30));
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);

@@ -1,6 +1,6 @@
 /*
  * mainThreadNetworkAddOn.hpp
- * Adonis_c - clock-driven spiking neural network simulator
+ * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -11,16 +11,16 @@
 
 #pragma once
 
-#include "networkAddOn.hpp"
+#include "addOn.hpp"
 
-namespace adonis_c
+namespace adonis
 {
-	class MainThreadNetworkAddOn : public NetworkAddOn
+	class MainThreadAddOn : public AddOn
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		MainThreadNetworkAddOn() = default;
-		virtual ~MainThreadNetworkAddOn(){}
+		MainThreadAddOn() = default;
+		virtual ~MainThreadAddOn(){}
 		
 		virtual void begin(Network* network, std::mutex* sync){}
 	};
