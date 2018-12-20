@@ -16,7 +16,7 @@
 #include "../source/predictionLogger.hpp"
 #include "../source/analysis.hpp"
 #include "../source/rewardModulatedSTDP.hpp"
-#include "../source/STDP.hpp"
+#include "../source/stdp.hpp"
 #include "../source/myelinPlasticity.hpp"
 
 int main(int argc, char** argv)

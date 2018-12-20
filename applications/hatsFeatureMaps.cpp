@@ -16,7 +16,7 @@
 #include "../source/qtDisplay.hpp"
 #include "../source/predictionLogger.hpp"
 #include "../source/rewardModulatedSTDP.hpp"
-#include "../source/STDP.hpp"
+#include "../source/stdp.hpp"
 
 int main(int argc, char** argv)
 {

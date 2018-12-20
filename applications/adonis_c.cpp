@@ -18,7 +18,7 @@
 #include "../source/dataParser.hpp"
 #include "../source/spikeLogger.hpp"
 #include "../source/myelinPlasticityLogger.hpp"
-#include "../source/STDP.hpp"
+#include "../source/stdp.hpp"
 #include "../source/myelinPlasticity.hpp"
 
 using json = nlohmann::json;
