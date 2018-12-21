@@ -78,13 +78,7 @@ namespace adonis
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int _refractoryPeriod=3, float _restingPotential=-70, std::vector<LearningRuleHandler*> _learningRuleHandler={}) :
-    		neuronID(_neuronID),
-    		refractoryPeriod(_refractoryPeriod),
-    		potential(_restingPotential),
-    		initialAxon{nullptr, nullptr, 100, 0, -1},
-    		learningRuleHandler(_learningRuleHandler),
-    	{}
+    	Neuron() = default;
     	
 		virtual ~Neuron(){}
 		
@@ -98,118 +92,6 @@ namespace adonis
 		{
 			update(timestamp, a, network, timestep);
 		}
-		
-		virtual void learn(double timestamp, Network* network){}
-		
-		virtual void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true)
-        {
-            if (postNeuron)
-            {
-            	if (connectionProbability(probability))
-            	{
-					if (redundantConnections == false)
-					{
-						int16_t ID = postNeuron->neuronID;
-						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](const std::unique_ptr<axon>& p){return p->postNeuron->neuronID == ID;});
-						
-						if (result == postAxons.end())
-						{
-							postAxons.emplace_back(new axon{this, postNeuron, weight, delay, -1});
-							postNeuron->preAxons.push_back(postAxons.back().get());
-						}
-						else
-						{
-							#ifndef NDEBUG
-							std::cout << "axon " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
-							#endif
-						}
-					}
-					else
-					{
-						postAxons.emplace_back(new axon{this, postNeuron, weight, delay, -1});
-						postNeuron->preAxons.push_back(postAxons.back().get());
-					}
-                }
-            }
-            else
-            {
-                throw std::logic_error("Neuron does not exist");
-            }
-        }
-		
-		virtual void resetNeuron()
-		{
-			potential = restingPotential;
-		}
-		
-		spike prepareInitialSpike(double timestamp)
-        {
-            if (!initialAxon.postNeuron)
-            {
-                initialAxon.postNeuron = this;
-            }
-            return spike{timestamp, &initialAxon};
-        }
-		
-		static bool connectionProbability(int probability)
-		{
-			std::random_device device;
-			std::mt19937 randomEngine(device());
-			std::bernoulli_distribution dist(probability/100.);
-			return dist(randomEngine);
-		}
-		
-		// ----- SETTERS AND GETTERS
-		int16_t getNeuronID() const
-        {
-            return neuronID;
-        }
-		
-		float getPotential() const
-        {
-            return potential;
-        }
-		
-        float setPotential(float newPotential)
-        {
-            return potential = newPotential;
-        }
-        
-		axon* getInitialAxon()
-		{
-			return &initialAxon;
-		}
-		
-		std::vector<axon*>& getPreAxons()
-		{
-			return preAxons;
-		}
-		
-		std::vector<std::unique_ptr<axon>>& getPostAxons()
-		{
-			return postAxons;
-		}
-
-		std::vector<LearningRuleHandler*> getLearningRuleHandler() const
-		{
-			return learningRuleHandler;
-		}
-		
-		void addLearningRule(LearningRuleHandler* newRule)
-		{
-			learningRuleHandler.emplace_back(newRule);
-		}
-		
-	protected:
-		// ----- NEURON PARAMETERS -----
-		int16_t                                  neuronID;
-		axon                                     initialAxon;
-		std::vector<axon*>                       preAxons;
-		std::vector<std::unique_ptr<axon>>       postAxons;
-		float                                    potential;
-		float                                    restingPotential;
-		float                                    refractoryPeriod;
-		std::vector<LearningRuleHandler*>        learningRuleHandler;
     };
 	
     class Network

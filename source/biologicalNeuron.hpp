@@ -20,6 +20,10 @@ namespace adonis
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		BiologicalNeuron(int16_t _neuronID, int _refractoryPeriod=3, float _restingPotential=-70, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _decayCurrent=10, float _decayPotential=20, bool _burstingActivity=false, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _inputResistance=50e9, float _externalCurrent=100, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, bool _wta=false, std::string _classLabel="") :
+			neuronID(_neuronID),
+    		refractoryPeriod(_refractoryPeriod),
+    		potential(_restingPotential),
+			learningRuleHandler(_learningRuleHandler),
 			rfRow(_rfRow),
 			rfCol(_rfCol),
 			sublayerID(_sublayerID),
@@ -70,6 +74,9 @@ namespace adonis
 		virtual ~BiologicalNeuron(){}
 		
 		// ----- PUBLIC NEURON METHODS -----
+		
+		virtual void update(double timestamp, axon* a, Network* network) = 0;
+		
 		void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true) override
         {
             if (postNeuron)
@@ -106,9 +113,24 @@ namespace adonis
             }
         }
 		
-		virtual void update(double timestamp, axon* a, Network* network) = 0;
+		spike prepareInitialSpike(double timestamp)
+        {
+            if (!initialAxon.postNeuron)
+            {
+                initialAxon.postNeuron = this;
+            }
+            return spike{timestamp, &initialAxon};
+        }
 		
-		virtual void learn(double timestamp, Network* network) override
+		static bool connectionProbability(int probability)
+		{
+			std::random_device device;
+			std::mt19937 randomEngine(device());
+			std::bernoulli_distribution dist(probability/100.);
+			return dist(randomEngine);
+		}
+		
+		virtual void learn(double timestamp, Network* network)
 		{
 			if (network->getLearningStatus())
 			{
@@ -127,7 +149,7 @@ namespace adonis
 			resetLearning();
 		}
 		
-		virtual void resetNeuron() override
+		virtual void resetNeuron()
 		{
 			lastSpikeTime = 0;
 			current = 0;
@@ -265,21 +287,64 @@ namespace adonis
 			inhibited = inhibitionStatus;
 		}
 		
+		std::vector<LearningRuleHandler*> getLearningRuleHandler() const
+		{
+			return learningRuleHandler;
+		}
+		
+		void addLearningRule(LearningRuleHandler* newRule)
+		{
+			learningRuleHandler.emplace_back(newRule);
+		}
+		
+		int16_t getNeuronID() const
+        {
+            return neuronID;
+        }
+		
+		float getPotential() const
+        {
+            return potential;
+        }
+		
+        float setPotential(float newPotential)
+        {
+            return potential = newPotential;
+        }
+		
+		axon* getInitialAxon()
+		{
+			return &initialAxon;
+		}
+		
+		std::vector<axon*>& getPreAxons()
+		{
+			return preAxons;
+		}
+		
+		std::vector<std::unique_ptr<axon>>& getPostAxons()
+		{
+			return postAxons;
+		}
+		
 	protected:
 		
 		// ----- NEURON BEHAVIOR -----
-		void WTA(double timestamp)
+		void WTA(double timestamp, Network* network)
 		{
-			if (preAxons.size() > 0)
+			for (auto rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
 			{
-				for (auto& projReset: preAxons[0]->preNeuron->postAxons)
+				if (rf.row == rfRow && rf.col == rfCol)
 				{
-					if (projReset->postNeuron->neuronID != neuronID)
+					for (auto n: rf.neurons)
 					{
-						projReset->postNeuron->inhibited = true;
-						projReset->postNeuron->inhibitionTime = timestamp;
-						projReset->postNeuron->current = 0;
-						projReset->postNeuron->potential = restingPotential;
+						if (network->getNeurons()[n].neuronID != neuronID)
+						{
+							network->getNeurons()[n].inhibited = true;
+							network->getNeurons()[n].inhibitionTime = timestamp;
+							network->getNeurons()[n].current = 0;
+							network->getNeurons()[n].potential = restingPotential;
+						}
 					}
 				}
 			}
@@ -307,7 +372,14 @@ namespace adonis
 		bool                                     active;
 		bool                                     inhibited;
 		double                                   inhibitionTime;
-		
+		int16_t                                  neuronID;
+		axon                                     initialAxon;
+		std::vector<axon*>                       preAxons;
+		std::vector<std::unique_ptr<axon>>       postAxons;
+		float                                    potential;
+		float                                    restingPotential;
+		float                                    refractoryPeriod;
+		std::vector<LearningRuleHandler*>        learningRuleHandler;
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
 		float                                    eligibilityTrace;
@@ -320,13 +392,8 @@ namespace adonis
 		float                                    decayHomeostasis;
 		float                                    homeostasisBeta;
 		bool                                     wta;
-		
-		// ----- IMPLEMENTATION VARIABLES -----
 		axon                                     activeAxon;
         double                                   lastSpikeTime;
-		
-		
-        // ----- LEARNING RULE VARIABLES -----
         float                                    plasticityTrace;
         std::string                              classLabel;
 	};
