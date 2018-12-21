@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 20/11/2018
  *
- * Information: Add-on to the Network class, used to log the spikes from the output layer when the learning is off
+ * Information: Add-on used to log the spikes from the output layer when the learning is off
  */
 
 #pragma once
@@ -17,9 +17,9 @@
 #include <array>
 #include <stdexcept>
 
-#include "core.hpp"
+#include "../core.hpp"
 #include "spikeLogger.hpp"
-#include "dataParser.hpp"
+#include "../dataParser.hpp"
 
 namespace adonis
 {

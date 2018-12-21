@@ -12,9 +12,9 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/qtDisplay.hpp"
-#include "../source/spikeLogger.hpp"
-#include "../source/stdp.hpp"
+#include "../source/GUI/qtDisplay.hpp"
+#include "../source/addOns/spikeLogger.hpp"
+#include "../source/learningRules/stdp.hpp"
 
 int main(int argc, char** argv)
 {

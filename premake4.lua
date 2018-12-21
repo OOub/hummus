@@ -13,7 +13,7 @@ solution 'adonis'
     		kind 'ConsoleApp'
     		language 'C++'
         	location 'build'
-        	files {'source/**.hpp', 'applications/' .. name .. '.cpp'}
+        	files {'source/**.hpp','source/addOns/**.hpp', 'source/dependencies/**.hpp', 'source/GUI/**.hpp', 'source/learningRules/**.hpp', 'source/neurons/**.hpp', 'applications/' .. name .. '.cpp'}
 
         	newoption {
    				trigger     = 'without-qt',
@@ -29,9 +29,9 @@ solution 'adonis'
 			if with_qt then
 	            -- Run moc and link to the Qt library
 	        	local mocFiles = {
-	            	'source/inputViewer.hpp',
-	            	'source/outputViewer.hpp',
-	            	'source/potentialViewer.hpp',
+	            	'source/GUI/inputViewer.hpp',
+	            	'source/GUI/outputViewer.hpp',
+	            	'source/GUI/potentialViewer.hpp',
 	        	}
 
 		        -- Linux specific settings

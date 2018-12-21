@@ -1,0 +1,6 @@
+Special thanks to the following people for their valuable advice on the development on the Adonis simulator during my PhD:
+
+Alexandre Marcireau
+Francesco Galluppi
+Fabian Chersi
+Kévin Géhère

@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 12/06/2018
  *
- * Information: Add-on to the Network class, used to write the learning rule's output into a log binary file; In other words, which neurons are being modified at each learning epoch. This can be read using the snnReader.m matlab function
+ * Information: Add-on used to write the learning rule's output into a log binary file; In other words, which neurons are being modified at each learning epoch. This can be read using the snnReader.m matlab function
  */
 
 #pragma once
@@ -17,7 +17,7 @@
 #include <array>
 #include <stdexcept>
 
-#include "core.hpp"
+#include "../core.hpp"
 #include "spikeLogger.hpp"
 
 namespace adonis

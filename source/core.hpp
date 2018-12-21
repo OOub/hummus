@@ -35,20 +35,9 @@ namespace adonis
 {
 	class Neuron;
 	
-	struct axon
-	{
-		Neuron*     preNeuron;
-		Neuron*     postNeuron;
-		float       weight;
-		int         delay;
-		double      lastInputTime;
-	};
+	struct axon;
 	
-	struct spike
-    {
-        double      timestamp;
-        axon*       axon;
-    };
+	struct spike;
 	
 	struct receptiveField
 	{
@@ -78,12 +67,14 @@ namespace adonis
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0) :
+    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1) :
     		neuronID(_neuronID),
     		rfRow(_rfRow),
 			rfCol(_rfCol),
 			sublayerID(_sublayerID),
-			layerID(_layerID)
+			layerID(_layerID),
+			xCoordinate(_xCoordinate),
+            yCoordinate(_yCoordinate)
     	{}
     	
 		virtual ~Neuron(){}
@@ -140,13 +131,124 @@ namespace adonis
 			return layerID;
 		}
 		
+		std::vector<axon> getPreAxons()
+		{
+			return preAxons;
+		}
+		
+		int16_t getX() const
+		{
+		    return xCoordinate;
+		}
+		
+		int16_t getY() const
+		{
+		    return yCoordinate;
+		}
+		
 		// ----- NEURON PARAMETERS -----
-        int16_t neuronID;
-		int16_t rfRow;
-		int16_t rfCol;
-		int16_t sublayerID;
-		int16_t layerID;
+        int16_t            neuronID;
+		int16_t            rfRow;
+		int16_t            rfCol;
+		int16_t            sublayerID;
+		int16_t            layerID;
+		int16_t            xCoordinate;
+		int16_t            yCoordinate;
+		std::vector<axon>  preAxons;
     };
+	
+	class PreNeuron;
+	
+	struct axon
+	{
+		PreNeuron*  preNeuron;
+		Neuron*     postNeuron;
+		float       weight;
+		int         delay;
+		double      lastInputTime;
+	};
+	
+	struct spike
+    {
+        double      timestamp;
+        axon*       axon;
+    };
+	
+	class PreNeuron : public Neuron
+	{
+	public:
+		// ----- CONSTRUCTOR AND DESTRUCTOR -----
+		PreNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1) :
+			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate),
+			initialAxon{nullptr, nullptr, 1, 0, -1}
+		{}
+		
+		virtual ~PreNeuron(){}
+		
+		// ----- PUBLIC NEURON METHODS -----
+		virtual void update(double timestamp, axon* a, Network* network, double timestep) = 0;
+		
+		// connect a PreNeuron to a Neuron
+		void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true)
+        {
+            if (postNeuron)
+            {
+            	if (connectionProbability(probability))
+            	{
+					if (redundantConnections == false)
+					{
+						int16_t ID = postNeuron->neuronID;
+						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](const std::unique_ptr<axon>& p){return p->postNeuron->neuronID == ID;});
+						
+						if (result == postAxons.end())
+						{
+							postAxons.emplace_back(this, postNeuron, weight, delay, -1);
+							postNeuron->preAxons.push_back(postAxons.back());
+						}
+						else
+						{
+							#ifndef NDEBUG
+							std::cout << "axon " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
+							#endif
+						}
+					}
+					else
+					{
+						postAxons.emplace_back(this, postNeuron, weight, delay, -1);
+						postNeuron->preAxons.push_back(postAxons.back());
+					}
+                }
+            }
+            else
+            {
+                throw std::logic_error("Neuron does not exist");
+            }
+        }
+	
+		spike prepareInitialSpike(double timestamp)
+        {
+            if (!initialAxon.postNeuron)
+            {
+                initialAxon.postNeuron = this;
+            }
+            return spike{timestamp, &initialAxon};
+        }
+		
+		// ----- SETTERS AND GETTERS -----
+		std::vector<axon> getPostAxons()
+		{
+			return postAxons;
+		}
+		
+		axon* getInitialAxon()
+		{
+			return &initialAxon;
+		}
+		
+		// ----- PRENEURON PARAMETERS -----
+		std::vector<axon>  postAxons;
+		axon               initialAxon;
+	};
 	
     class Network
     {
@@ -411,18 +513,21 @@ namespace adonis
     			{
 					for (auto& pre: preRF.neurons)
 					{
-						for (auto& postSub: postsynapticLayer.sublayers)
+						if(PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[pre].get()))
 						{
-							for (auto& postRF: postSub.receptiveFields)
-    						{
-    							for (auto& post: postRF.neurons)
+							for (auto& postSub: postsynapticLayer.sublayers)
+							{
+								for (auto& postRF: postSub.receptiveFields)
 								{
-									std::random_device device;
-									std::mt19937 randomEngine(device());
-									std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-									std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-									int sign = _weightMean<0?-1:_weightMean>=0;
-									neurons[pre]->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+									for (auto& post: postRF.neurons)
+									{
+										std::random_device device;
+										std::mt19937 randomEngine(device());
+										std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+										std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+										int sign = _weightMean<0?-1:_weightMean>=0;
+										dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+									}
 								}
 							}
 						}
@@ -447,18 +552,21 @@ namespace adonis
 					{
 						for (auto& pre: preRF.neurons)
 						{
-							for (auto& postSub: l.sublayers)
+							if(PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[pre].get()))
 							{
-								for (auto& postRF: postSub.receptiveFields)
+								for (auto& postSub: l.sublayers)
 								{
-									for (auto& post: postRF.neurons)
+									for (auto& postRF: postSub.receptiveFields)
 									{
-										if (pre != post)
+										for (auto& post: postRF.neurons)
 										{
-											std::random_device device;
-											std::mt19937 randomEngine(device());
-											std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-											neurons[pre]->addAxon(neurons[post].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, redundantConnections);
+											if (pre != post)
+											{
+												std::random_device device;
+												std::mt19937 randomEngine(device());
+												std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+												dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, redundantConnections);
+											}
 										}
 									}
 								}
@@ -496,14 +604,17 @@ namespace adonis
 							{
 								for (auto& pre: preRF.neurons)
 								{
-									for (auto& post: postRF.neurons)
+									if(PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[pre].get()))
 									{
-										std::random_device device;
-										std::mt19937 randomEngine(device());
-										std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-										std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-										int sign = _weightMean<0?-1:_weightMean>=0;
-										neurons[pre]->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+										for (auto& post: postRF.neurons)
+										{
+											std::random_device device;
+											std::mt19937 randomEngine(device());
+											std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+											std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+											int sign = _weightMean<0?-1:_weightMean>=0;
+											dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+										}
 									}
 								}
 							}
@@ -552,14 +663,17 @@ namespace adonis
 								{
 									for (auto& pre: preRf.neurons)
 									{
-										for (auto& post: postRf.neurons)
+										if(PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[pre].get()))
 										{
-											std::random_device device;
-											std::mt19937 randomEngine(device());
-											std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-											std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-											int sign = _weightMean<0?-1:_weightMean>=0;
-											neurons[pre]->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+											for (auto& post: postRf.neurons)
+											{
+												std::random_device device;
+												std::mt19937 randomEngine(device());
+												std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+												std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+												int sign = _weightMean<0?-1:_weightMean>=0;
+												dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+											}
 										}
 									}
 								}
@@ -616,7 +730,10 @@ namespace adonis
 								{
 									if (neurons[n]->getNeuronID() == event.neuronID)
 									{
-										injectSpike(neurons[n]->prepareInitialSpike(event.timestamp));
+										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
+										{
+											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+										}
 									}
 								}
 							}
@@ -629,7 +746,10 @@ namespace adonis
 								{
 									if (neurons[n]->getNeuronID() == event.neuronID)
 									{
-										injectSpike(neurons[n]->prepareInitialSpike(event.timestamp));
+										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
+										{
+											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+										}
 									}
 								}
 							}
@@ -651,8 +771,11 @@ namespace adonis
 								{
 									if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y)
 									{
-										injectSpike(neurons[n]->prepareInitialSpike(event.timestamp));
-										break;
+										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
+										{
+											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+											break;
+										}
 									}
 								}
 							}
@@ -665,8 +788,11 @@ namespace adonis
 								{
 									if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y)
 									{
-										injectSpike(neurons[n]->prepareInitialSpike(event.timestamp));
-										break;
+										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
+										{
+											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+											break;
+										}
 									}
 								}
 							}

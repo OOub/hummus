@@ -12,14 +12,14 @@
 #include <string>
 #include <iostream>
 
-#include "../source/dependencies/json.hpp"
-#include "../source/network.hpp"
-#include "../source/qtDisplay.hpp"
+#include "../source/core.hpp"
 #include "../source/dataParser.hpp"
-#include "../source/spikeLogger.hpp"
-#include "../source/myelinPlasticityLogger.hpp"
-#include "../source/stdp.hpp"
-#include "../source/myelinPlasticity.hpp"
+#include "../source/dependencies/json.hpp"
+#include "../source/GUI/qtDisplay.hpp"
+#include "../source/addOns/spikeLogger.hpp"
+#include "../source/learningRules/stdp.hpp"
+#include "../source/addOns/myelinPlasticityLogger.hpp"
+#include "../source/learningRules/myelinPlasticity.hpp"
 
 using json = nlohmann::json;
 

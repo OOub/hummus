@@ -22,7 +22,7 @@
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
 
-#include "core.hpp"
+#include "../core.hpp"
 #include "inputViewer.hpp"
 #include "outputViewer.hpp"
 #include "potentialViewer.hpp"

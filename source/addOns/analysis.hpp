@@ -13,8 +13,8 @@
 
 #include <vector>
 
-#include "core.hpp"
-#include "dataParser.hpp"
+#include "../core.hpp"
+#include "../dataParser.hpp"
 
 namespace adonis
 {

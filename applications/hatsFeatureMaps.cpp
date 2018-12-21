@@ -11,12 +11,12 @@
 
 #include <iostream> 
 
-#include "../source/network.hpp"
-#include "../source/analysis.hpp"
-#include "../source/qtDisplay.hpp"
-#include "../source/predictionLogger.hpp"
-#include "../source/rewardModulatedSTDP.hpp"
-#include "../source/stdp.hpp"
+#include "../source/core.hpp"
+#include "../source/addOns/analysis.hpp"
+#include "../source/GUI/qtDisplay.hpp"
+#include "../source/addOns/predictionLogger.hpp"
+#include "../source/learningRules/rewardModulatedSTDP.hpp"
+#include "../source/learningRules/stdp.hpp"
 
 int main(int argc, char** argv)
 {

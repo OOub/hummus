@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "globalLearningRuleHandler.hpp"
+#include "../globalLearningRuleHandler.hpp"
 
 namespace adonis
 {
@@ -70,19 +70,19 @@ namespace adonis
 				for (auto& postAxon: neuron->getPostAxons())
 				{
 					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive
-					if (postAxon->postNeuron->getEligibilityTrace() > 0.1)
+					if (postAxon.postNeuron->getEligibilityTrace() > 0.1)
 					{
-						float postTrace = - (timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus);
+						float postTrace = - (timestamp - postAxon.postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon.postNeuron->getLastSpikeTime())/tau_minus);
 
-						if (postAxon->weight > 0)
+						if (postAxon.weight > 0)
 						{
-							postAxon->weight += postTrace*(1/postAxon->postNeuron->getInputResistance());
-							if (postAxon->weight < 0)
+							postAxon.weight += postTrace*(1/postAxon.postNeuron->getInputResistance());
+							if (postAxon.weight < 0)
 							{
-								postAxon->weight = 0;
+								postAxon.weight = 0;
 							}
 						}
-						postAxon->postNeuron->setPlasticityTrace(postTrace);
+						postAxon.postNeuron->setPlasticityTrace(postTrace);
 					}
 				}
 			}
@@ -93,19 +93,19 @@ namespace adonis
 				for (auto preAxon: neuron->getPreAxons())
 				{
 					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
-					if (preAxon->preNeuron->getEligibilityTrace() > 0.1)
+					if (preAxon.preNeuron->getEligibilityTrace() > 0.1)
 					{
-						float preTrace = -(preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus);
+						float preTrace = -(preAxon.preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon.preNeuron->getLastSpikeTime() - timestamp)/tau_plus);
 
-						if (preAxon->weight < 1/preAxon->preNeuron->getInputResistance())
+						if (preAxon.weight < 1/preAxon.preNeuron->getInputResistance())
 						{
-							preAxon->weight += preTrace*(1/preAxon->preNeuron->getInputResistance());
-							if (preAxon->weight > 1/preAxon->preNeuron->getInputResistance())
+							preAxon.weight += preTrace*(1/preAxon->preNeuron->getInputResistance());
+							if (preAxon.weight > 1/preAxon.preNeuron->getInputResistance())
 							{
-								preAxon->weight = 1/preAxon->preNeuron->getInputResistance();
+								preAxon.weight = 1/preAxon.preNeuron->getInputResistance();
 							}
 						}
-						preAxon->preNeuron->setPlasticityTrace(preTrace);
+						preAxon.preNeuron->setPlasticityTrace(preTrace);
 					}
 				}
 			}

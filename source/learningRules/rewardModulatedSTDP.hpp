@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "globalLearningRuleHandler.hpp"
+#include "../globalLearningRuleHandler.hpp"
 
 namespace adonis
 {

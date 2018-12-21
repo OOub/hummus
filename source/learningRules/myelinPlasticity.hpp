@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "myelinPlasticityLogger.hpp"
+#include "../addOns/myelinPlasticityLogger.hpp"
 
 namespace adonis
 {

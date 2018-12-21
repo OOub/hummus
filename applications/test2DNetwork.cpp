@@ -11,10 +11,10 @@
 
 #include <iostream>
 
-#include "../source/network.hpp"
-#include "../source/qtDisplay.hpp"
-#include "../source/spikeLogger.hpp"
-#include "../source/stdp.hpp"
+#include "../source/core.hpp"
+#include "../source/GUI/qtDisplay.hpp"
+#include "../source/addOns/spikeLogger.hpp"
+#include "../source/learningRules/stdp.hpp"
 
 int main(int argc, char** argv)
 {
