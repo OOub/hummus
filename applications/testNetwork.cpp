@@ -34,24 +34,25 @@ int main(int argc, char** argv)
 	adonis_c::STDP stdp;
 	
 	// creating layers of neurons
-	network.addLayer({}, 1, 1, 1, false);
+	network.addLayer({}, 2, 1, 1, false);
 	network.addLayer({&stdp}, 1, 1, 1, false);
 
     //  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0, 10, 2);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0, 10, 2);
 	network.lateralInhibition(network.getLayers()[1], -1);
 	
     //  ----- INJECTING SPIKES -----
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(10));
+	network.injectSpike(network.getNeurons()[1].prepareInitialSpike(12));
 	network.injectSpike(network.getNeurons()[0].prepareInitialSpike(30));
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(runtime);
-  	qtDisplay.trackNeuron(1);
+  	qtDisplay.trackNeuron(2);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(timestep, runtime);
+    network.run(runtime, timestep);
 
     //  ----- EXITING APPLICATION -----
     return 0;

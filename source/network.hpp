@@ -582,7 +582,7 @@ namespace adonis_c
 		}
 		
 		// clock-based running through the network
-        void run(double _timestep, double _runtime)
+        void run(double _runtime, double _timestep=0.1)
         {
 			globalLearningRuleMonitor();
 			
@@ -605,38 +605,7 @@ namespace adonis_c
 				std::cout << "Running the network..." << std::endl;
 				std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
 				
-				if (!neurons.empty())
-				{
-					for (double i=0; i<_runtime; i+=_timestep)
-					{
-						if (!trainingLabels.empty())
-						{
-							if (trainingLabels.front().onset <= i)
-							{
-								currentLabel = trainingLabels.front().name;
-								trainingLabels.pop_front();
-							}
-						}
-					
-						if (learningOffSignal != -1)
-						{
-							if (learningStatus==true && i >= learningOffSignal)
-							{
-								std::cout << "learning turned off at t=" << i << std::endl;
-								learningStatus = false;
-							}
-						}
-						
-						for (auto& n: neurons)
-						{
-							update(&n, i, _timestep);
-						}
-					}
-				}
-				else
-				{
-					throw std::runtime_error("add neurons to the network before running it");
-				}
+				runHelper(_runtime, _timestep, false);
 
 				std::cout << "Done." << std::endl;
 
@@ -658,7 +627,7 @@ namespace adonis_c
 		}
 		
 		// running through the network and segregating between a training phase and a classification phase
-        void run(float _timestep, std::vector<input>* trainingData, std::vector<input>* testData=nullptr, int shift=20)
+        void run(std::vector<input>* trainingData, std::vector<input>* testData=nullptr, float _timestep=0.1, int shift=20)
         {
 			globalLearningRuleMonitor();
 			
@@ -756,38 +725,9 @@ namespace adonis_c
 			
 			std::cout << "Training the network..." << std::endl;
 			std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-			if (!neurons.empty())
-			{
-				for (double i=0; i<trainingData->back().timestamp+maxDelay+shift; i+= timestep)
-				{
-					if (!trainingLabels.empty())
-					{
-						if (trainingLabels.front().onset <= i)
-						{
-							currentLabel = trainingLabels.front().name;
-							trainingLabels.pop_front();
-						}
-					}
-					
-					if (learningOffSignal != -1)
-					{
-						if (learningStatus==true && i >= learningOffSignal)
-						{
-							learningStatus = false;
-							std::cout << "learning turned off at t=" << i << std::endl;
-						}
-					}
-				
-					for (auto& n: neurons)
-					{
-						update(&n, i, timestep);
-					}
-				}
-			}
-			else
-			{
-				throw std::runtime_error("add neurons to the network before running it");
-			}
+			
+			runHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
+			
 			std::cout << "Done." << std::endl;
 			std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
 			std::cout << "it took " << elapsed_seconds.count() << "s for the training phase." << std::endl;
@@ -807,86 +747,101 @@ namespace adonis_c
 			injectSpikeFromData(testData);
 			
 			std::cout << "Running prediction based on a trained network..." << std::endl;
+			
+			runHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
+
+			std::cout << "Done." << std::endl;
+		}
+		
+		void runHelper(double runtime, double timestep, bool prediction=false)
+		{
 			if (!neurons.empty())
 			{
-				for (double i=0; i<testData->back().timestamp+maxDelay+shift; i+= timestep)
+				for (double i=0; i<runtime; i+=timestep)
 				{
+					if (!prediction)
+					{
+						if (!trainingLabels.empty())
+						{
+							if (trainingLabels.front().onset <= i)
+							{
+								currentLabel = trainingLabels.front().name;
+								trainingLabels.pop_front();
+							}
+						}
+
+						if (learningOffSignal != -1)
+						{
+							if (learningStatus==true && i >= learningOffSignal)
+							{
+								std::cout << "learning turned off at t=" << i << std::endl;
+								learningStatus = false;
+							}
+						}
+					}
+
+					std::vector<spike> currentSpikes;
+					if (generatedSpikes.empty() && !initialSpikes.empty())
+					{
+						while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i)
+						{
+							currentSpikes.emplace_back(initialSpikes.front());
+							initialSpikes.pop_front();
+						}
+					}
+					else if (initialSpikes.empty() && !generatedSpikes.empty())
+					{
+						while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i)
+						{
+							currentSpikes.emplace_back(generatedSpikes.front());
+							generatedSpikes.pop_front();
+						}
+					}
+					else
+					{
+						while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i)
+						{
+							currentSpikes.emplace_back(initialSpikes.front());
+							initialSpikes.pop_front();
+						}
+						
+						while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i)
+						{
+							currentSpikes.emplace_back(generatedSpikes.front());
+							generatedSpikes.pop_front();
+						}
+						std::sort(currentSpikes.begin(), currentSpikes.end(), [&](spike a, spike b){return a.timestamp < b.timestamp;});
+					}
+
 					for (auto& n: neurons)
 					{
-						update(&n, i, timestep);
+						auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s)
+						{
+							if (s.axon)
+							{
+								return s.axon->postNeuron->getNeuronID() == n.getNeuronID();
+							}
+							else
+							{
+								return false;
+							}
+						});
+
+						if (it != currentSpikes.end())
+						{
+							auto idx = std::distance(currentSpikes.begin(), it);
+							n.update(i, currentSpikes[idx].axon, this, timestep);
+						}
+						else
+						{
+							n.update(i, nullptr, this, timestep);
+						}
 					}
 				}
 			}
 			else
 			{
 				throw std::runtime_error("add neurons to the network before running it");
-			}
-			std::cout << "Done." << std::endl;
-		}
-		
-		// update neuron status
-		void update(Neuron* neuron, double time, float timestep)
-		{
-			if (generatedSpikes.empty() && !initialSpikes.empty())
-			{
-				spike s = initialSpikes.front();
-				updateHelper(s, neuron, time, timestep,1);
-			}
-			else if (initialSpikes.empty() && !generatedSpikes.empty())
-			{
-				spike s = generatedSpikes.front();
-				updateHelper(s, neuron, time, timestep,0);
-			}
-			else if (!initialSpikes.empty() && !generatedSpikes.empty())
-			{
-				if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp)
-				{
-					spike s = initialSpikes.front();
-					updateHelper(s, neuron, time, timestep,1);
-				}
-				else
-				{
-					spike s = generatedSpikes.front();
-					updateHelper(s, neuron, time, timestep,0);
-				}
-			}
-			else
-			{
-				neuron->update(time, timestep, spike({time, nullptr}), this);
-			}
-		}
-		
-		// helper for the update method
-		void updateHelper(spike s, Neuron* neuron, double time, float timestep, int listSelector)
-		{
-			if (s.axon->postNeuron->getNeuronID() == neuron->getNeuronID())
-			{
-				
-				if (s.timestamp <= time + (timestep/2))
-				{
-					neuron->update(time, timestep, s, this);
-
-					if (listSelector == 0)
-					{
-						if (!generatedSpikes.empty())
-						{
-							generatedSpikes.pop_front();
-						}
-					}
-					
-					else if (listSelector == 1)
-					{
-						initialSpikes.pop_front();
-					}
-				}
-				else
-				{
-					neuron->update(time, timestep, spike({time, nullptr}),this);
-				}
-			}
-			else
-			{
-				neuron->update(time, timestep, spike({time, nullptr}),this);
 			}
 		}
 		

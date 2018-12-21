@@ -145,7 +145,7 @@ namespace adonis_c
         }
 		
 		template<typename Network>
-		void update(double timestamp, float timestep, spike s, Network* network)
+		void update(double timestamp, axon* a, Network* network, double timestep)
 		{
 			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
 			{
@@ -173,35 +173,35 @@ namespace adonis_c
 			// neuron inactive during refractory period
 			if (active && !inhibited)
 			{
-				if (s.axon)
+				if (a)
 				{
 					// increase the threshold
 					if (homeostasis)
 					{
 						threshold += homeostasisBeta/decayHomeostasis;
 					}
-					current += externalCurrent*s.axon->weight;
-					activeAxon = *s.axon;
-					s.axon->lastInputTime = timestamp;
+					current += externalCurrent*a->weight;
+					activeAxon = *a;
+					a->lastInputTime = timestamp;
 				}
 				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 			}
 
-			if (s.axon)
+			if (a)
 			{
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (s.axon->preNeuron ? s.axon->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.axon->weight << " d=" << s.axon->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
+				std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
 				#endif
 				for (auto addon: network->getStandardAddOns())
 				{
 					if (potential < threshold)
 					{
-						addon->incomingSpike(timestamp, s.axon, network);
+						addon->incomingSpike(timestamp, a, network);
 					}
 				}
 				if (network->getMainThreadAddOn())
 				{
-					network->getMainThreadAddOn()->incomingSpike(timestamp, s.axon, network);
+					network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
 				}
 			}
 			else
@@ -458,24 +458,29 @@ namespace adonis_c
 			}
 			if (wta)
 			{
-				WTA(timestamp);
+				WTA(timestamp, network);
 			}
 			resetLearning();
 		}
 		
 		// ----- NEURON BEHAVIOR -----
-		void WTA(double timestamp)
-		{
-			if (preAxons.size() > 0)
+		
+		template<typename Network>
+		void WTA(double timestamp, Network* network)
+		{			
+			for (auto rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
 			{
-				for (auto& projReset: preAxons[0]->preNeuron->postAxons)
+				if (rf.row == rfRow && rf.col == rfCol)
 				{
-					if (projReset->postNeuron->neuronID != neuronID)
+					for (auto n: rf.neurons)
 					{
-						projReset->postNeuron->inhibited = true;
-						projReset->postNeuron->inhibitionTime = timestamp;
-						projReset->postNeuron->current = 0;
-						projReset->postNeuron->potential = restingPotential;
+						if (network->getNeurons()[n].neuronID != neuronID)
+						{
+							network->getNeurons()[n].inhibited = true;
+							network->getNeurons()[n].inhibitionTime = timestamp;
+							network->getNeurons()[n].current = 0;
+							network->getNeurons()[n].potential = restingPotential;
+						}
 					}
 				}
 			}

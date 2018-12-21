@@ -1,5 +1,5 @@
 /*
- * STDP.hpp
+ * stdp.hpp
  * Adonis_c - clock-driven spiking neural network simulator
  *
  * Created by Omar Oubari.

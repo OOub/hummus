@@ -21,48 +21,42 @@
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
-    adonis_c::QtDisplay qtDisplay;
-	adonis_c::Analysis analysis("../../data/cards/test_nooff_pip2_rep10_jitter0Label.txt");
-	adonis_c::Network network({&analysis}, &qtDisplay);
+	adonis_c::Analysis analysis("../../data/cards/test_nooff_pip4_rep1_jitter0Label.txt");
+	adonis_c::Network network({&analysis});
 	
     //  ----- NETWORK PARAMETERS -----
-	float decayCurrent = 10;
-	float decayPotential = 20;
+	float decayCurrent = 80;
+	float decayPotential = 100;
 	float refractoryPeriod = 3;
-	float eligibilityDecay = 100;
+	float eligibilityDecay = 1000;
 	
 	bool overlap = false;
-	bool homeostasis = false;
+	bool homeostasis = true;
 	bool wta = false;
-	bool burst = false;
+	bool burst = true;
 	
 	//  ----- CREATING THE NETWORK -----
 	adonis_c::STDP stdp;
 	adonis_c::RewardModulatedSTDP rstdp;
 	
 	network.add2dLayer(1, 24, 24, {}, 1, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
-	network.add2dLayer(4, 24, 24, {}, 1, 1, overlap, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
-	network.addDecisionMakingLayer("../../data/cards/train_nooff_pip2_rep50_jitter0Label.txt", {}, 500);
-
+	network.add2dLayer(4, 24, 24, {&stdp}, 1, 1, overlap, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
+	network.addDecisionMakingLayer("../../data/cards/train_nooff_pip4_rep50_jitter0Label.txt", {&rstdp}, 500);
+	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.6, 0.4, 5, 3, 50);
-	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4, 5, 3, 50);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.6, 0.3, 5, 3, 100);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.3, 5, 3, 100);
 	
 	network.lateralInhibition(network.getLayers()[1], -1);
-	network.lateralInhibition(network.getLayers()[2], -1);
 	
 	//  ----- READING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readData("../../data/cards/train_nooff_pip2_rep50_jitter0.txt");
-	auto testData = dataParser.readData("../../data/cards/test_nooff_pip2_rep10_jitter0.txt");
+    auto trainingData = dataParser.readData("../../data/cards/train_nooff_pip4_rep50_jitter0.txt");
 	
-	//  ----- DISPLAY SETTINGS -----
-	qtDisplay.useHardwareAcceleration(true);
-	qtDisplay.setTimeWindow(5000);
-	qtDisplay.trackLayer(2);
+	auto testData = dataParser.readData("../../data/cards/test_nooff_pip4_rep1_jitter0.txt");
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(0.1, &trainingData, &testData);
+    network.run(&trainingData, &testData, 1);
 	analysis.accuracy();
 	
     //  ----- EXITING APPLICATION -----
