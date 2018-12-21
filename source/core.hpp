@@ -78,7 +78,13 @@ namespace adonis
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron() = default;
+    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0) :
+    		neuronID(_neuronID),
+    		rfRow(_rfRow),
+			rfCol(_rfCol),
+			sublayerID(_sublayerID),
+			layerID(_layerID)
+    	{}
     	
 		virtual ~Neuron(){}
 		
@@ -92,6 +98,51 @@ namespace adonis
 		{
 			update(timestamp, a, network, timestep);
 		}
+		
+		// reset a neuron to its initial status
+		virtual void resetNeuron(){}
+		
+		// utility function that returns true or false depending on a probability percentage
+		static bool connectionProbability(int probability)
+		{
+			std::random_device device;
+			std::mt19937 randomEngine(device());
+			std::bernoulli_distribution dist(probability/100.);
+			return dist(randomEngine);
+		}
+		
+		// ----- SETTERS AND GETTERS -----
+		int16_t getNeuronID() const
+        {
+            return neuronID;
+        }
+		
+		int16_t getRfRow() const
+		{
+			return rfRow;
+		}
+		
+		int16_t getRfCol() const
+		{
+			return rfCol;
+		}
+		
+		int16_t getSublayerID() const
+		{
+			return sublayerID;
+		}
+		
+		int16_t getLayerID() const
+		{
+			return layerID;
+		}
+		
+		// ----- NEURON PARAMETERS -----
+        int16_t neuronID;
+		int16_t rfRow;
+		int16_t rfCol;
+		int16_t sublayerID;
+		int16_t layerID;
     };
 	
     class Network
@@ -114,7 +165,7 @@ namespace adonis
 		
 		// add neurons
 		template <typename T, typename... Args>
-		void addLayer(std::vector<LearningRuleHandler*> _learningRuleHandler={}, int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, Args&&... args)
+		void addLayer(int neuronNumber=1, int rfNumber=1, int _sublayerNumber=1, Args&&... args)
         {
         	unsigned long shift = 0;
 			
@@ -145,7 +196,7 @@ namespace adonis
 					std::vector<std::size_t> neuronTemp;
 					for (auto k=0+shift; k<neuronNumber+shift; k++)
 					{
-						neurons.emplace_back(new T{k+counter, j, 0, i, layerID, _learningRuleHandler, std::forward<Args>(args)...});
+						neurons.emplace_back(new T{k+counter, j, 0, i, layerID, std::forward<Args>(args)...});
 						
 						neuronTemp.emplace_back(neurons.size()-1);
 					}
@@ -316,7 +367,7 @@ namespace adonis
 						{
 							for (auto j = 0; j < _numberOfNeurons; j++)
 							{
-								neurons.emplace_back(new Neuron{static_cast<int16_t>(neuronCounter+counter), rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, _learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta, _wta});
+								neurons.emplace_back(new T{static_cast<int16_t>(neuronCounter+counter), rfRow, rfCol, i, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent, -1, -1, _learningRuleHandler, homeostasis, decayHomeostasis, homeostasisBeta, _wta});
 								
 								neuronCounter += 1;
 								
@@ -551,7 +602,7 @@ namespace adonis
 			{
 				for (auto& event: *data)
 				{
-					for (auto& l: layers[0].sublayers)
+					for (auto& l: layers[0].sublayers) // this is solved
 					{
 						if (event.sublayerID == l.ID)
 						{
@@ -917,7 +968,7 @@ namespace adonis
 							{
 								if (s.axon)
 								{
-									return s.axon->postNeuron->getNeuronID() == n.getNeuronID();
+									return s.axon->postNeuron->getNeuronID() == n->getNeuronID();
 								}
 								else
 								{
@@ -928,11 +979,11 @@ namespace adonis
 							if (it != currentSpikes.end())
 							{
 								auto idx = std::distance(currentSpikes.begin(), it);
-								n.update(i, currentSpikes[idx].axon, this, timestep);
+								n->update(i, currentSpikes[idx].axon, this, timestep);
 							}
 							else
 							{
-								n.update(i, nullptr, this, timestep);
+								n->update(i, nullptr, this, timestep);
 							}
 						}
 					}

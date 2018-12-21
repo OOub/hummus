@@ -58,7 +58,7 @@ namespace adonis
     	// ----- PUBLIC OUTPUTVIEWER METHODS -----		
 		void handleData(double timestamp, axon* a, Network* network)
         {
-			if (a->postNeuron->getLayerID() == layerTracker)
+			if (a->postNeuron->getLayerID() == layerTracker) // add layerID to core neuron
 			{
 				if (a->postNeuron->getSublayerID() == sublayerTracker)
 				{

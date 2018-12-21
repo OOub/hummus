@@ -61,9 +61,9 @@ namespace adonis
     	// ----- PUBLIC INPUTVIEWER METHODS -----
 		void handleData(double timestamp, axon* a, Network* network)
         {
-			if (a->postNeuron->getInitialAxon()->postNeuron)
+			if (a->postNeuron->getInitialAxon()->postNeuron) // if initial neurons
 			{
-				if (a->postNeuron->getInitialAxon()->postNeuron->getSublayerID() == sublayerTracker)
+				if (a->postNeuron->getInitialAxon()->postNeuron->getSublayerID() == sublayerTracker) // add sublayer to core
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)

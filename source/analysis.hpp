@@ -61,9 +61,9 @@ namespace adonis
 			if (!network->getLearningStatus())
 			{
 				// restrict only to the decision-making layer
-				if (a->postNeuron->getLayerID() == network->getLayers().back().ID)
+				if (a->postNeuron->getLayerID() == network->getLayers().back().ID) // transform to decision making neurons
 				{
-					if (a->postNeuron->getClassLabel() != "")
+					if (a->postNeuron->getClassLabel() != "") //remove
 					{
 						predictedSpikes.emplace_back(spike{timestamp, a});
 					}
@@ -87,7 +87,7 @@ namespace adonis
 				if (it != predictedSpikes.end())
 				{
 					auto idx = std::distance(predictedSpikes.begin(), it);
-					predictedLabels.emplace_back(predictedSpikes[idx].axon->postNeuron->getClassLabel());
+					predictedLabels.emplace_back(predictedSpikes[idx].axon->postNeuron->getClassLabel()); // this will work because neuronFired only for DM neurons
 				}
 				else
 				{
