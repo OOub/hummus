@@ -67,6 +67,20 @@ namespace adonis
 		virtual ~BiologicalNeuron(){}
 		
 		// ----- PUBLIC NEURON METHODS -----
+		virtual void initialisation(Network* network) override
+		{
+			for (auto& rule: learningRuleHandler)
+			{
+				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
+				{
+					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					{
+						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
+					}
+				}
+			}
+		}
+		
 		virtual void update(double timestamp, axon* a, Network* network) override = 0;
 		
 		virtual void updateSync(double timestamp, axon* a, Network* network){} override

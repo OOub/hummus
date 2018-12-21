@@ -19,15 +19,30 @@ namespace adonis
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _threshold=-50, float _restingPotential=-70)
+		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _threshold=-50, float _restingPotential=-70, std::vector<LearningRuleHandler*> _learningRuleHandler={})
 			threshold(_threshold),
 			potential(_restingPotential),
 			initialAxon{nullptr, nullptr, 1, 0, -1},
+			learningRuleHandler(_learningRuleHandler)
 		{}
 		
 		virtual ~InputNeuron(){}
 		
 		// ----- PUBLIC NEURON METHODS -----
+		virtual void initialisation(Network* network) override
+		{
+			for (auto& rule: learningRuleHandler)
+			{
+				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
+				{
+					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					{
+						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
+					}
+				}
+			}
+		}
+		
 		virtual void update(double timestamp, axon* a, Network* network) override
 		{
 			throw std::logic_error("not implemented yet");
@@ -97,11 +112,21 @@ namespace adonis
 			return &initialAxon;
 		}
 	
+		std::vector<LearningRuleHandler*> getLearningRuleHandler() const
+		{
+			return learningRuleHandler;
+		}
+		
+		void addLearningRule(LearningRuleHandler* newRule)
+		{
+			learningRuleHandler.emplace_back(newRule);
+		}
 	protected:
 	
 		// ----- NEURON PARAMETERS -----
-		float threshold;
-		float potential;
-		axon  initialAxon;
+		float                              threshold;
+		float                              potential;
+		axon                               initialAxon;
+		std::vector<LearningRuleHandler*>  learningRuleHandler;
 	};
 }

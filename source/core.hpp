@@ -90,6 +90,9 @@ namespace adonis
 		
 		// ----- PUBLIC NEURON METHODS -----
 		
+		// ability to do things inside a neuron, outside the constructor before the network actually runs
+		virtual void initialisation(Network* network){}
+		
 		// asynchronous update method
 		virtual void update(double timestamp, axon* a, Network* network, double timestep) = 0;
 
@@ -695,7 +698,10 @@ namespace adonis
 				std::cout << "Running the network synchronously" << std::endl;
 			}
 			
-			globalLearningRuleMonitor();
+			for (auto& n: neurons)
+			{
+				n->initialisation(this);
+			}
 			
 			for (auto addon: stdAddOns)
 			{
@@ -739,7 +745,11 @@ namespace adonis
 		// running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
         void run(std::vector<input>* trainingData, std::vector<input>* testData=nullptr, float _timestep=0, int shift=20)
         {
-			globalLearningRuleMonitor();
+			
+			for (auto& n: neurons)
+			{
+				n->initialisation(this);
+			}
 			
 			for (auto addon: stdAddOns)
 			{
@@ -1019,23 +1029,6 @@ namespace adonis
 				}
 			}
 			s.axon->postNeuron->update(s.timestamp, s.axon, this, 0);
-		}
-		
-		void globalLearningRuleMonitor()
-		{
-			for (auto& n: neurons)
-			{
-				for (auto& rule: n->getLearningRuleHandler())
-				{
-					if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
-					{
-						if (std::find(stdAddOns.begin(), stdAddOns.end(), dynamic_cast<StandardAddOn*>(rule)) == stdAddOns.end())
-						{
-							stdAddOns.emplace_back(dynamic_cast<StandardAddOn*>(rule));
-						}
-					}
-				}
-			}
 		}
 		
 		// ----- IMPLEMENTATION VARIABLES -----
