@@ -63,7 +63,7 @@ namespace adonis
         {
 			if (a->postNeuron->getInitialAxon()->postNeuron) // if initial neurons
 			{
-				if (a->postNeuron->getInitialAxon()->postNeuron->getSublayerID() == sublayerTracker) // add sublayer to core
+				if (a->postNeuron->getInitialAxon()->postNeuron->getSublayerID() == sublayerTracker)
 				{
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed)

@@ -21,7 +21,7 @@ namespace adonis
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		DecisionMakingNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, std::string _classLabel="") :
 			classLabel(_classLabel)
-		{}
+			{}
 		
 		virtual ~DecisionMakingNeuron(){}
 		

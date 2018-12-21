@@ -593,6 +593,7 @@ namespace adonis
         }
         
 		// add spikes from file to the network
+		
 		void injectSpikeFromData(std::vector<input>* data)
 		{
 			// error handling

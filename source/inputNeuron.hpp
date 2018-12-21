@@ -19,11 +19,13 @@ namespace adonis
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, float _threshold=-50, float _restingPotential=-70, std::vector<LearningRuleHandler*> _learningRuleHandler={})
+		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _threshold=-50, float _restingPotential=-70)
 			threshold(_threshold),
 			potential(_restingPotential),
 			initialAxon{nullptr, nullptr, 1, 0, -1},
-			learningRuleHandler(_learningRuleHandler)
+			learningRuleHandler(_learningRuleHandler),
+			xCoordinate(_xCoordinate),
+            yCoordinate(_yCoordinate),
 		{}
 		
 		virtual ~InputNeuron(){}
@@ -121,6 +123,17 @@ namespace adonis
 		{
 			learningRuleHandler.emplace_back(newRule);
 		}
+		
+		int16_t getX() const
+		{
+		    return xCoordinate;
+		}
+		
+		int16_t getY() const
+		{
+		    return yCoordinate;
+		}
+		
 	protected:
 	
 		// ----- NEURON PARAMETERS -----
@@ -128,5 +141,7 @@ namespace adonis
 		float                              potential;
 		axon                               initialAxon;
 		std::vector<LearningRuleHandler*>  learningRuleHandler;
+		int16_t                            xCoordinate;
+		int16_t                            yCoordinate;
 	};
 }
