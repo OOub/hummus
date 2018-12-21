@@ -14,7 +14,7 @@
 #include "../source/core.hpp"
 #include "../source/analysis.hpp"
 #include "../source/qtDisplay.hpp"
-#include "../source/STDP.hpp"
+#include "../source/stdp.hpp"
 #include "../source/rewardModulatedSTDP.hpp"
 #include "../source/myelinPlasticity.hpp"
 

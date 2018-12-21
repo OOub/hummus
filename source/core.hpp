@@ -812,7 +812,7 @@ namespace adonis
 			std::cout << "Done." << std::endl;
 		}
 		
-		void runHelper(bool runtime, bool timestep, bool prediction=false)
+		void runHelper(double runtime, double timestep, bool prediction=false)
 		{
 			if (!neurons.empty())
 			{
@@ -857,28 +857,31 @@ namespace adonis
 				{
 					for (double i=0; i<runtime; i+=timestep)
 					{
-						if (!trainingLabels.empty())
+						if (!prediction)
 						{
-							if (trainingLabels.front().onset <= i)
+							if (!trainingLabels.empty())
 							{
-								currentLabel = trainingLabels.front().name;
-								trainingLabels.pop_front();
+								if (trainingLabels.front().onset <= i)
+								{
+									currentLabel = trainingLabels.front().name;
+									trainingLabels.pop_front();
+								}
+							}
+
+							if (learningOffSignal != -1)
+							{
+								if (learningStatus==true && i >= learningOffSignal)
+								{
+									std::cout << "learning turned off at t=" << i << std::endl;
+									learningStatus = false;
+								}
 							}
 						}
-
-						if (learningOffSignal != -1)
-						{
-							if (learningStatus==true && i >= learningOffSignal)
-							{
-								std::cout << "learning turned off at t=" << i << std::endl;
-								learningStatus = false;
-							}
-						}
-
+						
 						std::vector<spike> currentSpikes;
 						if (generatedSpikes.empty() && !initialSpikes.empty())
 						{
-							while (initialSpikes.front().timestamp <= i)
+							while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i)
 							{
 								currentSpikes.emplace_back(initialSpikes.front());
 								initialSpikes.pop_front();
@@ -886,7 +889,7 @@ namespace adonis
 						}
 						else if (initialSpikes.empty() && !generatedSpikes.empty())
 						{
-							while (generatedSpikes.front().timestamp <= i)
+							while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i)
 							{
 								currentSpikes.emplace_back(generatedSpikes.front());
 								generatedSpikes.pop_front();
@@ -894,46 +897,42 @@ namespace adonis
 						}
 						else
 						{
-							while (initialSpikes.front().timestamp <= i || generatedSpikes.front().timestamp <= i)
+							while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i)
 							{
-								if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp)
+								currentSpikes.emplace_back(initialSpikes.front());
+								initialSpikes.pop_front();
+							}
+							
+							while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i)
+							{
+								currentSpikes.emplace_back(generatedSpikes.front());
+								generatedSpikes.pop_front();
+							}
+							std::sort(currentSpikes.begin(), currentSpikes.end(), [&](spike a, spike b){return a.timestamp < b.timestamp;});
+						}
+
+						for (auto& n: neurons)
+						{
+							auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s)
+							{
+								if (s.axon)
 								{
-									 if (initialSpikes.front().timestamp <= i)
-									 {
-										currentSpikes.emplace_back(initialSpikes.front());
-										initialSpikes.pop_front();
-									 }
-								}
-								else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp)
-								{
-									 if (generatedSpikes.front().timestamp <= i)
-									 {
-										currentSpikes.emplace_back(generatedSpikes.front());
-										generatedSpikes.pop_front();
-									 }
+									return s.axon->postNeuron->getNeuronID() == n.getNeuronID();
 								}
 								else
 								{
-									currentSpikes.emplace_back(initialSpikes.front());
-									initialSpikes.pop_front();
-								
-									currentSpikes.emplace_back(generatedSpikes.front());
-									generatedSpikes.pop_front();
+									return false;
 								}
-							}
-						}
-						
-						for (auto& n: neurons)
-						{
-							auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s){return s.axon->postNeuron->getNeuronID() == n->getNeuronID();});
+							});
+
 							if (it != currentSpikes.end())
 							{
 								auto idx = std::distance(currentSpikes.begin(), it);
-								n->updateSync(i, currentSpikes[idx].axon, this, timestep);
+								n.update(i, currentSpikes[idx].axon, this, timestep);
 							}
 							else
 							{
-								n->updateSync(i, nullptr, this, timestep);
+								n.update(i, nullptr, this, timestep);
 							}
 						}
 					}

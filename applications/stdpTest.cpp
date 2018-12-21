@@ -16,7 +16,7 @@
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
 #include "../source/spikeLogger.hpp"
-#include "../source/STDP.hpp"
+#include "../source/stdp.hpp"
 
 int main(int argc, char** argv)
 {

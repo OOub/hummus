@@ -34,109 +34,108 @@ namespace adonis
 		
 		virtual void updateSync(double timestamp, axon* a, Network* network) override
 		{
-			std::cout << "implemented" << std::endl;
-//			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
-//			{
-//				inhibited = false;
-//			}
-//
-//            if (timestamp - lastSpikeTime >= refractoryPeriod)
-//            {
-//                active = true;
-//            }
-//
-//			// current decay
-//			current *= std::exp(-timestep/decayCurrent);
-//			eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
-//
-//			// potential decay
-//			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
-//
-//			// threshold decay
-//			if (homeostasis)
-//			{
-//				threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
-//			}
-//
-//			// neuron inactive during refractory period
-//			if (active && !inhibited)
-//			{
-//				if (s.axon)
-//				{
-//					// increase the threshold
-//					if (homeostasis)
-//					{
-//						threshold += homeostasisBeta/decayHomeostasis;
-//					}
-//					current += externalCurrent*s.axon->weight;
-//					activeAxon = *s.axon;
-//					s.axon->lastInputTime = timestamp;
-//				}
-//				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
-//			}
-//
-//			if (s.axon)
-//			{
-//				#ifndef NDEBUG
-//				std::cout << "t=" << timestamp << " " << (s.axon->preNeuron ? s.axon->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << s.axon->weight << " d=" << s.axon->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
-//				#endif
-//				for (auto addon: network->getStandardAddOns())
-//				{
-//					if (potential < threshold)
-//					{
-//						addon->incomingSpike(timestamp, s.axon, network);
-//					}
-//				}
-//				if (network->getMainThreadAddOn())
-//				{
-//					network->getMainThreadAddOn()->incomingSpike(timestamp, s.axon, network);
-//				}
-//			}
-//			else
-//			{
-//				for (auto addon: network->getStandardAddOns())
-//				{
-//					addon->timestep(timestamp, network, this);
-//				}
-//				if (network->getMainThreadAddOn())
-//				{
-//					network->getMainThreadAddOn()->timestep(timestamp, network, this);
-//				}
-//			}
-//
-//			if (potential >= threshold)
-//			{
-//				eligibilityTrace = 1;
-//				plasticityTrace += 1;
-//
-//				#ifndef NDEBUG
-//				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
-//				#endif
-//
-//				for (auto addon: network->getStandardAddOns())
-//				{
-//					addon->neuronFired(timestamp, &activeAxon, network);
-//				}
-//				if (network->getMainThreadAddOn())
-//				{
-//					network->getMainThreadAddOn()->neuronFired(timestamp, &activeAxon, network);
-//				}
-//
-//				for (auto& p : postAxons)
-//				{
-//					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
-//				}
-//
-//				learn(timestamp, network);
-//
-//				lastSpikeTime = timestamp;
-//				potential = resetPotential;
-//				if (!burstingActivity)
-//				{
-//					current = 0;
-//				}
-//				active = false;
-//			}
+			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
+			{
+				inhibited = false;
+			}
+
+            if (timestamp - lastSpikeTime >= refractoryPeriod)
+            {
+                active = true;
+            }
+
+			// current decay
+			current *= std::exp(-timestep/decayCurrent);
+			eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
+
+			// potential decay
+			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
+
+			// threshold decay
+			if (homeostasis)
+			{
+				threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
+			}
+
+			// neuron inactive during refractory period
+			if (active && !inhibited)
+			{
+				if (a)
+				{
+					// increase the threshold
+					if (homeostasis)
+					{
+						threshold += homeostasisBeta/decayHomeostasis;
+					}
+					current += externalCurrent*a->weight;
+					activeAxon = *a;
+					a->lastInputTime = timestamp;
+				}
+				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
+			}
+
+			if (a)
+			{
+				#ifndef NDEBUG
+				std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
+				#endif
+				for (auto addon: network->getStandardAddOns())
+				{
+					if (potential < threshold)
+					{
+						addon->incomingSpike(timestamp, a, network);
+					}
+				}
+				if (network->getMainThreadAddOn())
+				{
+					network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+				}
+			}
+			else
+			{
+				for (auto addon: network->getStandardAddOns())
+				{
+					addon->timestep(timestamp, network, this);
+				}
+				if (network->getMainThreadAddOn())
+				{
+					network->getMainThreadAddOn()->timestep(timestamp, network, this);
+				}
+			}
+
+			if (potential >= threshold)
+			{
+				eligibilityTrace = 1;
+				plasticityTrace += 1;
+
+				#ifndef NDEBUG
+				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
+				#endif
+
+				for (auto addon: network->getStandardAddOns())
+				{
+					addon->neuronFired(timestamp, &activeAxon, network);
+				}
+				if (network->getMainThreadAddOn())
+				{
+					network->getMainThreadAddOn()->neuronFired(timestamp, &activeAxon, network);
+				}
+
+				for (auto& p : postAxons)
+				{
+					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
+				}
+
+				learn(timestamp, network);
+
+				lastSpikeTime = timestamp;
+				potential = resetPotential;
+				if (!burstingActivity)
+				{
+					current = 0;
+				}
+				active = false;
+			}
 		}
 	};
 }
