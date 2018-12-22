@@ -1123,7 +1123,22 @@ namespace adonis
 								n->update(i, nullptr, this, timestep);
 							}
 						}
-					}
+						
+						// rechecking for any newly generated spikes
+						currentSpikes.clear();
+						if (!generatedSpikes.empty())
+						{
+							while (!generatedSpikes.empty() && generatedSpikes.front().timestamp == i)
+							{
+								currentSpikes.emplace_back(generatedSpikes.front());
+								generatedSpikes.pop_front();
+							}
+						}
+
+						for (auto& spike: currentSpikes)
+						{
+							spike.axon->postNeuron->update(i, spike.axon, this, timestep);
+						}
 				}
 			}
 			else
