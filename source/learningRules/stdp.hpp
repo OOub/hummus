@@ -99,7 +99,7 @@ namespace adonis
 
 						if (preAxon.weight < 1/preAxon.preNeuron->getInputResistance())
 						{
-							preAxon.weight += preTrace*(1/preAxon->preNeuron->getInputResistance());
+							preAxon.weight += preTrace*(1/preAxon.preNeuron->getInputResistance());
 							if (preAxon.weight > 1/preAxon.preNeuron->getInputResistance())
 							{
 								preAxon.weight = 1/preAxon.preNeuron->getInputResistance();

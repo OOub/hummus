@@ -72,9 +72,9 @@ namespace adonis
 			{
 				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
 				{
-					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), static_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
 					{
-						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
+						network->getStandardAddOns().emplace_back(static_cast<StandardAddOn*>(rule));
 					}
 				}
 			}
@@ -230,12 +230,12 @@ namespace adonis
 					if (redundantConnections == false)
 					{
 						int16_t ID = postNeuron->neuronID;
-						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](const std::unique_ptr<axon>& p){return p->postNeuron->neuronID == ID;});
+						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](axon a){return a.postNeuron->neuronID == ID;});
 						
 						if (result == postAxons.end())
 						{
 							postAxons.emplace_back(this, postNeuron, weight*(1/inputResistance), delay, -1);
-							postNeuron->preAxons.push_back(postAxons.back().get());
+							postNeuron->preAxons.push_back(postAxons.back());
 						}
 						else
 						{
@@ -247,7 +247,7 @@ namespace adonis
 					else
 					{
 						postAxons.emplace_back(this, postNeuron, weight*(1/inputResistance), delay, -1);
-						postNeuron->preAxons.push_back(postAxons.back().get());
+						postNeuron->preAxons.push_back(postAxons.back());
 					}
                 }
             }

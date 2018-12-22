@@ -35,9 +35,9 @@ namespace adonis
 			{
 				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
 				{
-					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), static_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
 					{
-						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
+						network->getStandardAddOns().emplace_back(static_cast<StandardAddOn*>(rule));
 					}
 				}
 			}

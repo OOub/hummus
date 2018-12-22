@@ -198,7 +198,7 @@ namespace adonis
 					if (redundantConnections == false)
 					{
 						int16_t ID = postNeuron->neuronID;
-						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](const std::unique_ptr<axon>& p){return p->postNeuron->neuronID == ID;});
+						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](axon a){return a.postNeuron->neuronID == ID;});
 						
 						if (result == postAxons.end())
 						{
@@ -240,9 +240,9 @@ namespace adonis
 			return postAxons;
 		}
 		
-		axon* getInitialAxon()
+		axon getInitialAxon()
 		{
-			return &initialAxon;
+			return initialAxon;
 		}
 		
 		// ----- PRENEURON PARAMETERS -----
@@ -526,7 +526,7 @@ namespace adonis
 										std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
 										std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
 										int sign = _weightMean<0?-1:_weightMean>=0;
-										dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+										static_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
 									}
 								}
 							}
@@ -565,7 +565,7 @@ namespace adonis
 												std::random_device device;
 												std::mt19937 randomEngine(device());
 												std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-												dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, redundantConnections);
+												static_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, redundantConnections);
 											}
 										}
 									}
@@ -613,7 +613,7 @@ namespace adonis
 											std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
 											std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
 											int sign = _weightMean<0?-1:_weightMean>=0;
-											dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+											static_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
 										}
 									}
 								}
@@ -672,7 +672,7 @@ namespace adonis
 												std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
 												std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
 												int sign = _weightMean<0?-1:_weightMean>=0;
-												dynamic_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+												static_cast<PreNeuron*>(neurons[pre].get())->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
 											}
 										}
 									}
@@ -732,7 +732,7 @@ namespace adonis
 									{
 										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
 										{
-											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+											injectSpike(static_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
 										}
 									}
 								}
@@ -748,7 +748,7 @@ namespace adonis
 									{
 										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
 										{
-											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+											injectSpike(static_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
 										}
 									}
 								}
@@ -773,7 +773,7 @@ namespace adonis
 									{
 										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
 										{
-											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+											injectSpike(static_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
 											break;
 										}
 									}
@@ -790,7 +790,7 @@ namespace adonis
 									{
 										if (PreNeuron* preN = dynamic_cast<PreNeuron*>(neurons[n].get()))
 										{
-											injectSpike(dynamic_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
+											injectSpike(static_cast<PreNeuron*>(neurons[n].get())->prepareInitialSpike(event.timestamp));
 											break;
 										}
 									}
