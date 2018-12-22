@@ -311,18 +311,21 @@ namespace adonis_c
     			{
 					for (auto& pre: preRF.neurons)
 					{
-						for (auto& postSub: postsynapticLayer.sublayers)
+						for (auto& postSub: postsynapticLayer.sublayers) // do not interconnect the sublayers
 						{
-							for (auto& postRF: postSub.receptiveFields)
-    						{
-    							for (auto& post: postRF.neurons)
+							if (preSub.ID == postSub.ID)
+							{
+								for (auto& postRF: postSub.receptiveFields)
 								{
-									std::random_device device;
-									std::mt19937 randomEngine(device());
-									std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-									std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-									int sign = _weightMean<0?-1:_weightMean>=0;
-									neurons[pre].addAxon(&neurons[post], sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+									for (auto& post: postRF.neurons)
+									{
+										std::random_device device;
+										std::mt19937 randomEngine(device());
+										std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+										std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+										int sign = _weightMean<0?-1:_weightMean>=0;
+										neurons[pre].addAxon(&neurons[post], sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+									}
 								}
 							}
 						}
@@ -815,7 +818,7 @@ namespace adonis_c
 
 					for (auto& n: neurons)
 					{
-						auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s)
+						auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s) // generated
 						{
 							if (s.axon)
 							{
@@ -836,6 +839,22 @@ namespace adonis_c
 						{
 							n.update(i, nullptr, this, timestep);
 						}
+					}
+					
+					// rechecking for any newly generated spikes
+					currentSpikes.clear();
+					if (!generatedSpikes.empty())
+					{
+						while (!generatedSpikes.empty() && generatedSpikes.front().timestamp == i)
+						{
+							currentSpikes.emplace_back(generatedSpikes.front());
+							generatedSpikes.pop_front();
+						}
+					}
+
+					for (auto& spike: currentSpikes)
+					{
+						spike.axon->postNeuron->update(i, spike.axon, this, timestep);
 					}
 				}
 			}

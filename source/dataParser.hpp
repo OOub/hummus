@@ -68,9 +68,10 @@ namespace adonis_c
 					// 2D data
                 	else if (fields.size() == 3)
                 	{
-                		dataType = 1;
-                		data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), -1});
-                		neuronCounter++;
+                		data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1, std::stod(fields[2])});
+//                		dataType = 1;
+//                		data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), -1});
+//                		neuronCounter++;
 					}
 					else if (fields.size() == 4)
 					{

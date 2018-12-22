@@ -74,14 +74,7 @@ namespace adonis_c
 					{
 						float postTrace = - (timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus);
 
-						if (postAxon->weight > 0)
-						{
-							postAxon->weight += postTrace*(1/postAxon->postNeuron->getInputResistance());
-							if (postAxon->weight < 0)
-							{
-								postAxon->weight = 0;
-							}
-						}
+						postAxon->weight += postTrace*(1/postAxon->postNeuron->getInputResistance()) * postAxon->weight;
 						postAxon->postNeuron->setPlasticityTrace(postTrace);
 					}
 				}
@@ -97,14 +90,8 @@ namespace adonis_c
 					{
 						float preTrace = -(preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus);
 
-						if (preAxon->weight < 1/preAxon->preNeuron->getInputResistance())
-						{
-							preAxon->weight += preTrace*(1/preAxon->preNeuron->getInputResistance());
-							if (preAxon->weight > 1/preAxon->preNeuron->getInputResistance())
-							{
-								preAxon->weight = 1/preAxon->preNeuron->getInputResistance();
-							}
-						}
+
+						preAxon->weight += preTrace*(1/preAxon->preNeuron->getInputResistance()) * (1-preAxon->weight);
 						preAxon->preNeuron->setPlasticityTrace(preTrace);
 					}
 				}

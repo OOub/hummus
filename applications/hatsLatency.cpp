@@ -23,7 +23,7 @@ int main(int argc, char** argv)
     //  ----- INITIALISING THE NETWORK -----
     adonis_c::QtDisplay qtDisplay;
 	adonis_c::PredictionLogger predictionLogger("hatsLatency.bin");
-	adonis_c::Analysis analysis("../../data/hats/latency/test_nCars_10samplePerc_1repLabel.txt");
+	adonis_c::Analysis analysis("../../data/hats/testLabel.txt");
 	adonis_c::Network network({&predictionLogger, &analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
@@ -33,35 +33,37 @@ int main(int argc, char** argv)
 	float eligibilityDecay = 100;
 	
 	bool burstingActivity = false;
-	bool homeostasis = false;
+	bool homeostasis = true;
 	bool wta = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::STDP stdp;
+	adonis_c::STDP stdp(0.1, 0.1, 100, 100);
+	adonis_c::RewardModulatedSTDP rstdp;
 	
 	//  ----- CREATING THE NETWORK -----
-	network.addLayer({}, 4116, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
+	network.addLayer({}, 1470, 1, 1, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
 	network.addLayer({&stdp}, 10, 1, 1, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burstingActivity, eligibilityDecay);
-	network.addDecisionMakingLayer("../../data/hats/latency/train_nCars_10samplePerc_1repLabel.txt", {});
+	network.addDecisionMakingLayer("../../data/hats/trainLabel.txt", {}, 900, false, decayCurrent, decayPotential);
 	
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.6, 0.4, 5, 3);
-	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4, 5, 3);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.2, 0.4, 5, 3, 100);
+	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4);
+//	network.lateralInhibition(network.getLayers()[1], -1);
 	
 	//  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-    auto trainingData = dataParser.readData("../../data/hats/latency/train_nCars_10samplePerc_1rep.txt");
+    auto trainingData = dataParser.readData("../../data/hats/train.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readData("../../data/hats/latency/test_nCars_10samplePerc_1rep.txt");
+	auto testingData = dataParser.readData("../../data/hats/test.txt");
 	
 	//  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
   	qtDisplay.setTimeWindow(5000);
-  	qtDisplay.trackLayer(2);
+  	qtDisplay.trackLayer(1);
 	qtDisplay.trackNeuron(network.getNeurons().back().getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(1, &trainingData, &testingData);
+    network.run(&trainingData, &testingData, 10);
 	analysis.accuracy();
 	
     //  ----- EXITING APPLICATION -----
