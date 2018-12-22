@@ -818,7 +818,7 @@ namespace adonis_c
 
 					for (auto& n: neurons)
 					{
-						auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s) // generated
+						auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s)
 						{
 							if (s.axon)
 							{

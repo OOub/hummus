@@ -468,22 +468,22 @@ namespace adonis_c
 		template<typename Network>
 		void WTA(double timestamp, Network* network)
 		{			
-//			for (auto rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
-//			{
-//				if (rf.row == rfRow && rf.col == rfCol)
-//				{
-//					for (auto n: rf.neurons)
-//					{
-//						if (network->getNeurons()[n].neuronID != neuronID)
-//						{
-//							network->getNeurons()[n].inhibited = true;
-//							network->getNeurons()[n].inhibitionTime = timestamp;
-//							network->getNeurons()[n].current = 0;
-//							network->getNeurons()[n].potential = restingPotential;
-//						}
-//					}
-//				}
-//			}
+			for (auto rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
+			{
+				if (rf.row == rfRow && rf.col == rfCol)
+				{
+					for (auto n: rf.neurons)
+					{
+						if (network->getNeurons()[n].neuronID != neuronID)
+						{
+							network->getNeurons()[n].inhibited = true;
+							network->getNeurons()[n].inhibitionTime = timestamp;
+							network->getNeurons()[n].current = 0;
+							network->getNeurons()[n].potential = restingPotential;
+						}
+					}
+				}
+			}
 		}
 		
 		void resetLearning()
