@@ -69,7 +69,16 @@ namespace adonis_c
 						#endif
 					}
 					neuron->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
-
+					
+//					// myelin plasticity rule sends a feedback to upstream neurons
+//					for (auto& n: network->getNeurons())
+//					{
+//						//reducing their ability to learn as the current neurons learn
+//						if (n.getLayerID() < neuron->getLayerID())
+//						{
+//							n.setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+//						}
+//					}
 				}
 			}
 			
@@ -87,22 +96,18 @@ namespace adonis_c
 				// looping through all axons from the winner
 				for (auto& allAxons: neuron->getPreAxons())
 				{
-					int16_t ID = allAxons->preNeuron->getNeuronID();
-					// if the axon is plastic
-					if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
+					// discarding inhibitory axons
+					if (allAxons->weight > 0)
 					{
-						// positive reinforcement on winner axons
-						if (allAxons->weight < (1/neuron->getInputResistance())/plasticID.size())
+						int16_t ID = allAxons->preNeuron->getNeuronID();
+						if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
 						{
-							allAxons->weight += allAxons->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
+							allAxons->weight += std::exp(-std::pow(timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
 						}
-					}
-					else
-					{
-						if (allAxons->weight > 0)
+						else
 						{
 							// negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
-							allAxons->weight -= allAxons->weight*neuron->getSynapticEfficacy()*0.1/plasticID.size();
+							allAxons->weight -= std::exp(-std::pow(timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
 							if (allAxons->weight < 0)
 							{
 								allAxons->weight = 0;

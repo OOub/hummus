@@ -69,10 +69,10 @@ namespace adonis_c
 			{
 				for (auto& postAxon: neuron->getPostAxons())
 				{
-					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive
-					if (postAxon->postNeuron->getEligibilityTrace() > 0.1)
+					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive (negative postTrace)
+					if (postAxon->weight >= 0 && postAxon->postNeuron->getEligibilityTrace() > 0.1)
 					{
-						float postTrace = - (timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus);
+						float postTrace = (-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus));//*neuron->getSynapticEfficacy();
 
 						postAxon->weight += postTrace*(1/postAxon->postNeuron->getInputResistance()) * postAxon->weight;
 						postAxon->postNeuron->setPlasticityTrace(postTrace);
@@ -85,13 +85,12 @@ namespace adonis_c
 			{
 				for (auto preAxon: neuron->getPreAxons())
 				{
-					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
-					if (preAxon->preNeuron->getEligibilityTrace() > 0.1)
+					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative (positive preTrace)
+					if (preAxon->weight >= 0 && preAxon->preNeuron->getEligibilityTrace() > 0.1)
 					{
-						float preTrace = -(preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus);
+						float preTrace = (-(preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus));//*neuron->getSynapticEfficacy();
 
-
-						preAxon->weight += preTrace*(1/preAxon->preNeuron->getInputResistance()) * (1-preAxon->weight);
+						preAxon->weight += preTrace*(1/preAxon->preNeuron->getInputResistance()) * (1./preAxon->preNeuron->getInputResistance()-preAxon->weight);
 						preAxon->preNeuron->setPlasticityTrace(preTrace);
 					}
 				}

@@ -311,21 +311,18 @@ namespace adonis_c
     			{
 					for (auto& pre: preRF.neurons)
 					{
-						for (auto& postSub: postsynapticLayer.sublayers) // do not interconnect the sublayers
+						for (auto& postSub: postsynapticLayer.sublayers)
 						{
-							if (preSub.ID == postSub.ID)
+							for (auto& postRF: postSub.receptiveFields)
 							{
-								for (auto& postRF: postSub.receptiveFields)
+								for (auto& post: postRF.neurons)
 								{
-									for (auto& post: postRF.neurons)
-									{
-										std::random_device device;
-										std::mt19937 randomEngine(device());
-										std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-										std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-										int sign = _weightMean<0?-1:_weightMean>=0;
-										neurons[pre].addAxon(&neurons[post], sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
-									}
+									std::random_device device;
+									std::mt19937 randomEngine(device());
+									std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+									std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+									int sign = _weightMean<0?-1:_weightMean>=0;
+									neurons[pre].addAxon(&neurons[post], sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
 								}
 							}
 						}

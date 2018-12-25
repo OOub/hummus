@@ -100,7 +100,7 @@ namespace adonis_c
 				// propagating the error signal to every layer using the R-STDP learning rule
 				for (auto& layer: rl)
 				{
-					// if preTime - postTime is positive
+					// if preTime - postTime is positive and strictly so
 					for (auto& sub: network->getLayers()[layer.preLayer].sublayers)
 					{
 						for (auto& rf: sub.receptiveFields)
@@ -111,10 +111,13 @@ namespace adonis_c
 								{
 									for (auto& postAxon: network->getNeurons()[n].getPostAxons())
 									{
-										if (postAxon->postNeuron->getEligibilityTrace() > 0.1)
+										if (timestamp - postAxon->postNeuron->getLastSpikeTime() > 0)
 										{
-											double delta = alpha*Ar_minus+beta*Ap_plus;
-											postAxon->weight += delta * postAxon->weight * (1./postAxon->postNeuron->getInputResistance() - postAxon->weight);
+											if (postAxon->weight >= 0 && postAxon->postNeuron->getEligibilityTrace() > 0.1)
+											{
+												double delta = alpha*Ar_minus+beta*Ap_plus;
+												postAxon->weight += delta * postAxon->weight * (1 - postAxon->weight);
+											}
 										}
 									}
 								}
@@ -122,7 +125,7 @@ namespace adonis_c
 						}
 					}
 
-					// if preTime - postTime is negative
+					// if preTime - postTime is negative or null
 					for (auto& sub: network->getLayers()[layer.postLayer].sublayers)
 					{
 						for (auto& rf: sub.receptiveFields)
@@ -133,10 +136,10 @@ namespace adonis_c
 								{
 									for (auto& preAxon: network->getNeurons()[n].getPreAxons())
 									{
-										if (preAxon->preNeuron->getEligibilityTrace() > 0.1)
+										if (preAxon->weight >= 0 && preAxon->preNeuron->getEligibilityTrace() > 0.1)
 										{
 											double delta = alpha*Ar_plus+beta*Ap_minus;
-											preAxon->weight += delta * preAxon->weight * (1./preAxon->preNeuron->getInputResistance() - preAxon->weight);
+											preAxon->weight += delta * preAxon->weight * (1 - preAxon->weight);
 										}
 									}
 								}
@@ -155,5 +158,7 @@ namespace adonis_c
 		float                            Ar_minus;
 		float                            Ap_plus;
 		float                            Ap_minus;
+		float                            phi_r;
+		float                            phi_p;
 	};
 }
