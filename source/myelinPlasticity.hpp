@@ -70,15 +70,15 @@ namespace adonis_c
 					}
 					neuron->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
 					
-//					// myelin plasticity rule sends a feedback to upstream neurons
-//					for (auto& n: network->getNeurons())
-//					{
-//						//reducing their ability to learn as the current neurons learn
-//						if (n.getLayerID() < neuron->getLayerID())
-//						{
-//							n.setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
-//						}
-//					}
+					// myelin plasticity rule sends a feedback to upstream neurons
+					for (auto& n: network->getNeurons())
+					{
+						//reducing their ability to learn as the current neurons learn
+						if (n.getLayerID() < neuron->getLayerID())
+						{
+							n.setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+						}
+					}
 				}
 			}
 			
