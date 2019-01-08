@@ -21,8 +21,7 @@ int main(int argc, char** argv)
 {
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;
-	
-	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
+	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
@@ -44,11 +43,11 @@ int main(int argc, char** argv)
 	bool homeostasis = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::MyelinPlasticity myelinPlasticity;
+	adonis_c::MyelinPlasticity myelinPlasticity(1, 1, 0, 0);
 	
     //  ----- CREATING THE NETWORK -----
-	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod, wta, false, eligibilityDecay);
-	network.addLayer({&myelinPlasticity}, layer1Neurons, 1, 1, homeostasis, decayCurrent, potentialDecay, 100, wta, burst, eligibilityDecay);
+	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, 0, false, false, eligibilityDecay);
+	network.addLayer({&myelinPlasticity}, layer1Neurons, 1, 1, homeostasis, decayCurrent, potentialDecay, refractoryPeriod, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 3);

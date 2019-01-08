@@ -71,40 +71,40 @@ namespace adonis_c
 					}
 					neuron->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
 					
-					// myelin plasticity rule sends a feedback to upstream neurons
-					for (auto& n: network->getNeurons())
-					{
-						//reducing their ability to learn as the current neurons learn
-						if (n.getLayerID() < neuron->getLayerID())
-						{
-							n.setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
-						}
-					}
+//					// myelin plasticity rule sends a feedback to upstream neurons
+//					for (auto& n: network->getNeurons())
+//					{
+//						//reducing their ability to learn as the current neurons learn
+//						if (n.getLayerID() < neuron->getLayerID())
+//						{
+//							n.setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+//						}
+//					}
 				}
 			}
 
-			// looping through all axons from the winner
-			for (auto& allAxons: neuron->getPreAxons())
-			{
-				// discarding inhibitory axons
-				if (allAxons->weight > 0)
-				{
-					int16_t ID = allAxons->preNeuron->getNeuronID();
-					if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
-					{
-						allAxons->weight += weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
-					}
-					else
-					{
-						// negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
-						allAxons->weight -= weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
-						if (allAxons->weight < 0)
-						{
-							allAxons->weight = 0;
-						}
-					}
-				}
-			}
+//            // looping through all axons from the winner
+//            for (auto& allAxons: neuron->getPreAxons())
+//            {
+//                // discarding inhibitory axons
+//                if (allAxons->weight > 0)
+//                {
+//                    int16_t ID = allAxons->preNeuron->getNeuronID();
+//                    if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
+//                    {
+//                        allAxons->weight += weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
+//                    }
+//                    else
+//                    {
+//                        // negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
+//                        allAxons->weight -= weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
+//                        if (allAxons->weight < 0)
+//                        {
+//                            allAxons->weight = 0;
+//                        }
+//                    }
+//                }
+//            }
 			
 			for (auto addon: network->getStandardAddOns())
 			{
