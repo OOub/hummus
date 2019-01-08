@@ -15,9 +15,6 @@
 #include "../source/dataParser.hpp"
 #include "../source/network.hpp"
 #include "../source/qtDisplay.hpp"
-#include "../source/spikeLogger.hpp"
-#include "../source/stdp.hpp"
-#include "../source/myelinPlasticityLogger.hpp"
 #include "../source/myelinPlasticity.hpp"
 
 int main(int argc, char** argv)
@@ -29,9 +26,7 @@ int main(int argc, char** argv)
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis_c::QtDisplay qtDisplay;
-	adonis_c::SpikeLogger spikeLogger("10neurons_4patterns_unsupervised_spikeLog.bin");
-	adonis_c::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
-	adonis_c::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
+	adonis_c::Network network(&qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
@@ -50,7 +45,6 @@ int main(int argc, char** argv)
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis_c::MyelinPlasticity myelinPlasticity;
-	adonis_c::STDP stdp;
 	
     //  ----- CREATING THE NETWORK -----
 	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod, wta, false, eligibilityDecay);
@@ -67,7 +61,7 @@ int main(int argc, char** argv)
 	network.turnOffLearning(80000);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(0.1, &trainingData);
+    network.run(&trainingData);
 	
     //  ----- EXITING APPLICATION -----
     return 0;

@@ -30,17 +30,15 @@ int main(int argc, char** argv)
 	
 	bool homeostasis = false;
 	bool wta = true;
-	bool burst = false;
 	
 	//  ----- CREATING THE NETWORK -----
-	adonis_c::MyelinPlasticity mp(1, 1, true);
+	adonis_c::MyelinPlasticity mp(1, 1, 1, 1);
 	
 	network.add2dLayer(1, 34, 34, {}, 1, -1, false, homeostasis, decayCurrent, decayPotential, 0, wta, false, eligibilityDecay);
-	network.addDecisionMakingLayer("../../data/cards/trainLabel.txt", {&mp}, 900, false, decayCurrent, decayPotential, wta, burst, eligibilityDecay);
+	network.addDecisionMakingLayer("../../data/cards/trainLabel.txt", {&mp}, 900, false, decayCurrent, decayPotential, wta, false, eligibilityDecay);
 
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3, 100);
-//	network.lateralInhibition(network.getLayers()[0], -0.5);
 	
 	//  ----- READING DATA FROM FILE -----
 	adonis_c::DataParser dataParser;

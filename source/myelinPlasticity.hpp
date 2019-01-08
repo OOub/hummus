@@ -21,10 +21,11 @@ namespace adonis_c
 	{
 	public:
 		// ----- CONSTRUCTOR -----
-		MyelinPlasticity(float _alpha=1, float _lambda=1, bool _weightReinforcement=false) :
-		alpha(_alpha),
-		lambda(_lambda),
-		weightReinforcement(_weightReinforcement)
+		MyelinPlasticity(float _delay_alpha=1, float _delay_lambda=1, float _weight_alpha=1, float _weight_lambda=1) :
+		delay_alpha(_delay_alpha),
+		delay_lambda(_delay_lambda),
+		weight_alpha(_weight_alpha),
+		weight_lambda(_weight_lambda)
 		{}
 		
 		// ----- PUBLIC METHODS -----
@@ -53,7 +54,7 @@ namespace adonis_c
 					timeDifferences.push_back(timestamp - inputAxon->lastInputTime - inputAxon->delay);
 					if (timeDifferences.back() > 0)
 					{
-						change = lambda*(neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(-alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(-alpha*timeDifferences.back()/neuron->getDecayPotential()))*neuron->getSynapticEfficacy();
+						change = delay_lambda*(neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(-delay_alpha*timeDifferences.back()/neuron->getDecayPotential()))*neuron->getSynapticEfficacy();
 						inputAxon->delay += change;
 						#ifndef NDEBUG
 						std::cout << inputAxon->preNeuron->getLayerID() << " " << inputAxon->preNeuron->getNeuronID() << " " << inputAxon->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
@@ -62,7 +63,7 @@ namespace adonis_c
 
 					else if (timeDifferences.back() < 0)
 					{
-						change = -lambda*((neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(alpha*timeDifferences.back()/neuron->getDecayPotential())))*neuron->getSynapticEfficacy();
+						change = -delay_lambda*((neuron->getInputResistance()/(neuron->getDecayCurrent()-neuron->getDecayPotential())) * neuron->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/neuron->getDecayCurrent()) - std::exp(delay_alpha*timeDifferences.back()/neuron->getDecayPotential())))*neuron->getSynapticEfficacy();
 						inputAxon->delay += change;
 						#ifndef NDEBUG
 						std::cout << inputAxon->preNeuron->getLayerID() << " " << inputAxon->preNeuron->getNeuronID() << " " << inputAxon->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << change << std::endl;
@@ -81,6 +82,29 @@ namespace adonis_c
 					}
 				}
 			}
+
+			// looping through all axons from the winner
+			for (auto& allAxons: neuron->getPreAxons())
+			{
+				// discarding inhibitory axons
+				if (allAxons->weight > 0)
+				{
+					int16_t ID = allAxons->preNeuron->getNeuronID();
+					if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
+					{
+						allAxons->weight += weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
+					}
+					else
+					{
+						// negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
+						allAxons->weight -= weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
+						if (allAxons->weight < 0)
+						{
+							allAxons->weight = 0;
+						}
+					}
+				}
+			}
 			
 			for (auto addon: network->getStandardAddOns())
 			{
@@ -89,40 +113,15 @@ namespace adonis_c
 					dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, network, neuron, timeDifferences, plasticCoordinates);
 				}
 			}
-			
-			// weight reinforcement
-			if (weightReinforcement)
-			{
-				// looping through all axons from the winner
-				for (auto& allAxons: neuron->getPreAxons())
-				{
-					// discarding inhibitory axons
-					if (allAxons->weight > 0)
-					{
-						int16_t ID = allAxons->preNeuron->getNeuronID();
-						if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end())
-						{
-							allAxons->weight += std::exp(-std::pow(timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
-						}
-						else
-						{
-							// negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
-							allAxons->weight -= std::exp(-std::pow(timeDifferences.back(),2))*(1/allAxons->postNeuron->getInputResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
-							if (allAxons->weight < 0)
-							{
-								allAxons->weight = 0;
-							}
-						}
-					}
-				}
-            }
 		}
 		
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-		float alpha;
-		float lambda;
-		bool  weightReinforcement;
+		float delay_alpha;
+		float delay_lambda;
+		float weight_alpha;
+		float weight_lambda;
+
 	};
 }
