@@ -61,26 +61,23 @@ namespace adonis
     	// ----- PUBLIC INPUTVIEWER METHODS -----
 		void handleData(double timestamp, axon* a, Network* network)
         {
-        	if (PreNeuron* input = dynamic_cast<PreNeuron*>(a->postNeuron))
-        	{
-				if (static_cast<PreNeuron*>(a->postNeuron)->getInitialAxon()->postNeuron)
-				{
-					if (static_cast<PreNeuron*>(a->postNeuron)->getInitialAxon()->postNeuron->getSublayerID() == sublayerTracker)
-					{
-						while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-						if (!isClosed)
-						{
-							points.append(QPointF(timestamp, a->postNeuron->getNeuronID()));
-							maxY = std::max(static_cast<float>(maxY), static_cast<float>(a->postNeuron->getNeuronID()));
-						}
-						else
-						{
-							points.clear();
-						}
-						atomicGuard.clear(std::memory_order_release);
-					}
-				}
-			}
+            if (a->postNeuron->getInitialAxon().postNeuron)
+            {
+                if (a->postNeuron->getInitialAxon().postNeuron->getSublayerID() == sublayerTracker)
+                {
+                    while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
+                    if (!isClosed)
+                    {
+                        points.append(QPointF(timestamp, a->postNeuron->getNeuronID()));
+                        maxY = std::max(static_cast<float>(maxY), static_cast<float>(a->postNeuron->getNeuronID()));
+                    }
+                    else
+                    {
+                        points.clear();
+                    }
+                    atomicGuard.clear(std::memory_order_release);
+                }
+            }
         }
 		
 		void handleTimestep(double timestamp)

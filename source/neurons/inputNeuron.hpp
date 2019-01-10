@@ -15,70 +15,56 @@
 
 namespace adonis
 {
-	class InputNeuron : public PreNeuron
+	class InputNeuron : public Neuron
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _threshold=-50, float _restingPotential=-70) :
-			PreNeuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate),
-			threshold(_threshold),
-			potential(_restingPotential),
-			learningRuleHandler(_learningRuleHandler)
+		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _threshold=1, float _restingPotential=0) :
+			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential)
 		{}
 		
 		virtual ~InputNeuron(){}
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
-		virtual void initialisation(Network* network) override
+		void initialisation(Network* network) override
 		{
 			for (auto& rule: learningRuleHandler)
 			{
 				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
 				{
-					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), static_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
 					{
-						network->getStandardAddOns().emplace_back(static_cast<StandardAddOn*>(rule));
+						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
 					}
 				}
 			}
 		}
 		
-		virtual void update(double timestamp, axon* a, Network* network) override
+		void update(double timestamp, axon* a, Network* network, double timestep) override
 		{
 			throw std::logic_error("not implemented yet");
 		}
 		
-		virtual void updateSync(double timestamp, axon* a, Network* network) override
+		void updateSync(double timestamp, axon* a, Network* network, double timestep) override
 		{
 			throw std::logic_error("not implemented yet");
 		}
-		
-		// ----- SETTERS AND GETTERS -----
-		float getThreshold() const
+        
+    protected:
+        
+        // loops through any learning rules and activates them
+        void learn(double timestamp, Network* network) override
         {
-            return threshold;
+            if (network->getLearningStatus())
+            {
+                if (!learningRuleHandler.empty())
+                {
+                    for (auto& learningRule: learningRuleHandler)
+                    {
+                        learningRule->learn(timestamp, this, network);
+                    }
+                }
+            }
         }
-		
-        float getPotential() const
-        {
-            return potential;
-        }
-	
-		std::vector<LearningRuleHandler*> getLearningRuleHandler() const
-		{
-			return learningRuleHandler;
-		}
-		
-		void addLearningRule(LearningRuleHandler* newRule)
-		{
-			learningRuleHandler.emplace_back(newRule);
-		}
-		
-	protected:
-	
-		// ----- INPUT NEURON PARAMETERS -----
-		float                              threshold;
-		float                              potential;
-		std::vector<LearningRuleHandler*>  learningRuleHandler;
 	};
 }

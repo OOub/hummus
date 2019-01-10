@@ -15,20 +15,17 @@
 
 namespace adonis
 {
-	class LeakyIntegrateAndFire : public PreNeuron
+	class LIF : public Neuron
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LeakyIntegrateAndFire(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  float _threshold=-50, float _restingPotential=-70, int _refractoryPeriod=3, float _decayCurrent=10, float _decayPotential=20, bool _burstingActivity=false, float _eligibilityDecay=20, float _inputResistance=50e9, float _externalCurrent=100 bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, bool _wta=false) :
-			PreNeuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate),
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  float _threshold=-50, float _restingPotential=-70, int _refractoryPeriod=3, float _decayCurrent=10, float _decayPotential=20, bool _burstingActivity=false, float _eligibilityDecay=20, float _inputResistance=50e9, float _externalCurrent=100, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, bool _wta=false) :
+			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential),
     		refractoryPeriod(_refractoryPeriod),
-    		potential(_restingPotential),
-			learningRuleHandler(_learningRuleHandler),
 			decayCurrent(_decayCurrent),
 			decayPotential(_decayPotential),
 			synapticEfficacy(1),
 			threshold(_threshold),
-			restingPotential(_restingPotential),
 			inputResistance(_inputResistance),
 			externalCurrent(_externalCurrent),
 			current(0),
@@ -63,29 +60,65 @@ namespace adonis
             }
 		}
 		
-		virtual ~LeakyIntegrateAndFire(){}
+		virtual ~LIF(){}
 		
 		// ----- PUBLIC LIF METHODS -----
-		virtual void initialisation(Network* network) override
+		void initialisation(Network* network) override
 		{
 			for (auto& rule: learningRuleHandler)
 			{
 				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
 				{
-					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), static_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
 					{
-						network->getStandardAddOns().emplace_back(static_cast<StandardAddOn*>(rule));
+						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
 					}
 				}
 			}
 		}
 		
-		virtual void update(double timestamp, axon* a, Network* network) override
+        void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true) override
+        {
+            if (postNeuron)
+            {
+                if (connectionProbability(probability))
+                {
+                    if (redundantConnections == false)
+                    {
+                        int16_t ID = postNeuron->getNeuronID();
+                        auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](axon a){return a.postNeuron->getNeuronID() == ID;});
+                        
+                        if (result == postAxons.end())
+                        {
+                            postAxons.emplace_back(axon{this, postNeuron, weight*(1/inputResistance), delay, -1});
+                            postNeuron->getPreAxons().push_back(postAxons.back());
+                        }
+                        else
+                        {
+                            #ifndef NDEBUG
+                            std::cout << "axon " << neuronID << "->" << postNeuron->getNeuronID() << " already exists" << std::endl;
+                            #endif
+                        }
+                    }
+                    else
+                    {
+                        postAxons.emplace_back(axon{this, postNeuron, weight*(1/inputResistance), delay, -1});
+                        postNeuron->getPreAxons().push_back(postAxons.back());
+                    }
+                }
+            }
+            else
+            {
+                throw std::logic_error("Neuron does not exist");
+            }
+        }
+        
+		void update(double timestamp, axon* a, Network* network, double timestep) override
 		{
 			throw std::logic_error("not implemented yet");
 		}
 		
-		virtual void updateSync(double timestamp, axon* a, Network* network) override
+		void updateSync(double timestamp, axon* a, Network* network, double timestep) override
 		{
 			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
 			{
@@ -176,13 +209,13 @@ namespace adonis
 
 				for (auto& p : postAxons)
 				{
-					network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
+                    network->injectGeneratedSpike(spike{timestamp + p.delay, &p});
 				}
 
 				learn(timestamp, network);
 
 				lastSpikeTime = timestamp;
-				potential = resetPotential;
+				potential = restingPotential;
 				if (!burstingActivity)
 				{
 					current = 0;
@@ -191,87 +224,22 @@ namespace adonis
 			}
 		}
 		
-		virtual void resetNeuron() override
-		{
-			lastSpikeTime = 0;
-			current = 0;
-			potential = restingPotential;
-			eligibilityTrace = 0;
-			inhibited = false;
-			active = true;
-			threshold = restingThreshold;
-		}
-		
-		virtual void learn(double timestamp, Network* network)
-		{
-			if (network->getLearningStatus())
-			{
-				if (!learningRuleHandler.empty())
-				{
-					for (auto& learningRule: learningRuleHandler)
-					{
-						learningRule->learn(timestamp, this, network);
-					}
-				}
-			}
-			if (wta)
-			{
-				WTA(timestamp);
-			}
-			resetLearning();
-		}
-		
-		void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true) override
+        void resetNeuron() override
         {
-            if (postNeuron)
-            {
-            	if (connectionProbability(probability))
-            	{
-					if (redundantConnections == false)
-					{
-						int16_t ID = postNeuron->neuronID;
-						auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](axon a){return a.postNeuron->neuronID == ID;});
-						
-						if (result == postAxons.end())
-						{
-							postAxons.emplace_back(this, postNeuron, weight*(1/inputResistance), delay, -1);
-							postNeuron->preAxons.push_back(postAxons.back());
-						}
-						else
-						{
-							#ifndef NDEBUG
-							std::cout << "axon " << neuronID << "->" << postNeuron->neuronID << " already exists" << std::endl;
-							#endif
-						}
-					}
-					else
-					{
-						postAxons.emplace_back(this, postNeuron, weight*(1/inputResistance), delay, -1);
-						postNeuron->preAxons.push_back(postAxons.back());
-					}
-                }
-            }
-            else
-            {
-                throw std::logic_error("Neuron does not exist");
-            }
+            lastSpikeTime = 0;
+            current = 0;
+            potential = restingPotential;
+            eligibilityTrace = 0;
+            inhibited = false;
+            active = true;
+            threshold = restingThreshold;
         }
-		
+        
 		// ----- SETTERS AND GETTERS -----
 		bool getActivity() const
 		{
 			return active;
 		}
-		
-		float getThreshold() const
-        {
-            return threshold;
-        }
-		
-        float setThreshold(float _threshold)
-        {
-            return threshold = _threshold;
-        }
 		
 		float getDecayPotential() const
         {
@@ -344,16 +312,6 @@ namespace adonis
 			inhibited = inhibitionStatus;
 		}
 		
-		std::vector<LearningRuleHandler*> getLearningRuleHandler() const
-		{
-			return learningRuleHandler;
-		}
-		
-		void addLearningRule(LearningRuleHandler* newRule)
-		{
-			learningRuleHandler.emplace_back(newRule);
-		}
-		
 		float getPotential() const
         {
             return potential;
@@ -366,8 +324,8 @@ namespace adonis
 		
 	protected:
 		
-		// ----- LIF BEHAVIOR -----
-		void WTA(double timestamp, Network* network)
+        // winner-take-all algorithm
+		void WTA(double timestamp, Network* network) override
 		{
 			for (auto rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
 			{
@@ -375,27 +333,41 @@ namespace adonis
 				{
 					for (auto n: rf.neurons)
 					{
-						if (network->getNeurons()[n].neuronID != neuronID)
+                        if (network->getNeurons()[n]->getNeuronID() != neuronID)
 						{
-							network->getNeurons()[n].inhibited = true;
-							network->getNeurons()[n].inhibitionTime = timestamp;
-							network->getNeurons()[n].current = 0;
-							network->getNeurons()[n].potential = restingPotential;
+                            network->getNeurons()[n]->setPotential(restingPotential);
+                            
+                            if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get()))
+                            {
+                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
+                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;
+                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibitionTime = timestamp;
+                            }
 						}
 					}
 				}
 			}
 		}
 		
-		void resetLearning()
-		{
-			// resetting plastic neurons
-			for (auto& inputAxon: preAxons)
-			{
-				inputAxon->preNeuron->eligibilityTrace = 0;
-			}
-		}
-		
+        // loops through any learning rules and activates them
+        void learn(double timestamp, Network* network) override
+        {
+            if (network->getLearningStatus())
+            {
+                if (!learningRuleHandler.empty())
+                {
+                    for (auto& learningRule: learningRuleHandler)
+                    {
+                        learningRule->learn(timestamp, this, network);
+                    }
+                }
+            }
+            if (wta)
+            {
+                WTA(timestamp, network);
+            }
+        }
+        
 		// ----- LIF PARAMETERS -----
 		float                                    decayCurrent;
 		float                                    decayPotential;
@@ -405,10 +377,7 @@ namespace adonis
 		bool                                     active;
 		bool                                     inhibited;
 		double                                   inhibitionTime;
-		float                                    potential;
-		float                                    restingPotential;
 		float                                    refractoryPeriod;
-		std::vector<LearningRuleHandler*>        learningRuleHandler;
 		float                                    synapticEfficacy;
 		float                                    externalCurrent;
 		float                                    eligibilityTrace;
