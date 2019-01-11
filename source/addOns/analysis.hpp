@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "../core.hpp"
+#include "../neurons/decisionMakingNeuron.hpp"
 #include "../dataParser.hpp"
 
 namespace adonis
@@ -61,9 +62,9 @@ namespace adonis
 			if (!network->getLearningStatus())
 			{
 				// restrict only to the decision-making layer
-				if (a->postNeuron->getLayerID() == network->getLayers().back().ID) // transform to decision making neurons
-				{
-					if (a->postNeuron->getClassLabel() != "") //remove
+                if (DecisionMakingNeuron* neuron = dynamic_cast<DecisionMakingNeuron*>(a->postNeuron))
+                {
+					if (dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)->getClassLabel() != "")
 					{
 						predictedSpikes.emplace_back(spike{timestamp, a});
 					}
@@ -75,19 +76,17 @@ namespace adonis
 			}
 		}
 		
-		// cannot use labels as they are. need an error signal instead
 		void onCompleted(Network* network) override
 		{
 			labels.emplace_back(label{"end", labels.back().onset+10000});
 			
-			// add condition if predictedSpikes is not empty
 			for (auto i=1; i<labels.size(); i++)
 			{
 				auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
 				if (it != predictedSpikes.end())
 				{
 					auto idx = std::distance(predictedSpikes.begin(), it);
-					predictedLabels.emplace_back(predictedSpikes[idx].axon->postNeuron->getClassLabel()); // this will work because neuronFired only for DM neurons
+					predictedLabels.emplace_back(dynamic_cast<DecisionMakingNeuron*>(predictedSpikes[idx].axon->postNeuron)->getClassLabel());
 				}
 				else
 				{

@@ -19,21 +19,15 @@ namespace adonis
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  float _threshold=-50, float _restingPotential=-70, int _refractoryPeriod=3, float _decayCurrent=10, float _decayPotential=20, bool _burstingActivity=false, float _eligibilityDecay=20, float _inputResistance=50e9, float _externalCurrent=100, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, bool _wta=false) :
-			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential),
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, int _refractoryPeriod=3, float _decayCurrent=10, float _decayPotential=20, bool _burstingActivity=false, float _eligibilityDecay=20, float _externalCurrent=100, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, bool _wta=false) :
+			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential, _membraneResistance),
     		refractoryPeriod(_refractoryPeriod),
 			decayCurrent(_decayCurrent),
 			decayPotential(_decayPotential),
-			synapticEfficacy(1),
-			threshold(_threshold),
-			inputResistance(_inputResistance),
 			externalCurrent(_externalCurrent),
 			current(0),
 			active(true),
-            lastSpikeTime(0),
-            eligibilityTrace(0),
             eligibilityDecay(_eligibilityDecay),
-			plasticityTrace(0),
 			burstingActivity(_burstingActivity),
 			homeostasis(_homeostasis),
 			restingThreshold(-50),
@@ -76,42 +70,6 @@ namespace adonis
 				}
 			}
 		}
-		
-        void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true) override
-        {
-            if (postNeuron)
-            {
-                if (connectionProbability(probability))
-                {
-                    if (redundantConnections == false)
-                    {
-                        int16_t ID = postNeuron->getNeuronID();
-                        auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](axon a){return a.postNeuron->getNeuronID() == ID;});
-                        
-                        if (result == postAxons.end())
-                        {
-                            postAxons.emplace_back(axon{this, postNeuron, weight*(1/inputResistance), delay, -1});
-                            postNeuron->getPreAxons().push_back(postAxons.back());
-                        }
-                        else
-                        {
-                            #ifndef NDEBUG
-                            std::cout << "axon " << neuronID << "->" << postNeuron->getNeuronID() << " already exists" << std::endl;
-                            #endif
-                        }
-                    }
-                    else
-                    {
-                        postAxons.emplace_back(axon{this, postNeuron, weight*(1/inputResistance), delay, -1});
-                        postNeuron->getPreAxons().push_back(postAxons.back());
-                    }
-                }
-            }
-            else
-            {
-                throw std::logic_error("Neuron does not exist");
-            }
-        }
         
 		void update(double timestamp, axon* a, Network* network, double timestep) override
 		{
@@ -125,7 +83,7 @@ namespace adonis
 				inhibited = false;
 			}
 
-            if (timestamp - lastSpikeTime >= refractoryPeriod)
+            if (timestamp - previousSpikeTime >= refractoryPeriod)
             {
                 active = true;
             }
@@ -155,9 +113,9 @@ namespace adonis
 					}
 					current += externalCurrent*a->weight;
 					activeAxon = *a;
-					a->lastInputTime = timestamp;
+					a->previousInputTime = timestamp;
 				}
-				potential += (inputResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
+				potential += (membraneResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 			}
 
 			if (a)
@@ -214,7 +172,7 @@ namespace adonis
 
 				learn(timestamp, network);
 
-				lastSpikeTime = timestamp;
+				previousSpikeTime = timestamp;
 				potential = restingPotential;
 				if (!burstingActivity)
 				{
@@ -226,7 +184,7 @@ namespace adonis
 		
         void resetNeuron() override
         {
-            lastSpikeTime = 0;
+            previousSpikeTime = 0;
             current = 0;
             potential = restingPotential;
             eligibilityTrace = 0;
@@ -271,56 +229,11 @@ namespace adonis
 			externalCurrent = newCurrent;
 		}
 		
-		float getEligibilityTrace() const
-		{
-			return eligibilityTrace;
-		}
-		
-		float getSynapticEfficacy() const
-		{
-			return synapticEfficacy;
-		}
-		
-		float setSynapticEfficacy(float newEfficacy)
-		{
-			return synapticEfficacy = newEfficacy;
-		}
-		
-		float getInputResistance() const
-		{
-			return inputResistance;
-		}
-		
-		float getPlasticityTrace() const
-		{
-			return plasticityTrace;
-		}
-		
-		void setPlasticityTrace(float newtrace)
-		{
-			plasticityTrace = newtrace;
-		}
-		
-		double getLastSpikeTime() const
-		{
-			return lastSpikeTime;
-		}
-		
 		void setInhibition(double timestamp, bool inhibitionStatus)
 		{
 			inhibitionTime = timestamp;
 			inhibited = inhibitionStatus;
 		}
-		
-		float getPotential() const
-        {
-            return potential;
-        }
-		
-        float setPotential(float newPotential)
-        {
-            return potential = newPotential;
-        }
 		
 	protected:
 		
@@ -371,16 +284,12 @@ namespace adonis
 		// ----- LIF PARAMETERS -----
 		float                                    decayCurrent;
 		float                                    decayPotential;
-        float                                    threshold;
-        float                                    inputResistance;
         float                                    current;
 		bool                                     active;
 		bool                                     inhibited;
 		double                                   inhibitionTime;
 		float                                    refractoryPeriod;
-		float                                    synapticEfficacy;
 		float                                    externalCurrent;
-		float                                    eligibilityTrace;
 		float                                    eligibilityDecay;
 		bool                                     burstingActivity;
 		bool                                     homeostasis;
@@ -389,7 +298,5 @@ namespace adonis
 		float                                    homeostasisBeta;
 		bool                                     wta;
 		axon                                     activeAxon;
-        double                                   lastSpikeTime;
-        float                                    plasticityTrace;
 	};
 }

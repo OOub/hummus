@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "../neurons/decisionMakingNeuron.hpp"
 #include "../globalLearningRuleHandler.hpp"
 
 namespace adonis
@@ -59,7 +60,7 @@ namespace adonis
 						}
 						else
 						{
-							throw std::logic_error("the reward-modulated STDP learning rule has to be on a postsynaptic layer");
+							throw std::logic_error("the reward-modulated STDP learning rule cannot be on the input layer");
 						}
 					}
 				}
@@ -72,9 +73,9 @@ namespace adonis
 				{
 					for (auto& n: rf.neurons)
 					{
-						if (network->getNeurons()[n]->getClassLabel() != "")
-						{
-							network->getNeurons()[n]->addLearningRule(this);
+                        if (DecisionMakingNeuron* neuron = dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get()))
+                        {
+							dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get())->addLearningRule(this);
 						}
 					}
 				}
@@ -83,12 +84,12 @@ namespace adonis
 		
 		virtual void learn(double timestamp, Neuron* neuron, Network* network) override
 		{
-			if (neuron->getLayerID() == network->getLayers().back().ID)
-			{
+            if (DecisionMakingNeuron* n = dynamic_cast<DecisionMakingNeuron*>(neuron))
+            {
 				// reward and punishement signal from the decision-making layer
 				int alpha = 0;
 				int beta = 0;
-				if (neuron->getClassLabel() == network->getCurrentLabel())
+				if (dynamic_cast<DecisionMakingNeuron*>(neuron)->getClassLabel() == network->getCurrentLabel())
 				{
 					alpha = 1;
 				}
@@ -114,7 +115,7 @@ namespace adonis
 										if (postAxon.postNeuron->getEligibilityTrace() > 0.1)
 										{
 											double delta = alpha*Ar_minus+beta*Ap_plus;
-											postAxon.weight += delta * postAxon.weight * (1./postAxon.postNeuron->getInputResistance() - postAxon.weight);
+											postAxon.weight += delta * postAxon.weight * (1./postAxon.postNeuron->getMembraneResistance() - postAxon.weight);
 										}
 									}
 								}
@@ -136,7 +137,7 @@ namespace adonis
 										if (preAxon.preNeuron->getEligibilityTrace() > 0.1)
 										{
 											double delta = alpha*Ar_plus+beta*Ap_minus;
-											preAxon.weight += delta * preAxon.weight * (1./preAxon.preNeuron->getInputResistance() - preAxon.weight);
+											preAxon.weight += delta * preAxon.weight * (1./preAxon.preNeuron->getMembraneResistance() - preAxon.weight);
 										}
 									}
 								}

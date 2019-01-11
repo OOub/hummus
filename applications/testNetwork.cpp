@@ -12,10 +12,21 @@
 #include <iostream>
 
 #include "../source/core.hpp"
+
 #include "../source/GUI/qtDisplay.hpp"
+
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
 #include "../source/neurons/leakyIntegrateAndFire.hpp"
+
+#include "../source/addOns/spikeLogger.hpp"
+#include "../source/addOns/predictionLogger.hpp"
+#include "../source/addOns/myelinPlasticityLogger.hpp"
+#include "../source/addOns/analysis.hpp"
+
+#include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/learningRules/rewardModulatedSTDP.hpp"
+#include "../source/learningRules/stdp.hpp"
 
 int main(int argc, char** argv)
 {
@@ -31,8 +42,8 @@ int main(int argc, char** argv)
     //  ----- CREATING THE NETWORK -----
 
     // creating layers of neurons
-    network.addLayer<adonis::InputNeuron>({}, 1, 1, 1, false);
-    network.addLayer<adonis::LIF>({}, 1, 1, 1, false);
+    network.addLayer<adonis::InputNeuron>(1, 1, 1);
+    network.addLayer<adonis::LIF>(1, 1, 1);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0, 10, 2);
@@ -43,9 +54,9 @@ int main(int argc, char** argv)
     network.injectSpike(network.getNeurons()[0]->prepareInitialSpike(30));
 
     //  ----- DISPLAY SETTINGS -----
-      qtDisplay.useHardwareAcceleration(true);
-      qtDisplay.setTimeWindow(runtime);
-      qtDisplay.trackNeuron(1);
+    qtDisplay.useHardwareAcceleration(true);
+    qtDisplay.setTimeWindow(runtime);
+    qtDisplay.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(timestep, runtime);

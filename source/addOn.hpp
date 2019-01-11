@@ -13,8 +13,8 @@
 
 namespace adonis
 {
-	class Neuron;
-	class Network;
+    class Neuron;
+    class Network;
 	struct axon;
 	
 	// polymorphic class for add-ons
