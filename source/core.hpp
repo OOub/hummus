@@ -95,7 +95,7 @@ namespace adonis
             eligibilityTrace(0),
             membraneResistance(_membraneResistance),
             previousSpikeTime(0),
-            synapticEfficacy(1),
+            synapticEfficacy(1)
     	{}
     	
 		virtual ~Neuron(){}
