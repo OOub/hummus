@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 11/12/2018
+ * Last Version: 14/01/2019
  *
  * Information: Example of a basic spiking neural network.
  */
@@ -40,10 +40,10 @@ int main(int argc, char** argv)
     float timestep = 0.1;
 
     //  ----- CREATING THE NETWORK -----
-
+    
     // creating layers of neurons
-    network.addLayer<adonis::InputNeuron>(1, 1, 1);
-    network.addLayer<adonis::LIF>(1, 1, 1);
+    network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
+    network.addLayer<adonis::LIF>(1, 1, 1, {});
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0, 10, 2);
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     qtDisplay.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(timestep, runtime);
+    network.run(runtime, timestep);
 
     //  ----- EXITING APPLICATION -----
     return 0;

@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 11/12/2018
+ * Last Version: Last Version: 14/01/2019
  *
  * Information: the core.hpp contains both the network and the polymorphic Neuron class:
  *  - The Network class acts as a spike manager
@@ -25,6 +25,8 @@
 #include <cmath>
 #include <mutex>
 #include <deque>
+
+#include <tuple>
 
 #include "dataParser.hpp"
 #include "standardAddOn.hpp"
@@ -106,12 +108,12 @@ namespace adonis
 		virtual void initialisation(Network* network){}
 		
 		// asynchronous update method
-		virtual void update(double timestamp, axon* a, Network* network, double timestep) = 0;
+		virtual void update(double timestamp, axon* a, Network* network) = 0;
         
 		// synchronous update method
 		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep)
 		{
-			update(timestamp, a, network, timestep);
+			update(timestamp, a, network);
 		}
 		
         // reset a neuron to its initial status
@@ -134,7 +136,7 @@ namespace adonis
                         
                         if (result == postAxons.end())
                         {
-                            postAxons.emplace_back(axon{this, postNeuron, weight*(1/membraneResistance), delay, -1});
+                            postAxons.emplace_back(axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
                             postNeuron->getPreAxons().push_back(postAxons.back());
                         }
                         else
@@ -146,7 +148,7 @@ namespace adonis
                     }
                     else
                     {
-                        postAxons.emplace_back(axon{this, postNeuron, weight*(1/membraneResistance), delay, -1});
+                        postAxons.emplace_back(axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
                         postNeuron->getPreAxons().push_back(postAxons.back());
                     }
                 }
@@ -176,7 +178,7 @@ namespace adonis
 			return dist(randomEngine);
 		}
 		
-		// ----- SETTERS AND GETTERS -----
+		// ----- SETTERS AND GETTERS -----        
 		int16_t getNeuronID() const
         {
             return neuronID;
@@ -342,7 +344,7 @@ namespace adonis
 		
         // add neurons
         template <typename T, typename... Args>
-        void addLayer(int _numberOfNeurons, int rfNumber, int _sublayerNumber, Args&&... args)
+        void addLayer(int _numberOfNeurons, int rfNumber, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args)
         {
             unsigned long shift = 0;
 
@@ -373,7 +375,7 @@ namespace adonis
                     std::vector<std::size_t> neuronTemp;
                     for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++)
                     {
-                        neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, j, 0, i, layerID, std::forward<Args>(args)...)));
+                        neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, j, 0, i, layerID, -1, -1, _learningRuleHandler, std::forward<Args>(args)...)));
                         neuronTemp.emplace_back(neurons.size()-1);
                     }
                     rfTemp.emplace_back(receptiveField{neuronTemp, j, 0});
@@ -386,7 +388,7 @@ namespace adonis
 		
         // adds a 2 dimentional grid of neurons - thr number of neurons should be zero if we want a neuron for each pixel of the grid. Otherwise, we choose a positive number of neurons to define how many neurons we want per receptive field/window
         template <typename T, typename... Args>
-        void add2dLayer(int _numberOfNeurons, int rfSize, int gridW, int gridH, int _sublayerNumber, bool overlap, Args&&... args)
+        void add2dLayer(int _numberOfNeurons, int rfSize, int gridW, int gridH, int _sublayerNumber, bool overlap, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args)
         {
             // error handling
             if (rfSize <= 0 || rfSize > gridW || rfSize > gridH)
@@ -476,7 +478,7 @@ namespace adonis
 
                     if (_numberOfNeurons == 0)
                     {
-                        neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, x, y, std::forward<Args>(args)...)));
+                        neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, x, y, _learningRuleHandler, std::forward<Args>(args)...)));
 
                         neuronCounter += 1;
 
@@ -498,7 +500,7 @@ namespace adonis
                         {
                             for (auto j = 0; j < _numberOfNeurons; j++)
                             {
-                                neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, 0, 0, std::forward<Args>(args)...)));
+                                neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, -1, -1, _learningRuleHandler,  std::forward<Args>(args)...)));
 
                                 neuronCounter += 1;
 
@@ -528,7 +530,7 @@ namespace adonis
 		
         // add a one dimentional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
-        void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, float _decayCurrent=10, float _decayPotential=20, bool _wta=true, bool _burstingActivity=false, float _eligibilityDecay=100, float decayHomeostasis=10, float homeostasisBeta=1, float _threshold = -50, float  _restingPotential=-70, float _resetPotential=-70, float _inputResistance=50e9, float _externalCurrent=100)
+        void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100)
         {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
@@ -564,7 +566,7 @@ namespace adonis
             std::vector<std::size_t> neuronTemp;
             for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++)
             {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, _decayCurrent, _decayPotential, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _threshold, _restingPotential, _resetPotential, _inputResistance, _externalCurrent,-1,-1,_learningRuleHandler, decayHomeostasis, homeostasisBeta, _wta, uniqueLabels[k-shift])));
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
                 
                 neuronTemp.emplace_back(neurons.size()-1);
             }
@@ -777,7 +779,7 @@ namespace adonis
             {
                 for (auto& event: *data)
                 {
-                    for (auto& l: layers[0].sublayers) // this is solved
+                    for (auto& l: layers[0].sublayers)
                     {
                         if (event.sublayerID == l.ID)
                         {
@@ -915,7 +917,7 @@ namespace adonis
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
-        void run(std::vector<input>* trainingData, std::vector<input>* testData=nullptr, float _timestep=0, int shift=20)
+        void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr, int shift=20)
         {
 
             for (auto& n: neurons)
@@ -1161,11 +1163,11 @@ namespace adonis
                             if (it != currentSpikes.end())
                             {
                                 auto idx = std::distance(currentSpikes.begin(), it);
-                                n->update(i, currentSpikes[idx].axon, this, timestep);
+                                n->updateSync(i, currentSpikes[idx].axon, this, timestep);
                             }
                             else
                             {
-                                n->update(i, nullptr, this, timestep);
+                                n->updateSync(i, nullptr, this, timestep);
                             }
                         }
 
@@ -1182,7 +1184,7 @@ namespace adonis
 
                         for (auto& spike: currentSpikes)
                         {
-                            spike.axon->postNeuron->update(i, spike.axon, this, timestep);
+                            spike.axon->postNeuron->updateSync(i, spike.axon, this, timestep);
                         }
                     }
                 }
@@ -1216,7 +1218,7 @@ namespace adonis
                     }
                 }
             }
-            s.axon->postNeuron->update(s.timestamp, s.axon, this, 0);
+            s.axon->postNeuron->update(s.timestamp, s.axon, this);
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----

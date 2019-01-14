@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 11/12/2018
+ * Last Version: 14/01/2019
  *
  * Information: The MyelinPlasticity learning rule compatible only with leaky integrate-and-fire neurons
  */

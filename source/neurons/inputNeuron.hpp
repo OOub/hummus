@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 12/06/2018
+ * Last Version: 14/01/2019
  *
  * Information: input neuron which takes in spikes to distribute to the rest of the network
  */
@@ -19,7 +19,7 @@ namespace adonis
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _threshold=1, float _restingPotential=0, float _membraneResistance=1) :
+		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=1) :
 			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential, _membraneResistance)
 		{}
 		
@@ -40,15 +40,75 @@ namespace adonis
 			}
 		}
 		
-		void update(double timestamp, axon* a, Network* network, double timestep) override
+		void update(double timestamp, axon* a, Network* network) override
 		{
-			throw std::logic_error("not implemented yet");
+            potential = threshold;
+
+            #ifndef NDEBUG
+            std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
+            #endif
+            
+            for (auto addon: network->getStandardAddOns())
+            {
+                addon->neuronFired(timestamp, a, network);
+            }
+            
+            if (network->getMainThreadAddOn())
+            {
+                network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
+            }
+            
+            for (auto& p : postAxons)
+            {
+                network->injectGeneratedSpike(spike{timestamp + p.delay, &p});
+            }
+            
+            learn(timestamp, network);
+            previousSpikeTime = timestamp;
+            potential = restingPotential;
 		}
-		
-		void updateSync(double timestamp, axon* a, Network* network, double timestep) override
-		{
-			throw std::logic_error("not implemented yet");
-		}
+        
+        void updateSync(double timestamp, axon* a, Network* network, double timestep) override
+        {
+            if (a)
+            {
+                potential = threshold;
+                
+                #ifndef NDEBUG
+                std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
+                #endif
+                
+                for (auto addon: network->getStandardAddOns())
+                {
+                    addon->neuronFired(timestamp, a, network);
+                }
+                
+                if (network->getMainThreadAddOn())
+                {
+                    network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
+                }
+                
+                for (auto& p : postAxons)
+                {
+                    network->injectGeneratedSpike(spike{timestamp + p.delay, &p});
+                }
+                
+                learn(timestamp, network);
+                previousSpikeTime = timestamp;
+                potential = restingPotential;
+            }
+            else
+            {
+                for (auto addon: network->getStandardAddOns())
+                {
+                    addon->timestep(timestamp, network, this);
+                }
+                if (network->getMainThreadAddOn())
+                {
+                    network->getMainThreadAddOn()->timestep(timestamp, network, this);
+                }
+            }
+        }
         
     protected:
         

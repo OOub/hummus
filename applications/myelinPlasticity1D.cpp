@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 29/10/2018
+ * Last Version: 14/01/2019
  *
  * Information: Example of a spiking neural network that can learn one dimensional patterns.
  */
@@ -15,9 +15,10 @@
 #include "../source/dataParser.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/addOns/spikeLogger.hpp"
-#include "../source/learningRules/stdp.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/neurons/inputNeuron.hpp"
+#include "../source/neurons/leakyIntegrateAndFire.hpp"
 
 int main(int argc, char** argv)
 {
@@ -35,7 +36,6 @@ int main(int argc, char** argv)
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float potentialDecay = 20;
-	float refractoryPeriod = 3;
 
     int inputNeurons = 10;
     int layer1Neurons = 4;
@@ -48,15 +48,14 @@ int main(int argc, char** argv)
 	bool homeostasis = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis::MyelinPlasticity myelinPlasticity;
-	adonis::STDP stdp;
+	adonis::MyelinPlasticity myelinPlasticity(1, 1, 0, 0);
 	
     //  ----- CREATING THE NETWORK -----
-	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod, wta, false, eligibilityDecay);
-	network.addLayer({&myelinPlasticity}, layer1Neurons, 1, 1, homeostasis, decayCurrent, potentialDecay, 100, wta, burst, eligibilityDecay);
+    network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
+    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, homeostasis, decayCurrent, potentialDecay, 100, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 3);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 0.1);
 	
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
@@ -66,7 +65,7 @@ int main(int argc, char** argv)
 	network.turnOffLearning(80000);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(0.1, &trainingData);
+    network.run(&trainingData, 0.1);
 	
     //  ----- EXITING APPLICATION -----
     return 0;

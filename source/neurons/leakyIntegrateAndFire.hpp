@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 12/06/2018
+ * Last Version: 14/01/2019
  *
  * Information: LIF neuron model
  */
@@ -19,7 +19,7 @@ namespace adonis
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, int _refractoryPeriod=3, float _decayCurrent=10, float _decayPotential=20, bool _burstingActivity=false, float _eligibilityDecay=20, float _externalCurrent=100, bool _homeostasis=false, float _decayHomeostasis=10, float _homeostasisBeta=1, bool _wta=false) :
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
 			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential, _membraneResistance),
     		refractoryPeriod(_refractoryPeriod),
 			decayCurrent(_decayCurrent),
@@ -57,7 +57,7 @@ namespace adonis
 		virtual ~LIF(){}
 		
 		// ----- PUBLIC LIF METHODS -----
-		void initialisation(Network* network) override
+		virtual void initialisation(Network* network) override
 		{
 			for (auto& rule: learningRuleHandler)
 			{
@@ -71,12 +71,12 @@ namespace adonis
 			}
 		}
         
-		void update(double timestamp, axon* a, Network* network, double timestep) override
+		virtual void update(double timestamp, axon* a, Network* network) override
 		{
 			throw std::logic_error("not implemented yet");
 		}
 		
-		void updateSync(double timestamp, axon* a, Network* network, double timestep) override
+		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) override
 		{
 			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
 			{
@@ -121,7 +121,7 @@ namespace adonis
 			if (a)
 			{
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> EMITTED" << std::endl;
+				std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
 				#endif
 				for (auto addon: network->getStandardAddOns())
 				{
@@ -153,7 +153,7 @@ namespace adonis
 				plasticityTrace += 1;
 
 				#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << "--> SPIKED" << std::endl;
+				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
 				#endif
 
 				for (auto addon: network->getStandardAddOns())
@@ -182,7 +182,7 @@ namespace adonis
 			}
 		}
 		
-        void resetNeuron() override
+        virtual void resetNeuron() override
         {
             previousSpikeTime = 0;
             current = 0;
@@ -238,7 +238,7 @@ namespace adonis
 	protected:
 		
         // winner-take-all algorithm
-		void WTA(double timestamp, Network* network) override
+		virtual void WTA(double timestamp, Network* network) override
 		{
 			for (auto rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
 			{
@@ -263,7 +263,7 @@ namespace adonis
 		}
 		
         // loops through any learning rules and activates them
-        void learn(double timestamp, Network* network) override
+        virtual void learn(double timestamp, Network* network) override
         {
             if (network->getLearningStatus())
             {

@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 11/12/2018
+ * Last Version: 14/01/2019
  *
  * Information: Spiking neural network classifying the poker-DVS dataset
  */
@@ -12,49 +12,38 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/addOns/analysis.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/learningRules/stdp.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/neurons/inputNeuron.hpp"
+#include "../source/neurons/decisionMakingNeuron.hpp"
+#include "../source/neurons/leakyIntegrateAndFire.hpp"
 
 int main(int argc, char** argv)
 {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
-	adonis::Analysis analysis("../../data/cards/test_nooff_pip2_rep10_jitter0Label.txt");
-	adonis::Network network({&analysis}, &qtDisplay);
+	adonis::Network network(&qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float decayPotential = 20;
-	float refractoryPeriod = 3;
 	float eligibilityDecay = 100;
 	
-	bool overlap = false;
-	bool homeostasis = false;
-	bool wta = false;
-	bool burst = false;
-	
-	//  ----- CREATING THE NETWORK -----
-	adonis::STDP stdp;
-	adonis::RewardModulatedSTDP rstdp;
-	
-	network.add2dLayer(1, 24, 24, {}, 1, -1, false, false, decayCurrent, decayPotential, refractoryPeriod, false, false, eligibilityDecay);
-	network.add2dLayer(4, 24, 24, {}, 1, 1, overlap, homeostasis, decayCurrent, decayPotential, refractoryPeriod, wta, burst, eligibilityDecay);
-	network.addDecisionMakingLayer("../../data/cards/train_nooff_pip2_rep50_jitter0Label.txt", {}, 500);
-
-	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.6, 0.4, 5, 3, 50);
-	network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.6, 0.4, 5, 3, 50);
-	
-	network.lateralInhibition(network.getLayers()[1], -1);
-	network.lateralInhibition(network.getLayers()[2], -1);
+    //  ----- CREATING THE NETWORK -----
+    adonis::MyelinPlasticity mp(1, 1, 1, 1);
+    
+    network.add2dLayer<adonis::InputNeuron>(0, 1, 34, 34, 1, false, {});
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/cards/trainLabel.txt", {&mp}, 900, false, decayCurrent, decayPotential, eligibilityDecay);
+    
+    //  ----- CONNECTING THE NETWORK -----
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3, 100);
 	
 	//  ----- READING DATA FROM FILE -----
-	adonis::DataParser dataParser;
-    auto trainingData = dataParser.readData("../../data/cards/train_nooff_pip2_rep50_jitter0.txt");
-	auto testData = dataParser.readData("../../data/cards/test_nooff_pip2_rep10_jitter0.txt");
+    adonis::DataParser dataParser;
+    auto trainingData = dataParser.readData("../../data/cards/train.txt");
+    auto testData = dataParser.readData("../../data/cards/test.txt");
 	
 	//  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
@@ -62,8 +51,7 @@ int main(int argc, char** argv)
 	qtDisplay.trackLayer(2);
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(0.1, &trainingData, &testData);
-	analysis.accuracy();
+    network.run(&trainingData, 0.1, &testData);
 	
     //  ----- EXITING APPLICATION -----
     return 0;

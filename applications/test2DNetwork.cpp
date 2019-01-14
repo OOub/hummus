@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 31/05/2018
+ * Last Version: 14/01/2019
  *
  * Information: Example of a basic spiking neural network.
  */
@@ -13,8 +13,8 @@
 
 #include "../source/core.hpp"
 #include "../source/GUI/qtDisplay.hpp"
-#include "../source/addOns/spikeLogger.hpp"
-#include "../source/learningRules/stdp.hpp"
+#include "../source/neurons/inputNeuron.hpp"
+#include "../source/neurons/leakyIntegrateAndFire.hpp"
 
 int main(int argc, char** argv)
 {
@@ -27,9 +27,9 @@ int main(int argc, char** argv)
 	adonis::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
-	network.add2dLayer(2, 8, 8, {}, 2, -1);
-	network.add2dLayer(2, 8, 8, {}, 2, 1, false, false, 10, 20, 3, true);
-	network.addLayer({}, 1, 1, 1, false);
+    network.add2dLayer<adonis::InputNeuron>(0, 2, 8, 8, 2, false, {});
+    network.add2dLayer<adonis::LIF>(1, 2, 8, 8, 2, false, {}, false, 10, 20, 3, true);
+    network.addLayer<adonis::LIF>(1, 1, 1, {});
 		
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1., 0);
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 	qtDisplay.trackNeuron(128);
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(0.1, &trainingData);
+    network.run(&trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;
