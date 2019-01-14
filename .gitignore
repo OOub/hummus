@@ -8,3 +8,7 @@ data/poker_card_task/
 data/hats/
 
 data/1D_patterns/
+
+source/\.DS_Store
+
+\.DS_Store
