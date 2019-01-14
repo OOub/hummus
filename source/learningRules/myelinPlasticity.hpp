@@ -98,6 +98,7 @@ namespace adonis
 						#endif
 					}
 					n->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+                    inputAxon.preNeuron->setEligibilityTrace(0);
                     
                     // myelin plasticity rule sends a feedback to upstream neurons
                     for (auto& neurons: network->getNeurons())

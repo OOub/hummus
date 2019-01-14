@@ -116,6 +116,7 @@ namespace adonis
 										{
 											double delta = alpha*Ar_minus+beta*Ap_plus;
 											postAxon.weight += delta * postAxon.weight * (1./postAxon.postNeuron->getMembraneResistance() - postAxon.weight);
+                                            postAxon.postNeuron->setEligibilityTrace(0);
 										}
 									}
 								}
@@ -138,6 +139,7 @@ namespace adonis
 										{
 											double delta = alpha*Ar_plus+beta*Ap_minus;
 											preAxon.weight += delta * preAxon.weight * (1./preAxon.preNeuron->getMembraneResistance() - preAxon.weight);
+                                            preAxon.preNeuron->setEligibilityTrace(0);
 										}
 									}
 								}

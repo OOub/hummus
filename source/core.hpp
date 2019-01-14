@@ -119,7 +119,9 @@ namespace adonis
         // reset a neuron to its initial status
         virtual void resetNeuron()
         {
+            previousSpikeTime = 0;
             potential = restingPotential;
+            eligibilityTrace = 0;
         }
         
         // connect two Neurons together
@@ -137,7 +139,7 @@ namespace adonis
                         if (result == postAxons.end())
                         {
                             postAxons.emplace_back(axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
-                            postNeuron->getPreAxons().push_back(postAxons.back());
+                            postNeuron->getPreAxons().emplace_back(postAxons.back());
                         }
                         else
                         {
@@ -149,7 +151,7 @@ namespace adonis
                     else
                     {
                         postAxons.emplace_back(axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
-                        postNeuron->getPreAxons().push_back(postAxons.back());
+                        postNeuron->getPreAxons().emplace_back(postAxons.back());
                     }
                 }
             }
@@ -214,12 +216,12 @@ namespace adonis
 		    return yCoordinate;
 		}
         
-        std::vector<axon> getPreAxons()
+        std::vector<axon>& getPreAxons()
         {
             return preAxons;
         }
         
-        std::vector<axon> getPostAxons()
+        std::vector<axon>& getPostAxons()
         {
             return postAxons;
         }
@@ -277,6 +279,11 @@ namespace adonis
         float getEligibilityTrace() const
         {
             return eligibilityTrace;
+        }
+        
+        void setEligibilityTrace(float newtrace)
+        {
+            eligibilityTrace = newtrace;
         }
         
         double getPreviousSpikeTime() const

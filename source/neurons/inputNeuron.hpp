@@ -43,6 +43,8 @@ namespace adonis
 		void update(double timestamp, axon* a, Network* network) override
 		{
             potential = threshold;
+            eligibilityTrace = 1;
+            plasticityTrace += 1;
 
             #ifndef NDEBUG
             std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
@@ -73,6 +75,8 @@ namespace adonis
             if (a)
             {
                 potential = threshold;
+                eligibilityTrace = 1;
+                plasticityTrace += 1;
                 
                 #ifndef NDEBUG
                 std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;

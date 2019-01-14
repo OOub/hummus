@@ -12,6 +12,8 @@
 #pragma once
 
 #include "../globalLearningRuleHandler.hpp"
+#include "../neurons/inputNeuron.hpp"
+#include "../neurons/leakyIntegrateAndFire.hpp"
 
 namespace adonis
 {
@@ -69,6 +71,7 @@ namespace adonis
 			{
 				for (auto& postAxon: neuron->getPostAxons())
 				{
+                    std::cout << postAxon.postNeuron->getEligibilityTrace() << std::endl;
 					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive
 					if (postAxon.postNeuron->getEligibilityTrace() > 0.1)
 					{
@@ -83,6 +86,7 @@ namespace adonis
 							}
 						}
 						postAxon.postNeuron->setPlasticityTrace(postTrace);
+                        postAxon.postNeuron->setEligibilityTrace(0);
 					}
 				}
 			}
@@ -106,6 +110,7 @@ namespace adonis
 							}
 						}
 						preAxon.preNeuron->setPlasticityTrace(preTrace);
+                        preAxon.preNeuron->setEligibilityTrace(0);
 					}
 				}
 			}
