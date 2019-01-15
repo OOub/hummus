@@ -90,7 +90,8 @@ namespace adonis
 
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
-
+            
+            // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
             
 			// potential decay

@@ -926,7 +926,6 @@ namespace adonis
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
         void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr, int shift=20)
         {
-
             for (auto& n: neurons)
             {
                 n->initialisation(this);

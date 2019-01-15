@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&stdp}, false, decayCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0);
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
