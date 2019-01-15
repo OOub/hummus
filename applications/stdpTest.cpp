@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis::QtDisplay qtDisplay;
-	adonis::Network network;
+	adonis::Network network(&qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
