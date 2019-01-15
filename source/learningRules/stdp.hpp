@@ -72,7 +72,7 @@ namespace adonis
 				for (auto& postAxon: neuron->getPostAxons())
 				{                    
 					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive
-					if (postAxon.postNeuron->getEligibilityTrace() > 0.01)
+					if (postAxon.postNeuron->getEligibilityTrace() > 0.1)
 					{
 						float postTrace = - (timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus);
                         std::cout << "postTrace " << postTrace*(1/postAxon.postNeuron->getMembraneResistance()) << std::endl;
