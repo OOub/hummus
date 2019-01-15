@@ -97,6 +97,8 @@ namespace adonis
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
 
+            std::cout << timestamp << " " << neuronID << " " << eligibilityTrace << " " << potential << std::endl;
+            
 			// threshold decay
 			if (homeostasis)
 			{

@@ -15,7 +15,6 @@
 
 #include "../source/core.hpp"
 #include "../source/GUI/qtDisplay.hpp"
-#include "../source/addOns/spikeLogger.hpp"
 #include "../source/learningRules/stdp.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/leakyIntegrateAndFire.hpp"
@@ -29,8 +28,7 @@ int main(int argc, char** argv)
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis::QtDisplay qtDisplay;
-	adonis::SpikeLogger spikeLogger("stdpSpikeLog");
-	adonis::Network network({&spikeLogger}, &qtDisplay);
+	adonis::Network network;
 
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;

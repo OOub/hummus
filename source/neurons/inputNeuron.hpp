@@ -77,10 +77,15 @@ namespace adonis
                 potential = threshold;
                 eligibilityTrace = 1;
                 plasticityTrace += 1;
-                
+                                
                 #ifndef NDEBUG
                 std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
                 #endif
+                
+                if (network->getMainThreadAddOn())
+                {
+                    network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+                }
                 
                 for (auto addon: network->getStandardAddOns())
                 {
