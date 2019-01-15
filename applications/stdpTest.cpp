@@ -34,7 +34,7 @@ int main(int argc, char** argv)
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float potentialDecay = 20;
-	float refractoryPeriod = 3;
+	float refractoryPeriod = 30;
 	
     int inputNeurons = 10;
     int layer1Neurons = 1;
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
   	qtDisplay.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(0.1, &trainingData);
+    network.run(&trainingData, {}, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

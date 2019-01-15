@@ -43,14 +43,14 @@ int main(int argc, char** argv)
 	bool homeostasis = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis_c::MyelinPlasticity myelinPlasticity(1, 1, 0, 0);
+	adonis_c::MyelinPlasticity myelinPlasticity(1, 0.1, 0, 0);
 	
     //  ----- CREATING THE NETWORK -----
 	network.addLayer({}, inputNeurons, 1, 1, false, decayCurrent, potentialDecay, refractoryPeriod, false, false, eligibilityDecay);
-	network.addLayer({&myelinPlasticity}, layer1Neurons, 1, 1, homeostasis, decayCurrent, potentialDecay, 100, wta, burst, eligibilityDecay);
+	network.addLayer({&myelinPlasticity}, layer1Neurons, 1, 1, homeostasis, decayCurrent, potentialDecay, refractoryPeriod, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 0.1);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 3);
 	
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
