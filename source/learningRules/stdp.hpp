@@ -72,12 +72,15 @@ namespace adonis
                 for (auto& postAxon: neuron->getPostAxons())
                 {
                     // if a postNeuron fired, the deltaT (preTime - postTime) should be positive
-                    if (postAxon.postNeuron->getEligibilityTrace() > 0.5)
+                    if (postAxon.postNeuron->getEligibilityTrace() > 0.1)
                     {
+                        std::cout << timestamp << " " << neuron->getNeuronID() << " " << postAxon.postNeuron->getPreviousSpikeTime() <<std::endl;
                         float postTrace = - (timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus);
                         if (postAxon.weight > 0)
                         {
                             postAxon.weight += postTrace*(1/postAxon.postNeuron->getMembraneResistance());
+                            std::cout << "weight " << postAxon.weight <<std::endl;
+                            
                             if (postAxon.weight < 0)
                             {
                                 postAxon.weight = 0;
@@ -94,7 +97,7 @@ namespace adonis
 				for (auto preAxon: neuron->getPreAxons())
 				{
 					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
-					if (preAxon.preNeuron->getEligibilityTrace() > 0.5)
+					if (preAxon.preNeuron->getEligibilityTrace() > 0.1)
 					{
 						float preTrace = -(preAxon.preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon.preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus);
                         if (preAxon.weight < 1/preAxon.preNeuron->getMembraneResistance())

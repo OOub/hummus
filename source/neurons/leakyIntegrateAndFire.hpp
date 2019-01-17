@@ -96,7 +96,6 @@ namespace adonis
             
 			// potential decay
 			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
-
             
 			// threshold decay
 			if (homeostasis)
