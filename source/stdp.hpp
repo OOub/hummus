@@ -72,11 +72,13 @@ namespace adonis_c
                     // if a postNeuron fired, the deltaT (preTime - postTime) should be positive (negative postTrace)
                     if (postAxon->postNeuron->getEligibilityTrace() > 0.1)
                     {
+                        std::cout << timestamp << " " << postAxon->postNeuron->getLastSpikeTime() << std::endl;
                         float postTrace = (-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus));
                         
                         if (postAxon->weight > 0)
                         {
                             postAxon->weight += postTrace*(1/postAxon->postNeuron->getInputResistance());
+                            std::cout << "weight " << postAxon->weight << std::endl;
                             if (postAxon->weight < 0)
                             {
                                 postAxon->weight = 0;
