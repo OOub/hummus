@@ -70,7 +70,7 @@ namespace adonis
     struct spike
     {
         double      timestamp;
-        axon*       axon;
+        axon*       propagationAxon;
     };
     
 	class Network;
@@ -1165,9 +1165,9 @@ namespace adonis
                         {
                             auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s)
                             {
-                                if (s.axon)
+                                if (s.propagationAxon)
                                 {
-                                    return s.axon->postNeuron->getNeuronID() == n->getNeuronID();
+                                    return s.propagationAxon->postNeuron->getNeuronID() == n->getNeuronID();
                                 }
                                 else
                                 {
@@ -1178,7 +1178,7 @@ namespace adonis
                             if (it != currentSpikes.end())
                             {
                                 auto idx = std::distance(currentSpikes.begin(), it);
-                                n->updateSync(i, currentSpikes[idx].axon, this, timestep);
+                                n->updateSync(i, currentSpikes[idx].propagationAxon, this, timestep);
                             }
                             else
                             {
@@ -1199,7 +1199,7 @@ namespace adonis
 
                         for (auto& spike: currentSpikes)
                         {
-                            spike.axon->postNeuron->updateSync(i, spike.axon, this, timestep);
+                            spike.propagationAxon->postNeuron->updateSync(i, spike.propagationAxon, this, timestep);
                         }
                     }
                 }
@@ -1233,7 +1233,7 @@ namespace adonis
                     }
                 }
             }
-            s.axon->postNeuron->update(s.timestamp, s.axon, this);
+            s.propagationAxon->postNeuron->update(s.timestamp, s.propagationAxon, this);
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----
