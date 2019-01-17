@@ -64,7 +64,6 @@ ApplicationWindow
 				contentItem: Text
 				{
 					text: play.text
-					font.pointSize: 17
 					color: play.down ? "#000000" : "#363636"
 					horizontalAlignment: Text.AlignHCenter
         			verticalAlignment: Text.AlignVCenter
