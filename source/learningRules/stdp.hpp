@@ -66,17 +66,15 @@ namespace adonis
 		
 		virtual void learn(double timestamp, Neuron* neuron, Network* network) override
 		{
-			// LTD whenever a neuron from the presynaptic layer spikes
-			if (neuron->getLayerID() == preLayer)
-			{
-				for (auto& postAxon: neuron->getPostAxons())
-				{
-					// if a postNeuron fired, the deltaT (preTime - postTime) should be positive
-                    std::cout << neuron->getNeuronID() << " " << postAxon.postNeuron->getEligibilityTrace() << std::endl;
-					if (postAxon.postNeuron->getEligibilityTrace() > 0.1)
-					{
-						float postTrace = - (timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus);
-                        std::cout << neuron->getNeuronID() << " postTrace " << postTrace*(1/postAxon.postNeuron->getMembraneResistance()) << std::endl;
+            // LTD whenever a neuron from the presynaptic layer spikes
+            if (neuron->getLayerID() == preLayer)
+            {
+                for (auto& postAxon: neuron->getPostAxons())
+                {
+                    // if a postNeuron fired, the deltaT (preTime - postTime) should be positive
+                    if (postAxon.postNeuron->getEligibilityTrace() > 0.5)
+                    {
+                        float postTrace = - (timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon.postNeuron->getPreviousSpikeTime())/tau_minus);
                         if (postAxon.weight > 0)
                         {
                             postAxon.weight += postTrace*(1/postAxon.postNeuron->getMembraneResistance());
@@ -86,10 +84,9 @@ namespace adonis
                             }
                         }
                         postAxon.postNeuron->setPlasticityTrace(postTrace);
-                        postAxon.postNeuron->setEligibilityTrace(0);
-					}
-				}
-			}
+                    }
+                }
+            }
 			
 			// LTP whenever a neuron from the postsynaptic layer spikes
 			else if (neuron->getLayerID() == postLayer)
@@ -97,10 +94,9 @@ namespace adonis
 				for (auto preAxon: neuron->getPreAxons())
 				{
 					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
-					if (preAxon.preNeuron->getEligibilityTrace() > 0.1)
+					if (preAxon.preNeuron->getEligibilityTrace() > 0.5)
 					{
 						float preTrace = -(preAxon.preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon.preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus);
-                        std::cout << "preTrace " << preTrace*(1/preAxon.preNeuron->getMembraneResistance()) << std::endl;
                         if (preAxon.weight < 1/preAxon.preNeuron->getMembraneResistance())
                         {
                             preAxon.weight += preTrace*(1/preAxon.preNeuron->getMembraneResistance());
@@ -110,7 +106,6 @@ namespace adonis
                             }
                         }
 						preAxon.preNeuron->setPlasticityTrace(preTrace);
-                        preAxon.preNeuron->setEligibilityTrace(0);
 					}
 				}
 			}
