@@ -72,7 +72,7 @@ namespace adonis_c
                     // if a postNeuron fired, the deltaT (preTime - postTime) should be positive (negative postTrace)
                     if (postAxon->postNeuron->getEligibilityTrace() > 0.1)
                     {
-                        float postTrace = (-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus));//*neuron->getSynapticEfficacy();
+                        float postTrace = (-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getLastSpikeTime())/tau_minus));
                         
                         if (postAxon->weight > 0)
                         {
@@ -96,7 +96,7 @@ namespace adonis_c
                     // if a preNeuron already fired, the deltaT (preTime - postTime) should be negative (positive preTrace)
                     if (preAxon->preNeuron->getEligibilityTrace() > 0.1)
                     {
-                        float preTrace = (-(preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus));//*neuron->getSynapticEfficacy();
+                        float preTrace = (-(preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon->preNeuron->getLastSpikeTime() - timestamp)/tau_plus));
                         
                         if (preAxon->weight < 1/preAxon->preNeuron->getInputResistance())
                         {

@@ -817,9 +817,9 @@ namespace adonis_c
 					{
 						auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s)
 						{
-							if (s.axon)
+							if (s.propagationAxon)
 							{
-								return s.axon->postNeuron->getNeuronID() == n.getNeuronID();
+								return s.propagationAxon->postNeuron->getNeuronID() == n.getNeuronID();
 							}
 							else
 							{
@@ -830,7 +830,7 @@ namespace adonis_c
 						if (it != currentSpikes.end())
 						{
 							auto idx = std::distance(currentSpikes.begin(), it);
-							n.update(i, currentSpikes[idx].axon, this, timestep);
+							n.update(i, currentSpikes[idx].propagationAxon, this, timestep);
 						}
 						else
 						{
@@ -851,7 +851,7 @@ namespace adonis_c
 
 					for (auto& spike: currentSpikes)
 					{
-						spike.axon->postNeuron->update(i, spike.axon, this, timestep);
+						spike.propagationAxon->postNeuron->update(i, spike.propagationAxon, this, timestep);
 					}
 				}
 			}

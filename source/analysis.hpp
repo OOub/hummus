@@ -88,7 +88,7 @@ namespace adonis_c
 				if (it != predictedSpikes.end())
 				{
 					auto idx = std::distance(predictedSpikes.begin(), it);
-					predictedLabels.emplace_back(predictedSpikes[idx].axon->postNeuron->getClassLabel());
+					predictedLabels.emplace_back(predictedSpikes[idx].propagationAxon->postNeuron->getClassLabel());
 				}
 				else
 				{
