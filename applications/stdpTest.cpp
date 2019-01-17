@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis::STDP stdp(0.01, 0.01);
+	adonis::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
