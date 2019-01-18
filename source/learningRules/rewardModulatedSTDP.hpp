@@ -112,11 +112,11 @@ namespace adonis
 								{
 									for (auto& postAxon: network->getNeurons()[n]->getPostAxons())
 									{
-                                        if (postAxon.weight >= 0 && postAxon.postNeuron->getEligibilityTrace() > 0.1)
+                                        if (postAxon->weight >= 0 && postAxon->postNeuron->getEligibilityTrace() > 0.1)
 										{
 											double delta = alpha*Ar_minus+beta*Ap_plus;
-											postAxon.weight += delta * postAxon.weight * (1./postAxon.postNeuron->getMembraneResistance() - postAxon.weight);
-                                            postAxon.postNeuron->setEligibilityTrace(0);
+											postAxon->weight += delta * postAxon->weight * (1./postAxon->postNeuron->getMembraneResistance() - postAxon->weight);
+                                            postAxon->postNeuron->setEligibilityTrace(0);
 										}
 									}
 								}
@@ -135,11 +135,11 @@ namespace adonis
 								{
 									for (auto& preAxon: network->getNeurons()[n]->getPreAxons())
 									{
-										if (preAxon.weight >= 0 && preAxon.preNeuron->getEligibilityTrace() > 0.1)
+										if (preAxon->weight >= 0 && preAxon->preNeuron->getEligibilityTrace() > 0.1)
 										{
 											double delta = alpha*Ar_plus+beta*Ap_minus;
-											preAxon.weight += delta * preAxon.weight * (1./preAxon.preNeuron->getMembraneResistance() - preAxon.weight);
-                                            preAxon.preNeuron->setEligibilityTrace(0);
+											preAxon->weight += delta * preAxon->weight * (1./preAxon->preNeuron->getMembraneResistance() - preAxon->weight);
+                                            preAxon->preNeuron->setEligibilityTrace(0);
 										}
 									}
 								}

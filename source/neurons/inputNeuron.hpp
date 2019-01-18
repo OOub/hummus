@@ -42,9 +42,9 @@ namespace adonis
 		
 		void update(double timestamp, axon* a, Network* network) override
 		{
+            
             potential = threshold;
             eligibilityTrace = 1;
-            plasticityTrace += 1;
 
             #ifndef NDEBUG
             std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
@@ -62,7 +62,7 @@ namespace adonis
             
             for (auto& p : postAxons)
             {
-                network->injectGeneratedSpike(spike{timestamp + p.delay, &p});
+                network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
             }
             
             learn(timestamp, network);
@@ -74,9 +74,9 @@ namespace adonis
         {
             if (a)
             {
+                a->previousInputTime = timestamp;
                 potential = threshold;
                 eligibilityTrace = 1;
-                plasticityTrace += 1;
                 
                 #ifndef NDEBUG
                 std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
@@ -99,7 +99,7 @@ namespace adonis
                 
                 for (auto& p : postAxons)
                 {
-                    network->injectGeneratedSpike(spike{timestamp + p.delay, &p});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
                 }
                 
                 learn(timestamp, network);

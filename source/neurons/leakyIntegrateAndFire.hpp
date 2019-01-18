@@ -152,7 +152,6 @@ namespace adonis
 			if (potential >= threshold)
 			{
 				eligibilityTrace = 1;
-				plasticityTrace += 1;
 
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
@@ -169,7 +168,7 @@ namespace adonis
 
 				for (auto& p : postAxons)
 				{
-                    network->injectGeneratedSpike(spike{timestamp + p.delay, &p});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 
 				learn(timestamp, network);
@@ -242,11 +241,11 @@ namespace adonis
         // winner-take-all algorithm
 		virtual void WTA(double timestamp, Network* network) override
 		{
-			for (auto rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
+			for (auto& rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
 			{
 				if (rf.row == rfRow && rf.col == rfCol)
 				{
-					for (auto n: rf.neurons)
+					for (auto& n: rf.neurons)
 					{
                         if (network->getNeurons()[n]->getNeuronID() != neuronID)
 						{

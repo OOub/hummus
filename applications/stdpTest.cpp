@@ -16,8 +16,11 @@
 #include "../source/core.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/learningRules/stdp.hpp"
+#include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/leakyIntegrateAndFire.hpp"
+#include "../source/neurons/decisionMakingNeuron.hpp"
 
 int main(int argc, char** argv)
 {
@@ -33,7 +36,7 @@ int main(int argc, char** argv)
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float potentialDecay = 20;
-	float refractoryPeriod = 20;
+	float refractoryPeriod = 30;
 	
     int inputNeurons = 10;
     int layer1Neurons = 1;
@@ -52,7 +55,7 @@ int main(int argc, char** argv)
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(1000);
+  	qtDisplay.setTimeWindow(100);
   	qtDisplay.trackNeuron(10);
   	qtDisplay.trackLayer(1);
 	

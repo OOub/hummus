@@ -91,9 +91,8 @@ namespace adonis
             threshold(_threshold),
             potential(_restingPotential),
             restingPotential(_restingPotential),
-            initialAxon{nullptr, nullptr, 1, 0, -1},
+            initialAxon{nullptr, nullptr, 100/_membraneResistance, 0, -1},
             learningRuleHandler(_learningRuleHandler),
-            plasticityTrace(0),
             eligibilityTrace(0),
             membraneResistance(_membraneResistance),
             previousSpikeTime(0),
@@ -134,12 +133,12 @@ namespace adonis
                     if (redundantConnections == false)
                     {
                         int16_t ID = postNeuron->getNeuronID();
-                        auto result = std::find_if(postAxons.begin(), postAxons.end(), [ID](axon a){return a.postNeuron->getNeuronID() == ID;});
+                        auto result = std::find_if(postAxons.begin(), postAxons.end(), [&](std::unique_ptr<axon>& a){return a->postNeuron->getNeuronID() == ID;});
                         
                         if (result == postAxons.end())
                         {
-                            postAxons.emplace_back(axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
-                            postNeuron->getPreAxons().emplace_back(postAxons.back());
+                            postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
+                            postNeuron->getPreAxons().emplace_back(postAxons.back().get());
                         }
                         else
                         {
@@ -150,8 +149,8 @@ namespace adonis
                     }
                     else
                     {
-                        postAxons.emplace_back(axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
-                        postNeuron->getPreAxons().emplace_back(postAxons.back());
+                        postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
+                        postNeuron->getPreAxons().emplace_back(postAxons.back().get());
                     }
                 }
             }
@@ -216,17 +215,17 @@ namespace adonis
 		    return yCoordinate;
 		}
         
-        std::vector<axon>& getPreAxons()
+        std::vector<axon*>& getPreAxons()
         {
             return preAxons;
         }
         
-        std::vector<axon>& getPostAxons()
+        std::vector<std::unique_ptr<axon>>& getPostAxons()
         {
             return postAxons;
         }
         
-        axon getInitialAxon()
+        axon& getInitialAxon()
         {
             return initialAxon;
         }
@@ -264,16 +263,6 @@ namespace adonis
         float getMembraneResistance() const
         {
             return membraneResistance;
-        }
-        
-        float getPlasticityTrace() const
-        {
-            return plasticityTrace;
-        }
-        
-        void setPlasticityTrace(float newtrace)
-        {
-            plasticityTrace = newtrace;
         }
         
         float getEligibilityTrace() const
@@ -314,7 +303,7 @@ namespace adonis
             // resetting plastic neurons
             for (auto& inputAxon: preAxons)
             {
-                inputAxon.preNeuron->eligibilityTrace = 0;
+                inputAxon->preNeuron->eligibilityTrace = 0;
             }
         }
         
@@ -326,15 +315,14 @@ namespace adonis
 		int16_t                            layerID;
 		int16_t                            xCoordinate;
 		int16_t                            yCoordinate;
-		std::vector<axon>                  preAxons;
-        std::vector<axon>                  postAxons;
+		std::vector<axon*>                 preAxons;
+        std::vector<std::unique_ptr<axon>> postAxons;
         axon                               initialAxon;
         float                              threshold;
         float                              potential;
         float                              restingPotential;
         std::vector<LearningRuleHandler*>  learningRuleHandler;
         float                              eligibilityTrace;
-        float                              plasticityTrace;
         float                              membraneResistance;
         double                             previousSpikeTime;
         float                              synapticEfficacy;

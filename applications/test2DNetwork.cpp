@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     network.add2dLayer<adonis::LIF>(1, 2, 8, 8, 2, false, {}, false, 10, 20, 3, true);
     network.addLayer<adonis::LIF>(1, 1, 1, {});
 		
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
+	network.convolution(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1., 0);
 	
 	//  ----- DISPLAY SETTINGS -----
