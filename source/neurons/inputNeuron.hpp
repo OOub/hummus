@@ -134,7 +134,6 @@ namespace adonis
                     }
                 }
             }
-            resetLearning();
         }
 	};
 }

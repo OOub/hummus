@@ -280,7 +280,6 @@ namespace adonis
             {
                 WTA(timestamp, network);
             }
-            resetLearning();
         }
         
 		// ----- LIF PARAMETERS -----

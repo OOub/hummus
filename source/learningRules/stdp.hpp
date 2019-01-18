@@ -84,7 +84,8 @@ namespace adonis
                             {
                                 postAxon->weight = 0;
                             }
-                        }                        
+                        }
+                        postAxon->postNeuron->setEligibilityTrace(0);
                     }
                 }
             }
@@ -108,6 +109,7 @@ namespace adonis
                                 preAxon->weight = 1/preAxon->preNeuron->getMembraneResistance();
                             }
                         }
+                        preAxon->preNeuron->setEligibilityTrace(0);
 					}
 				}
 			}

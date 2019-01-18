@@ -54,7 +54,6 @@ namespace adonis
                 }
             }
             WTA(timestamp, network);
-            resetLearning();
         }
     
 		// ----- DECISION-MAKING NEURON PARAMETERS -----

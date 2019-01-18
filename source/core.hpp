@@ -298,15 +298,6 @@ namespace adonis
         // loops through any learning rules and activates them
         virtual void learn(double timestamp, Network* network){}
         
-        void resetLearning()
-        {
-            // resetting plastic neurons
-            for (auto& inputAxon: preAxons)
-            {
-                inputAxon->preNeuron->eligibilityTrace = 0;
-            }
-        }
-        
 		// ----- NEURON PARAMETERS -----
         int16_t                            neuronID;
 		int16_t                            rfRow;
