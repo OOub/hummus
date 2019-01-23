@@ -31,8 +31,8 @@ int main(int argc, char** argv)
 	adonis::QtDisplay qtDisplay;
 	adonis::SpikeLogger spikeLogger("10neurons_4patterns_unsupervised_spikeLog.bin");
 	adonis::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
-	adonis::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
-
+    adonis::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
+    
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float potentialDecay = 20;
@@ -52,11 +52,11 @@ int main(int argc, char** argv)
 	
     //  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
-    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, homeostasis, decayCurrent, potentialDecay, 100, wta, burst, eligibilityDecay);
+    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, homeostasis, decayCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 3);
-	
+    
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(5000);

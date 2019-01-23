@@ -19,15 +19,14 @@ namespace adonis
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=100, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
-			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential, _membraneResistance),
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
     		refractoryPeriod(_refractoryPeriod),
 			decayCurrent(_decayCurrent),
 			decayPotential(_decayPotential),
 			externalCurrent(_externalCurrent),
 			current(0),
 			active(true),
-            eligibilityDecay(_eligibilityDecay),
 			burstingActivity(_burstingActivity),
 			homeostasis(_homeostasis),
 			restingThreshold(-50),
@@ -78,6 +77,11 @@ namespace adonis
 		
 		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) override
 		{
+            if (timestamp != 0 && timestamp - previousSpikeTime == 0)
+            {
+                timestep = 0;
+            }
+            
 			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
 			{
 				inhibited = false;
@@ -139,20 +143,23 @@ namespace adonis
 			}
 			else
 			{
-				for (auto addon: network->getStandardAddOns())
-				{
-					addon->timestep(timestamp, network, this);
-				}
-				if (network->getMainThreadAddOn())
-				{
-					network->getMainThreadAddOn()->timestep(timestamp, network, this);
-				}
+                if (timestep > 0)
+                {
+                    for (auto addon: network->getStandardAddOns())
+                    {
+                        addon->timestep(timestamp, network, this);
+                    }
+                    if (network->getMainThreadAddOn())
+                    {
+                        network->getMainThreadAddOn()->timestep(timestamp, network, this);
+                    }
+                }
 			}
 
 			if (potential >= threshold)
 			{
 				eligibilityTrace = 1;
-
+                
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
 				#endif
@@ -241,26 +248,26 @@ namespace adonis
         // winner-take-all algorithm
 		virtual void WTA(double timestamp, Network* network) override
 		{
-			for (auto& rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
-			{
-				if (rf.row == rfRow && rf.col == rfCol)
-				{
-					for (auto& n: rf.neurons)
-					{
+            for (auto& rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields)
+            {
+                if (rf.row == rfRow && rf.col == rfCol)
+                {
+                    for (auto& n: rf.neurons)
+                    {
                         if (network->getNeurons()[n]->getNeuronID() != neuronID)
-						{
+                        {
                             network->getNeurons()[n]->setPotential(restingPotential);
-                            
+
                             if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get()))
                             {
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibitionTime = timestamp;
                             }
-						}
-					}
-				}
-			}
+                        }
+                    }
+                }
+            }
 		}
 		
         // loops through any learning rules and activates them
@@ -291,7 +298,6 @@ namespace adonis
 		double                                   inhibitionTime;
 		float                                    refractoryPeriod;
 		float                                    externalCurrent;
-		float                                    eligibilityDecay;
 		bool                                     burstingActivity;
 		bool                                     homeostasis;
 		float                                    restingThreshold;

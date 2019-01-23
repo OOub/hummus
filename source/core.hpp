@@ -26,8 +26,6 @@
 #include <mutex>
 #include <deque>
 
-#include <tuple>
-
 #include "dataParser.hpp"
 #include "standardAddOn.hpp"
 #include "mainThreadAddOn.hpp"
@@ -63,14 +61,14 @@ namespace adonis
         Neuron*  preNeuron;
         Neuron*  postNeuron;
         float    weight;
-        int      delay;
+        float    delay;
         double   previousInputTime;
     };
     
     struct spike
     {
-        double      timestamp;
-        axon*       propagationAxon;
+        double   timestamp;
+        axon*    propagationAxon;
     };
     
 	class Network;
@@ -80,7 +78,7 @@ namespace adonis
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
     		neuronID(_neuronID),
     		rfRow(_rfRow),
 			rfCol(_rfCol),
@@ -94,6 +92,7 @@ namespace adonis
             initialAxon{nullptr, nullptr, 100/_membraneResistance, 0, -1},
             learningRuleHandler(_learningRuleHandler),
             eligibilityTrace(0),
+            eligibilityDecay(_eligibilityDecay),
             membraneResistance(_membraneResistance),
             previousSpikeTime(0),
             synapticEfficacy(1)
@@ -124,7 +123,7 @@ namespace adonis
         }
         
         // connect two Neurons together
-        void addAxon(Neuron* postNeuron, float weight=1., int delay=0, int probability=100, bool redundantConnections=true)
+        void addAxon(Neuron* postNeuron, float weight, float delay, int probability=100, bool redundantConnections=true)
         {
             if (postNeuron)
             {
@@ -270,6 +269,11 @@ namespace adonis
             return eligibilityTrace;
         }
         
+        float getEligibilityDecay() const
+        {
+            return eligibilityDecay;
+        }
+        
         void setEligibilityTrace(float newtrace)
         {
             eligibilityTrace = newtrace;
@@ -314,6 +318,7 @@ namespace adonis
         float                              restingPotential;
         std::vector<LearningRuleHandler*>  learningRuleHandler;
         float                              eligibilityTrace;
+        float                              eligibilityDecay;
         float                              membraneResistance;
         double                             previousSpikeTime;
         float                              synapticEfficacy;
@@ -570,7 +575,7 @@ namespace adonis
 		// ----- LAYER CONNECTION METHODS -----
 		
         // all to all connections (for everything including sublayers and receptive fields)
-        void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, int _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
+        void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
         {
             maxDelay = std::max(maxDelay, _delayMean);
 
@@ -591,6 +596,7 @@ namespace adonis
                                         std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
                                         std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
                                         int sign = _weightMean<0?-1:_weightMean>=0;
+                                        
                                         neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
                                     }
                                 }
@@ -643,7 +649,7 @@ namespace adonis
         }
 		
         // connecting two layers according to their receptive fields
-        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, float _delaystdev=0, int probability=100, bool redundantConnections=true)
+        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
         {
             // restrict to layers of the same size
             if (presynapticLayer.width != postsynapticLayer.width || presynapticLayer.height != postsynapticLayer.height)
@@ -683,7 +689,7 @@ namespace adonis
         }
 		
         // subsampling connection of receptive fields
-        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, int _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
+        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
         {
             auto preMaxRows = presynapticLayer.sublayers[0].receptiveFields.back().row+1;
             auto preMaxColumns = presynapticLayer.sublayers[0].receptiveFields.back().col+1;
@@ -1139,10 +1145,11 @@ namespace adonis
                             }
                             std::sort(currentSpikes.begin(), currentSpikes.end(), [&](spike a, spike b){return a.timestamp < b.timestamp;});
                         }
-
+                        
                         for (auto& n: neurons)
                         {
-                            auto it = std::find_if(currentSpikes.begin(), currentSpikes.end(), [&](spike s)
+                            std::vector<spike> local_currentSpikes(currentSpikes.size());
+                            const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s)
                             {
                                 if (s.propagationAxon)
                                 {
@@ -1153,11 +1160,15 @@ namespace adonis
                                     return false;
                                 }
                             });
-
+                            
+                            local_currentSpikes.resize(std::distance(local_currentSpikes.begin(), it));
+                            
                             if (it != currentSpikes.end())
                             {
-                                auto idx = std::distance(currentSpikes.begin(), it);
-                                n->updateSync(i, currentSpikes[idx].propagationAxon, this, timestep);
+                                for (auto& currentSpike: local_currentSpikes)
+                                {
+                                    n->updateSync(i, currentSpike.propagationAxon, this, timestep);
+                                }
                             }
                             else
                             {
@@ -1188,7 +1199,7 @@ namespace adonis
                 throw std::runtime_error("add neurons to the network before running it");
             }
         }
-
+        
         // update neuron status asynchronously
         void update(spike s, bool prediction=false)
         {

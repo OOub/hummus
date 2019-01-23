@@ -19,8 +19,8 @@ namespace adonis
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
-			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _threshold, _restingPotential, _membraneResistance)
+		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance)
 		{}
 		
 		virtual ~InputNeuron(){}
@@ -42,7 +42,10 @@ namespace adonis
 		
 		void update(double timestamp, axon* a, Network* network) override
 		{
+            // eligibility trace decay
+            eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
             
+            // instantly making the input neuron fire at every input spike
             potential = threshold;
             eligibilityTrace = 1;
 
@@ -72,6 +75,14 @@ namespace adonis
         
         void updateSync(double timestamp, axon* a, Network* network, double timestep) override
         {
+            if (timestamp != 0 && timestamp - previousSpikeTime == 0)
+            {
+                timestep = 0;
+            }
+            
+            // eligibility trace decay
+            eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
+            
             if (a)
             {
                 a->previousInputTime = timestamp;
@@ -108,13 +119,16 @@ namespace adonis
             }
             else
             {
-                for (auto addon: network->getStandardAddOns())
+                if (timestep > 0)
                 {
-                    addon->timestep(timestamp, network, this);
-                }
-                if (network->getMainThreadAddOn())
-                {
-                    network->getMainThreadAddOn()->timestep(timestamp, network, this);
+                    for (auto addon: network->getStandardAddOns())
+                    {
+                        addon->timestep(timestamp, network, this);
+                    }
+                    if (network->getMainThreadAddOn())
+                    {
+                        network->getMainThreadAddOn()->timestep(timestamp, network, this);
+                    }
                 }
             }
         }
