@@ -4,9 +4,9 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 14/01/2019
+ * Last Version: 24/01/2019
  *
- * Information: Decision-making neuron for classification
+ * Information: Decision-making neurons inherit from LIF neurons with the addition of a label for classification purposes. They should always be on the last layer of a network.
  */
 
 #pragma once
@@ -41,7 +41,7 @@ namespace adonis
     protected:
         
         // loops through any learning rules and activates them
-        void learn(double timestamp, Network* network) override
+        void requestLearning(double timestamp, Network* network) override
         {
             if (network->getLearningStatus())
             {

@@ -4,9 +4,9 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 14/01/2019
+ * Last Version: 24/01/2019
  *
- * Information: input neuron which takes in spikes to distribute to the rest of the network
+ * Information: input neurons take in spikes or events and instantly propagate them in the network. The potential does not decay and there is no refractory period. 
  */
 
 #pragma once
@@ -46,12 +46,18 @@ namespace adonis
             eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
             
             // instantly making the input neuron fire at every input spike
+            a->previousInputTime = timestamp;
             potential = threshold;
             eligibilityTrace = 1;
 
             #ifndef NDEBUG
             std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
             #endif
+            
+            if (network->getMainThreadAddOn())
+            {
+                network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+            }
             
             for (auto addon: network->getStandardAddOns())
             {
@@ -68,7 +74,7 @@ namespace adonis
                 network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
             }
             
-            learn(timestamp, network);
+            requestLearning(timestamp, network);
             previousSpikeTime = timestamp;
             potential = restingPotential;
 		}
@@ -113,7 +119,7 @@ namespace adonis
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
                 }
                 
-                learn(timestamp, network);
+                requestLearning(timestamp, network);
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
             }
@@ -136,7 +142,7 @@ namespace adonis
     protected:
         
         // loops through any learning rules and activates them
-        void learn(double timestamp, Network* network) override
+        void requestLearning(double timestamp, Network* network) override
         {
             if (network->getLearningStatus())
             {

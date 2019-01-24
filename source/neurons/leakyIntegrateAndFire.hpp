@@ -4,9 +4,9 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 14/01/2019
+ * Last Version: 21/01/2019
  *
- * Information: LIF neuron model
+ * Information: leaky integrate and fire (LIF) neuron model
  */
 
 #pragma once
@@ -58,6 +58,7 @@ namespace adonis
 		// ----- PUBLIC LIF METHODS -----
 		virtual void initialisation(Network* network) override
 		{
+            // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the standardAddons vector
 			for (auto& rule: learningRuleHandler)
 			{
 				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
@@ -72,21 +73,46 @@ namespace adonis
         
 		virtual void update(double timestamp, axon* a, Network* network) override
 		{
-			throw std::logic_error("not implemented yet");
+            // checking if the neuron is inhibited
+            if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
+            {
+                inhibited = false;
+            }
+            
+            // checking if the neuron is in a refractory period
+            if (timestamp - previousSpikeTime >= refractoryPeriod)
+            {
+                active = true;
+            }
+            
+            // eligibility trace decay
+            eligibilityTrace *= std::exp(-(timestamp-previousSpikeTime)/eligibilityDecay);
+            
+            // potential decay
+            potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousSpikeTime)/decayPotential);
+            
+            // threshold decay
+            if (homeostasis)
+            {
+                threshold = restingThreshold + (threshold-restingThreshold)*exp(-(timestamp-previousSpikeTime)/decayHomeostasis);
+            }
 		}
 		
 		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) override
 		{
+            // handling multiple spikes at the same timestamp (to prevent excessive decay)
             if (timestamp != 0 && timestamp - previousSpikeTime == 0)
             {
                 timestep = 0;
             }
             
+            // checking if the neuron is inhibited
 			if (inhibited && timestamp - inhibitionTime >= refractoryPeriod)
 			{
 				inhibited = false;
 			}
-
+            
+            // checking if the neuron is in a refractory period
             if (timestamp - previousSpikeTime >= refractoryPeriod)
             {
                 active = true;
@@ -112,15 +138,21 @@ namespace adonis
 			{
 				if (a)
 				{
-					// increase the threshold
+					// updating the threshold
 					if (homeostasis)
 					{
 						threshold += homeostasisBeta/decayHomeostasis;
 					}
+                    
+                    // updating the current
 					current += externalCurrent*a->weight;
 					activeAxon = *a;
+                    
+                    // updating the timestamp when an axon was propagating a spike
 					a->previousInputTime = timestamp;
 				}
+                
+                // membrane potential equation (double exponential model)
 				potential += (membraneResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 			}
 
@@ -178,7 +210,7 @@ namespace adonis
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
 				}
 
-				learn(timestamp, network);
+				requestLearning(timestamp, network);
 
 				previousSpikeTime = timestamp;
 				potential = restingPotential;
@@ -271,7 +303,7 @@ namespace adonis
 		}
 		
         // loops through any learning rules and activates them
-        virtual void learn(double timestamp, Network* network) override
+        virtual void requestLearning(double timestamp, Network* network) override
         {
             if (network->getLearningStatus())
             {

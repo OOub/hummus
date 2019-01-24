@@ -4,9 +4,10 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 14/01/2019
+ * Last Version: 23/01/2019
  *
  * Information: The STDP learning rule has to be on a postsynaptic layer because it automatically detects the presynaptic layer.
+ * Citation: 
  */
 
 #pragma once

@@ -50,8 +50,8 @@ int main(int argc, char** argv)
     network.lateralInhibition(network.getLayers()[1], -1);
 
     //  ----- INJECTING SPIKES -----
-    network.injectSpike(network.getNeurons()[0]->prepareInitialSpike(10));
-    network.injectSpike(network.getNeurons()[0]->prepareInitialSpike(30));
+    network.injectSpike(0, 10);
+    network.injectSpike(0, 30);
 
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);

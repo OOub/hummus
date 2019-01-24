@@ -7,6 +7,7 @@
  * Last Version: 14/01/2019
  *
  * Information: The rewardModulatedSTDP learning rule has to be on a postsynaptic layer because it automatically detects the presynaptic layer.
+ * Citation: 
  */
 
 #pragma once

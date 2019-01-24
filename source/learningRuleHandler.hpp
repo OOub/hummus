@@ -23,6 +23,8 @@ namespace adonis
 		LearningRuleHandler() = default;
 		
 		// ----- PUBLIC METHODS -----
+        
+        // pure virtual function that needs to be implemented in every learning rule. The body would contain said learning rule. This specific method should be called inside a neuron's requestLearn method
 		virtual void learn(double timestamp, Neuron* neuron, Network* network) = 0;
 	};
 }
