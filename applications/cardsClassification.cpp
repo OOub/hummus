@@ -20,8 +20,7 @@
 #include "../source/neurons/decisionMakingNeuron.hpp"
 #include "../source/neurons/leakyIntegrateAndFire.hpp"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
 	adonis::Network network(&qtDisplay);

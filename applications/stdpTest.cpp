@@ -22,8 +22,7 @@
 #include "../source/neurons/leakyIntegrateAndFire.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis::DataParser dataParser;
 	
@@ -60,7 +59,7 @@ int main(int argc, char** argv)
   	qtDisplay.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0.1);
+    network.run(&trainingData, 0);
 
     //  ----- EXITING APPLICATION -----
     return 0;

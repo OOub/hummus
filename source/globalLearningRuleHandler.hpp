@@ -14,10 +14,9 @@
 #include "addOn.hpp"
 #include "learningRuleHandler.hpp"
 
-namespace adonis
-{
-	class GlobalLearningRuleHandler : public LearningRuleHandler, public AddOn
-	{
+namespace adonis {
+	class GlobalLearningRuleHandler : public LearningRuleHandler, public AddOn {
+        
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		GlobalLearningRuleHandler() = default;

@@ -22,8 +22,7 @@ import InputViewer 1.0
 import OutputViewer 1.0
 import PotentialViewer 1.0
 
-ApplicationWindow
-{
+ApplicationWindow {
 	id: mainWindow
 	title: qsTr("Adonis")
 	height: 900
@@ -38,13 +37,11 @@ ApplicationWindow
 	color: "#FFFFFF"
 	flags: Qt.Window | Qt.WindowFullscreenButtonHint
     
-	ColumnLayout
-	{
+	ColumnLayout {
 		id: mainGrid
 		anchors.fill: parent
 
-		Rectangle
-		{
+		Rectangle {
 			id: menu
     		color: "#FFFFFF"
     		Layout.alignment: Qt.AlignCenter
@@ -55,14 +52,12 @@ ApplicationWindow
 			Layout.minimumHeight: 27
     		radius: 2
 
-			RoundButton
-			{
+			RoundButton {
 				id: play
 				text: qsTr("\u2759\u2759")
 				anchors.centerIn: parent
 
-				contentItem: Text
-				{
+				contentItem: Text {
 					text: play.text
 					color: play.down ? "#000000" : "#363636"
 					horizontalAlignment: Text.AlignHCenter
@@ -70,8 +65,7 @@ ApplicationWindow
 					elide: Text.ElideRight
 				}
 
-				background: Rectangle
-				{
+				background: Rectangle {
 					color: play.down ? "#bdbebf" : "#FFFFFF"
 					implicitWidth: 35
 					implicitHeight: 35
@@ -80,15 +74,12 @@ ApplicationWindow
 					radius: 17.5
 				}
 
-				onClicked:
-				{
-					if (pp == true)
-					{
+				onClicked: {
+					if (pp == true) {
 						pp = false
 						play.text = qsTr("\u25B6")
 					}
-					else
-					{
+					else {
 						pp = true
 						play.text = qsTr("\u2759\u2759")
 					}
@@ -97,16 +88,14 @@ ApplicationWindow
 
 		}
 
-		Rectangle
-		{
+		Rectangle {
 			color: "#bdbebf"
 			Layout.minimumWidth: mainGrid.width
 			Layout.minimumHeight: 1
 			Layout.alignment: Qt.AlignCenter
 		}
 
-		Rectangle
-		{
+		Rectangle {
 			id: inputRec
 			color: '#FFFFFF'
 			Layout.alignment: Qt.AlignCenter
@@ -117,8 +106,7 @@ ApplicationWindow
 			Layout.minimumHeight: mainGrid.height/3-19
 			radius: 2
 
-			ChartView
-			{
+			ChartView {
 				id: inputChart
 				title: "Input Neurons"
 				titleFont : Qt.font({bold: true})
@@ -128,40 +116,34 @@ ApplicationWindow
 				legend.visible: false
 				dropShadowEnabled: false
 
-				ValueAxis
-				{
+				ValueAxis {
 					id:inputX
 					tickCount: inputRec.width/75
 				}
 
-				ValueAxis
-				{
+				ValueAxis {
 					id:inputY
 					tickCount: inputRec.height/50
 				}
 
-				Text
-				{
+				Text {
 					id: sublayerLegend1
 					text: "sublayers"
 				}
 
-				OldCtrl.SpinBox
-				{
+				OldCtrl.SpinBox {
 					id: sublayerbox1
 					minimumValue: 0
 					maximumValue: inputSublayer
 					anchors.left: sublayerLegend1.right
 					anchors.leftMargin: 5
 
-					onEditingFinished:
-					{
+					onEditingFinished: {
 						inputViewer.changeSublayer(value)
 					}
 				}
 
-				ScatterSeries
-				{
+				ScatterSeries {
 					id: input
 					name: "Input Neurons"
 					markerSize: 5
@@ -171,36 +153,31 @@ ApplicationWindow
 					borderColor: 'transparent'
 				}
 
-				Timer
-				{
+				Timer {
 					id: refreshTimer
 					interval: refresh
 					running: pp
 					repeat: true
-					onTriggered:
-					{
+					onTriggered: {
 						inputViewer.update(inputX, inputY, inputChart.series(0));
 					}
 				}
 
-				InputViewer
-				{
+				InputViewer {
 					objectName: "inputViewer"
 					id: inputViewer
 				}
 			}
 		}
 
-		Rectangle
-		{
+		Rectangle {
 			color: "#bdbebf"
 			Layout.minimumWidth: mainGrid.width
 			Layout.minimumHeight: 1
 			Layout.alignment: Qt.AlignCenter
 		}
 
-		Rectangle
-		{
+		Rectangle {
 			id: outputRec
 			color: '#FFFFFF'
 			Layout.alignment: Qt.AlignCenter
@@ -210,8 +187,7 @@ ApplicationWindow
 			Layout.minimumHeight: mainGrid.height/3-19
 			radius: 2
 
-			ChartView
-			{
+			ChartView {
 				id: outputChart
 				title: "Output Neurons"
 				titleFont : Qt.font({bold: true})
@@ -221,60 +197,51 @@ ApplicationWindow
 				legend.visible: false
 				dropShadowEnabled: false
 
-				ValueAxis
-				{
+				ValueAxis {
 					id:outputX
 					tickCount: outputRec.width/75
 				}
 
-				ValueAxis
-				{
+				ValueAxis {
 					id:outputY
 					tickCount: outputRec.height/50
 				}
 
-				Text
-				{
+				Text {
 					id: layerLegend
 					text: "layer"
 				}
 
-				OldCtrl.SpinBox
-				{
+				OldCtrl.SpinBox {
 					id: layerbox
 					minimumValue: 1
 					maximumValue: layers
 					anchors.left: layerLegend.right
 					anchors.leftMargin: 5
-					onEditingFinished:
-					{
+					onEditingFinished: {
 						outputViewer.changeLayer(value)
 					}
 				}
 
-				Text
-				{
+				Text {
 					id: sublayerLegend
 					text: "sublayers"
 					anchors.left: layerbox.right
 					anchors.leftMargin: 20
 				}
 
-				OldCtrl.SpinBox
-				{
+				OldCtrl.SpinBox {
 					id: sublayerbox
 					minimumValue: 0
 					maximumValue: sublayers
 					anchors.left: sublayerLegend.right
 					anchors.leftMargin: 5
-					onEditingFinished:
-					{
+					onEditingFinished: {
 						outputViewer.changeSublayer(value)
 					}
 				}
 
-				ScatterSeries
-				{
+				ScatterSeries {
 					id: output
 					name: "Output Neurons"
 					markerSize: 5
@@ -284,20 +251,17 @@ ApplicationWindow
 					borderColor: 'transparent'
 				}
 
-				Timer
-				{
+				Timer {
 					id: refreshTimer2
 					interval: refresh
 					running: pp
 					repeat: true
-					onTriggered:
-					{
+					onTriggered: {
 						outputViewer.update(outputX, outputY, outputChart.series(0));
 					}
 				}
 
-				OutputViewer
-				{
+				OutputViewer {
 					objectName: "outputViewer"
 					id: outputViewer
 				}
@@ -305,16 +269,14 @@ ApplicationWindow
 			}
 		}
 
-		Rectangle
-		{
+		Rectangle {
 			color: "#bdbebf"
 			Layout.minimumWidth: mainGrid.width
 			Layout.minimumHeight: 1
 			Layout.alignment: Qt.AlignCenter
 		}
 
-		Rectangle
-		{
+		Rectangle {
 			id: potentialRec
 			color: '#FFFFFF'
 			Layout.alignment: Qt.AlignCenter
@@ -325,8 +287,7 @@ ApplicationWindow
 			Layout.minimumHeight: mainGrid.height/3-19
 			radius: 2
 
-			ChartView
-			{
+			ChartView {
 				id: membraneChart
 				title: "Membrane Potential (mV)"
 				titleFont : Qt.font({bold: true})
@@ -336,75 +297,64 @@ ApplicationWindow
 				legend.visible: false
 				dropShadowEnabled: false
 
-				ValueAxis
-				{
+				ValueAxis {
 					id:mX
 					tickCount: potentialRec.width/75
 				}
 
-				ValueAxis
-				{
+				ValueAxis {
 					id:mY
 					tickCount: potentialRec.height/50
 				}
 
-				Text
-				{
+				Text {
 					id: neuronLegend
 					text: "neuron"
 				}
 
-				OldCtrl.SpinBox
-				{
+				OldCtrl.SpinBox {
 					id: spinbox
                     maximumValue: numberOfNeurons
                     anchors.left: neuronLegend.right
 					anchors.leftMargin: 5
-					onEditingFinished:
-					{
+					onEditingFinished: {
 						potentialViewer.changeTrackedNeuron(value)
 					}
 				}
 
-				LineSeries
-				{
+				LineSeries {
 					id: membranePotential
 					name: "Approximate Membrane Potential - Discrete Values"
 					axisX: mX
 					axisY: mY
 				}
 
-				LineSeries 
-				{
+				LineSeries {
 					id: threshold
 					axisX: mX
 					axisY: mY
 					color: "#ED6A56"
 				}
 
-				Timer
-				{
+				Timer {
 					id: refreshTimer3
 					interval: refresh
 					running: pp
 					repeat: true
-					onTriggered:
-					{
+					onTriggered: {
 						potentialViewer.update(mX, mY, membraneChart.series(0),a);
 						potentialViewer.update(mX, mY, membraneChart.series(1),b);
 					}
 				}
 
-				PotentialViewer
-				{
+				PotentialViewer {
 					objectName: "potentialViewer"
 					id: potentialViewer
 				}
 			}
 		}
 	}
-	onClosing:
-	{
+	onClosing: {
 		inputViewer.disable();
     	outputViewer.disable();
     	potentialViewer.disable();

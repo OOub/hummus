@@ -13,35 +13,28 @@
 
 #include "../core.hpp"
 
-namespace adonis
-{
-	class InputNeuron : public Neuron
-	{
+namespace adonis {
+	class InputNeuron : public Neuron {
+        
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
-			Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance)
-		{}
+                Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance){}
 		
 		virtual ~InputNeuron(){}
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
-		void initialisation(Network* network) override
-		{
-			for (auto& rule: learningRuleHandler)
-			{
-				if(AddOn* globalRule = dynamic_cast<AddOn*>(rule))
-				{
-					if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end())
-					{
+		void initialisation(Network* network) override {
+			for (auto& rule: learningRuleHandler) {
+				if(AddOn* globalRule = dynamic_cast<AddOn*>(rule)) {
+					if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end()) {
 						network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
 					}
 				}
 			}
 		}
 		
-		void update(double timestamp, axon* a, Network* network) override
-		{
+		void update(double timestamp, axon* a, Network* network) override {
             // eligibility trace decay
             eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
             
@@ -54,23 +47,19 @@ namespace adonis
             std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
             #endif
             
-            if (network->getMainThreadAddOn())
-            {
+            if (network->getMainThreadAddOn()) {
                 network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
             }
             
-            for (auto addon: network->getAddOns())
-            {
+            for (auto addon: network->getAddOns()) {
                 addon->neuronFired(timestamp, a, network);
             }
             
-            if (network->getMainThreadAddOn())
-            {
+            if (network->getMainThreadAddOn()) {
                 network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
             }
             
-            for (auto& p : postAxons)
-            {
+            for (auto& p : postAxons) {
                 network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
             }
             
@@ -79,60 +68,48 @@ namespace adonis
             potential = restingPotential;
 		}
         
-        void updateSync(double timestamp, axon* a, Network* network, double timestep) override
-        {
-            if (timestamp != 0 && timestamp - previousSpikeTime == 0)
-            {
+        void updateSync(double timestamp, axon* a, Network* network, double timestep) override {
+            if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
                 timestep = 0;
             }
             
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
             
-            if (a)
-            {
+            if (a) {
                 a->previousInputTime = timestamp;
                 potential = threshold;
                 eligibilityTrace = 1;
                 
-                #ifndef NDEBUG
+#ifndef NDEBUG
                 std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
-                #endif
+#endif
                 
-                if (network->getMainThreadAddOn())
-                {
+                if (network->getMainThreadAddOn()) {
                     network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
                 }
                 
-                for (auto addon: network->getAddOns())
-                {
+                for (auto addon: network->getAddOns()) {
                     addon->neuronFired(timestamp, a, network);
                 }
                 
-                if (network->getMainThreadAddOn())
-                {
+                if (network->getMainThreadAddOn()) {
                     network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
                 }
                 
-                for (auto& p : postAxons)
-                {
+                for (auto& p : postAxons) {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
                 }
                 
                 requestLearning(timestamp, network);
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
-            }
-            else
-            {
-                if (timestep > 0)
-                {
-                    for (auto addon: network->getAddOns())
-                    {
+            } else {
+                if (timestep > 0) {
+                    for (auto addon: network->getAddOns()) {
                         addon->timestep(timestamp, network, this);
                     }
-                    if (network->getMainThreadAddOn())
-                    {
+                    if (network->getMainThreadAddOn()) {
                         network->getMainThreadAddOn()->timestep(timestamp, network, this);
                     }
                 }
@@ -142,14 +119,10 @@ namespace adonis
     protected:
         
         // loops through any learning rules and activates them
-        void requestLearning(double timestamp, Network* network) override
-        {
-            if (network->getLearningStatus())
-            {
-                if (!learningRuleHandler.empty())
-                {
-                    for (auto& learningRule: learningRuleHandler)
-                    {
+        void requestLearning(double timestamp, Network* network) override {
+            if (network->getLearningStatus()) {
+                if (!learningRuleHandler.empty()) {
+                    for (auto& learningRule: learningRuleHandler) {
                         learningRule->learn(timestamp, this, network);
                     }
                 }

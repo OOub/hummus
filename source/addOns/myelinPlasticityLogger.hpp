@@ -20,24 +20,20 @@
 #include "../core.hpp"
 #include "spikeLogger.hpp"
 
-namespace adonis
-{
-    class MyelinPlasticityLogger : public AddOn
-    {
+namespace adonis {
+    class MyelinPlasticityLogger : public AddOn {
+        
     public:
     	// ----- CONSTRUCTOR -----
-        MyelinPlasticityLogger(std::string filename)
-        {
+        MyelinPlasticityLogger(std::string filename) {
             saveFile.open(filename, std::ios::out | std::ios::binary);
-            if (!saveFile.good())
-            {
+            if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
 
 		// ----- PUBLIC LOGGER METHODS -----
-		void myelinPlasticityEvent(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons)
-		{
+		void myelinPlasticityEvent(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) {
 			const int64_t bitSize = 24+8*timeDifferences.size()+8*plasticNeurons[0].size();
 			std::vector<char> bytes(bitSize);
 			SpikeLogger::copy_to(bytes.data() + 0, bitSize);
@@ -48,8 +44,7 @@ namespace adonis
 			SpikeLogger::copy_to(bytes.data() + 22, postNeuron->getRfCol());
 			
 			int count = 24;
-			for (auto i=0; i<timeDifferences.size(); i++)
-			{
+			for (auto i=0; i<timeDifferences.size(); i++) {
 				SpikeLogger::copy_to(bytes.data() + count, timeDifferences[i]);
 				SpikeLogger::copy_to(bytes.data() + count+8, plasticNeurons[0][i]);
 				SpikeLogger::copy_to(bytes.data() + count+10, plasticNeurons[1][i]);

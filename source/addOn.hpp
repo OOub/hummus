@@ -11,15 +11,14 @@
 
 #pragma once
 
-namespace adonis
-{
+namespace adonis {
     class Neuron;
     class Network;
 	struct axon;
 	
 	// polymorphic class for add-ons
-	class AddOn
-	{
+	class AddOn {
+        
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		AddOn() = default;
@@ -30,16 +29,16 @@ namespace adonis
         // message that is actived before the network starts running
 		virtual void onStart(Network* network){}
         
-        // message that is actived when the nwtwork finishes running
+        // message that is actived when the network finishes running
 		virtual void onCompleted(Network* network){}
         
         // message that is activated whenever a neuron receives a spike
 		virtual void incomingSpike(double timestamp, axon* a, Network* network){}
         
-        // message that is activated whenever a neuron fires a spike
+        // message that is activated whenever a neuron emits a spike
 		virtual void neuronFired(double timestamp, axon* a, Network* network){}
         
-        // message that is activated on every timestep ont he synchronous network only. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
+        // message that is activated on every timestep on the synchronous network only. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
 		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}
 	};
 }

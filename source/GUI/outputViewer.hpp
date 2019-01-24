@@ -31,45 +31,38 @@
 
 #include "../core.hpp"
 
-namespace adonis
-{
-    class OutputViewer : public QObject
-    {
+namespace adonis {
+    class OutputViewer : public QObject {
+        
     Q_OBJECT
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         OutputViewer(QObject *parent = 0) :
-            QObject(parent),
-            timeWindow(100),
-            openGL(false),
-            isClosed(false),
-            input(0),
-            minY(0),
-            maxY(1),
-            layerTracker(1),
-			sublayerTracker(0)
-        {
+                QObject(parent),
+                timeWindow(100),
+                openGL(false),
+                isClosed(false),
+                input(0),
+                minY(0),
+                maxY(1),
+                layerTracker(1),
+                sublayerTracker(0) {
             atomicGuard.clear(std::memory_order_release);
         }
         
         virtual ~OutputViewer(){}
 		
     	// ----- PUBLIC OUTPUTVIEWER METHODS -----		
-		void handleData(double timestamp, axon* a, Network* network)
-        {
-			if (a->postNeuron->getLayerID() == layerTracker) // add layerID to core neuron
-			{
-				if (a->postNeuron->getSublayerID() == sublayerTracker)
-				{
+		void handleData(double timestamp, axon* a, Network* network) {
+            input = timestamp;
+			if (a->postNeuron->getLayerID() == layerTracker) {
+				if (a->postNeuron->getSublayerID() == sublayerTracker) {
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-					if (!isClosed)
-					{
+					if (!isClosed) {
 						points.append(QPointF(timestamp, a->postNeuron->getNeuronID()));
 						maxY = std::max(static_cast<float>(maxY), static_cast<float>(a->postNeuron->getNeuronID()));
-					}
-					else
-					{
+					} else {
 						points.clear();
 					}
 					atomicGuard.clear(std::memory_order_release);
@@ -77,29 +70,24 @@ namespace adonis
 			}
         }
 		
-		void handleTimestep(double timestamp)
-        {
+		void handleTimestep(double timestamp) {
 			input = timestamp;
         }
 		
 		// ----- SETTERS -----
-		void setEngine(QQmlApplicationEngine* _engine)
-		{
+		void setEngine(QQmlApplicationEngine* _engine) {
 			engine = _engine;
 		}
 		
-		void setTimeWindow(float newWindow)
-        {
+		void setTimeWindow(float newWindow) {
             timeWindow = newWindow;
         }
 		
-		void useHardwareAcceleration(bool accelerate)
-        {
+		void useHardwareAcceleration(bool accelerate) {
             openGL = accelerate;
         }
 		
-		void setYLookup(std::vector<std::vector<int>> newLookup, std::vector<int> _neuronsInLayers)
-		{
+		void setYLookup(std::vector<std::vector<int>> newLookup, std::vector<int> _neuronsInLayers) {
 		    yLookupTable = newLookup;
 		    neuronsInLayers = _neuronsInLayers;
 		}
@@ -108,8 +96,7 @@ namespace adonis
     public slots:
 		
     	// ----- QT-RELATED METHODS -----
-		void changeLayer(int newLayer)
-		{
+		void changeLayer(int newLayer) {
 			layerTracker = newLayer;
 			sublayerTracker = 0;
 			engine->rootContext()->setContextProperty("sublayers", static_cast<int>(yLookupTable[layerTracker].size()-1));
@@ -119,8 +106,7 @@ namespace adonis
 			maxY = minY+1;
 		}
 		
-		void changeSublayer(int newSublayer)
-		{
+		void changeSublayer(int newSublayer) {
 			sublayerTracker = newSublayer;
 			int previousLayerNeurons = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.begin()+layerTracker, 0);
 			int previousSublayerNeurons = std::accumulate(yLookupTable[layerTracker].begin(), yLookupTable[layerTracker].begin()+sublayerTracker, 0);
@@ -128,27 +114,21 @@ namespace adonis
 			maxY = minY+1;
 		}
 		
-        void disable()
-        {
+        void disable() {
             while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
             isClosed = true;
             atomicGuard.clear(std::memory_order_release);
         }
         
-        void update(QtCharts::QValueAxis *axisX, QtCharts::QValueAxis *axisY, QtCharts::QAbstractSeries *series)
-        {
-            if (!isClosed)
-            {
-                if (series)
-                {
+        void update(QtCharts::QValueAxis *axisX, QtCharts::QValueAxis *axisY, QtCharts::QAbstractSeries *series) {
+            if (!isClosed) {
+                if (series) {
                     while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-                    if (openGL)
-                    {
+                    if (openGL) {
                         series->setUseOpenGL(true);
                     }
                     axisX->setRange(input - timeWindow, input+1);
-                    if (!points.isEmpty())
-                    {
+                    if (!points.isEmpty()) {
                         auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](double timestamp, const QPointF& point) {
                             return timestamp < point.x();
                         });

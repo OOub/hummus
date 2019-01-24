@@ -23,8 +23,7 @@
 
 using json = nlohmann::json;
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 //	std::ifstream input;
 //	std::string filename;
 //	if (argc == 2)

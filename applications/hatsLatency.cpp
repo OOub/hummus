@@ -19,8 +19,7 @@
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
 	adonis::Analysis analysis("../../data/hats/testLabel2.txt");

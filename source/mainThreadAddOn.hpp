@@ -13,10 +13,9 @@
 
 #include "addOn.hpp"
 
-namespace adonis
-{
-	class MainThreadAddOn : public AddOn
-	{
+namespace adonis {
+	class MainThreadAddOn : public AddOn {
+        
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		MainThreadAddOn() = default;
@@ -24,5 +23,8 @@ namespace adonis
 		
         // method that starts the GUI
 		virtual void begin(Network* network, std::mutex* sync){}
+        
+        // method that is used to send a neuron's potential (before and after it changes) to the GUI when an asynchronous network is used.This helps approximate the potential curve on the GUI.
+        virtual void statusUpdate(double timestamp, axon* a, Network* network){}
 	};
 }

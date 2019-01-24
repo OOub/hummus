@@ -21,30 +21,24 @@
 #include "spikeLogger.hpp"
 #include "../dataParser.hpp"
 
-namespace adonis
-{
-    class PredictionLogger : public AddOn
-    {
+namespace adonis {
+    class PredictionLogger : public AddOn {
+        
     public:
     	// ----- CONSTRUCTOR -----
-        PredictionLogger(std::string filename)
-        {
+        PredictionLogger(std::string filename) {
             saveFile.open(filename, std::ios::out | std::ios::binary);
-            if (!saveFile.good())
-            {
+            if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
 		
 		// ----- PUBLIC LOGGER METHODS -----
-		void neuronFired(double timestamp, axon* a, Network* network) override
-		{
+		void neuronFired(double timestamp, axon* a, Network* network) override {
 			// logging only after learning is stopped
-			if (!network->getLearningStatus())
-			{
+			if (!network->getLearningStatus()) {
 				// restrict only to the output layer
-				if (a->postNeuron->getLayerID() == network->getLayers().back().ID)
-				{	
+				if (a->postNeuron->getLayerID() == network->getLayers().back().ID) {	
 					std::array<char, 12> bytes;
 					SpikeLogger::copy_to(bytes.data() + 0, timestamp);
 					SpikeLogger::copy_to(bytes.data() + 8, a->preNeuron ? a->preNeuron->getNeuronID() : -1);

@@ -28,22 +28,18 @@
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
-    adonis::Network network(&qtDisplay);
-
-    //  ----- NETWORK PARAMETERS -----
-    float runtime = 100;
-    float timestep = 0.1;
+    adonis::SpikeLogger spikeLog("testNetworkLog.bin");
+    adonis::Network network({&spikeLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
     network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
-    network.addLayer<adonis::LIF>(1, 1, 1, {});
+    network.addLayer<adonis::LIF>(1, 1, 1, {}, false, 10, 5);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0, 10, 2);
@@ -55,11 +51,11 @@ int main(int argc, char** argv)
 
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
-    qtDisplay.setTimeWindow(runtime);
+    qtDisplay.setTimeWindow(100);
     qtDisplay.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(runtime, timestep);
+    network.run(100, 0);
 
     //  ----- EXITING APPLICATION -----
     return 0;

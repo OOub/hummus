@@ -31,33 +31,28 @@
 #include "mainThreadAddOn.hpp"
 #include "learningRuleHandler.hpp"
 
-namespace adonis
-{
+namespace adonis {
 	class Neuron;
 	
-	struct receptiveField
-	{
+	struct receptiveField {
 		std::vector<std::size_t> neurons;
 		int16_t                  row;
 		int16_t                  col;
 	};
 	
-	struct sublayer
-	{
+	struct sublayer {
 		std::vector<receptiveField> receptiveFields;
 		int16_t                     ID;
 	};
 	
-	struct layer
-	{
+	struct layer {
 		std::vector<sublayer> sublayers;
 		int16_t               ID;
 		int                   width;
 		int                   height;
 	};
 	
-    struct axon
-    {
+    struct axon {
         Neuron*  preNeuron;
         Neuron*  postNeuron;
         float    weight;
@@ -65,38 +60,36 @@ namespace adonis
         double   previousInputTime;
     };
     
-    struct spike
-    {
+    struct spike {
         double   timestamp;
         axon*    propagationAxon;
     };
     
 	class Network;
 	
-	class Neuron
-    {
+	class Neuron {
+        
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
     	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
-    		neuronID(_neuronID),
-    		rfRow(_rfRow),
-			rfCol(_rfCol),
-			sublayerID(_sublayerID),
-			layerID(_layerID),
-			xCoordinate(_xCoordinate),
-            yCoordinate(_yCoordinate),
-            threshold(_threshold),
-            potential(_restingPotential),
-            restingPotential(_restingPotential),
-            initialAxon{nullptr, nullptr, 100/_membraneResistance, 0, -1},
-            learningRuleHandler(_learningRuleHandler),
-            eligibilityTrace(0),
-            eligibilityDecay(_eligibilityDecay),
-            membraneResistance(_membraneResistance),
-            previousSpikeTime(0),
-            synapticEfficacy(1)
-    	{}
+                neuronID(_neuronID),
+                rfRow(_rfRow),
+                rfCol(_rfCol),
+                sublayerID(_sublayerID),
+                layerID(_layerID),
+                xCoordinate(_xCoordinate),
+                yCoordinate(_yCoordinate),
+                threshold(_threshold),
+                potential(_restingPotential),
+                restingPotential(_restingPotential),
+                initialAxon{nullptr, nullptr, 100/_membraneResistance, 0, -1},
+                learningRuleHandler(_learningRuleHandler),
+                eligibilityTrace(0),
+                eligibilityDecay(_eligibilityDecay),
+                membraneResistance(_membraneResistance),
+                previousSpikeTime(0),
+                synapticEfficacy(1) {}
     	
 		virtual ~Neuron(){}
 		
@@ -109,69 +102,54 @@ namespace adonis
 		virtual void update(double timestamp, axon* a, Network* network) = 0;
         
 		// synchronous update method
-		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep)
-		{
+		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) {
 			update(timestamp, a, network);
 		}
 		
         // reset a neuron to its initial status
-        virtual void resetNeuron()
-        {
+        virtual void resetNeuron() {
             previousSpikeTime = 0;
             potential = restingPotential;
             eligibilityTrace = 0;
         }
         
         // connect two Neurons together
-        void addAxon(Neuron* postNeuron, float weight, float delay, int probability=100, bool redundantConnections=true)
-        {
-            if (postNeuron)
-            {
-                if (connectionProbability(probability))
-                {
-                    if (redundantConnections == false)
-                    {
+        void addAxon(Neuron* postNeuron, float weight, float delay, int probability=100, bool redundantConnections=true) {
+            if (postNeuron) {
+                if (connectionProbability(probability)) {
+                    if (redundantConnections == false) {
                         int16_t ID = postNeuron->getNeuronID();
                         auto result = std::find_if(postAxons.begin(), postAxons.end(), [&](std::unique_ptr<axon>& a){return a->postNeuron->getNeuronID() == ID;});
                         
-                        if (result == postAxons.end())
-                        {
+                        if (result == postAxons.end()) {
                             postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
                             postNeuron->getPreAxons().emplace_back(postAxons.back().get());
-                        }
-                        else
-                        {
-                            #ifndef NDEBUG
+                        } else {
+#ifndef NDEBUG
                             std::cout << "axon " << neuronID << "->" << postNeuron->getNeuronID() << " already exists" << std::endl;
-                            #endif
+#endif
                         }
                     }
-                    else
-                    {
+                    else {
                         postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
                         postNeuron->getPreAxons().emplace_back(postAxons.back().get());
                     }
                 }
-            }
-            else
-            {
+            } else {
                 throw std::logic_error("Neuron does not exist");
             }
         }
 		
         // initialise the initial axon when a neuron receives an input event
-        spike prepareInitialSpike(double timestamp)
-        {
-            if (!initialAxon.postNeuron)
-            {
+        spike prepareInitialSpike(double timestamp) {
+            if (!initialAxon.postNeuron) {
                 initialAxon.postNeuron = this;
             }
             return spike{timestamp, &initialAxon};
         }
         
 		// utility function that returns true or false depending on a probability percentage
-		static bool connectionProbability(int probability)
-		{
+		static bool connectionProbability(int probability) {
 			std::random_device device;
 			std::mt19937 randomEngine(device());
 			std::bernoulli_distribution dist(probability/100.);
@@ -179,118 +157,95 @@ namespace adonis
 		}
 		
 		// ----- SETTERS AND GETTERS -----        
-		int16_t getNeuronID() const
-        {
+		int16_t getNeuronID() const {
             return neuronID;
         }
 		
-		int16_t getRfRow() const
-		{
+		int16_t getRfRow() const {
 			return rfRow;
 		}
 		
-		int16_t getRfCol() const
-		{
+		int16_t getRfCol() const {
 			return rfCol;
 		}
 		
-		int16_t getSublayerID() const
-		{
+		int16_t getSublayerID() const {
 			return sublayerID;
 		}
 		
-		int16_t getLayerID() const
-		{
+		int16_t getLayerID() const {
 			return layerID;
 		}
 		
-		int16_t getX() const
-		{
+		int16_t getX() const {
 		    return xCoordinate;
 		}
 		
-		int16_t getY() const
-		{
+		int16_t getY() const {
 		    return yCoordinate;
 		}
         
-        std::vector<axon*>& getPreAxons()
-        {
+        std::vector<axon*>& getPreAxons() {
             return preAxons;
         }
         
-        std::vector<std::unique_ptr<axon>>& getPostAxons()
-        {
+        std::vector<std::unique_ptr<axon>>& getPostAxons() {
             return postAxons;
         }
         
-        axon& getInitialAxon()
-        {
+        axon& getInitialAxon() {
             return initialAxon;
         }
         
-        float setPotential(float newPotential)
-        {
+        float setPotential(float newPotential) {
             return potential = newPotential;
         }
         
-        float getPotential() const
-        {
+        float getPotential() const {
             return potential;
         }
         
-        float getThreshold() const
-        {
+        float getThreshold() const {
             return threshold;
         }
         
-        float setThreshold(float _threshold)
-        {
+        float setThreshold(float _threshold) {
             return threshold = _threshold;
         }
         
-        std::vector<LearningRuleHandler*> getLearningRuleHandler() const
-        {
+        std::vector<LearningRuleHandler*> getLearningRuleHandler() const {
             return learningRuleHandler;
         }
         
-        void addLearningRule(LearningRuleHandler* newRule)
-        {
+        void addLearningRule(LearningRuleHandler* newRule) {
             learningRuleHandler.emplace_back(newRule);
         }
         
-        float getMembraneResistance() const
-        {
+        float getMembraneResistance() const {
             return membraneResistance;
         }
         
-        float getEligibilityTrace() const
-        {
+        float getEligibilityTrace() const {
             return eligibilityTrace;
         }
         
-        float getEligibilityDecay() const
-        {
+        float getEligibilityDecay() const {
             return eligibilityDecay;
         }
         
-        void setEligibilityTrace(float newtrace)
-        {
+        void setEligibilityTrace(float newtrace) {
             eligibilityTrace = newtrace;
         }
         
-        double getPreviousSpikeTime() const
-        {
+        double getPreviousSpikeTime() const {
             return previousSpikeTime;
         }
         
-        float getSynapticEfficacy() const
-        {
+        float getSynapticEfficacy() const {
             return synapticEfficacy;
         }
         
-        float setSynapticEfficacy(float newEfficacy)
-        {
+        float setSynapticEfficacy(float newEfficacy) {
             return synapticEfficacy = newEfficacy;
         }
         
@@ -324,39 +279,32 @@ namespace adonis
         float                              synapticEfficacy;
     };
 	
-    class Network
-    {
+    class Network {
+        
     public:
 		
 		// ----- CONSTRUCTOR AND DESTRUCTOR ------
         Network(std::vector<AddOn*> _addOns = {}, MainThreadAddOn* _thAddOn = nullptr) :
-            addOns(_addOns),
-			thAddOn(_thAddOn),
-			learningStatus(true),
-			learningOffSignal(-1),
-			maxDelay(0)
-		{}
+                addOns(_addOns),
+                thAddOn(_thAddOn),
+                learningStatus(true),
+                learningOffSignal(-1),
+                maxDelay(0) {}
 		
-		Network(MainThreadAddOn* _thAddOn) : Network({}, _thAddOn)
-		{}
+		Network(MainThreadAddOn* _thAddOn) : Network({}, _thAddOn) {}
 		
 		// ----- NEURON CREATION METHODS -----
 		
         // add neurons
         template <typename T, typename... Args>
-        void addLayer(int _numberOfNeurons, int rfNumber, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args)
-        {
+        void addLayer(int _numberOfNeurons, int rfNumber, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
             unsigned long shift = 0;
 
             int16_t layerID = 0;
-            if (!layers.empty())
-            {
-                for (auto& l: layers)
-                {
-                    for (auto& s: l.sublayers)
-                    {
-                        for (auto& r: s.receptiveFields)
-                        {
+            if (!layers.empty()) {
+                for (auto& l: layers) {
+                    for (auto& s: l.sublayers) {
+                        for (auto& r: s.receptiveFields) {
                             shift += r.neurons.size();
                         }
                     }
@@ -367,14 +315,11 @@ namespace adonis
             // building a layer of one dimensional sublayers with no receptiveFields
             int16_t counter = 0;
             std::vector<sublayer> subTemp;
-            for (int16_t i=0; i<_sublayerNumber; i++)
-            {
+            for (int16_t i=0; i<_sublayerNumber; i++) {
                 std::vector<receptiveField> rfTemp;
-                for (int16_t j=0; j<rfNumber; j++)
-                {
+                for (int16_t j=0; j<rfNumber; j++) {
                     std::vector<std::size_t> neuronTemp;
-                    for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++)
-                    {
+                    for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
                         neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, j, 0, i, layerID, -1, -1, _learningRuleHandler, std::forward<Args>(args)...)));
                         neuronTemp.emplace_back(neurons.size()-1);
                     }
@@ -388,55 +333,41 @@ namespace adonis
 		
         // adds a 2 dimentional grid of neurons - thr number of neurons should be zero if we want a neuron for each pixel of the grid. Otherwise, we choose a positive number of neurons to define how many neurons we want per receptive field/window
         template <typename T, typename... Args>
-        void add2dLayer(int _numberOfNeurons, int rfSize, int gridW, int gridH, int _sublayerNumber, bool overlap, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args)
-        {
+        void add2dLayer(int _numberOfNeurons, int rfSize, int gridW, int gridH, int _sublayerNumber, bool overlap, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
             // error handling
-            if (rfSize <= 0 || rfSize > gridW || rfSize > gridH)
-            {
+            if (rfSize <= 0 || rfSize > gridW || rfSize > gridH) {
                 throw std::logic_error("the selected window size is not valid");
             }
 
-            if (_numberOfNeurons < 0)
-            {
+            if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
             }
 
             int overlapSize = 0;
-            if (overlap)
-            {
-                if (rfSize > 1)
-                {
+            if (overlap) {
+                if (rfSize > 1) {
                     overlapSize = rfSize-1;
-                }
-                else if (rfSize == 1)
-                {
+                } else if (rfSize == 1) {
                     throw std::logic_error("For a window size equal to 1, consider using a layer with contiguous receptive fields by setting the overlap to false");
                 }
-            }
-            else
-            {
+            } else {
                 double dW_check = gridW / static_cast<double>(rfSize);
                 double dH_check = gridH / static_cast<double>(rfSize);
 
                 int iW_check = dW_check;
                 int iH_check = dH_check;
 
-                if (dW_check != iW_check || dH_check != iH_check)
-                {
+                if (dW_check != iW_check || dH_check != iH_check) {
                     throw std::logic_error("With contiguous receptive fields, the width and height of the grid need to be divisible by the receptive field size");
                 }
             }
 
             int16_t shift = 0;
             int16_t layerID = 0;
-            if (!layers.empty())
-            {
-                for (auto& l: layers)
-                {
-                    for (auto& s: l.sublayers)
-                    {
-                        for (auto& r: s.receptiveFields)
-                        {
+            if (!layers.empty()) {
+                for (auto& l: layers) {
+                    for (auto& s: l.sublayers) {
+                        for (auto& r: s.receptiveFields) {
                             shift += static_cast<int16_t>(r.neurons.size());
                         }
                     }
@@ -446,8 +377,7 @@ namespace adonis
 
             int16_t counter = 0;
             std::vector<sublayer> subTemp;
-            for (int16_t i=0; i<_sublayerNumber; i++)
-            {
+            for (int16_t i=0; i<_sublayerNumber; i++) {
                 int16_t x = 0;
                 int16_t y = 0;
 
@@ -463,10 +393,8 @@ namespace adonis
 
                 std::vector<std::size_t> neuronTemp;
                 std::vector<receptiveField> rfTemp;
-                while (true)
-                {
-                    if (x == gridW-1 && y != gridH-1 && col == 0 && row == 0)
-                    {
+                while (true) {
+                    if (x == gridW-1 && y != gridH-1 && col == 0 && row == 0) {
                         rfCol = 0;
                         rfRow += 1;
                         colShift = 0;
@@ -476,8 +404,7 @@ namespace adonis
                     x = col+colShift;
                     y = row+rowShift;
 
-                    if (_numberOfNeurons == 0)
-                    {
+                    if (_numberOfNeurons == 0) {
                         neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, x, y, _learningRuleHandler, std::forward<Args>(args)...)));
 
                         neuronCounter += 1;
@@ -486,20 +413,15 @@ namespace adonis
                     }
 
                     col += 1;
-                    if (col == rfSize && row != rfSize-1)
-                    {
+                    if (col == rfSize && row != rfSize-1) {
                         col = 0;
                         row += 1;
-                    }
-                    else if (col == rfSize && row == rfSize-1)
-                    {
+                    } else if (col == rfSize && row == rfSize-1) {
                         col = 0;
                         row = 0;
                         colShift += rfSize-overlapSize;
-                        if (_numberOfNeurons > 0)
-                        {
-                            for (auto j = 0; j < _numberOfNeurons; j++)
-                            {
+                        if (_numberOfNeurons > 0) {
+                            for (auto j = 0; j < _numberOfNeurons; j++) {
                                 neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, -1, -1, _learningRuleHandler,  std::forward<Args>(args)...)));
 
                                 neuronCounter += 1;
@@ -512,13 +434,11 @@ namespace adonis
                         neuronTemp.clear();
                     }
 
-                    if (x == gridW-1 && y == gridH-1)
-                    {
+                    if (x == gridW-1 && y == gridH-1) {
                         break;
                     }
 
-                    if (x > gridW-1 || y > gridH-1)
-                    {
+                    if (x > gridW-1 || y > gridH-1) {
                         throw std::logic_error("the window and the grid do not match. recheck the size parameters");
                     }
                 }
@@ -530,17 +450,14 @@ namespace adonis
 		
         // add a one dimentional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
-        void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100)
-        {
+        void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             
             // find number of classes
             std::vector<std::string> uniqueLabels;
-            for (auto& label: trainingLabels)
-            {
-                if (std::find(uniqueLabels.begin(), uniqueLabels.end(), label.name) == uniqueLabels.end())
-                {
+            for (auto& label: trainingLabels) {
+                if (std::find(uniqueLabels.begin(), uniqueLabels.end(), label.name) == uniqueLabels.end()) {
                     uniqueLabels.emplace_back(label.name);
                 }
             }
@@ -548,14 +465,10 @@ namespace adonis
             // add decision-making neurons
             unsigned long shift = 0;
             int16_t layerID = 0;
-            if (!layers.empty())
-            {
-                for (auto& l: layers)
-                {
-                    for (auto& s: l.sublayers)
-                    {
-                        for (auto& r: s.receptiveFields)
-                        {
+            if (!layers.empty()) {
+                for (auto& l: layers) {
+                    for (auto& s: l.sublayers) {
+                        for (auto& r: s.receptiveFields) {
                             shift += r.neurons.size();
                         }
                     }
@@ -564,8 +477,7 @@ namespace adonis
             }
             
             std::vector<std::size_t> neuronTemp;
-            for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++)
-            {
+            for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
                 neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
                 
                 neuronTemp.emplace_back(neurons.size()-1);
@@ -575,22 +487,15 @@ namespace adonis
 		// ----- LAYER CONNECTION METHODS -----
 		
         // all to all connections (for everything including sublayers and receptive fields)
-        void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
-        {
+        void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
             maxDelay = std::max(maxDelay, _delayMean);
 
-            for (auto& preSub: presynapticLayer.sublayers)
-            {
-                for (auto& preRF: preSub.receptiveFields)
-                {
-                    for (auto& pre: preRF.neurons)
-                    {
-                            for (auto& postSub: postsynapticLayer.sublayers)
-                            {
-                                for (auto& postRF: postSub.receptiveFields)
-                                {
-                                    for (auto& post: postRF.neurons)
-                                    {
+            for (auto& preSub: presynapticLayer.sublayers) {
+                for (auto& preRF: preSub.receptiveFields) {
+                    for (auto& pre: preRF.neurons) {
+                            for (auto& postSub: postsynapticLayer.sublayers) {
+                                for (auto& postRF: postSub.receptiveFields) {
+                                    for (auto& post: postRF.neurons) {
                                         std::random_device device;
                                         std::mt19937 randomEngine(device());
                                         std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
@@ -607,29 +512,19 @@ namespace adonis
         }
 		
         // interconnecting a layer with soft winner-takes-all axons, using negative weights
-        void lateralInhibition(layer l, float _weightMean=-1, float _weightstdev=0, int probability=100, bool redundantConnections=true)
-        {
-            if (_weightMean != 0)
-            {
-                if (_weightMean > 0)
-                {
+        void lateralInhibition(layer l, float _weightMean=-1, float _weightstdev=0, int probability=100, bool redundantConnections=true) {
+            if (_weightMean != 0) {
+                if (_weightMean > 0) {
                     std::cout << "lateral inhibition axons must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
                 }
 
-                for (auto& preSub: l.sublayers)
-                {
-                    for (auto& preRF: preSub.receptiveFields)
-                    {
-                        for (auto& pre: preRF.neurons)
-                        {
-                            for (auto& postSub: l.sublayers)
-                            {
-                                for (auto& postRF: postSub.receptiveFields)
-                                {
-                                    for (auto& post: postRF.neurons)
-                                    {
-                                        if (pre != post)
-                                        {
+                for (auto& preSub: l.sublayers) {
+                    for (auto& preRF: preSub.receptiveFields) {
+                        for (auto& pre: preRF.neurons) {
+                            for (auto& postSub: l.sublayers) {
+                                for (auto& postRF: postSub.receptiveFields) {
+                                    for (auto& post: postRF.neurons) {
+                                        if (pre != post) {
                                             std::random_device device;
                                             std::mt19937 randomEngine(device());
                                             std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
@@ -641,38 +536,27 @@ namespace adonis
                         }
                     }
                 }
-            }
-            else
-            {
+            } else {
                 throw std::logic_error("lateral inhibition axons cannot have a null weight");
             }
         }
 		
         // connecting two layers according to their receptive fields
-        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
-        {
+        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
             // restrict to layers of the same size
-            if (presynapticLayer.width != postsynapticLayer.width || presynapticLayer.height != postsynapticLayer.height)
-            {
+            if (presynapticLayer.width != postsynapticLayer.width || presynapticLayer.height != postsynapticLayer.height) {
                 throw std::logic_error("Convoluting two layers requires them to be the same size");
             }
             
             maxDelay = std::max(maxDelay, _delayMean);
             
-            for (auto& preSub: presynapticLayer.sublayers)
-            {
-                for (auto& preRF: preSub.receptiveFields)
-                {
-                    for (auto& postSub: postsynapticLayer.sublayers)
-                    {
-                        for (auto& postRF: postSub.receptiveFields)
-                        {
-                            if (preRF.row == postRF.row && preRF.col == postRF.col)
-                            {
-                                for (auto& pre: preRF.neurons)
-                                {
-                                    for (auto& post: postRF.neurons)
-                                    {
+            for (auto& preSub: presynapticLayer.sublayers) {
+                for (auto& preRF: preSub.receptiveFields) {
+                    for (auto& postSub: postsynapticLayer.sublayers) {
+                        for (auto& postRF: postSub.receptiveFields) {
+                            if (preRF.row == postRF.row && preRF.col == postRF.col) {
+                                for (auto& pre: preRF.neurons){
+                                    for (auto& post: postRF.neurons){
                                         std::random_device device;
                                         std::mt19937 randomEngine(device());
                                         std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
@@ -689,8 +573,7 @@ namespace adonis
         }
 		
         // subsampling connection of receptive fields
-        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true)
-        {
+        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
             auto preMaxRows = presynapticLayer.sublayers[0].receptiveFields.back().row+1;
             auto preMaxColumns = presynapticLayer.sublayers[0].receptiveFields.back().col+1;
 
@@ -703,32 +586,23 @@ namespace adonis
             int rowPoolingFactor = fRow_check;
             int colPoolingFactor = fCol_check;
 
-            if (rowPoolingFactor != fRow_check || colPoolingFactor != fCol_check)
-            {
+            if (rowPoolingFactor != fRow_check || colPoolingFactor != fCol_check) {
                 throw std::logic_error("the number of receptive fields in each layer is not proportional. The pooling factor cannot be calculated");
             }
 
             maxDelay = std::max(maxDelay, _delayMean);
 
-            for (auto& preSub: presynapticLayer.sublayers)
-            {
-                for (auto& postSub: postsynapticLayer.sublayers)
-                {
+            for (auto& preSub: presynapticLayer.sublayers) {
+                for (auto& postSub: postsynapticLayer.sublayers) {
                     // each presynaptic sublayer connects to the same postsynaptic sublayer
-                    if (preSub.ID == postSub.ID)
-                    {
+                    if (preSub.ID == postSub.ID) {
                         int rowShift = 0;
                         int colShift = 0;
-                        for (auto& postRf: postSub.receptiveFields)
-                        {
-                            for (auto& preRf: preSub.receptiveFields)
-                            {
-                                if ( preRf.row >= 0+rowShift && preRf.row < rowPoolingFactor+rowShift && preRf.col >= 0+colShift && preRf.col < colPoolingFactor+colShift)
-                                {
-                                    for (auto& pre: preRf.neurons)
-                                    {
-                                        for (auto& post: postRf.neurons)
-                                        {
+                        for (auto& postRf: postSub.receptiveFields) {
+                            for (auto& preRf: preSub.receptiveFields) {
+                                if ( preRf.row >= 0+rowShift && preRf.row < rowPoolingFactor+rowShift && preRf.col >= 0+colShift && preRf.col < colPoolingFactor+colShift) {
+                                    for (auto& pre: preRf.neurons) {
+                                        for (auto& post: postRf.neurons) {
                                             std::random_device device;
                                             std::mt19937 randomEngine(device());
                                             std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
@@ -740,8 +614,7 @@ namespace adonis
                                 }
                             }
                             colShift += colPoolingFactor;
-                            if (postRf.col == postMaxColumns-1)
-                            {
+                            if (postRf.col == postMaxColumns-1) {
                                 colShift = 0;
                                 rowShift += rowPoolingFactor;
                             }
@@ -754,55 +627,39 @@ namespace adonis
         // ----- PUBLIC NETWORK METHODS -----
         
         // add spike to the network - user-friendly version that wraps a neuron's prepareInitialSpike method
-        void injectSpike(int16_t neuronIndex, double timestamp)
-        {
+        void injectSpike(int16_t neuronIndex, double timestamp) {
             initialSpikes.push_back(neurons[neuronIndex].get()->prepareInitialSpike(timestamp));
         }
         
         // adding spikes generated by the network
-        void injectGeneratedSpike(spike s)
-        {
+        void injectGeneratedSpike(spike s) {
             generatedSpikes.insert(
                 std::upper_bound(generatedSpikes.begin(), generatedSpikes.end(), s, [](spike one, spike two){return one.timestamp < two.timestamp;}),
                 s);
         }
 
         // add spikes from file to the network
-        void injectSpikeFromData(std::vector<input>* data)
-        {
+        void injectSpikeFromData(std::vector<input>* data) {
             // error handling
-            if (neurons.empty())
-            {
+            if (neurons.empty()) {
                 throw std::logic_error("add neurons before injecting spikes");
             }
 
-            if ((*data)[1].x == -1 && (*data)[1].y == -1)
-            {
-                for (auto& event: *data)
-                {
-                    for (auto& l: layers[0].sublayers)
-                    {
-                        if (event.sublayerID == l.ID)
-                        {
-                            for (auto& r: l.receptiveFields)
-                            {
-                                for (auto& n: r.neurons)
-                                {
-                                    if (neurons[n]->getNeuronID() == event.neuronID)
-                                    {
+            if ((*data)[1].x == -1 && (*data)[1].y == -1) {
+                for (auto& event: *data) {
+                    for (auto& l: layers[0].sublayers) {
+                        if (event.sublayerID == l.ID) {
+                            for (auto& r: l.receptiveFields) {
+                                for (auto& n: r.neurons) {
+                                    if (neurons[n]->getNeuronID() == event.neuronID) {
                                         injectSpike(n, event.timestamp);
                                     }
                                 }
                             }
-                        }
-                        else if (event.sublayerID == -1)
-                        {
-                            for (auto& r: l.receptiveFields)
-                            {
-                                for (auto& n: r.neurons)
-                                {
-                                    if (neurons[n]->getNeuronID() == event.neuronID)
-                                    {
+                        } else if (event.sublayerID == -1) {
+                            for (auto& r: l.receptiveFields) {
+                                for (auto& n: r.neurons) {
+                                    if (neurons[n]->getNeuronID() == event.neuronID) {
                                         injectSpike(n, event.timestamp);
                                     }
                                 }
@@ -810,35 +667,22 @@ namespace adonis
                         }
                     }
                 }
-            }
-            else
-            {
-                for (auto& event: *data)
-                {
-                    for (auto& l: layers[0].sublayers)
-                    {
-                        if (event.sublayerID == l.ID)
-                        {
-                            for (auto& r: l.receptiveFields)
-                            {
-                                for (auto& n: r.neurons)
-                                {
-                                    if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y)
-                                    {
+            } else {
+                for (auto& event: *data) {
+                    for (auto& l: layers[0].sublayers) {
+                        if (event.sublayerID == l.ID) {
+                            for (auto& r: l.receptiveFields) {
+                                for (auto& n: r.neurons) {
+                                    if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y) {
                                         injectSpike(n, event.timestamp);
                                         break;
                                     }
                                 }
                             }
-                        }
-                        else if (event.sublayerID == -1)
-                        {
-                            for (auto& r: l.receptiveFields)
-                            {
-                                for (auto& n: r.neurons)
-                                {
-                                    if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y)
-                                    {
+                        } else if (event.sublayerID == -1) {
+                            for (auto& r: l.receptiveFields) {
+                                for (auto& n: r.neurons) {
+                                    if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y) {
                                         injectSpike(n, event.timestamp);
                                         break;
                                     }
@@ -851,46 +695,35 @@ namespace adonis
         }
 
         // turn off all learning rules (for cross-validation or test data)
-        void turnOffLearning(double timestamp)
-        {
+        void turnOffLearning(double timestamp) {
             learningOffSignal = timestamp;
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise
-        void run(double _runtime, double _timestep=0)
-        {
+        void run(double _runtime, double _timestep=0) {
             // error handling
-            if (_timestep < 0)
-            {
+            if (_timestep < 0) {
                 throw std::logic_error("the timestep cannot be negative");
-            }
-            else if (_timestep == 0)
-            {
+            } else if (_timestep == 0) {
                 std::cout << "Running the network asynchronously" << std::endl;
-            }
-            else
-            {
+            } else {
                 std::cout << "Running the network synchronously" << std::endl;
             }
 
-            for (auto& n: neurons)
-            {
+            for (auto& n: neurons) {
                 n->initialisation(this);
             }
 
-            for (auto addon: addOns)
-            {
+            for (auto addon: addOns) {
                 addon->onStart(this);
             }
 
             std::mutex sync;
-            if (thAddOn)
-            {
+            if (thAddOn) {
                 sync.lock();
             }
 
-            std::thread spikeManager([&]
-            {
+            std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
 
@@ -903,14 +736,12 @@ namespace adonis
                 std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
                 std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
 
-                for (auto addon: addOns)
-                {
+                for (auto addon: addOns) {
                     addon->onCompleted(this);
                 }
             });
 
-            if (thAddOn)
-            {
+            if (thAddOn) {
                 thAddOn->begin(this, &sync);
             }
 
@@ -918,26 +749,21 @@ namespace adonis
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
-        void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr, int shift=20)
-        {
-            for (auto& n: neurons)
-            {
+        void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr, int shift=20) {
+            for (auto& n: neurons) {
                 n->initialisation(this);
             }
 
-            for (auto addon: addOns)
-            {
+            for (auto addon: addOns) {
                 addon->onStart(this);
             }
 
             std::mutex sync;
-            if (thAddOn)
-            {
+            if (thAddOn) {
                 sync.lock();
             }
 
-            std::thread spikeManager([&]
-            {
+            std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
 
@@ -945,27 +771,23 @@ namespace adonis
                 train(_timestep, trainingData, shift);
 
                 // importing test data and running the network through the data
-                if (testData)
-                {
+                if (testData) {
                     predict(_timestep, testData, shift);
                 }
 
-                for (auto addon: addOns)
-                {
+                for (auto addon: addOns) {
                     addon->onCompleted(this);
                 }
             });
 
-            if (thAddOn)
-            {
+            if (thAddOn) {
                 thAddOn->begin(this, &sync);
             }
             spikeManager.join();
         }
 
         // reset the network back to the initial conditions without changing the network build
-        void reset()
-        {
+        void reset() {
             initialSpikes.clear();
             generatedSpikes.clear();
             learningStatus = true;
@@ -973,38 +795,31 @@ namespace adonis
         }
 
         // ----- SETTERS AND GETTERS -----
-        std::vector<std::unique_ptr<Neuron>>& getNeurons()
-        {
+        std::vector<std::unique_ptr<Neuron>>& getNeurons() {
             return neurons;
         }
 
-        std::vector<layer>& getLayers()
-        {
+        std::vector<layer>& getLayers() {
             return layers;
         }
 
-        std::vector<AddOn*>& getAddOns()
-        {
+        std::vector<AddOn*>& getAddOns() {
             return addOns;
         }
 
-        MainThreadAddOn* getMainThreadAddOn()
-        {
+        MainThreadAddOn* getMainThreadAddOn() {
             return thAddOn;
         }
 
-        std::deque<spike>& getGeneratedSpikes()
-        {
+        std::deque<spike>& getGeneratedSpikes() {
             return generatedSpikes;
         }
 
-        bool getLearningStatus() const
-        {
+        bool getLearningStatus() const {
             return learningStatus;
         }
 
-        std::string getCurrentLabel() const
-        {
+        std::string getCurrentLabel() const {
             return currentLabel;
         }
 
@@ -1013,8 +828,7 @@ namespace adonis
         // -----PROTECTED NETWORK METHODS -----
 
         // importing training data and running the network through the data
-        void train(double timestep, std::vector<input>* trainingData, int shift)
-        {
+        void train(double timestep, std::vector<input>* trainingData, int shift) {
             injectSpikeFromData(trainingData);
 
             std::cout << "Training the network..." << std::endl;
@@ -1028,13 +842,11 @@ namespace adonis
         }
 
         // importing test data and running it through the network for classification
-        void predict(double timestep, std::vector<input>* testData, int shift)
-        {
+        void predict(double timestep, std::vector<input>* testData, int shift) {
             learningStatus = false;
             initialSpikes.clear();
             generatedSpikes.clear();
-            for (auto& n: neurons)
-            {
+            for (auto& n: neurons) {
                 n->resetNeuron();
             }
 
@@ -1047,38 +859,24 @@ namespace adonis
             std::cout << "Done." << std::endl;
         }
 
-        void runHelper(double runtime, double timestep, bool prediction=false)
-        {
-            if (!neurons.empty())
-            {
-                if (timestep == 0)
-                {
-                    while (!initialSpikes.empty() || !generatedSpikes.empty())
-                    {
-                        if (generatedSpikes.empty() && !initialSpikes.empty())
-                        {
+        void runHelper(double runtime, double timestep, bool prediction=false) {
+            if (!neurons.empty()) {
+                if (timestep == 0) {
+                    while (!initialSpikes.empty() || !generatedSpikes.empty()) {
+                        if (generatedSpikes.empty() && !initialSpikes.empty()) {
                             update(initialSpikes.front(), prediction);
                             initialSpikes.pop_front();
-                        }
-                        else if (initialSpikes.empty() && !generatedSpikes.empty())
-                        {
+                        } else if (initialSpikes.empty() && !generatedSpikes.empty()) {
                             update(generatedSpikes.front(), prediction);
                             generatedSpikes.pop_front();
-                        }
-                        else
-                        {
-                            if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp)
-                            {
+                        } else {
+                            if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp) {
                                 update(initialSpikes.front(), prediction);
                                 initialSpikes.pop_front();
-                            }
-                            else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp)
-                            {
+                            } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp) {
                                 update(generatedSpikes.front(), prediction);
                                 generatedSpikes.pop_front();
-                            }
-                            else
-                            {
+                            } else {
                                 update(initialSpikes.front(), prediction);
                                 initialSpikes.pop_front();
 
@@ -1087,26 +885,18 @@ namespace adonis
                             }
                         }
                     }
-                }
-                else
-                {
-                    for (double i=0; i<runtime; i+=timestep)
-                    {
-                        if (!prediction)
-                        {
-                            if (!trainingLabels.empty())
-                            {
-                                if (trainingLabels.front().onset <= i)
-                                {
+                } else {
+                    for (double i=0; i<runtime; i+=timestep) {
+                        if (!prediction) {
+                            if (!trainingLabels.empty()) {
+                                if (trainingLabels.front().onset <= i) {
                                     currentLabel = trainingLabels.front().name;
                                     trainingLabels.pop_front();
                                 }
                             }
 
-                            if (learningOffSignal != -1)
-                            {
-                                if (learningStatus==true && i >= learningOffSignal)
-                                {
+                            if (learningOffSignal != -1) {
+                                if (learningStatus==true && i >= learningOffSignal) {
                                     std::cout << "learning turned off at t=" << i << std::endl;
                                     learningStatus = false;
                                 }
@@ -1114,110 +904,85 @@ namespace adonis
                         }
 
                         std::vector<spike> currentSpikes;
-                        if (generatedSpikes.empty() && !initialSpikes.empty())
-                        {
-                            while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i)
-                            {
+                        if (generatedSpikes.empty() && !initialSpikes.empty()) {
+                            while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i) {
                                 currentSpikes.emplace_back(initialSpikes.front());
                                 initialSpikes.pop_front();
                             }
                         }
-                        else if (initialSpikes.empty() && !generatedSpikes.empty())
-                        {
-                            while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i)
-                            {
+                        else if (initialSpikes.empty() && !generatedSpikes.empty()) {
+                            while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i) {
                                 currentSpikes.emplace_back(generatedSpikes.front());
                                 generatedSpikes.pop_front();
                             }
                         }
-                        else
-                        {
-                            while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i)
-                            {
+                        else {
+                            while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i) {
                                 currentSpikes.emplace_back(initialSpikes.front());
                                 initialSpikes.pop_front();
                             }
 
-                            while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i)
-                            {
+                            while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i) {
                                 currentSpikes.emplace_back(generatedSpikes.front());
                                 generatedSpikes.pop_front();
                             }
                             std::sort(currentSpikes.begin(), currentSpikes.end(), [&](spike a, spike b){return a.timestamp < b.timestamp;});
                         }
                         
-                        for (auto& n: neurons)
-                        {
+                        for (auto& n: neurons) {
                             std::vector<spike> local_currentSpikes(currentSpikes.size());
-                            const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s)
-                            {
-                                if (s.propagationAxon)
-                                {
+                            const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
+                                if (s.propagationAxon) {
                                     return s.propagationAxon->postNeuron->getNeuronID() == n->getNeuronID();
                                 }
-                                else
-                                {
+                                else {
                                     return false;
                                 }
                             });
                             
                             local_currentSpikes.resize(std::distance(local_currentSpikes.begin(), it));
                             
-                            if (it != currentSpikes.end())
-                            {
-                                for (auto& currentSpike: local_currentSpikes)
-                                {
+                            if (it != currentSpikes.end()) {
+                                for (auto& currentSpike: local_currentSpikes) {
                                     n->updateSync(i, currentSpike.propagationAxon, this, timestep);
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 n->updateSync(i, nullptr, this, timestep);
                             }
                         }
 
                         // rechecking for any newly generated spikes
                         currentSpikes.clear();
-                        if (!generatedSpikes.empty())
-                        {
-                            while (!generatedSpikes.empty() && generatedSpikes.front().timestamp == i)
-                            {
+                        if (!generatedSpikes.empty()) {
+                            while (!generatedSpikes.empty() && generatedSpikes.front().timestamp == i) {
                                 currentSpikes.emplace_back(generatedSpikes.front());
                                 generatedSpikes.pop_front();
                             }
                         }
 
-                        for (auto& spike: currentSpikes)
-                        {
+                        for (auto& spike: currentSpikes) {
                             spike.propagationAxon->postNeuron->updateSync(i, spike.propagationAxon, this, timestep);
                         }
                     }
                 }
             }
-            else
-            {
+            else {
                 throw std::runtime_error("add neurons to the network before running it");
             }
         }
         
         // update neuron status asynchronously
-        void update(spike s, bool prediction=false)
-        {
-            if (!prediction)
-            {
-                if (!trainingLabels.empty())
-                {
-                    if (trainingLabels.front().onset <= s.timestamp)
-                    {
+        void update(spike s, bool prediction=false) {
+            if (!prediction) {
+                if (!trainingLabels.empty()) {
+                    if (trainingLabels.front().onset <= s.timestamp) {
                         currentLabel = trainingLabels.front().name;
                         trainingLabels.pop_front();
                     }
                 }
 
-                if (learningOffSignal != -1)
-                {
-                    if (learningStatus==true && s.timestamp >= learningOffSignal)
-                    {
+                if (learningOffSignal != -1) {
+                    if (learningStatus==true && s.timestamp >= learningOffSignal) {
                         std::cout << "learning turned off at t=" << s.timestamp << std::endl;
                         learningStatus = false;
                     }

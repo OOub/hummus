@@ -27,19 +27,17 @@
 #include "outputViewer.hpp"
 #include "potentialViewer.hpp"
 
-namespace adonis
-{
-    class QtDisplay : public MainThreadAddOn
-    {
+namespace adonis {
+    class QtDisplay : public MainThreadAddOn {
+        
     public:
 
     	// ----- CONSTRUCTOR -----
         QtDisplay() :
-			neuronToTrack(-1),
-			inputSublayerToTrack(0),
-			outputLayerToTrack(1),
-			outputSublayerToTrack(0)
-        {
+                neuronToTrack(-1),
+                inputSublayerToTrack(0),
+                outputLayerToTrack(1),
+                outputSublayerToTrack(0) {
         	static int argc = 1;
 			static char* argv[1] = {NULL};
 
@@ -75,46 +73,42 @@ namespace adonis
         }
 
     	// ----- PUBLIC DISPLAY METHODS -----
-		void incomingSpike(double timestamp, axon* a, Network* network) override
-		{
+		void incomingSpike(double timestamp, axon* a, Network* network) override {
 			potentialviewer->handleData(timestamp, a, network);
 		}
 
-        void neuronFired(double timestamp, axon* a, Network* network) override
-        {
+        void neuronFired(double timestamp, axon* a, Network* network) override {
 			inputviewer->handleData(timestamp, a, network);
 			outputviewer->handleData(timestamp, a, network);
 			potentialviewer->handleData(timestamp, a, network);
 		}
 
-		void timestep(double timestamp, Network* network, Neuron* postNeuron) override
-        {
+		void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
 			inputviewer->handleTimestep(timestamp);
 			outputviewer->handleTimestep(timestamp);
 			potentialviewer->handleTimestep(timestamp, network, postNeuron);
 		}
 
-		void begin(Network* network, std::mutex* sync) override
-		{
+        void statusUpdate(double timestamp, axon* a, Network* network) override {
+            potentialviewer->handleData(timestamp, a, network);
+        }
+        
+		void begin(Network* network, std::mutex* sync) override {
 			// finding the number of layers in the network
 			int numberOfLayers = static_cast<int>(network->getLayers().size());
 			
 			// number of sublayers in each layer
 			std::vector<int> sublayerInLayers;
-			for (auto& l: network->getLayers())
-			{
+			for (auto& l: network->getLayers()) {
 				sublayerInLayers.emplace_back(l.sublayers.size());
 			}
 			
 			// number of neurons in each layer
 			std::vector<int> neuronsInLayers;
-			for (auto& l: network->getLayers())
-			{
+			for (auto& l: network->getLayers()) {
 				int count = 0;
-				for (auto& s: l.sublayers)
-				{
-					for (auto& r: s.receptiveFields)
-					{
+				for (auto& s: l.sublayers) {
+					for (auto& r: s.receptiveFields) {
 						count += r.neurons.size();
 					}
 				}
@@ -123,13 +117,10 @@ namespace adonis
 			
 			// number of neurons in each sublayer
 			std::vector<std::vector<int>> neuronsInSublayers(numberOfLayers);
-			for (auto i=0; i<network->getLayers().size(); i++)
-			{
-				for (auto& s: network->getLayers()[i].sublayers)
-				{
+			for (auto i=0; i<network->getLayers().size(); i++) {
+				for (auto& s: network->getLayers()[i].sublayers) {
 					int count = 0;
-					for (auto& r: s.receptiveFields)
-					{
+					for (auto& r: s.receptiveFields) {
 						count += r.neurons.size();
 					}
 					neuronsInSublayers[i].emplace_back(count);
@@ -150,41 +141,35 @@ namespace adonis
 			outputviewer->changeSublayer(outputSublayerToTrack);
 			potentialviewer->trackNeuron(neuronToTrack);
 			
-			sync->unlock();
+            sync->unlock();
 
 			app->exec();
 		}
 		
 		// ----- SETTERS -----
-		void useHardwareAcceleration(bool accelerate)
-        {
+		void useHardwareAcceleration(bool accelerate) {
             inputviewer->useHardwareAcceleration(accelerate);
             outputviewer->useHardwareAcceleration(accelerate);
             potentialviewer->useHardwareAcceleration(accelerate);
         }
 
-		void trackLayer(int layerToTrack)
-		{
+		void trackLayer(int layerToTrack) {
 			outputLayerToTrack = layerToTrack;
 		}
 		
-		void trackInputSublayer(int sublayerToTrack)
-		{
+		void trackInputSublayer(int sublayerToTrack) {
 			inputSublayerToTrack = sublayerToTrack;
 		}
 		
-		void trackOutputSublayer(int sublayerToTrack)
-		{
+		void trackOutputSublayer(int sublayerToTrack) {
 			outputSublayerToTrack = sublayerToTrack;
 		}
 		
-        void trackNeuron(int _neuronToTrack)
-        {
+        void trackNeuron(int _neuronToTrack) {
         	neuronToTrack = _neuronToTrack;
         }
 
-		void setTimeWindow(double newWindow)
-        {
+		void setTimeWindow(double newWindow) {
             inputviewer->setTimeWindow(newWindow);
             outputviewer->setTimeWindow(newWindow);
             potentialviewer->setTimeWindow(newWindow);

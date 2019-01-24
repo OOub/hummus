@@ -20,8 +20,7 @@
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/leakyIntegrateAndFire.hpp"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	adonis::DataParser dataParser;
 	

@@ -11,13 +11,12 @@
 
 #pragma once
 
-namespace adonis
-{
+namespace adonis {
 	class Network;
 	class Neuron;
 	
-	class LearningRuleHandler
-	{
+	class LearningRuleHandler {
+        
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		LearningRuleHandler() = default;

@@ -20,24 +20,20 @@
 
 #include "../core.hpp"
 
-namespace adonis
-{
-    class SpikeLogger : public AddOn
-    {
+namespace adonis {
+    class SpikeLogger : public AddOn {
+        
     public:
     	// ----- CONSTRUCTOR -----
-        SpikeLogger(std::string filename)
-        {
+        SpikeLogger(std::string filename) {
             saveFile.open(filename, std::ios::out | std::ios::binary);
-            if (!saveFile.good())
-            {
+            if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
 		
 		// ----- PUBLIC SPIKE LOGGER METHODS -----
-		void incomingSpike(double timestamp, axon* a, Network* network) override
-        {
+		void incomingSpike(double timestamp, axon* a, Network* network) override {
 			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
 			copy_to(bytes.data() + 8, a->delay);
@@ -53,8 +49,7 @@ namespace adonis
 			saveFile.write(bytes.data(), bytes.size());
         }
 		
-		void neuronFired(double timestamp, axon* a, Network* network) override
-        {
+		void neuronFired(double timestamp, axon* a, Network* network) override {
 			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
 			copy_to(bytes.data() + 8, a->delay);
@@ -71,8 +66,7 @@ namespace adonis
         }
 		
 		template <typename T>
-		static void copy_to(char* target, T t)
-		{
+		static void copy_to(char* target, T t) {
 		    *reinterpret_cast<T*>(target) = t;
 		}
 		
