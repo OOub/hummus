@@ -22,7 +22,7 @@
 
 namespace adonis
 {
-    class MyelinPlasticityLogger : public StandardAddOn
+    class MyelinPlasticityLogger : public AddOn
     {
     public:
     	// ----- CONSTRUCTOR -----

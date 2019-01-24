@@ -16,7 +16,7 @@
 
 namespace adonis
 {
-	class GlobalLearningRuleHandler : public LearningRuleHandler, public StandardAddOn
+	class GlobalLearningRuleHandler : public LearningRuleHandler, public AddOn
 	{
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----

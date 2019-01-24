@@ -58,14 +58,14 @@ namespace adonis
 		// ----- PUBLIC LIF METHODS -----
 		virtual void initialisation(Network* network) override
 		{
-            // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the standardAddons vector
+            // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
 			for (auto& rule: learningRuleHandler)
 			{
-				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
+				if(AddOn* globalRule = dynamic_cast<AddOn*>(rule))
 				{
-					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end())
 					{
-						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
+						network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
 					}
 				}
 			}
@@ -161,7 +161,7 @@ namespace adonis
 				#ifndef NDEBUG
 				std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
 				#endif
-				for (auto addon: network->getStandardAddOns())
+				for (auto addon: network->getAddOns())
 				{
 					if (potential < threshold)
 					{
@@ -177,7 +177,7 @@ namespace adonis
 			{
                 if (timestep > 0)
                 {
-                    for (auto addon: network->getStandardAddOns())
+                    for (auto addon: network->getAddOns())
                     {
                         addon->timestep(timestamp, network, this);
                     }
@@ -196,7 +196,7 @@ namespace adonis
 				std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
 				#endif
 
-				for (auto addon: network->getStandardAddOns())
+				for (auto addon: network->getAddOns())
 				{
 					addon->neuronFired(timestamp, &activeAxon, network);
 				}

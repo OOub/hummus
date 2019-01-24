@@ -30,11 +30,11 @@ namespace adonis
 		{
 			for (auto& rule: learningRuleHandler)
 			{
-				if(StandardAddOn* globalRule = dynamic_cast<StandardAddOn*>(rule))
+				if(AddOn* globalRule = dynamic_cast<AddOn*>(rule))
 				{
-					if (std::find(network->getStandardAddOns().begin(), network->getStandardAddOns().end(), dynamic_cast<StandardAddOn*>(rule)) == network->getStandardAddOns().end())
+					if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end())
 					{
-						network->getStandardAddOns().emplace_back(dynamic_cast<StandardAddOn*>(rule));
+						network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
 					}
 				}
 			}
@@ -59,7 +59,7 @@ namespace adonis
                 network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
             }
             
-            for (auto addon: network->getStandardAddOns())
+            for (auto addon: network->getAddOns())
             {
                 addon->neuronFired(timestamp, a, network);
             }
@@ -104,7 +104,7 @@ namespace adonis
                     network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
                 }
                 
-                for (auto addon: network->getStandardAddOns())
+                for (auto addon: network->getAddOns())
                 {
                     addon->neuronFired(timestamp, a, network);
                 }
@@ -127,7 +127,7 @@ namespace adonis
             {
                 if (timestep > 0)
                 {
-                    for (auto addon: network->getStandardAddOns())
+                    for (auto addon: network->getAddOns())
                     {
                         addon->timestep(timestamp, network, this);
                     }

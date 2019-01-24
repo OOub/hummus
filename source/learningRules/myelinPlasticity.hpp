@@ -137,7 +137,7 @@ namespace adonis
                 }
             }
             
-            for (auto addon: network->getStandardAddOns())
+            for (auto addon: network->getAddOns())
             {
                 if(MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon))
                 {

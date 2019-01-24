@@ -22,7 +22,7 @@
 
 namespace adonis
 {
-    class SpikeLogger : public StandardAddOn
+    class SpikeLogger : public AddOn
     {
     public:
     	// ----- CONSTRUCTOR -----

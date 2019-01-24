@@ -19,7 +19,7 @@
 
 namespace adonis
 {
-	class Analysis : public StandardAddOn
+	class Analysis : public AddOn
 	{
 	public:
 		// ----- CONSTRUCTOR -----

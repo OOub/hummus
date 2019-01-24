@@ -22,6 +22,7 @@ namespace adonis
 		MainThreadAddOn() = default;
 		virtual ~MainThreadAddOn(){}
 		
+        // method that starts the GUI
 		virtual void begin(Network* network, std::mutex* sync){}
 	};
 }

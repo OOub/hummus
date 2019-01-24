@@ -27,7 +27,7 @@
 #include <deque>
 
 #include "dataParser.hpp"
-#include "standardAddOn.hpp"
+#include "addOn.hpp"
 #include "mainThreadAddOn.hpp"
 #include "learningRuleHandler.hpp"
 
@@ -329,8 +329,8 @@ namespace adonis
     public:
 		
 		// ----- CONSTRUCTOR AND DESTRUCTOR ------
-        Network(std::vector<StandardAddOn*> _stdAddOns = {}, MainThreadAddOn* _thAddOn = nullptr) :
-            stdAddOns(_stdAddOns),
+        Network(std::vector<AddOn*> _addOns = {}, MainThreadAddOn* _thAddOn = nullptr) :
+            addOns(_addOns),
 			thAddOn(_thAddOn),
 			learningStatus(true),
 			learningOffSignal(-1),
@@ -878,7 +878,7 @@ namespace adonis
                 n->initialisation(this);
             }
 
-            for (auto addon: stdAddOns)
+            for (auto addon: addOns)
             {
                 addon->onStart(this);
             }
@@ -903,7 +903,7 @@ namespace adonis
                 std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
                 std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
 
-                for (auto addon: stdAddOns)
+                for (auto addon: addOns)
                 {
                     addon->onCompleted(this);
                 }
@@ -925,7 +925,7 @@ namespace adonis
                 n->initialisation(this);
             }
 
-            for (auto addon: stdAddOns)
+            for (auto addon: addOns)
             {
                 addon->onStart(this);
             }
@@ -950,7 +950,7 @@ namespace adonis
                     predict(_timestep, testData, shift);
                 }
 
-                for (auto addon: stdAddOns)
+                for (auto addon: addOns)
                 {
                     addon->onCompleted(this);
                 }
@@ -983,9 +983,9 @@ namespace adonis
             return layers;
         }
 
-        std::vector<StandardAddOn*>& getStandardAddOns()
+        std::vector<AddOn*>& getAddOns()
         {
-            return stdAddOns;
+            return addOns;
         }
 
         MainThreadAddOn* getMainThreadAddOn()
@@ -1229,7 +1229,7 @@ namespace adonis
 		// ----- IMPLEMENTATION VARIABLES -----
 		std::deque<spike>                      initialSpikes;
         std::deque<spike>                      generatedSpikes;
-        std::vector<StandardAddOn*>            stdAddOns;
+        std::vector<AddOn*>                    addOns;
         MainThreadAddOn*                       thAddOn;
         std::vector<layer>                     layers;
 		std::vector<std::unique_ptr<Neuron>>   neurons;

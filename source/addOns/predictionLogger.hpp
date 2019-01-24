@@ -23,7 +23,7 @@
 
 namespace adonis
 {
-    class PredictionLogger : public StandardAddOn
+    class PredictionLogger : public AddOn
     {
     public:
     	// ----- CONSTRUCTOR -----
