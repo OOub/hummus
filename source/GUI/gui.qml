@@ -29,7 +29,7 @@ ApplicationWindow {
 	width: 900
 	minimumHeight: 650
 	minimumWidth: 450
-	property int refresh: 1
+	property int refresh: 100
 	property int a: 0
 	property int b: 1
 	property bool pp: true

@@ -33,11 +33,11 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     adonis::MyelinPlasticity mp(1, 1, 1, 1);
     
-    network.add2dLayer<adonis::InputNeuron>(0, 1, 34, 34, 1, false, {});
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/cards/trainLabel.txt", {&mp}, 900, false, decayCurrent, decayPotential, eligibilityDecay);
+    network.add2dLayer<adonis::InputNeuron>(0, 2, 34, 34, 1, true, {});
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/cards/trainLabel.txt", {&mp}, 900, true, decayCurrent, decayPotential, eligibilityDecay);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3, 100);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 1, 5, 3, 100);
 	
 	//  ----- READING DATA FROM FILE -----
     adonis::DataParser dataParser;
@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
 	
 	//  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
-	qtDisplay.setTimeWindow(5000);
-	qtDisplay.trackLayer(2);
+	qtDisplay.setTimeWindow(20000);
+	qtDisplay.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0.1, &testData);

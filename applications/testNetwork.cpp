@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     qtDisplay.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(100, 0);
+    network.run(100, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;
