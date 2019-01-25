@@ -250,15 +250,10 @@ namespace adonis {
             threshold = restingThreshold;
             
             // associating the appropriate label to the decision-making neuron
-            for (auto i: labelTracker)
-            {
-                std::cout << i << std::endl;
-            }
-            
             auto it = std::max_element(labelTracker.begin(), labelTracker.end());
             auto idx = std::distance(labelTracker.begin(), it);
             classLabel = network->getUniqueLabels()[idx];
-            std::cout << classLabel << " " << neuronID << std::endl;
+            std::cout << neuronID << "specialised to the " << classLabel << " label" << std::endl;
             
         }
         
