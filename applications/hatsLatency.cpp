@@ -15,7 +15,7 @@
 #include "../source/core.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/addOns/analysis.hpp"
-#include "../source/addOns/myelinPlasticityLogger.hpp"
+#include "../source/addOns/predictionLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
@@ -24,16 +24,16 @@ int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
 	adonis::Analysis analysis("../../data/hats/testLabel.txt");
-    adonis::MyelinPlasticityLogger mpLog("mpLog.bin");
-	adonis::Network network({&mpLog, &analysis});
+    adonis::PredictionLogger predictionLog("pLog.bin");
+	adonis::Network network({&predictionLog, &analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float decayPotential = 20;
-	float eligibilityDecay = 100;
+	float eligibilityDecay = 20;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis::MyelinPlasticity mp(0.1, 0.1, true);
+	adonis::MyelinPlasticity mp(1, 1, 1, 1);
 	
 	//  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(1470, 1, 1, {});
@@ -50,8 +50,8 @@ int main(int argc, char** argv) {
 	
 	//  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(5000);
-  	qtDisplay.trackLayer(2);
+  	qtDisplay.setTimeWindow(20000);
+  	qtDisplay.trackLayer(1);
 	 qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----

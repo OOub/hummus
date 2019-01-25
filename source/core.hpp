@@ -107,7 +107,7 @@ namespace adonis {
 		}
 		
         // reset a neuron to its initial status
-        virtual void resetNeuron() {
+        virtual void resetNeuron(Network* network) {
             previousSpikeTime = 0;
             potential = restingPotential;
             eligibilityTrace = 0;
@@ -455,7 +455,6 @@ namespace adonis {
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             
             // find number of classes
-            std::vector<std::string> uniqueLabels;
             for (auto& label: trainingLabels) {
                 if (std::find(uniqueLabels.begin(), uniqueLabels.end(), label.name) == uniqueLabels.end()) {
                     uniqueLabels.emplace_back(label.name);
@@ -478,7 +477,7 @@ namespace adonis {
             
             std::vector<std::size_t> neuronTemp;
             for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
                 
                 neuronTemp.emplace_back(neurons.size()-1);
             }
@@ -822,6 +821,10 @@ namespace adonis {
         std::string getCurrentLabel() const {
             return currentLabel;
         }
+        
+        std::vector<std::string>& getUniqueLabels() {
+            return uniqueLabels;
+        }
 
     protected:
 
@@ -847,7 +850,7 @@ namespace adonis {
             initialSpikes.clear();
             generatedSpikes.clear();
             for (auto& n: neurons) {
-                n->resetNeuron();
+                n->resetNeuron(this);
             }
 
             injectSpikeFromData(testData);
@@ -999,6 +1002,7 @@ namespace adonis {
         std::vector<layer>                     layers;
 		std::vector<std::unique_ptr<Neuron>>   neurons;
 		std::deque<label>                      trainingLabels;
+        std::vector<std::string>               uniqueLabels;
 		bool                                   learningStatus;
 		double                                 learningOffSignal;
         int                                    maxDelay;

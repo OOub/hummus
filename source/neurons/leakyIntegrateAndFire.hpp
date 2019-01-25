@@ -249,7 +249,7 @@ namespace adonis {
 			}
 		}
 		
-        virtual void resetNeuron() override {
+        virtual void resetNeuron(Network* network) override {
             previousSpikeTime = 0;
             current = 0;
             potential = restingPotential;

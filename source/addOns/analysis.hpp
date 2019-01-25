@@ -52,12 +52,7 @@ namespace adonis {
 			if (!network->getLearningStatus()) {
 				// restrict only to the decision-making layer
                 if (DecisionMakingNeuron* neuron = dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)) {
-					if (dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)->getClassLabel() != "") {
-						predictedSpikes.emplace_back(spike{timestamp, a});
-					}
-					else {
-						throw std::logic_error("the output neurons are unlabelled. Please use the addDecisionMakingLayer method to create the output layer");
-					}
+                    predictedSpikes.emplace_back(spike{timestamp, a});
 				}
 			}
 		}
