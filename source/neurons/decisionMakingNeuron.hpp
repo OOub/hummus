@@ -253,7 +253,7 @@ namespace adonis {
             auto it = std::max_element(labelTracker.begin(), labelTracker.end());
             auto idx = std::distance(labelTracker.begin(), it);
             classLabel = network->getUniqueLabels()[idx];
-            std::cout << neuronID << "specialised to the " << classLabel << " label" << std::endl;
+            std::cout << neuronID << " specialised to the " << classLabel << " label" << std::endl;
             
         }
         

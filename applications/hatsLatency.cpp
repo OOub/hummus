@@ -30,14 +30,14 @@ int main(int argc, char** argv) {
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float decayPotential = 20;
-	float eligibilityDecay = 20;
+	float eligibilityDecay = 100;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
 	adonis::MyelinPlasticity mp(1, 1, 1, 1);
 	
 	//  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(1470, 1, 1, {});
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/hats/trainLabel.txt", {&mp}, 900, false, decayCurrent, decayPotential, eligibilityDecay+50);
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/hats/trainLabel.txt", {&mp}, 900, false, decayCurrent, decayPotential, eligibilityDecay);
 	
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.05, 0.02, 5, 3, 100);
 	
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     auto trainingData = dataParser.readData("../../data/hats/train.txt");
 	
 	//  ----- READING TEST DATA FROM FILE -----
-	auto testingData = dataParser.readData("../../data/hats/train.txt");
+	auto testingData = dataParser.readData("../../data/hats/test.txt");
 	
 	//  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
