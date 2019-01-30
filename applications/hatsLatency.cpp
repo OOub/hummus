@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 14/01/2019
  *
- * Information: spiking neural network running the n-Cars database with HATS encoded with the Intentisty-to-latency method;
+ * Information: spiking neural network running the n-Cars database with HATS encoded with the Intensity-to-latency method;
  */
 
 #include <iostream> 

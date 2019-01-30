@@ -14,43 +14,48 @@
 #include "../source/core.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/learningRules/stdp.hpp"
-#include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
 #include "../source/neurons/leakyIntegrateAndFire.hpp"
+#include "../source/addOns/spikeLogger.hpp"
+#include "../source/addOns/predictionLogger.hpp"
+#include "../source/addOns/myelinPlasticityLogger.hpp"
 
 int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
-	adonis::Network network(&qtDisplay);
+    adonis::SpikeLogger spikeLog("spikeLog.bin");
+    adonis::PredictionLogger predictionLog("predictionLog.bin");
+    adonis::MyelinPlasticityLogger mpLog("mpLog.bin");
+    
+    adonis::Network network({&spikeLog, &predictionLog, &mpLog}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
-	float decayCurrent = 10;
-	float decayPotential = 20;
 	float eligibilityDecay = 100;
 	
     //  ----- CREATING THE NETWORK -----
-    adonis::MyelinPlasticity mp(1, 1, 1, 1);
+    adonis::MyelinPlasticity mp(1, 0.1, 1, 1);
     
-    network.add2dLayer<adonis::InputNeuron>(0, 2, 34, 34, 1, true, {});
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/cards/trainLabel.txt", {&mp}, 900, true, decayCurrent, decayPotential, eligibilityDecay);
+    network.add2dLayer<adonis::InputNeuron>(0, 1, 34, 34, 1, false, {});
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/cards/heart1trainLabel.txt", {&mp}, 1000, true, 10, 20, eligibilityDecay, 10000);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 1, 5, 3, 100);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 1, 5, 3);
 	
 	//  ----- READING DATA FROM FILE -----
     adonis::DataParser dataParser;
-    auto trainingData = dataParser.readData("../../data/cards/train.txt");
-    auto testData = dataParser.readData("../../data/cards/test.txt");
+    auto trainingData = dataParser.readData("../../data/cards/heart1train.txt");
+    auto testData = dataParser.readData("../../data/cards/heart9test.txt");
 	
 	//  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
-	qtDisplay.setTimeWindow(20000);
+	qtDisplay.setTimeWindow(5000);
 	qtDisplay.trackLayer(1);
+    qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0.1, &testData);
+    network.run(&trainingData, 1, &testData);
 	
     //  ----- EXITING APPLICATION -----
     return 0;

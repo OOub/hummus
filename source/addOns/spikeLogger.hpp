@@ -33,6 +33,12 @@ namespace adonis {
         }
 		
 		// ----- PUBLIC SPIKE LOGGER METHODS -----
+        void onStart(Network* network) override {
+            std::array<char, 8> bytes;
+            copy_to(bytes.data() + 0, network->getLearningOffSignal());
+            saveFile.write(bytes.data(), bytes.size());
+        }
+        
 		void incomingSpike(double timestamp, axon* a, Network* network) override {
 			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);

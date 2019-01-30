@@ -18,7 +18,7 @@ namespace adonis {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
                 Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 refractoryPeriod(_refractoryPeriod),
                 decayCurrent(_decayCurrent),
@@ -29,6 +29,7 @@ namespace adonis {
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
                 restingThreshold(-50),
+                decayWeight(_decayWeight),
                 decayHomeostasis(_decayHomeostasis),
                 homeostasisBeta(_homeostasisBeta),
                 inhibited(false),
@@ -82,6 +83,12 @@ namespace adonis {
             // threshold decay
             if (homeostasis) {
                 threshold = restingThreshold + (threshold-restingThreshold)*exp(-(timestamp-previousSpikeTime)/decayHomeostasis);
+            }
+            
+            // axon weight decay - synaptic pruning
+            if (decayWeight != 0)
+            {
+                a->weight *= std::exp(-(timestamp-previousSpikeTime)*synapticEfficacy/decayWeight);
             }
             
             if (active && !inhibited) {
@@ -162,7 +169,7 @@ namespace adonis {
             if (timestamp - previousSpikeTime >= refractoryPeriod) {
                 active = true;
             }
-
+            
 			// current decay
 			current *= std::exp(-timestep/decayCurrent);
             
@@ -177,6 +184,14 @@ namespace adonis {
 				threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
 			}
 
+            if (a) {
+                // axon weight decay - synaptic pruning
+                if (decayWeight != 0)
+                {
+                    a->weight *= std::exp(-(timestamp-previousSpikeTime)*synapticEfficacy/decayWeight);
+                }
+            }
+                
 			// neuron inactive during refractory period
 			if (active && !inhibited) {
 				if (a) {
@@ -191,25 +206,25 @@ namespace adonis {
                     
                     // updating the timestamp when an axon was propagating a spike
 					a->previousInputTime = timestamp;
+                    
+#ifndef NDEBUG
+                    std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
+#endif
+                    for (auto addon: network->getAddOns()) {
+                        if (potential < threshold) {
+                            addon->incomingSpike(timestamp, a, network);
+                        }
+                    }
+                    if (network->getMainThreadAddOn()) {
+                        network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+                    }
 				}
                 
                 // membrane potential equation (double exponential model)
 				potential += (membraneResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
 			}
 
-			if (a) {
-#ifndef NDEBUG
-				std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
-#endif
-				for (auto addon: network->getAddOns()) {
-					if (potential < threshold) {
-						addon->incomingSpike(timestamp, a, network);
-					}
-				}
-				if (network->getMainThreadAddOn()) {
-					network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
-				}
-			} else {
+            if (!a) {
                 if (timestep > 0) {
                     for (auto addon: network->getAddOns()) {
                         addon->timestep(timestamp, network, this);
@@ -218,7 +233,7 @@ namespace adonis {
                         network->getMainThreadAddOn()->timestep(timestamp, network, this);
                     }
                 }
-			}
+            }
 
 			if (potential >= threshold) {
 				eligibilityTrace = 1;
@@ -329,6 +344,7 @@ namespace adonis {
         }
         
 		// ----- LIF PARAMETERS -----
+        float                                    decayWeight;
 		float                                    decayCurrent;
 		float                                    decayPotential;
         float                                    current;

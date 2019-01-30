@@ -94,52 +94,52 @@ namespace adonis {
         }
         
 		void begin(Network* network, std::mutex* sync) override {
-			// finding the number of layers in the network
-			int numberOfLayers = static_cast<int>(network->getLayers().size());
-			
-			// number of sublayers in each layer
-			std::vector<int> sublayerInLayers;
-			for (auto& l: network->getLayers()) {
-				sublayerInLayers.emplace_back(l.sublayers.size());
-			}
-			
-			// number of neurons in each layer
-			std::vector<int> neuronsInLayers;
-			for (auto& l: network->getLayers()) {
-				int count = 0;
-				for (auto& s: l.sublayers) {
-					for (auto& r: s.receptiveFields) {
-						count += r.neurons.size();
-					}
-				}
-				neuronsInLayers.emplace_back(count);
-			}
-			
-			// number of neurons in each sublayer
-			std::vector<std::vector<int>> neuronsInSublayers(numberOfLayers);
-			for (auto i=0; i<network->getLayers().size(); i++) {
-				for (auto& s: network->getLayers()[i].sublayers) {
-					int count = 0;
-					for (auto& r: s.receptiveFields) {
-						count += r.neurons.size();
-					}
-					neuronsInSublayers[i].emplace_back(count);
-				}
-			}
-			
-			int neuronNumber = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.end(), 0);
-			engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
-			engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
-			engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
+            // finding the number of layers in the network
+            int numberOfLayers = static_cast<int>(network->getLayers().size());
 
-			inputviewer->setYLookup(neuronsInSublayers[0]);
-			outputviewer->setEngine(engine);
-        	outputviewer->setYLookup(neuronsInSublayers, neuronsInLayers);
+            // number of sublayers in each layer
+            std::vector<int> sublayerInLayers;
+            for (auto& l: network->getLayers()) {
+                sublayerInLayers.emplace_back(l.sublayers.size());
+            }
 
-			inputviewer->changeSublayer(inputSublayerToTrack);
-			outputviewer->changeLayer(outputLayerToTrack);
-			outputviewer->changeSublayer(outputSublayerToTrack);
-			potentialviewer->trackNeuron(neuronToTrack);
+            // number of neurons in each layer
+            std::vector<int> neuronsInLayers;
+            for (auto& l: network->getLayers()) {
+                int count = 0;
+                for (auto& s: l.sublayers) {
+                    for (auto& r: s.receptiveFields) {
+                        count += r.neurons.size();
+                    }
+                }
+                neuronsInLayers.emplace_back(count);
+            }
+
+            // number of neurons in each sublayer
+            std::vector<std::vector<int>> neuronsInSublayers(numberOfLayers);
+            for (auto i=0; i<network->getLayers().size(); i++) {
+                for (auto& s: network->getLayers()[i].sublayers) {
+                    int count = 0;
+                    for (auto& r: s.receptiveFields) {
+                        count += r.neurons.size();
+                    }
+                    neuronsInSublayers[i].emplace_back(count);
+                }
+            }
+
+            int neuronNumber = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.end(), 0);
+            engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
+            engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
+            engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
+
+            inputviewer->setYLookup(neuronsInSublayers[0]);
+            outputviewer->setEngine(engine);
+            outputviewer->setYLookup(neuronsInSublayers, neuronsInLayers);
+
+            inputviewer->changeSublayer(inputSublayerToTrack);
+            outputviewer->changeLayer(outputLayerToTrack);
+            outputviewer->changeSublayer(outputSublayerToTrack);
+            potentialviewer->trackNeuron(neuronToTrack);
 			
             sync->unlock();
 

@@ -450,7 +450,7 @@ namespace adonis {
 		
         // add a one dimentional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
-        void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) {
+        void addDecisionMakingLayer(std::string trainingLabelFilename, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             
@@ -477,7 +477,7 @@ namespace adonis {
             
             std::vector<std::size_t> neuronTemp;
             for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
                 
                 neuronTemp.emplace_back(neurons.size()-1);
             }
@@ -752,16 +752,20 @@ namespace adonis {
             for (auto& n: neurons) {
                 n->initialisation(this);
             }
-
+            
+            if (learningOffSignal == -1) {
+                learningOffSignal = trainingData->back().timestamp+maxDelay+shift;
+            }
+            
             for (auto addon: addOns) {
                 addon->onStart(this);
             }
-
+            
             std::mutex sync;
             if (thAddOn) {
                 sync.lock();
             }
-
+            
             std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
@@ -817,7 +821,11 @@ namespace adonis {
         bool getLearningStatus() const {
             return learningStatus;
         }
-
+        
+        double getLearningOffSignal() const {
+            return learningOffSignal;
+        }
+        
         std::string getCurrentLabel() const {
             return currentLabel;
         }
@@ -833,10 +841,10 @@ namespace adonis {
         // importing training data and running the network through the data
         void train(double timestep, std::vector<input>* trainingData, int shift) {
             injectSpikeFromData(trainingData);
-
+            
             std::cout << "Training the network..." << std::endl;
             std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-
+        
             runHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
 
             std::cout << "Done." << std::endl;

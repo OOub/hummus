@@ -100,6 +100,8 @@ namespace adonis {
                     // discarding inhibitory axons
                     if (allAxons->weight > 0) {
                         int16_t ID = allAxons->preNeuron->getNeuronID();
+                        
+                        // positive reinforcement on plastic neurons that were updated
                         if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
                             allAxons->weight += weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1./allAxons->postNeuron->getMembraneResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
                         } else {
