@@ -108,20 +108,26 @@ namespace adonis {
                     network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
                 }
                 
+#ifndef NDEBUG
+                std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
+#endif
+                for (auto addon: network->getAddOns()) {
+                    if (potential < threshold){
+                        addon->incomingSpike(timestamp, a, network);
+                    }
+                }
+                if (network->getMainThreadAddOn()) {
+                    network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+                }
+                
                 // membrane potential equation
                 potential = restingPotential + membraneResistance * current * (1 - std::exp(-timestamp/decayPotential));
             }
             
-#ifndef NDEBUG
-            std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
-#endif
-            for (auto addon: network->getAddOns()) {
-                if (potential < threshold){
-                    addon->incomingSpike(timestamp, a, network);
+            if (a) {
+                if (network->getMainThreadAddOn()) {
+                    network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
                 }
-            }
-            if (network->getMainThreadAddOn()) {
-                network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
             }
             
             if (potential >= threshold) {
@@ -222,9 +228,13 @@ namespace adonis {
                 
                 // membrane potential equation (double exponential model)
 				potential += (membraneResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
-			}
-
-            if (!a) {
+            }
+            
+            if (a) {
+                if (network->getMainThreadAddOn()) {
+                    network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+                }
+            } else {
                 if (timestep > 0) {
                     for (auto addon: network->getAddOns()) {
                         addon->timestep(timestamp, network, this);
