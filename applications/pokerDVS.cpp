@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	//  ----- READING DATA FROM FILE -----
     adonis::DataParser dataParser;
     auto trainingData = dataParser.readData("../../data/pokerDVS/DHtrain.txt");
-    auto testData = dataParser.readData("../../data/pokerDVS/DHtestHats.txt");
+    auto testData = dataParser.readData("../../data/pokerDVS/DHtest.txt");
 	
 	//  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
