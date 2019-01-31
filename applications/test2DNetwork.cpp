@@ -1,5 +1,5 @@
 /*
- * testNetwork.cpp
+ * test2D.cpp
  * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
