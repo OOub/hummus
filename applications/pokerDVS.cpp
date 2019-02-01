@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     
     network.add2dLayer<adonis::InputNeuron>(0, 1, 34, 34, 1, false, {});
     network.add2dLayer<adonis::LIF>(0, 1, 34, 34, 1, false, {&mp}, 3, true, 10, 20, eligibilityDecay);
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainLabel.txt", {&stdp}, 1000, true, 10, 80, eligibilityDecay, 10000);
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainLabel.txt", true, {&stdp}, 1000, true, 10, 80, eligibilityDecay, 10000);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.006, 0.02, 50, 10);

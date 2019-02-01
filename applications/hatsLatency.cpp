@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 	
 	//  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(1470, 1, 1, {});
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/hats/trainLabel.txt", {&mp}, 900, false, decayCurrent, decayPotential, eligibilityDecay);
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/hats/trainLabel.txt", true, {&mp}, 900, false, decayCurrent, decayPotential, eligibilityDecay);
 	
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.05, 0.02, 5, 3, 100);
 	

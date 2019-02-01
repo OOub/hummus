@@ -29,21 +29,20 @@ int main(int argc, char** argv) {
     adonis::Network network(&qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
-	float eligibilityDecay = 20;
+	float eligibilityDecay = 100;
 	
     //  ----- CREATING THE NETWORK -----
     adonis::MyelinPlasticity mp(1, 1, 1, 1);
-    adonis::STDP stdp(1, 1, 20, 20);
     
     network.add2dLayer<adonis::InputNeuron>(0, 4, 28, 28, 1, true, {});
-    network.add2dLayer<adonis::LIF>(0, 4, 28, 28, 1, true, {&mp}, 900, true, 10, 20, eligibilityDecay);
-    network.add2dLayer<adonis::LIF>(0, 4, 14, 14, 1, true, {}, 900, true, 10, 20, eligibilityDecay);
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/cards/trainHatsLabel.txt", {&mp}, 900, true, 10, 80, 80);
+//    network.add2dLayer<adonis::LIF>(0, 4, 28, 28, 1, true, {&mp}, 900, true, 10, 20, eligibilityDecay);
+//    network.add2dLayer<adonis::LIF>(0, 4, 14, 14, 1, true, {}, 900, true, 10, 20, eligibilityDecay);
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/trainHatsLabel.txt", true, {&mp}, 900, true, 10, 80, eligibilityDecay);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.convolution(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3);
-    network.pooling(network.getLayers()[0], network.getLayers()[1], 1);
-    network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.3, 0.2, 5, 3);
+//    network.convolution(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3);
+//    network.pooling(network.getLayers()[0], network.getLayers()[1], 1);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3);
 	
 	//  ----- READING DATA FROM FILE -----
     adonis::DataParser dataParser;
@@ -57,7 +56,7 @@ int main(int argc, char** argv) {
     qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0.1, &testData);
+    network.run(&trainingData, 1, &testData);
 	
     //  ----- EXITING APPLICATION -----
     return 0;
