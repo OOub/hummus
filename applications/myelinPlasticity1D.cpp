@@ -40,21 +40,20 @@ int main(int argc, char** argv) {
     int layer1Neurons = 4;
 	
 	float eligibilityDecay = 20;
-    float weight = 1./10;
 	
 	bool wta = true;
 	bool burst = false;
 	bool homeostasis = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis::MyelinPlasticity myelinPlasticity(1, 1, 0, 0);
+	adonis::MyelinPlasticity myelinPlasticity(1, 1, 1, 1);
 	
     //  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
     network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, homeostasis, decayCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 5, 3);
+	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.2, 0.1, 5, 3);
     
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);

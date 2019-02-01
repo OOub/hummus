@@ -56,7 +56,7 @@ namespace adonis {
 			std::cout << "New learning epoch at t=" << timestamp << std::endl;
 #endif
 			
-			for (auto inputAxon: n->getPreAxons()) {
+			for (auto& inputAxon: n->getPreAxons()) {
 				// selecting plastic neurons
                 if (inputAxon->preNeuron->getEligibilityTrace() > 0.1) {
 					plasticID.push_back(inputAxon->preNeuron->getNeuronID());
@@ -94,23 +94,28 @@ namespace adonis {
 				}
 			}
 			
-            // looping through all axons from the winner
-            for (auto& allAxons: neuron->getPreAxons()) {
-                if (!timeDifferences.empty()) {
+            // shifting weights to be equal to the number of plastic neurons
+            float desiredWeight = 1./plasticID.size()*(1/neuron->getMembraneResistance());
+            if (!timeDifferences.empty()) {
+                for (auto i=0; i<neuron->getPreAxons().size(); i++) {
                     // discarding inhibitory axons
-                    if (allAxons->weight > 0) {
-                        int16_t ID = allAxons->preNeuron->getNeuronID();
-                        
-                        // positive reinforcement on plastic neurons that were updated
+                    if (neuron->getPreAxons()[i]->weight >= 0) {
+                        int16_t ID = neuron->getPreAxons()[i]->preNeuron->getNeuronID();
                         if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
-                            allAxons->weight += weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1./allAxons->postNeuron->getMembraneResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
-                        } else {
-                            // negative reinforcement on other axons going towards the winner to prevent other neurons from triggering it
-                            allAxons->weight -= weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences.back(),2))*(1./allAxons->postNeuron->getMembraneResistance() - allAxons->weight) * neuron->getSynapticEfficacy();
-                            if (allAxons->weight < 0) {
-                                allAxons->weight = 0;
+//                            neuron->getPreAxons()[i]->weight += weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences[i],2))*(1./neuron->getPreAxons()[i]->postNeuron->getMembraneResistance() - neuron->getPreAxons()[i]->weight) * neuron->getSynapticEfficacy();
+                            float weightDifference = (desiredWeight* neuron->getMembraneResistance()) - (neuron->getPreAxons()[i]->weight*neuron->getMembraneResistance());
+                            float change = - std::exp( - std::pow(weight_alpha*weightDifference,2)) + 1;
+                            if (weightDifference >= 0) {
+                                neuron->getPreAxons()[i]->weight += weight_lambda*change*(1/neuron->getMembraneResistance());
+                            } else {
+                                neuron->getPreAxons()[i]->weight -= weight_lambda*change*(1/neuron->getMembraneResistance());
                             }
-                        }
+                        } // else {
+//                            neuron->getPreAxons()[i]->weight -= weight_lambda*std::exp(-std::pow(weight_alpha*timeDifferences[i],2))*(1./neuron->getPreAxons()[i]->postNeuron->getMembraneResistance() - neuron->getPreAxons()[i]->weight) * neuron->getSynapticEfficacy();
+//                            if (neuron->getPreAxons()[i]->weight < 0) {
+//                                neuron->getPreAxons()[i]->weight = 0;
+//                            }
+//                        }
                     }
                 }
             }

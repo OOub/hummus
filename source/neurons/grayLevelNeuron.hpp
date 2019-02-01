@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 25/01/2019
  *
- * Information: experimental neurons that calculate gray levels from events originating from a neuromorphic camera such as the ATIS
+ * Information: experimental neurons that calculate gray levels from events originating from a neuromorphic camera
  */
 
 #pragma once
