@@ -34,15 +34,13 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     adonis::MyelinPlasticity mp(1, 1, 1, 1);
     
-    network.add2dLayer<adonis::InputNeuron>(0, 4, 28, 28, 1, true, {});
-//    network.add2dLayer<adonis::LIF>(0, 4, 28, 28, 1, true, {&mp}, 900, true, 10, 20, eligibilityDecay);
-//    network.add2dLayer<adonis::LIF>(0, 4, 14, 14, 1, true, {}, 900, true, 10, 20, eligibilityDecay);
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/trainHatsLabel.txt", true, {&mp}, 900, true, 10, 80, eligibilityDecay);
+    network.add2dLayer<adonis::InputNeuron>(0, 1, 28, 28, 1, false, {});
+    network.addLayer<adonis::LIF>(100, 1, 1, {&mp}, true, 10, 20, 3, true, false, eligibilityDecay);
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/trainHatsLabel.txt", false, {&mp}, 900, false, 10, 20, eligibilityDecay);
     
     //  ----- CONNECTING THE NETWORK -----
-//    network.convolution(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3);
-//    network.pooling(network.getLayers()[0], network.getLayers()[1], 1);
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.03, 0.02, 5, 3);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.04, 0.02, 5, 3);
+    network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.4, 0.2, 5, 3);
 	
 	//  ----- READING DATA FROM FILE -----
     adonis::DataParser dataParser;
@@ -51,8 +49,8 @@ int main(int argc, char** argv) {
 	
 	//  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
-	qtDisplay.setTimeWindow(20000);
-	qtDisplay.trackLayer(1);
+	qtDisplay.setTimeWindow(10000);
+    qtDisplay.trackLayer(1);
     qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
 	
     //  ----- RUNNING THE NETWORK -----

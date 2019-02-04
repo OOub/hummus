@@ -83,7 +83,7 @@ namespace adonis {
                 threshold(_threshold),
                 potential(_restingPotential),
                 restingPotential(_restingPotential),
-                initialAxon{nullptr, nullptr, 100/_membraneResistance, 0, -1},
+                initialAxon{nullptr, nullptr, 100/_membraneResistance, 0, 0},
                 learningRuleHandler(_learningRuleHandler),
                 eligibilityTrace(0),
                 eligibilityDecay(_eligibilityDecay),
@@ -122,7 +122,7 @@ namespace adonis {
                         auto result = std::find_if(postAxons.begin(), postAxons.end(), [&](std::unique_ptr<axon>& a){return a->postNeuron->getNeuronID() == ID;});
                         
                         if (result == postAxons.end()) {
-                            postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
+                            postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
                             postNeuron->getPreAxons().emplace_back(postAxons.back().get());
                         } else {
 #ifndef NDEBUG
@@ -131,7 +131,7 @@ namespace adonis {
                         }
                     }
                     else {
-                        postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, -1});
+                        postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
                         postNeuron->getPreAxons().emplace_back(postAxons.back().get());
                     }
                 }
