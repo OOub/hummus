@@ -1,5 +1,5 @@
 /*
- * leakyIntegrateAndFire.hpp
+ * LIF.hpp
  * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.

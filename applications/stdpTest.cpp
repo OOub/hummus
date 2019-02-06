@@ -19,7 +19,7 @@
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/neurons/inputNeuron.hpp"
-#include "../source/neurons/leakyIntegrateAndFire.hpp"
+#include "../source/neurons/LIF.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
 
 int main(int argc, char** argv) {

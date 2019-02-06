@@ -12,7 +12,7 @@
 #pragma once
 
 #include "../core.hpp"
-#include "leakyIntegrateAndFire.hpp"
+#include "LIF.hpp"
 
 namespace adonis {
 	class DecisionMakingNeuron : public LIF {

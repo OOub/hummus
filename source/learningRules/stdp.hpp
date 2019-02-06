@@ -14,7 +14,7 @@
 
 #include "../globalLearningRuleHandler.hpp"
 #include "../neurons/inputNeuron.hpp"
-#include "../neurons/leakyIntegrateAndFire.hpp"
+#include "../neurons/LIF.hpp"
 
 namespace adonis {
 	class Neuron;

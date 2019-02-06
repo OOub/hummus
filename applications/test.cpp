@@ -17,7 +17,7 @@
 
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
-#include "../source/neurons/leakyIntegrateAndFire.hpp"
+#include "../source/neurons/LIF.hpp"
 
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/predictionLogger.hpp"
