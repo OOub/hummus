@@ -16,6 +16,7 @@
 #include "../source/core.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/learningRules/stdp.hpp"
+#include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/neurons/inputNeuron.hpp"
@@ -43,14 +44,14 @@ int main(int argc, char** argv) {
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis::STDP stdp;
+    adonis::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
     network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&stdp}, false, decayCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 1, 0);
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
   	qtDisplay.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0);
+    network.run(&trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

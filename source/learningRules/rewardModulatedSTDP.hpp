@@ -67,12 +67,12 @@ namespace adonis {
 			}
 		}
 		
-		virtual void learn(double timestamp, Neuron* neuron, Network* network) override {
-            if (DecisionMakingNeuron* n = dynamic_cast<DecisionMakingNeuron*>(neuron)) {
+		virtual void learn(double timestamp, axon* a, Network* network) override {
+            if (DecisionMakingNeuron* n = dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)) {
 				// reward and punishement signal from the decision-making layer
 				int alpha = 0;
 				int beta = 0;
-				if (dynamic_cast<DecisionMakingNeuron*>(neuron)->getClassLabel() == network->getCurrentLabel()) {
+				if (dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)->getClassLabel() == network->getCurrentLabel()) {
 					alpha = 1;
 				} else {
 					beta = 1;

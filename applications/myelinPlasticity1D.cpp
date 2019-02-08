@@ -15,6 +15,7 @@
 #include "../source/dataParser.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/addOns/spikeLogger.hpp"
+#include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/inputNeuron.hpp"
@@ -28,9 +29,10 @@ int main(int argc, char** argv) {
 	
     //  ----- INITIALISING THE NETWORK -----
 	adonis::QtDisplay qtDisplay;
-	adonis::SpikeLogger spikeLogger("10neurons_4patterns_unsupervised_spikeLog.bin");
-	adonis::MyelinPlasticityLogger myelinPlasticityLogger("10neurons_4patterns_unsupervised_learningLog.bin");
-    adonis::Network network({&spikeLogger, &myelinPlasticityLogger}, &qtDisplay);
+	adonis::SpikeLogger spikeLog("10neurons_4patterns_unsupervised_spikeLog.bin");
+    adonis::PotentialLogger potentialLog("10neurons_4patterns_unsupervised_potentialLog.bin");
+	adonis::MyelinPlasticityLogger myelinPlasticityLog("10neurons_4patterns_unsupervised_learningLog.bin");
+    adonis::Network network({&potentialLog, &spikeLog, &myelinPlasticityLog}, &qtDisplay);
     
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;

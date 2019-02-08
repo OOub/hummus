@@ -63,7 +63,7 @@ namespace adonis {
                 network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
             }
             
-            requestLearning(timestamp, network);
+            requestLearning(timestamp, a, network);
             previousSpikeTime = timestamp;
             potential = restingPotential;
 		}
@@ -101,7 +101,7 @@ namespace adonis {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
                 }
                 
-                requestLearning(timestamp, network);
+                requestLearning(timestamp, a, network);
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
             } else {
@@ -119,11 +119,11 @@ namespace adonis {
     protected:
         
         // loops through any learning rules and activates them
-        void requestLearning(double timestamp, Network* network) override {
+        void requestLearning(double timestamp, axon* a ,Network* network) override {
             if (network->getLearningStatus()) {
                 if (!learningRuleHandler.empty()) {
                     for (auto& learningRule: learningRuleHandler) {
-                        learningRule->learn(timestamp, this, network);
+                        learningRule->learn(timestamp, a, network);
                     }
                 }
             }

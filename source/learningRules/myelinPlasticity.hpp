@@ -45,9 +45,9 @@ namespace adonis {
             }
         }
         
-        virtual void learn(double timestamp, Neuron* neuron, Network* network) override {
+        virtual void learn(double timestamp, axon* a, Network* network) override {
             // forcing the neuron to be a LIF
-            LIF* n = dynamic_cast<LIF*>(neuron);
+            LIF* n = dynamic_cast<LIF*>(a->postNeuron);
 
             std::vector<double> timeDifferences;
             std::vector<int16_t> plasticID;
@@ -92,7 +92,7 @@ namespace adonis {
                         for (auto& n: network->getNeurons())
                         {
                             //reducing their ability to learn as the current neurons learn
-                            if (n->getLayerID() < neuron->getLayerID())
+                            if (n->getLayerID() < a->postNeuron->getLayerID())
                             {
                                 n->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
                             }
@@ -105,25 +105,25 @@ namespace adonis {
             }
 
             // shifting weights to be equal to the number of plastic neurons
-            float desiredWeight = 1./plasticID.size()*(1/neuron->getMembraneResistance());
+            float desiredWeight = 1./plasticID.size()*(1/a->postNeuron->getMembraneResistance());
 
-            for (auto i=0; i<neuron->getPreAxons().size(); i++) {
+            for (auto i=0; i<a->postNeuron->getPreAxons().size(); i++) {
                 // discarding inhibitory axons
-                if (neuron->getPreAxons()[i]->weight >= 0) {
-                    int16_t ID = neuron->getPreAxons()[i]->preNeuron->getNeuronID();
+                if (a->postNeuron->getPreAxons()[i]->weight >= 0) {
+                    int16_t ID = a->postNeuron->getPreAxons()[i]->preNeuron->getNeuronID();
                     if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
-                        float weightDifference = (desiredWeight* neuron->getMembraneResistance()) - (neuron->getPreAxons()[i]->weight*neuron->getMembraneResistance());
+                        float weightDifference = (desiredWeight* a->postNeuron->getMembraneResistance()) - (a->postNeuron->getPreAxons()[i]->weight*a->postNeuron->getMembraneResistance());
                         float change = - std::exp( - std::pow(weight_alpha*weightDifference,2)) + 1;
                         if (weightDifference >= 0) {
-                            neuron->getPreAxons()[i]->weight += weight_lambda*change*(1/neuron->getMembraneResistance());
+                            a->postNeuron->getPreAxons()[i]->weight += weight_lambda*change*(1/a->postNeuron->getMembraneResistance());
                         } else {
-                            neuron->getPreAxons()[i]->weight -= weight_lambda*change*(1/neuron->getMembraneResistance());
+                            a->postNeuron->getPreAxons()[i]->weight -= weight_lambda*change*(1/a->postNeuron->getMembraneResistance());
                         }
                     } else {
-                        if (neuron->getPreAxons()[i]->weight > 0) {
-                            neuron->getPreAxons()[i]->weight -= 0.01* 1/neuron->getMembraneResistance();
-                            if (neuron->getPreAxons()[i]->weight < 0) {
-                                neuron->getPreAxons()[i]->weight = 0;
+                        if (a->postNeuron->getPreAxons()[i]->weight > 0) {
+                            a->postNeuron->getPreAxons()[i]->weight -= 0.01* 1/a->postNeuron->getMembraneResistance();
+                            if (a->postNeuron->getPreAxons()[i]->weight < 0) {
+                                a->postNeuron->getPreAxons()[i]->weight = 0;
                             }
                         }
                     }
@@ -132,7 +132,7 @@ namespace adonis {
 
             for (auto addon: network->getAddOns()) {
                 if(MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
-                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, network, neuron, timeDifferences, plasticCoordinates);
+                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, network, a->postNeuron, timeDifferences, plasticCoordinates);
                 }
             }
         }

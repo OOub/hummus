@@ -53,6 +53,11 @@ namespace adonis {
                 active = true;
             }
             
+            // current reset to 0 after tau = decayCurrent
+            if (timestamp - previousInputTime >= decayCurrent) {
+                current = 0;
+            }
+            
             // eligibility trace decay
             eligibilityTrace *= std::exp(-(timestamp-previousSpikeTime)/eligibilityDecay);
             
@@ -78,9 +83,9 @@ namespace adonis {
                 
                 // updating the current
                 current += externalCurrent*a->weight;
-                activeAxon = *a;
                 
                 // updating the timestamp when an axon was propagating a spike
+                previousInputTime = timestamp;
                 a->previousInputTime = timestamp;
                 
                 if (network->getMainThreadAddOn()) {
@@ -100,7 +105,7 @@ namespace adonis {
                 }
                 
                 // membrane potential equation
-                potential = restingPotential + membraneResistance * current * (1 - std::exp(-timestamp/decayPotential));
+                potential = restingPotential + (potential-restingPotential) + membraneResistance * current * (1 - std::exp(-(timestamp-previousSpikeTime)/decayPotential));
             }
             
             if (a) {
@@ -117,21 +122,21 @@ namespace adonis {
                 
                 eligibilityTrace = 1;
 #ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
+                std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
 #endif
                 
                 for (auto addon: network->getAddOns()) {
-                    addon->neuronFired(timestamp, &activeAxon, network);
+                    addon->neuronFired(timestamp, a, network);
                 }
                 if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->neuronFired(timestamp, &activeAxon, network);
+                    network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
                 }
                 
                 for (auto& p : postAxons) {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
                 }
                 
-                requestLearning(timestamp, network);
+                requestLearning(timestamp, a, network);
                 
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
@@ -192,9 +197,10 @@ namespace adonis {
                     
                     // updating the current
                     current += externalCurrent*a->weight;
-                    activeAxon = *a;
+                    activeAxon = a;
                     
                     // updating the timestamp when an axon was propagating a spike
+                    previousInputTime = timestamp;
                     a->previousInputTime = timestamp;
                     
 #ifndef NDEBUG
@@ -238,21 +244,21 @@ namespace adonis {
                 eligibilityTrace = 1;
                 
 #ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << (activeAxon.preNeuron ? activeAxon.preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon.weight << " d=" << activeAxon.delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
+                std::cout << "t=" << timestamp << " " << (activeAxon->preNeuron ? activeAxon->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon->weight << " d=" << activeAxon->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
 #endif
                 
                 for (auto addon: network->getAddOns()) {
-                    addon->neuronFired(timestamp, &activeAxon, network);
+                    addon->neuronFired(timestamp, activeAxon, network);
                 }
                 if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->neuronFired(timestamp, &activeAxon, network);
+                    network->getMainThreadAddOn()->neuronFired(timestamp, activeAxon, network);
                 }
                 
                 for (auto& p : postAxons) {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
                 }
                 
-                requestLearning(timestamp, network);
+                requestLearning(timestamp, activeAxon, network);
                 
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
@@ -265,6 +271,7 @@ namespace adonis {
         
         virtual void resetNeuron(Network* network) override {
             // resetting parameters
+            previousInputTime = 0;
             previousSpikeTime = 0;
             current = 0;
             potential = restingPotential;
@@ -295,11 +302,11 @@ namespace adonis {
     protected:
         
         // loops through any learning rules and activates them
-        void requestLearning(double timestamp, Network* network) override {
+        void requestLearning(double timestamp, axon* a, Network* network) override {
             if (network->getLearningStatus()) {
                 if (!learningRuleHandler.empty()) {
                     for (auto& learningRule: learningRuleHandler) {
-                        learningRule->learn(timestamp, this, network);
+                        learningRule->learn(timestamp, a, network);
                     }
                 }
             }

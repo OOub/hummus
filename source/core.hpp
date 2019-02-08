@@ -89,6 +89,7 @@ namespace adonis {
                 eligibilityDecay(_eligibilityDecay),
                 membraneResistance(_membraneResistance),
                 previousSpikeTime(0),
+                previousInputTime(0),
                 synapticEfficacy(1) {}
     	
 		virtual ~Neuron(){}
@@ -108,6 +109,7 @@ namespace adonis {
 		
         // reset a neuron to its initial status
         virtual void resetNeuron(Network* network) {
+            previousInputTime = 0;
             previousSpikeTime = 0;
             potential = restingPotential;
             eligibilityTrace = 0;
@@ -241,6 +243,10 @@ namespace adonis {
             return previousSpikeTime;
         }
         
+        double getPreviousInputTime() const {
+            return previousInputTime;
+        }
+        
         float getSynapticEfficacy() const {
             return synapticEfficacy;
         }
@@ -255,7 +261,7 @@ namespace adonis {
         virtual void WTA(double timestamp, Network* network){}
         
         // loops through any learning rules and activates them
-        virtual void requestLearning(double timestamp, Network* network){}
+        virtual void requestLearning(double timestamp, axon* a, Network* network){}
         
 		// ----- NEURON PARAMETERS -----
         int16_t                            neuronID;
@@ -276,6 +282,7 @@ namespace adonis {
         float                              eligibilityDecay;
         float                              membraneResistance;
         double                             previousSpikeTime;
+        double                             previousInputTime;
         float                              synapticEfficacy;
     };
 	
