@@ -20,7 +20,7 @@
 #include "../source/neurons/LIF.hpp"
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
-#include "../source/addOns/predictionLogger.hpp"
+#include "../source/addOns/classificationLogger.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"
 
 int main(int argc, char** argv) {

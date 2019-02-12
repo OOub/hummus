@@ -63,70 +63,76 @@ namespace adonis {
 			}
 		}
         
-		virtual void update(double timestamp, axon* a, Network* network) override {
-            // checking if the neuron is inhibited
-            if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
-                inhibited = false;
-            }
+		virtual void update(double timestamp, axon* a, Network* network, bool prediction) override {
             
-            // checking if the neuron is in a refractory period
-            if (timestamp - previousSpikeTime >= refractoryPeriod) {
-                active = true;
-            }
-            
-            // current reset to 0 after tau = decayCurrent
-            if (timestamp - previousInputTime >= decayCurrent) {
-                current = 0;
-            }
-            
-            // eligibility trace decay
-            eligibilityTrace *= std::exp(-(timestamp-previousSpikeTime)/eligibilityDecay);
-            
-            // potential decay
-            potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousSpikeTime)/decayPotential);
-            
-            // threshold decay
-            if (homeostasis) {
-                threshold = restingThreshold + (threshold-restingThreshold)*exp(-(timestamp-previousSpikeTime)/decayHomeostasis);
-            }
-            
-            // axon weight decay - synaptic pruning
-            if (decayWeight != 0)
-            {
-                a->weight *= std::exp(-(timestamp-previousSpikeTime)*synapticEfficacy/decayWeight);
-            }
-            
-            if (active && !inhibited) {
-                // updating the threshold
+            if (!prediction) {
+                // checking if the neuron is inhibited
+                if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
+                    inhibited = false;
+                }
+                
+                // checking if the neuron is in a refractory period
+                if (timestamp - previousSpikeTime >= refractoryPeriod) {
+                    active = true;
+                }
+                
+                // eligibility trace decay
+                eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
+                
+                // potential decay
+                potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)/decayPotential);
+                
+                // threshold decay
                 if (homeostasis) {
-                    threshold += homeostasisBeta/decayHomeostasis;
+                    threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousInputTime)/decayHomeostasis);
                 }
                 
-                // updating the current
-                current += externalCurrent*a->weight;
-                
-                // updating the timestamp when an axon was propagating a spike
-                previousInputTime = timestamp;
-                a->previousInputTime = timestamp;
-                
-                if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+                // axon weight decay - synaptic pruning
+                if (decayWeight != 0) {
+                    a->weight *= std::exp(-(timestamp-previousInputTime)*synapticEfficacy/decayWeight);
                 }
-                
+            
+                if (active && !inhibited) {
+                    // calculating the potential on the onset of the spike
+                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
+                    
+                    // updating the threshold
+                    if (homeostasis) {
+                        threshold += homeostasisBeta/decayHomeostasis;
+                    }
+                    
+                    // updating the current
+                    current += externalCurrent*a->weight;
+                    
+                    if (network->getMainThreadAddOn()) {
+                        network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+                    }
+                    
 #ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
+                    std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
 #endif
-                for (auto addon: network->getAddOns()) {
-                    if (potential < threshold){
-                        addon->incomingSpike(timestamp, a, network);
+                    for (auto addon: network->getAddOns()) {
+                        if (potential < threshold) {
+                            addon->incomingSpike(timestamp, a, network);
+                        }
+                    }
+                    if (network->getMainThreadAddOn()) {
+                        network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+                    }
+                    
+                    // calculating time at which potential = threshold
+                    double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
+                    
+                    if (predictedTimestamp > timestamp + decayCurrent) {
+                        
+                    } else if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
+                        network->injectPredictedSpike(spike{predictedTimestamp, a});
+                    } else {
+                        throw std::logic_error("there's an incorrect parameter in the network that leads to a bad result from the predictedTimestamp equation (externalCurrent, membraneResistance or the weights)");
                     }
                 }
-                if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
-                }
-                
-                // membrane potential equation
-                potential = restingPotential + (potential-restingPotential) + membraneResistance * current * (1 - std::exp(-(timestamp-previousSpikeTime)/decayPotential));
+            } else {
+                potential = threshold;
             }
             
             if (a) {
@@ -163,6 +169,10 @@ namespace adonis {
                     network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
                 }
             }
+            
+            // updating the timestamp when an axon was propagating a spike
+            previousInputTime = timestamp;
+            a->previousInputTime = timestamp;
 		}
 		
 		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) override {
@@ -197,8 +207,7 @@ namespace adonis {
 
             if (a) {
                 // axon weight decay - synaptic pruning
-                if (decayWeight != 0)
-                {
+                if (decayWeight != 0) {
                     a->weight *= std::exp(-(timestamp-previousSpikeTime)*synapticEfficacy/decayWeight);
                 }
             }
@@ -335,7 +344,6 @@ namespace adonis {
                     for (auto& n: rf.neurons) {
                         if (network->getNeurons()[n]->getNeuronID() != neuronID) {
                             network->getNeurons()[n]->setPotential(restingPotential);
-
                             if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;

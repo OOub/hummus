@@ -1,5 +1,5 @@
 /*
- * predictionLogger.hpp
+ * classificationLogger.hpp
  * Adonis - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -22,11 +22,11 @@
 #include "../dataParser.hpp"
 
 namespace adonis {
-    class PredictionLogger : public AddOn {
+    class ClassificationLogger : public AddOn {
         
     public:
     	// ----- CONSTRUCTOR -----
-        PredictionLogger(std::string filename) {
+        ClassificationLogger(std::string filename) {
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");

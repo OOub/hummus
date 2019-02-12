@@ -32,18 +32,18 @@ namespace adonis {
 		
 		// ----- PUBLIC METHODS -----
 		void accuracy() {
-			if (!predictedLabels.empty() && predictedLabels.size() == actualLabels.size()) {
+			if (!classifiedLabels.empty() && classifiedLabels.size() == actualLabels.size()) {
 				std::vector<std::string> correctLabels;
 				for (auto i=0; i<actualLabels.size(); i++) {
-					if (predictedLabels[i] == actualLabels[i]) {
-						correctLabels.emplace_back(predictedLabels[i]);
+					if (classifiedLabels[i] == actualLabels[i]) {
+						correctLabels.emplace_back(classifiedLabels[i]);
 					}
 				}
 				
 				double accuracy = (static_cast<double>(correctLabels.size())/actualLabels.size())*100;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
 			} else {
-				throw std::logic_error("there is a problem with the predicted and actual labels");
+				throw std::logic_error("there is a problem with the classified and actual labels");
 			}
 		}
 		
@@ -52,7 +52,7 @@ namespace adonis {
 			if (!network->getLearningStatus()) {
 				// restrict only to the decision-making layer
                 if (DecisionMakingNeuron* neuron = dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)) {
-                    predictedSpikes.emplace_back(spike{timestamp, a});
+                    classifiedSpikes.emplace_back(spike{timestamp, a});
 				}
 			}
 		}
@@ -61,21 +61,21 @@ namespace adonis {
 			labels.emplace_back(label{"end", labels.back().onset+10000});
 			
 			for (auto i=1; i<labels.size(); i++) {
-				auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
-				if (it != predictedSpikes.end()) {
-					auto idx = std::distance(predictedSpikes.begin(), it);
-					predictedLabels.emplace_back(dynamic_cast<DecisionMakingNeuron*>(predictedSpikes[idx].propagationAxon->postNeuron)->getClassLabel());
+				auto it = std::find_if(classifiedSpikes.begin(), classifiedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
+				if (it != classifiedSpikes.end()) {
+					auto idx = std::distance(classifiedSpikes.begin(), it);
+					classifiedLabels.emplace_back(dynamic_cast<DecisionMakingNeuron*>(classifiedSpikes[idx].propagationAxon->postNeuron)->getClassLabel());
 				} else {
-					predictedLabels.emplace_back("NaN");
+					classifiedLabels.emplace_back("NaN");
 				}
 			}
 		}
 		
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::vector<spike>       predictedSpikes;
+		std::vector<spike>       classifiedSpikes;
 		std::deque<label>        labels;
 		std::deque<std::string>  actualLabels;
-		std::deque<std::string>  predictedLabels;
+		std::deque<std::string>  classifiedLabels;
 	};
 }

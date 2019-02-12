@@ -34,7 +34,7 @@ namespace adonis {
 			}
 		}
 		
-		void update(double timestamp, axon* a, Network* network) override {
+		void update(double timestamp, axon* a, Network* network, bool prediction) override {
             // eligibility trace decay
             eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
             

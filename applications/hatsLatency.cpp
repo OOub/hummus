@@ -15,7 +15,7 @@
 #include "../source/core.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/addOns/analysis.hpp"
-#include "../source/addOns/predictionLogger.hpp"
+#include "../source/addOns/classificationLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
@@ -24,8 +24,8 @@ int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
 	adonis::Analysis analysis("../../data/hats/testLabel.txt");
-    adonis::PredictionLogger predictionLog("pLog.bin");
-	adonis::Network network({&predictionLog, &analysis}, &qtDisplay);
+    adonis::ClassificationLogger classificationLog("pLog.bin");
+	adonis::Network network({&classificationLog, &analysis}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;

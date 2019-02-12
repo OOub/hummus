@@ -42,7 +42,7 @@ namespace adonis {
             }
         }
         
-        virtual void update(double timestamp, axon* a, Network* network) override {
+        virtual void update(double timestamp, axon* a, Network* network, bool prediction) override {
             // checking if the neuron is inhibited
             if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
                 inhibited = false;
@@ -66,12 +66,11 @@ namespace adonis {
             
             // threshold decay
             if (homeostasis) {
-                threshold = restingThreshold + (threshold-restingThreshold)*exp(-(timestamp-previousSpikeTime)/decayHomeostasis);
+                threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousSpikeTime)/decayHomeostasis);
             }
             
             // axon weight decay - synaptic pruning
-            if (decayWeight != 0)
-            {
+            if (decayWeight != 0) {
                 a->weight *= std::exp(-(timestamp-previousSpikeTime)*synapticEfficacy/decayWeight);
             }
             
@@ -181,8 +180,7 @@ namespace adonis {
             
             if (a) {
                 // axon weight decay - synaptic pruning
-                if (decayWeight != 0)
-                {
+                if (decayWeight != 0) {
                     a->weight *= std::exp(-(timestamp-previousSpikeTime)*synapticEfficacy/decayWeight);
                 }
             }

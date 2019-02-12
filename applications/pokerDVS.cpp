@@ -19,17 +19,17 @@
 #include "../source/neurons/decisionMakingNeuron.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/addOns/spikeLogger.hpp"
-#include "../source/addOns/predictionLogger.hpp"
+#include "../source/addOns/classificationLogger.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"
 
 int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
     adonis::SpikeLogger spikeLog("spikeLog.bin");
-    adonis::PredictionLogger predictionLog("predictionLog.bin");
+    adonis::ClassificationLogger classificationLog("predictionLog.bin");
     adonis::MyelinPlasticityLogger mpLog("mpLog.bin");
     
-    adonis::Network network({&spikeLog, &predictionLog, &mpLog}, &qtDisplay);
+    adonis::Network network({&spikeLog, &classificationLog, &mpLog}, &qtDisplay);
 	
     //  ----- NETWORK PARAMETERS -----
 	float eligibilityDecay = 100;

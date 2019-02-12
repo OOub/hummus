@@ -100,13 +100,13 @@ namespace adonis {
 		virtual void initialisation(Network* network){}
 		
 		// asynchronous update method
-		virtual void update(double timestamp, axon* a, Network* network) = 0;
+		virtual void update(double timestamp, axon* a, Network* network, bool prediction) = 0;
         
 		// synchronous update method
 		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) {
-			update(timestamp, a, network);
+			update(timestamp, a, network, false);
 		}
-		
+        
         // reset a neuron to its initial status
         virtual void resetNeuron(Network* network) {
             previousInputTime = 0;
@@ -653,6 +653,21 @@ namespace adonis {
                 s);
         }
 
+        // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
+        void injectPredictedSpike(spike s) {
+            // if spike doesn't already exist insert it in the list. if it does, just update the timestamp
+            auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(),[&](spike oldSpike) {
+                return oldSpike.propagationAxon == s.propagationAxon;
+            });
+            
+            if (it != predictedSpikes.end()) {
+                auto idx = std::distance(predictedSpikes.begin(), it);
+                predictedSpikes[idx].timestamp = s.timestamp;
+            } else {
+                predictedSpikes.insert(it, s);
+            }
+        }
+        
         // add spikes from file to the network
         void injectSpikeFromData(std::vector<input>* data) {
             // error handling
@@ -738,7 +753,7 @@ namespace adonis {
                 sync.lock();
             }
 
-            std::thread spikeManager([&] {
+                std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
 
@@ -883,42 +898,117 @@ namespace adonis {
 
             injectSpikeFromData(testData);
 
-            std::cout << "Running prediction based on a trained network..." << std::endl;
+            std::cout << "Running classification based on a trained network..." << std::endl;
 
             runHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
 
             std::cout << "Done." << std::endl;
         }
 
-        void runHelper(double runtime, double timestep, bool prediction=false) {
+        void runHelper(double runtime, double timestep, bool classification=false) {
             if (!neurons.empty()) {
                 if (timestep == 0) {
-                    while (!initialSpikes.empty() || !generatedSpikes.empty()) {
-                        if (generatedSpikes.empty() && !initialSpikes.empty()) {
-                            update(initialSpikes.front(), prediction);
+                    while (!initialSpikes.empty() || !generatedSpikes.empty() || !predictedSpikes.empty()) {
+                        // if only one list is filled
+                        if (predictedSpikes.empty() && generatedSpikes.empty() && !initialSpikes.empty()) {
+                            update(initialSpikes.front(), classification);
                             initialSpikes.pop_front();
-                        } else if (initialSpikes.empty() && !generatedSpikes.empty()) {
-                            update(generatedSpikes.front(), prediction);
+                        } else if (predictedSpikes.empty() && initialSpikes.empty() && !generatedSpikes.empty()) {
+                            update(generatedSpikes.front(), classification);
                             generatedSpikes.pop_front();
-                        } else {
+                        } else if (generatedSpikes.empty() && initialSpikes.empty() && !predictedSpikes.empty()) {
+                            update(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                        // if two lists are filled
+                        } else if (predictedSpikes.empty() && !generatedSpikes.empty() && !initialSpikes.empty()){
                             if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp) {
-                                update(initialSpikes.front(), prediction);
+                                update(initialSpikes.front(), classification);
                                 initialSpikes.pop_front();
                             } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp) {
-                                update(generatedSpikes.front(), prediction);
+                                update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
                             } else {
-                                update(initialSpikes.front(), prediction);
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
+                                
+                                update(generatedSpikes.front(), classification);
+                                generatedSpikes.pop_front();
+                            }
+                        } else if (generatedSpikes.empty() && !predictedSpikes.empty() && !initialSpikes.empty()){
+                            if (predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                            } else if (initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
+                            } else {
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
+                                
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                            }
+                        } else if (initialSpikes.empty() && !predictedSpikes.empty() && !generatedSpikes.empty()){
+                            if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp) {
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                            } else if (generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                                update(generatedSpikes.front(), classification);
+                                generatedSpikes.pop_front();
+                            } else {
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                                
+                                update(generatedSpikes.front(), classification);
+                                generatedSpikes.pop_front();
+                            }
+                        // if all lists are filled
+                        } else {
+                            // if one list spikes before the others
+                            if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp && initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
+                            } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp && generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                                update(generatedSpikes.front(), classification);
+                                generatedSpikes.pop_front();
+                            } else if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp && predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                            // if two lists spike at the same time, define order of spike
+                            } else if (generatedSpikes.front().timestamp == initialSpikes.front().timestamp){
+                                update(initialSpikes.front(), classification);
                                 initialSpikes.pop_front();
 
-                                update(generatedSpikes.front(), prediction);
+                                update(generatedSpikes.front(), classification);
+                                generatedSpikes.pop_front();
+                            } else if (generatedSpikes.front().timestamp == predictedSpikes.front().timestamp){
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                                
+                                update(generatedSpikes.front(), classification);
+                                generatedSpikes.pop_front();
+                            } else if (initialSpikes.front().timestamp == predictedSpikes.front().timestamp){
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
+                                
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                                // if they all spike at the same time
+                            } else {
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
+                                
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                                
+                                update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
                             }
                         }
                     }
                 } else {
                     for (double i=0; i<runtime; i+=timestep) {
-                        if (!prediction) {
+                        if (!classification) {
                             if (!trainingLabels.empty()) {
                                 if (trainingLabels.front().onset <= i) {
                                     currentLabel = trainingLabels.front().name;
@@ -1003,8 +1093,8 @@ namespace adonis {
         }
         
         // update neuron status asynchronously
-        void update(spike s, bool prediction=false) {
-            if (!prediction) {
+        void update(spike s, bool classification=false, bool prediction=false) {
+            if (!classification) {
                 if (!trainingLabels.empty()) {
                     if (trainingLabels.front().onset <= s.timestamp) {
                         currentLabel = trainingLabels.front().name;
@@ -1019,12 +1109,13 @@ namespace adonis {
                     }
                 }
             }
-            s.propagationAxon->postNeuron->update(s.timestamp, s.propagationAxon, this);
+            s.propagationAxon->postNeuron->update(s.timestamp, s.propagationAxon, this, prediction);
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----
 		std::deque<spike>                      initialSpikes;
         std::deque<spike>                      generatedSpikes;
+        std::deque<spike>                      predictedSpikes;
         std::vector<AddOn*>                    addOns;
         MainThreadAddOn*                       thAddOn;
         std::vector<layer>                     layers;

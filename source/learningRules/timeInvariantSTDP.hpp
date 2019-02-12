@@ -23,7 +23,7 @@ namespace adonis {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        TimeInvariantSTDP(float _alpha_plus=1, float _alpha_minus=-1, float _beta_plus=3, float _beta_minus=0) :
+        TimeInvariantSTDP(float _alpha_plus=1, float _alpha_minus=-8, float _beta_plus=3, float _beta_minus=0) :
                 alpha_plus(_alpha_plus),
                 alpha_minus(_alpha_minus),
                 beta_plus(_beta_plus),
@@ -45,12 +45,12 @@ namespace adonis {
         
 		virtual void learn(double timestamp, axon* a, Network* network) override {
             for (auto& preAxon: a->postNeuron->getPreAxons()) {
-                // Long term potentiation
+                // Long term potentiation for all presynaptic neurons that spiked
                 if (timestamp >= preAxon->preNeuron->getPreviousSpikeTime() && preAxon->preNeuron->getPreviousSpikeTime() > preAxon->postNeuron->getPreviousSpikeTime()) {
                     float delta_weight = alpha_plus * std::exp(- beta_plus * preAxon->weight * preAxon->postNeuron->getMembraneResistance());
                     preAxon->weight += delta_weight*(1./preAxon->postNeuron->getMembraneResistance());
                     std::cout << "LTP " << delta_weight << " " << preAxon->weight << std::endl;
-                // Long term depression
+                // Long term depression for all presynaptic neurons neurons that didn't spike
                 } else {
                     float delta_weight = alpha_minus * std::exp(- beta_minus * (1 - preAxon->weight * preAxon->postNeuron->getMembraneResistance()));
                     if (preAxon->weight > 0) {

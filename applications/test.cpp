@@ -21,7 +21,7 @@
 
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
-#include "../source/addOns/predictionLogger.hpp"
+#include "../source/addOns/classificationLogger.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"
 #include "../source/addOns/analysis.hpp"
 
@@ -41,10 +41,10 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
-    network.addLayer<adonis::LIF>(1, 1, 1, {}, false, 10, 20);
+    network.addLayer<adonis::LIF>(4, 1, 1, {}, false, 10, 20, 3, false);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1., 0);
     network.lateralInhibition(network.getLayers()[1], -1);
     
     // turning off learning at a specified timestamp
@@ -52,8 +52,8 @@ int main(int argc, char** argv) {
     
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
-    network.injectSpike(0, 15);
-    network.injectSpike(0, 30);
+//    network.injectSpike(0, 11);
+//    network.injectSpike(0, 30);
     
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
