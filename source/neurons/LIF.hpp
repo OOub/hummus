@@ -64,7 +64,6 @@ namespace adonis {
 		}
         
 		virtual void update(double timestamp, axon* a, Network* network, bool prediction) override {
-            
             if (!prediction) {
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
@@ -75,7 +74,7 @@ namespace adonis {
                 if (timestamp - previousSpikeTime >= refractoryPeriod) {
                     active = true;
                 }
-                
+            
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
                 
@@ -124,7 +123,9 @@ namespace adonis {
                     double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
                     
                     if (predictedTimestamp > timestamp + decayCurrent) {
-                        
+                        // need to implement calculating the potential if a spike comes during the decay phase
+                        // need to implement a special equation for the lateral inhibition (negative weight -> direct decrease no negative integration)
+                        throw std::logic_error("not implemented yet");
                     } else if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
                         network->injectPredictedSpike(spike{predictedTimestamp, a});
                     } else {
@@ -132,7 +133,9 @@ namespace adonis {
                     }
                 }
             } else {
-                potential = threshold;
+                if (active && !inhibited) {
+                    potential = threshold;
+                }
             }
             
             if (a) {

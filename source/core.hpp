@@ -928,11 +928,11 @@ namespace adonis {
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
                             } else {
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                                
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
+                                
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
                             }
                         } else if (generatedSpikes.empty() && !predictedSpikes.empty() && !initialSpikes.empty()){
                             if (predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
@@ -942,11 +942,11 @@ namespace adonis {
                                 update(initialSpikes.front(), classification);
                                 initialSpikes.pop_front();
                             } else {
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                                
                                 update(predictedSpikes.front(), classification, true);
                                 predictedSpikes.pop_front();
+                                
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
                             }
                         } else if (initialSpikes.empty() && !predictedSpikes.empty() && !generatedSpikes.empty()){
                             if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp) {
@@ -976,11 +976,11 @@ namespace adonis {
                                 predictedSpikes.pop_front();
                             // if two lists spike at the same time, define order of spike
                             } else if (generatedSpikes.front().timestamp == initialSpikes.front().timestamp){
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
+                                
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
                             } else if (generatedSpikes.front().timestamp == predictedSpikes.front().timestamp){
                                 update(predictedSpikes.front(), classification, true);
                                 predictedSpikes.pop_front();
@@ -988,21 +988,21 @@ namespace adonis {
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
                             } else if (initialSpikes.front().timestamp == predictedSpikes.front().timestamp){
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                                
                                 update(predictedSpikes.front(), classification, true);
                                 predictedSpikes.pop_front();
-                                // if they all spike at the same time
-                            } else {
+                                
                                 update(initialSpikes.front(), classification);
                                 initialSpikes.pop_front();
-                                
+                                // if they all spike at the same time
+                            } else {
                                 update(predictedSpikes.front(), classification, true);
                                 predictedSpikes.pop_front();
                                 
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
+                                
+                                update(initialSpikes.front(), classification);
+                                initialSpikes.pop_front();
                             }
                         }
                     }
@@ -1037,16 +1037,17 @@ namespace adonis {
                                 generatedSpikes.pop_front();
                             }
                         }
-                        else {
+                        else {                            
                             while (!initialSpikes.empty() && initialSpikes.front().timestamp <= i) {
                                 currentSpikes.emplace_back(initialSpikes.front());
                                 initialSpikes.pop_front();
                             }
-
+                            
                             while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i) {
                                 currentSpikes.emplace_back(generatedSpikes.front());
                                 generatedSpikes.pop_front();
                             }
+                            
                             std::sort(currentSpikes.begin(), currentSpikes.end(), [&](spike a, spike b){return a.timestamp < b.timestamp;});
                         }
                         

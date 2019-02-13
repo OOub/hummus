@@ -41,11 +41,10 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
-    network.addLayer<adonis::LIF>(4, 1, 1, {}, false, 10, 20, 3, false);
+    network.addLayer<adonis::LIF>(4, 1, 1, {}, false, 10, 20, 3, true);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1., 0);
-    network.lateralInhibition(network.getLayers()[1], -1);
     
     // turning off learning at a specified timestamp
     network.turnOffLearning(0);
@@ -61,7 +60,7 @@ int main(int argc, char** argv) {
     qtDisplay.trackNeuron(1);
     
     //  ----- RUNNING THE NETWORK -----
-    network.run(100, 0.1);
+    network.run(100, 0);
     
     //  ----- EXITING APPLICATION -----
     return 0;
