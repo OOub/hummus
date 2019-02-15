@@ -42,7 +42,7 @@ namespace adonis {
             a->previousInputTime = timestamp;
             potential = threshold;
             eligibilityTrace = 1;
-
+			
             #ifndef NDEBUG
             std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
             #endif
@@ -66,6 +66,10 @@ namespace adonis {
             requestLearning(timestamp, a, network);
             previousSpikeTime = timestamp;
             potential = restingPotential;
+			
+            if (network->getMainThreadAddOn()) {
+				network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+			}
 		}
         
         void updateSync(double timestamp, axon* a, Network* network, double timestep) override {

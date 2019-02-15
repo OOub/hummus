@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     //  ----- NETWORK PARAMETERS -----
 	float decayCurrent = 10;
 	float potentialDecay = 20;
-
+	float injectedCurrent = 100;
     int inputNeurons = 10;
     int layer1Neurons = 4;
 	
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 	
     //  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
-    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, homeostasis, decayCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
+    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, homeostasis, injectedCurrent, decayCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.2, 0.1, 5, 3);

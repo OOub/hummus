@@ -33,13 +33,14 @@ int main(int argc, char** argv) {
 	
     //  ----- NETWORK PARAMETERS -----
 	float eligibilityDecay = 100;
+	float injectedCurrent = 100;
 	
     //  ----- CREATING THE NETWORK -----
     adonis::MyelinPlasticity mp(1, 1, 1, 1);
     
     network.add2dLayer<adonis::InputNeuron>(0, 1, 34, 34, 1, false, {});
-    network.add2dLayer<adonis::LIF>(0, 1, 34, 34, 1, false, {&mp}, 3, true, 10, 20, eligibilityDecay);
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainLabel.txt", true, {&mp}, 1000, true, 10, 80, eligibilityDecay);
+    network.add2dLayer<adonis::LIF>(0, 1, 34, 34, 1, false, {&mp}, 3, true, injectedCurrent, 10, 20, eligibilityDecay);
+    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainLabel.txt", true, {&mp}, 1000, true, injectedCurrent, 10, 80, eligibilityDecay);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.006, 0.02, 50, 10);

@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 	
 	//  ----- CREATING THE NETWORK -----
     network.add2dLayer<adonis::InputNeuron>(0, 2, 8, 8, 2, false, {});
-    network.add2dLayer<adonis::LIF>(1, 2, 8, 8, 2, false, {}, false, 10, 20, 3, true);
+    network.add2dLayer<adonis::LIF>(1, 2, 8, 8, 2, false, {}, false, 100, 10, 20, 3, true);
     network.addLayer<adonis::LIF>(1, 1, 1, {});
 		
 	network.convolution(network.getLayers()[0], network.getLayers()[1], 1./2, 0);

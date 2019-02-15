@@ -34,20 +34,17 @@ int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     adonis::QtDisplay qtDisplay;
     adonis::SpikeLogger spikeLog("testSpikeLog.bin");
-    adonis::PotentialLogger potentialLog("testPotentialLog.bin");
-    adonis::Network network({&spikeLog, &potentialLog}, &qtDisplay);
+    adonis::Network network({&spikeLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
     network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
-    network.addLayer<adonis::LIF>(1, 1, 1, {}, false, 5, 20, 3, true);
+    network.addLayer<adonis::LIF>(1, 1, 1, {}, false, 80, 5, 20, 3, true);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
-    
-    // turning off learning at a specified timestamp
-    network.turnOffLearning(0);
+//    network.lateralInhibition(network.getLayers()[1]);
     
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
