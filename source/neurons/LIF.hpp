@@ -18,7 +18,7 @@ namespace adonis {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=65) :
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
                 Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 refractoryPeriod(_refractoryPeriod),
                 decayCurrent(_decayCurrent),
@@ -39,10 +39,6 @@ namespace adonis {
 			// error handling
 			if (decayCurrent == decayPotential) {
                 throw std::logic_error("The current decay and the potential decay cannot be equal: a division by 0 occurs");
-            }
-			
-			if (decayCurrent == 0) {
-                throw std::logic_error("The current decay cannot be 0");
             }
 			
     	    if (decayPotential == 0) {
@@ -86,7 +82,7 @@ namespace adonis {
                 
                 // potential decay
                 potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)/decayPotential);
-                
+				
                 // threshold decay
                 if (homeostasis) {
                     threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousInputTime)/decayHomeostasis);
@@ -100,7 +96,7 @@ namespace adonis {
                 if (active && !inhibited) {
                     // calculating the potential on the onset of the spike
                     potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
-                    
+					
                     // updating the threshold
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
@@ -108,11 +104,7 @@ namespace adonis {
                     
                     // updating the current
                     current += externalCurrent*a->weight;
-                    
-                    if (network->getMainThreadAddOn()) {
-                        network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
-                    }
-                    
+					
 #ifndef NDEBUG
                     std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
 #endif
@@ -127,18 +119,14 @@ namespace adonis {
                     
                     // calculating time at which potential = threshold
                     double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
-                    
-                    if (predictedTimestamp > timestamp + decayCurrent) {
-                        // calculating the potential at time t + decayCurrent
-                        endOfIntegrationPotential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp + decayCurrent - previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp + decayCurrent - previousInputTime)/decayPotential);
-                        
-                        std::cout << endOfIntegrationPotential << std::endl;
-                        
-                        network->injectPredictedSpike(spike{timestamp + decayCurrent, a, endOfIntegration});
-                    } else if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
+
+					// calculating the potential at time t + decayCurrent
+                    endOfIntegrationPotential = restingPotential + membraneResistance * current * (1 - std::exp(-(decayCurrent)/decayPotential)) + (endOfIntegrationPotential - restingPotential) * std::exp(-(decayPotential)/decayPotential);
+
+                    if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
                         network->injectPredictedSpike(spike{predictedTimestamp, a, prediction});
                     } else {
-                        throw std::logic_error("there's an incorrect parameter in the network that leads to a bad result from the predictedTimestamp equation (externalCurrent, membraneResistance or the weights)");
+						network->injectPredictedSpike(spike{timestamp + decayCurrent, a, endOfIntegration});
                     }
                 }
             } else if (type == prediction){
@@ -147,14 +135,16 @@ namespace adonis {
                 }
             } else if (type == endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = endOfIntegrationPotential;
+                	if (endOfIntegrationPotential >= threshold) {
+                		potential = threshold;
+					} else {
+						potential = endOfIntegrationPotential;
+					}
                 }
             }
             
-            if (a) {
-                if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
-                }
+            if (network->getMainThreadAddOn()) {
+                network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
             }
             
             if (potential >= threshold) {
@@ -177,6 +167,7 @@ namespace adonis {
                 requestLearning(timestamp, a, network);
                 
                 previousSpikeTime = timestamp;
+                endOfIntegrationPotential = restingPotential;
                 potential = restingPotential;
                 current = 0;
                 active = false;

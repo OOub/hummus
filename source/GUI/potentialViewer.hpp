@@ -42,7 +42,7 @@ namespace adonis {
                 timeWindow(100),
                 openGL(false),
                 isClosed(false),
-                maxX(1),
+                maxX(0),
                 minY(20),
                 maxY(-70),
                 potential(0),
