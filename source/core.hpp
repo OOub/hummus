@@ -60,9 +60,17 @@ namespace adonis {
         double   previousInputTime;
     };
     
+    enum spikeType {
+        normal,
+        endOfIntegration,
+        prediction,
+        none
+    };
+    
     struct spike {
-        double   timestamp;
-        axon*    propagationAxon;
+        double    timestamp;
+        axon*     propagationAxon;
+        spikeType type;
     };
     
 	class Network;
@@ -100,11 +108,11 @@ namespace adonis {
 		virtual void initialisation(Network* network){}
 		
 		// asynchronous update method
-		virtual void update(double timestamp, axon* a, Network* network, bool prediction) = 0;
+		virtual void update(double timestamp, axon* a, Network* network, spikeType type) = 0;
         
 		// synchronous update method
 		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) {
-			update(timestamp, a, network, false);
+			update(timestamp, a, network, none);
 		}
         
         // reset a neuron to its initial status
@@ -147,7 +155,7 @@ namespace adonis {
             if (!initialAxon.postNeuron) {
                 initialAxon.postNeuron = this;
             }
-            return spike{timestamp, &initialAxon};
+            return spike{timestamp, &initialAxon, normal};
         }
         
 		// utility function that returns true or false depending on a probability percentage
@@ -1110,7 +1118,7 @@ namespace adonis {
                     }
                 }
             }
-            s.propagationAxon->postNeuron->update(s.timestamp, s.propagationAxon, this, prediction);
+            s.propagationAxon->postNeuron->update(s.timestamp, s.propagationAxon, this, s.type);
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----

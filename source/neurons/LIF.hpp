@@ -18,7 +18,7 @@ namespace adonis {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=65) :
                 Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 refractoryPeriod(_refractoryPeriod),
                 decayCurrent(_decayCurrent),
@@ -34,6 +34,7 @@ namespace adonis {
                 homeostasisBeta(_homeostasisBeta),
                 inhibited(false),
                 inhibitionTime(0),
+                endOfIntegrationPotential(_restingPotential),
                 wta(_wta) {
 			// error handling
 			if (decayCurrent == decayPotential) {
@@ -63,8 +64,8 @@ namespace adonis {
 			}
 		}
         
-		virtual void update(double timestamp, axon* a, Network* network, bool prediction) override {
-            if (!prediction) {
+		virtual void update(double timestamp, axon* a, Network* network, spikeType type) override {
+            if (type == normal) {
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
                     inhibited = false;
@@ -75,6 +76,11 @@ namespace adonis {
                     active = true;
                 }
             
+                // reset the current to 0 in the absence of incoming spikes by the time t + decayCurrent
+                if (timestamp - previousInputTime > decayCurrent) {
+                    current = 0;
+                }
+                
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
                 
@@ -123,18 +129,25 @@ namespace adonis {
                     double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
                     
                     if (predictedTimestamp > timestamp + decayCurrent) {
-                        // need to implement calculating the potential if a spike comes during the decay phase
-                        // need to implement a special equation for the lateral inhibition (negative weight -> direct decrease no negative integration)
-                        throw std::logic_error("not implemented yet");
+                        // calculating the potential at time t + decayCurrent
+                        endOfIntegrationPotential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp + decayCurrent - previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp + decayCurrent - previousInputTime)/decayPotential);
+                        
+                        std::cout << endOfIntegrationPotential << std::endl;
+                        
+                        network->injectPredictedSpike(spike{timestamp + decayCurrent, a, endOfIntegration});
                     } else if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
-                        network->injectPredictedSpike(spike{predictedTimestamp, a});
+                        network->injectPredictedSpike(spike{predictedTimestamp, a, prediction});
                     } else {
                         throw std::logic_error("there's an incorrect parameter in the network that leads to a bad result from the predictedTimestamp equation (externalCurrent, membraneResistance or the weights)");
                     }
                 }
-            } else {
+            } else if (type == prediction){
                 if (active && !inhibited) {
                     potential = threshold;
+                }
+            } else if (type == endOfIntegration) {
+                if (active && !inhibited) {
+                    potential = endOfIntegrationPotential;
                 }
             }
             
@@ -158,7 +171,7 @@ namespace adonis {
                 }
                 
                 for (auto& p : postAxons) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
                 }
                 
                 requestLearning(timestamp, a, network);
@@ -279,7 +292,7 @@ namespace adonis {
 				}
 
 				for (auto& p : postAxons) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
 				}
 
 				requestLearning(timestamp, activeAxon, network);
@@ -389,5 +402,6 @@ namespace adonis {
 		float                                    homeostasisBeta;
 		bool                                     wta;
 		axon*                                    activeAxon;
+        double                                   endOfIntegrationPotential;
 	};
 }

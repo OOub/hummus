@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     network.addLayer<adonis::LIF>(4, 1, 1, {}, false, 10, 20, 3, true);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1., 0);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
     
     // turning off learning at a specified timestamp
     network.turnOffLearning(0);

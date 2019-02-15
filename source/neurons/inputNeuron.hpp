@@ -34,7 +34,7 @@ namespace adonis {
 			}
 		}
 		
-		void update(double timestamp, axon* a, Network* network, bool prediction) override {
+		void update(double timestamp, axon* a, Network* network, spikeType type) override {
             // eligibility trace decay
             eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
             
@@ -60,7 +60,7 @@ namespace adonis {
             }
             
             for (auto& p : postAxons) {
-                network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
+                network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
             }
             
             requestLearning(timestamp, a, network);
@@ -98,7 +98,7 @@ namespace adonis {
                 }
                 
                 for (auto& p : postAxons) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get()});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
                 }
                 
                 requestLearning(timestamp, a, network);
