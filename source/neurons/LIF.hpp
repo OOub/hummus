@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 21/01/2019
  *
- * Information: leaky integrate and fire (LIF) neuron model
+ * Information: leaky integrate and fire (LIF) neuron model with current dynamics
  */
 
 #pragma once
@@ -41,8 +41,8 @@ namespace adonis {
                 throw std::logic_error("The current decay and the potential decay cannot be equal: a division by 0 occurs");
             }
 			
-			if (decayCurrent < 0) {
-                throw std::logic_error("The current decay cannot be less than 0");
+			if (decayCurrent <= 0) {
+                throw std::logic_error("The potential decay cannot less than or equal to 0");
             }
 					
     	    if (decayPotential <= 0) {
@@ -65,6 +65,7 @@ namespace adonis {
 		}
         
 		virtual void update(double timestamp, axon* a, Network* network, spikeType type) override {
+			
             if (type == normal) {
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
@@ -77,11 +78,8 @@ namespace adonis {
                 }
             
                 // reset the current to 0 in the absence of incoming spikes by the time t + decayCurrent
-
-				if (decayCurrent > 0) {
-					if (timestamp - previousInputTime > decayCurrent) {
-						current = 0;
-					}
+				if (timestamp - previousInputTime > decayCurrent) {
+					current = 0;
 				}
 				
                 // eligibility trace decay
@@ -101,12 +99,11 @@ namespace adonis {
                 }
             
                 if (active && !inhibited) {
-                	if (decayCurrent > 0)
-                	{
-						// calculating the potential on the onset of the spike
+					// calculating the potential on the onset of an excitatory spike
+					if (a->weight >= 0)
+                    {
 						potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
-                    }
-					
+					}
                     // updating the threshold
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
@@ -127,7 +124,8 @@ namespace adonis {
                         network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
                     }
 					
-                    if (decayCurrent > 0)
+					// only for an excitatory spike
+                    if (a->weight >= 0)
                     {
 						// calculating time at which potential = threshold
 						double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
@@ -140,6 +138,7 @@ namespace adonis {
 						} else {
 							network->injectPredictedSpike(spike{timestamp + decayCurrent, a, endOfIntegration});
 						}
+					// for an inhibitory spike (lateral inhibition
                     } else {
                     	// in case decayCurrent = 0 membrane equation for immediate rise of the potential (no integration)
 						potential = restingPotential + membraneResistance * current + (potential - restingPotential);
@@ -147,14 +146,26 @@ namespace adonis {
                 }
             } else if (type == prediction){
                 if (active && !inhibited) {
-                    potential = threshold;
+                	current += externalCurrent*a->weight;
+                	std::cout << current << std::endl;
+                	if (a->weight > 0) {
+                    	potential = threshold;
+					} else {
+						potential = restingPotential + membraneResistance * current + (potential - restingPotential);
+					}
                 }
             } else if (type == endOfIntegration) {
                 if (active && !inhibited) {
-                	if (endOfIntegrationPotential >= threshold) {
-                		potential = threshold;
+                	current += externalCurrent*a->weight;
+					
+                	if (a->weight > 0) {
+						if (endOfIntegrationPotential >= threshold) {
+							potential = threshold;
+						} else {
+							potential = endOfIntegrationPotential;
+						}
 					} else {
-						potential = endOfIntegrationPotential;
+						potential = restingPotential + membraneResistance * current + (potential - restingPotential);
 					}
                 }
             }

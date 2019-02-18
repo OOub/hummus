@@ -40,21 +40,21 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
-    network.addLayer<adonis::LIF>(1, 1, 1, {}, false, 80, 5, 20, 3, true);
+    network.addLayer<adonis::LIF>(2, 1, 1, {}, false, 100, 5, 20, 3, false);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
-//    network.lateralInhibition(network.getLayers()[1]);
-    
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1., 0);
+    network.lateralInhibition(network.getLayers()[1]);
+	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
-    network.injectSpike(0, 11);
+//    network.injectSpike(0, 11);
     network.injectSpike(0, 30);
 	
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
     qtDisplay.setTimeWindow(100);
-    qtDisplay.trackNeuron(1);
+    qtDisplay.trackNeuron(2);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(100, 0);
