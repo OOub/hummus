@@ -65,8 +65,8 @@ namespace adonis {
 		}
         
 		virtual void update(double timestamp, axon* a, Network* network, spikeType type) override {
-			
             if (type == normal) {
+                
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
                     inhibited = false;
@@ -99,11 +99,10 @@ namespace adonis {
                 }
             
                 if (active && !inhibited) {
-					// calculating the potential on the onset of an excitatory spike
-					if (a->weight >= 0)
-                    {
-						potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
-					}
+                
+					// calculating the potential
+                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
+                    
                     // updating the threshold
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
@@ -111,7 +110,6 @@ namespace adonis {
                     
                     // updating the current
                     current += externalCurrent*a->weight;
-					
 #ifndef NDEBUG
                     std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
 #endif
@@ -124,49 +122,36 @@ namespace adonis {
                         network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
                     }
 					
-					// only for an excitatory spike
                     if (a->weight >= 0)
                     {
-						// calculating time at which potential = threshold
-						double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
+                        // calculating time at which potential = threshold
+                        double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
+                        
+                        // calculating the potential at time t + decayCurrent
+                        endOfIntegrationPotential = restingPotential + membraneResistance * current * (1 - std::exp(-(decayCurrent)/decayPotential)) + (endOfIntegrationPotential - restingPotential) * std::exp(-(decayPotential)/decayPotential);
 
-						// calculating the potential at time t + decayCurrent
-						endOfIntegrationPotential = restingPotential + membraneResistance * current * (1 - std::exp(-(decayCurrent)/decayPotential)) + (endOfIntegrationPotential - restingPotential) * std::exp(-(decayPotential)/decayPotential);
-
-						if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
-							network->injectPredictedSpike(spike{predictedTimestamp, a, prediction});
-						} else {
-							network->injectPredictedSpike(spike{timestamp + decayCurrent, a, endOfIntegration});
-						}
-					// for an inhibitory spike (lateral inhibition
+                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
+                            network->injectPredictedSpike(spike{predictedTimestamp, a, prediction});
+                        } else {
+                            network->injectPredictedSpike(spike{timestamp + decayCurrent, a, endOfIntegration});
+                        }
                     } else {
-                    	// in case decayCurrent = 0 membrane equation for immediate rise of the potential (no integration)
-						potential = restingPotential + membraneResistance * current + (potential - restingPotential);
+                        potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
                     }
                 }
             } else if (type == prediction){
                 if (active && !inhibited) {
-                	current += externalCurrent*a->weight;
-                	std::cout << current << std::endl;
-                	if (a->weight > 0) {
-                    	potential = threshold;
-					} else {
-						potential = restingPotential + membraneResistance * current + (potential - restingPotential);
-					}
+                    current += externalCurrent*a->weight;
+                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
                 }
             } else if (type == endOfIntegration) {
                 if (active && !inhibited) {
-                	current += externalCurrent*a->weight;
-					
-                	if (a->weight > 0) {
-						if (endOfIntegrationPotential >= threshold) {
-							potential = threshold;
-						} else {
-							potential = endOfIntegrationPotential;
-						}
-					} else {
-						potential = restingPotential + membraneResistance * current + (potential - restingPotential);
-					}
+                    current += externalCurrent*a->weight;
+                    if (endOfIntegrationPotential >= threshold) {
+                        potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
+                    } else {
+                        potential = endOfIntegrationPotential;
+                    }
                 }
             }
             

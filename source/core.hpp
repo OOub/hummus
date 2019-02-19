@@ -674,6 +674,11 @@ namespace adonis {
             } else {
                 predictedSpikes.insert(it, s);
             }
+            
+            // sort timestamps
+            std::sort(predictedSpikes.begin(), predictedSpikes.end(), [](spike a, spike b) {
+                return a.timestamp < b.timestamp;
+            });
         }
         
         // add spikes from file to the network
@@ -916,6 +921,7 @@ namespace adonis {
         void runHelper(double runtime, double timestep, bool classification=false) {
             if (!neurons.empty()) {
                 if (timestep == 0) {
+                    
                     while (!initialSpikes.empty() || !generatedSpikes.empty() || !predictedSpikes.empty()) {
                         // if only one list is filled
                         if (predictedSpikes.empty() && generatedSpikes.empty() && !initialSpikes.empty()) {
@@ -964,11 +970,11 @@ namespace adonis {
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
                             } else {
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
-                                
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
+                                
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
                             }
                         // if all lists are filled
                         } else {
@@ -977,25 +983,31 @@ namespace adonis {
                                 update(initialSpikes.front(), classification);
                                 initialSpikes.pop_front();
                             } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp && generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                                
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
                             } else if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp && predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
+                                
                                 update(predictedSpikes.front(), classification, true);
                                 predictedSpikes.pop_front();
                             // if two lists spike at the same time, define order of spike
                             } else if (generatedSpikes.front().timestamp == initialSpikes.front().timestamp){
+                                
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
                                 
                                 update(initialSpikes.front(), classification);
                                 initialSpikes.pop_front();
                             } else if (generatedSpikes.front().timestamp == predictedSpikes.front().timestamp){
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
                                 
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
+                                
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
+                            
                             } else if (initialSpikes.front().timestamp == predictedSpikes.front().timestamp){
+                                
                                 update(predictedSpikes.front(), classification, true);
                                 predictedSpikes.pop_front();
                                 
@@ -1003,11 +1015,12 @@ namespace adonis {
                                 initialSpikes.pop_front();
                                 // if they all spike at the same time
                             } else {
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
                                 
                                 update(generatedSpikes.front(), classification);
                                 generatedSpikes.pop_front();
+                                
+                                update(predictedSpikes.front(), classification, true);
+                                predictedSpikes.pop_front();
                                 
                                 update(initialSpikes.front(), classification);
                                 initialSpikes.pop_front();
