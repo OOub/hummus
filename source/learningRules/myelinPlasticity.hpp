@@ -72,14 +72,14 @@ namespace adonis {
                         float delta_delay = 0;
 
                         if (timeDifferences.back() > 0) {
-                            delta_delay = delay_lambda*(n->getMembraneResistance()/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getDecayCurrent()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()))*n->getSynapticEfficacy();
+                            delta_delay = delay_lambda*(n->getMembraneResistance()/(n->getResetCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getResetCurrent()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()))*n->getSynapticEfficacy();
 
                             inputAxon->delay += delta_delay;
 #ifndef NDEBUG
                             std::cout << timestamp << " " << inputAxon->preNeuron->getNeuronID() << " " << inputAxon->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
 #endif
                         } else if (timeDifferences.back() < 0) {
-                            delta_delay = -delay_lambda*((n->getMembraneResistance()/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getDecayCurrent()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())))*n->getSynapticEfficacy();
+                            delta_delay = -delay_lambda*((n->getMembraneResistance()/(n->getResetCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getResetCurrent()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())))*n->getSynapticEfficacy();
 
                             inputAxon->delay += delta_delay;
 #ifndef NDEBUG

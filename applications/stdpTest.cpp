@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 	adonis::Network network(&qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
-	float decayCurrent = 10;
+	float resetCurrent = 10;
 	float injectedCurrent = 100;
 	float potentialDecay = 20;
 	float refractoryPeriod = 30;
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	
 	//  ----- CREATING THE NETWORK -----
     network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
-    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&stdp}, false, injectedCurrent, decayCurrent, potentialDecay, refractoryPeriod);
+    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&stdp}, false, injectedCurrent, resetCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 1, 0);

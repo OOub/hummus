@@ -18,10 +18,10 @@ namespace adonis {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _externalCurrent=100, float _decayCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _externalCurrent=100, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
                 Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 refractoryPeriod(_refractoryPeriod),
-                decayCurrent(_decayCurrent),
+                resetCurrent(_resetCurrent),
                 decayPotential(_decayPotential),
                 externalCurrent(_externalCurrent),
                 current(0),
@@ -37,11 +37,11 @@ namespace adonis {
                 endOfIntegrationPotential(_restingPotential),
                 wta(_wta) {
 			// error handling
-			if (decayCurrent == decayPotential) {
+			if (resetCurrent == decayPotential) {
                 throw std::logic_error("The current decay and the potential decay cannot be equal: a division by 0 occurs");
             }
 			
-			if (decayCurrent <= 0) {
+			if (resetCurrent <= 0) {
                 throw std::logic_error("The potential decay cannot less than or equal to 0");
             }
 					
@@ -77,8 +77,8 @@ namespace adonis {
                     active = true;
                 }
             
-                // reset the current to 0 in the absence of incoming spikes by the time t + decayCurrent
-				if (timestamp - previousInputTime > decayCurrent) {
+                // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
+				if (timestamp - previousInputTime > resetCurrent) {
 					current = 0;
 				}
 				
@@ -127,13 +127,13 @@ namespace adonis {
                         // calculating time at which potential = threshold
                         double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
                         
-                        // calculating the potential at time t + decayCurrent
-                        endOfIntegrationPotential = restingPotential + membraneResistance * current * (1 - std::exp(-(decayCurrent)/decayPotential)) + (endOfIntegrationPotential - restingPotential) * std::exp(-(decayPotential)/decayPotential);
+                        // calculating the potential at time t + resetCurrent
+                        endOfIntegrationPotential = restingPotential + membraneResistance * current * (1 - std::exp(-(resetCurrent)/decayPotential)) + (endOfIntegrationPotential - restingPotential) * std::exp(-(decayPotential)/decayPotential);
 
-                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + decayCurrent) {
+                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + resetCurrent) {
                             network->injectPredictedSpike(spike{predictedTimestamp, a, prediction});
                         } else {
-                            network->injectPredictedSpike(spike{timestamp + decayCurrent, a, endOfIntegration});
+                            network->injectPredictedSpike(spike{timestamp + resetCurrent, a, endOfIntegration});
                         }
                     } else {
                         potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
@@ -141,6 +141,7 @@ namespace adonis {
                 }
             } else if (type == prediction){
                 if (active && !inhibited) {
+//                    potential = threshold;
                     current += externalCurrent*a->weight;
                     potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
                 }
@@ -210,24 +211,26 @@ namespace adonis {
                 active = true;
             }
             
-            // current decay
-            current *= std::exp(-timestep/decayCurrent);
+            // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
+            if (timestamp - previousInputTime > resetCurrent) {
+                current = 0;
+            }
             
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
             
 			// potential decay
-			potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
+            potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
             
 			// threshold decay
 			if (homeostasis) {
-				threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
+                threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
 			}
 
             if (a) {
                 // axon weight decay - synaptic pruning
                 if (decayWeight != 0) {
-                    a->weight *= std::exp(-(timestamp-previousSpikeTime)*synapticEfficacy/decayWeight);
+                    a->weight *= std::exp(-(timestamp-previousInputTime)*synapticEfficacy/decayWeight);
                 }
             }
                 
@@ -261,8 +264,8 @@ namespace adonis {
                     }
 				}
                 
-                // membrane potential equation (double exponential model)
-                potential += (membraneResistance*decayCurrent/(decayCurrent - decayPotential)) * current * (std::exp(-timestep/decayCurrent) - std::exp(-timestep/decayPotential));
+                // membrane potential equation
+                potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
             }
             
             if (a) {
@@ -329,8 +332,8 @@ namespace adonis {
             return decayPotential;
         }
 		
-        float getDecayCurrent() const {
-            return decayCurrent;
+        float getResetCurrent() const {
+            return resetCurrent;
         }
 		
         float getCurrent() const {
@@ -390,7 +393,7 @@ namespace adonis {
         
 		// ----- LIF PARAMETERS -----
         float                                    decayWeight;
-		float                                    decayCurrent;
+		float                                    resetCurrent;
 		float                                    decayPotential;
         float                                    current;
 		bool                                     active;

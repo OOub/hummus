@@ -18,6 +18,7 @@
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
 #include "../source/neurons/LIF.hpp"
+#include "../source/neurons/IF.hpp"
 
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
@@ -44,13 +45,13 @@ int main(int argc, char** argv) {
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
-    network.lateralInhibition(network.getLayers()[1], -1);
-	
+    network.lateralInhibition(network.getLayers()[1]);
+    
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
     network.injectSpike(0, 11);
     network.injectSpike(0, 30);
-	
+    
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
     qtDisplay.setTimeWindow(100);
