@@ -662,7 +662,7 @@ namespace adonis {
         }
 
         // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
-        void injectPredictedSpike(spike s) {
+        void injectPredictedSpike(spike s, spikeType stype) {
             // if spike doesn't already exist insert it in the list. if it does, just update the timestamp
             auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(),[&](spike oldSpike) {
                 return oldSpike.propagationAxon == s.propagationAxon;
@@ -670,6 +670,7 @@ namespace adonis {
             
             if (it != predictedSpikes.end()) {
                 auto idx = std::distance(predictedSpikes.begin(), it);
+                predictedSpikes[idx].type = stype;
                 predictedSpikes[idx].timestamp = s.timestamp;
             } else {
                 predictedSpikes.insert(it, s);
