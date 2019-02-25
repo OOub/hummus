@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
-    network.addLayer<adonis::LIF>(2, 1, 1, {}, true, false, 10, 20, 3, false);
+    network.addLayer<adonis::LIF>(2, 1, 1, {}, true, false, 10, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0.1);

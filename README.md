@@ -2,15 +2,27 @@
 
 # Quick Start Guide
 
-Adonis is a spiking neural network simulator coded using C++. There is currently one version released, with another purely event-based one in the works: 
+## Introduction
 
-**Adonis_c** : a clock-based version of the simulator which includes current dynamics  
+Adonis is a header-only hybrid spiking neural network simulator coded using C++ and built first and foremost for computer vision and pattern recognition tasks. The simulator has the ability to run in both **clock-based** and **event-based** modes. In the clock-based mode, neurons are updated at a certain time interval. In the event-based mode, neurons are only updated in response to a spike.
 
-Adonis is a fast, lightweight and flexible spiking neural network simulator made specifically for pattern recognition tasks. Adonis makes it very simple to change/add learning rules without having to dig into the specifics of the code.
+##### event-based or clock-based?
+![events](resources/events.png)
 
-So far, only leaky integrate and fire neurons are supported, as the usefulness of more complicated models is debatable in pattern recognition. The neuron model support will be updated as my research progresses. 
+We will see later in the guide how to select a mode.
 
-Finally, Adonis allows full usage of both weight and conduction delays for pattern recognition
+#### Main Goals
+Adonis was born from the frustratingly complicated endeavour of using the standard simulators to create and work with novel concepts and learning rules that are "outside the box". One of the strong points of this simulator is the ease of implementing new ideas without having to delve into endless lines of code. As such, Adonis was developed with two goals in mind: flexibility and simplicity.
+
+##### Flexibility and Simplicity
+In order keep things simple, polymorphic classes with virtual methods were implemented. This basically means we can create a new type of add-on, neuron, or learning rule in a completely separate file by simply inheriting from  a polymorphic class and overriding the available virtual methods. We can focus on the scientific part of our work without worrying about making any changes to the main code.
+
+To easily remember and work with these polymorphic classes, the virtual methods available in each class act like messages that occur in different scenarios. We will break down the structure of each in a diagram further down.
+
+Furthermore, Adonis allows full usage of both **weights** and **axonal conduction delays** in the learning rules
+
+#### What's provided
+A matlab toolbox called AdonisUtilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
 
 ## Dependencies
 
@@ -23,7 +35,7 @@ Homebrew is used to easily install macOS dependencies. Open a terminal and run `
 Premake 4 is used to build the project. Open a terminal and run ``brew install premake``
 
 ###### Qt (optional if no GUI is needed)
-The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.11.1** and support cannot be guaranteed for other versions
+The Qt framework is needed when using the GUI to visualise the output of a neural network. The following has been tested with **Qt 5.12.1** and support cannot be guaranteed for other versions
 
 **first option**  
 Open a terminal and run ``brew install qt5``
@@ -44,7 +56,7 @@ Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get i
 The Qt framework version 5.9 or newer is needed when using the GUI to visualise the output of a neural network. To install qt5 on Debian Buster or Ubuntu 18.04, type the following:
 ``sudo apt-get install qt5-default libqt5charts5 libqt5charts5-dev libqt5qml5 qtdeclarative5-dev qml-module-qtcharts qml-module-qtquick-controls``
 
-This should get you going in terms of dependencies. If your distribution does not support that version (Debian Stretch bundles 5.7), consider downloading the latest Qt manually. The following has been tested with **Qt 5.11.1**.
+This should get you going in terms of dependencies. If your distribution does not support that version (Debian Stretch bundles 5.7), consider downloading the latest Qt manually.
 
 1. Download directly from https://www.qt.io/download/
 2. Select the correct version of Qt
@@ -58,7 +70,7 @@ export LD\_LIBRARY\_PATH
 
 ## Testing
 
-1. Go to the Adonis directory and run ``premake4 gmake && cd build && make`` or ``premake4 --without-qt gmake && cd build && make`` in case we do not want any Qt dependencies
+1. Go to the Adonis directory and run ``premake4 gmake && cd build && make`` or ``premake4 --without-qt gmake && cd build && make`` to build adonis without any Qt dependencies (you will lose the GUI in the process!)
 
 2. execute ``cd release && ./testNetwork`` to run the spiking neural network
 
@@ -78,79 +90,68 @@ Run ``premake4 --help`` for more information
 ## Using The Simulator
 
 #### Adonis UML Diagram
-The Adonis simulator is a header-only C++ library with 16 classes
 
-![flowChart](resources/flowchart.png)
+![chart](resources/flowchart.png)
 
-#### Adonis_c
-all the classes are declared within the ``adonis_c`` namespace. Check out testNetwork.cpp for more information on how to build and run a spiking neural network.
+**Create a new class in a new file and override any of the pure virtual methods outlined in the diagram to create your own add-on, neuron or learning rule**
+
+#### Namespace
+all the classes are declared within the ``adonis`` namespace. Check out testNetwork.cpp for an example on how to build and run a spiking neural network.
 
 ###### Important includes
-* add ``#include "../source/network.hpp"`` to use the base framework
-* any add-ons being used also need to be included. If I want to use the Qt Display for instance, I would add ``#include "../source/qtDisplay.hpp"``
+* base framework: ``#include "../source/core.hpp"``
+* Qt GUI: ``#include "../source/GUI/qtDisplay.hpp"``
+* neurons: ``#include "../source/neurons/[filename].hpp"``. Choose the neuron headers to include
+* learning rules: ``#include "../source/learningRules/[filename].hpp"`` Choose the learning rule headers to include
+* add-ons: ``#include "../source/addOns/[filename].hpp"`` Choose the add-on headers to include
 
-###### Reading Input data
-* the DataParser class is capable of reading 1D input data formatted in a text file as such: _timestamp, index_
+###### Reading Spike data
+<!-- * the DataParser class is capable of reading 1D input data formatted in a text file as such: _timestamp, index_
 * It can also read 2D data formatted as such: _timestamp, X, Y_
 
 This is done via the **readTrainingData()** method which take in a string for the location of the input data file, and an int for the width of the 2D square grid in the case of 2D data.
 
-the output is a vector of struct with 4 fields: **timestamp**, **neuronID**, **x**, **y**.
-
-###### Adding a Teacher signal
-* We can make the myelin plasticity algorithm supervised by simply adding a training signal using the **readTeacherSignal()** method in the DataParser class.
-* the teacher signal is then injected into the network by passing it as a reference to the network method **injectTeacher()**, and it will look something like this: 
-
-```
-auto teacher = dataParser.readTeacherSignal(path_to_file);
-network.injectTeacher(&teacher);
-
-```
-
-the teacher signal in question is formatted as a matrix of desired timestamps, each timestamp referring to the desired time of alignement on each learning epoch.
-
-###### Reading Test data
-the **readTestData()** method reads a test dataset in the same format as the training data, stops learning at the end of the training data time and shifts the test dataset timestamps accordingly, so as to make a sequence of spike patterns to be fed into the network
+the output is a vector of struct with 4 fields: **timestamp**, **neuronID**, **x**, **y**. -->
 
 ###### Initialisation
 
 _Initialising the optional Add-ons_
 
-* the QtDisplay is initialised as such: ``adonis_c::QtDisplay qtDisplay;``
+<!-- * the QtDisplay is initialised as such: ``adonis::QtDisplay qtDisplay;``
 * the SpikeLogger and the LearningLogger both take in an std::string as a parameter, to define the name of their corresponding output file. They are initialised as such:
 ```
-adonis_c::SpikeLogger spikeLogger(std::string("spikeLog"));
-adonis_c::LearningLogger learningLogger(std::string("learningLog"));
-```
+adonis::SpikeLogger spikeLogger(std::string("spikeLog"));
+adonis::LearningLogger learningLogger(std::string("learningLog"));
+``` -->
 _Initialising The Network_
 
-* if no add-ons are used we can directly initialise the network as such: ``adonis_c::Network network``
+<!-- * if no add-ons are used we can directly initialise the network as such: ``adonis::Network network``
 
 * the Network class can take in a vector of references for the standard delegates:
-``adonis_c::Network network({&spikeLogger, &learningLogger});``
+``adonis::Network network({&spikeLogger, &learningLogger});``
 
 * the Network class can also take in a reference to a main thread delegate (only 1 main thread add-on can be used):
-``adonis_c::Network network(&qtDisplay);``
+``adonis::Network network(&qtDisplay);``
 
 * if both types of add-ons are being used then we initialise as such:
-``adonis_c::Network network({&spikeLogger, &learningLogger}, &qtDisplay);``
+``adonis::Network network({&spikeLogger, &learningLogger}, &qtDisplay);`` -->
 
 ###### Creating The Network
 
-* to create neurons defined in a 1D space, we use the Network method **addNeurons()** method
+<!-- * to create neurons defined in a 1D space, we use the Network method **addNeurons()** method
 
 * to create neurons defined in a 2D square grid (for computer vision tasks), we use the Network method **addReceptiveFields()** method which creates a grid where each square in that grid contains a separate neuron population. This method allows the network to retain spatial information
 
-* an important parameter in the methods to create neurons is the selection of a learning rule. Each learning rule available inherits from the polymorphic class LearningRuleHandler: 
+* an important parameter in the methods to create neurons is the selection of a learning rule. Each learning rule available inherits from the polymorphic class LearningRuleHandler:
 
-1. The correct learning rule needs to be in the includes. 
+1. The correct learning rule needs to be in the includes.
 2. A LearningRuleHandler object needs to be created, and passed as a reference to the neuron creation methods, and if we don't want a learning rule, we simply pass a **nullptr**
 
-currently, 3 learning rules are implemented: MyelinPlasticity, MyelinPlasticityReinforcement, and Stdp.
+currently, 3 learning rules are implemented: MyelinPlasticity, MyelinPlasticityReinforcement, and Stdp. -->
 
 ###### Connecting The Network
 
-* the network getter **getNeuronPopulations()** returns a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
+<!-- * the network getter **getNeuronPopulations()** returns a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
 
 * the network method **allToAllConnectivity()** connects all neurons of a presynaptic population with all neurons from a postsynaptic population. It has 7 parameters:
 
@@ -167,28 +168,51 @@ currently, 3 learning rules are implemented: MyelinPlasticity, MyelinPlasticityR
 the following is an example of connectivity between 2 layers, with fixed weights, random delays with a maximum value of 20, and no redundant connectivity:
 ```
 network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20, false);
-```
+``` -->
 
 ###### Injecting Spikes
 
-* to inject a spike in a neuron we need to use the network method **injectSpike()** on a neuron. The neuron has to be defined as an input neuron via the Neuron class method **prepareInitialSpike** which takes in the timestamp of the spike. In the testNetwork.cpp you can find an example of how this looks:
+<!-- * to inject a spike in a neuron we use the network method **injectSpike()** on a neuron. The neuron has to be defined as an input neuron via the Neuron class method **prepareInitialSpike** which takes in the timestamp of the spike. In the testNetwork.cpp you can find an example of how this looks:
 
 ```
 network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
 ```
  here we inject a spike at timestamp 10 (a.u) for the first neuron in the first neuron population created.
 
-* if we are using an input data file we can use the **network.injectSpikeFromData()** method which takes in a reference (&) to the output of either the **readTrainingData()** or **readTestData()** method.
+* if we are using an input data file we can use the **network.injectSpikeFromData()** method which takes in a reference (&) to the output of either the **readTrainingData()** or **readTestData()** method. -->
 
-* we can stop learning at any time by calling the network method: **turnOffLearning(double timestamp)** which takes in a timestamp to disable the learning rules. This is useful in case we want to start injecting spikes from testing / cross-validation datasets.
+###### Turning off learning
+we can manually stop learning at any time by calling the network method: **turnOffLearning(double timestamp)**
 
 ###### Qt Display Settings
 The QtDisplay class has 4 methods to control the settings:
 
-* **useHardwareAcceleration()** : a bool to control whether to use openGL
-* **trackLayer()** : an int to track a specific layer
-* **trackNeuron()** : an int to track a specific neuron via its ID
+* **useHardwareAcceleration()** : a bool to control whether to use openGL for faster rendering of the plots
+* **trackLayer()** : an int to track a specific layer on the OutputViewer
+* **trackInputSublayer()** : an int to track a specific sublayer on the InputViewer
+* **trackOutputSublayer()** : an int to track a specific sublayer on the OutputViewer
+* **trackNeuron()** : an int to track the membrane potential of a neuron via its ID
 * **setTimeWindow()** : a double that defines the time window of the display
 
 ###### Running The Network
-to run the network use the Network class method run which takes the _runtime_ and the _timestep_ as parameters: ``network.run(runtime, timestep);``
+There are two ways to run a network with the same method **run()**:
+
+1. If spikes were manually injected via the **injectSpike()** method, or through an input data file via the **injectSpikeFromData()** then we can run the network for a specific time, with a _runtime_ and _timestep_ parameter
+
+```
+network.run(runtime, timestep);
+```
+
+2. We can also run the network with _trainingData_ vector, a _timestep_, an optional _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value shoudl be equivalent to the time window you are working with):
+  * inject spikes from training and test data
+  * run the network on the training data
+  * stop all learning and reset network time
+  * run the network on the test data
+
+```
+network.run(trainingData, timestep, timestep, testData, shift);
+```
+
+###### Event-based and Clock-based mode selection
+* running the network with a **timestep = 0** will select the asynchronous, or **event-based** mode.
+* running the network with a **timestep > 0** will select the **clock-based** mode.
