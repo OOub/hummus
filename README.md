@@ -98,24 +98,45 @@ Run ``premake4 --help`` for more information
 #### Namespace
 all the classes are declared within the ``adonis`` namespace. Check out testNetwork.cpp for an example on how to build and run a spiking neural network.
 
-###### Important includes
+###### Important Includes
 * base framework: ``#include "../source/core.hpp"``
 * Qt GUI: ``#include "../source/GUI/qtDisplay.hpp"``
 * neurons: ``#include "../source/neurons/[filename].hpp"``. Choose the neuron headers to include
 * learning rules: ``#include "../source/learningRules/[filename].hpp"`` Choose the learning rule headers to include
 * add-ons: ``#include "../source/addOns/[filename].hpp"`` Choose the add-on headers to include
 
-###### Reading Spike data
-<!-- * the DataParser class is capable of reading 1D input data formatted in a text file as such: _timestamp, index_
-* It can also read 2D data formatted as such: _timestamp, X, Y_
+###### Reading Spike Data
+the DataParser class is used to **parse spike data** from a text file **into a vector of input** via the **readData()** method which take in a string for the location of the input data file
 
-This is done via the **readTrainingData()** method which take in a string for the location of the input data file, and an int for the width of the 2D square grid in the case of 2D data.
+* input is a struct with 5 fields:
+  * timestamp
+  * neuronID
+  * x
+  * y
+  * sublayerID
 
-the output is a vector of struct with 4 fields: **timestamp**, **neuronID**, **x**, **y**. -->
+
+* The text files can be formatted as such:
+  * 1D input data: _timestamp, index_
+  * 2D input data:  _timestamp, X, Y_
+  * 2D input data with sublayers (feature maps):  _timestamp, X, Y, sublayerID_
+
+<u>Example<u>
+
+```
+#include "../source/dataParser
+
+adonis::DataParser parser;
+
+auto trainingData = parser.readData([path to training file]);
+auto testData = parser.readData([path to test file]);
+```
+
+the trainingData and testData vectors can then be used to inject spikes into the network either through the **injectSpikeFromData()** method or the appropriate **run()** method which takes care of that for you. Please see below for more details on injecting spikes and running the network
 
 ###### Initialisation
 
-_Initialising the optional Add-ons_
+* Initialising the optional Add-ons
 
 <!-- * the QtDisplay is initialised as such: ``adonis::QtDisplay qtDisplay;``
 * the SpikeLogger and the LearningLogger both take in an std::string as a parameter, to define the name of their corresponding output file. They are initialised as such:
@@ -123,7 +144,7 @@ _Initialising the optional Add-ons_
 adonis::SpikeLogger spikeLogger(std::string("spikeLog"));
 adonis::LearningLogger learningLogger(std::string("learningLog"));
 ``` -->
-_Initialising The Network_
+* Initialising the network
 
 <!-- * if no add-ons are used we can directly initialise the network as such: ``adonis::Network network``
 
@@ -135,6 +156,19 @@ _Initialising The Network_
 
 * if both types of add-ons are being used then we initialise as such:
 ``adonis::Network network({&spikeLogger, &learningLogger}, &qtDisplay);`` -->
+
+###### Turning Off Learning
+we can manually stop learning at any time by calling the network method: **turnOffLearning(double timestamp)**
+
+###### Qt Display Settings
+The QtDisplay class has 4 methods to control the settings:
+
+* **useHardwareAcceleration()** : a bool to control whether to use openGL for faster rendering of the plots
+* **trackLayer()** : an int to track a specific layer on the OutputViewer
+* **trackInputSublayer()** : an int to track a specific sublayer on the InputViewer
+* **trackOutputSublayer()** : an int to track a specific sublayer on the OutputViewer
+* **trackNeuron()** : an int to track the membrane potential of a neuron via its ID
+* **setTimeWindow()** : a double that defines the time window of the display
 
 ###### Creating The Network
 
@@ -172,27 +206,25 @@ network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &netw
 
 ###### Injecting Spikes
 
-<!-- * to inject a spike in a neuron we use the network method **injectSpike()** on a neuron. The neuron has to be defined as an input neuron via the Neuron class method **prepareInitialSpike** which takes in the timestamp of the spike. In the testNetwork.cpp you can find an example of how this looks:
-
+* To manually inject a spike into the network, use the **injectSpike(neuronID, timestamp)** method:
 ```
-network.injectSpike(network.getNeuronPopulations()[0].rfNeurons[0].prepareInitialSpike(10));
+network.injectSpike(0, 10);
 ```
- here we inject a spike at timestamp 10 (a.u) for the first neuron in the first neuron population created.
+here we inject a spike at timestamp 10ms for the first neuron in the first neuron population created.
 
-* if we are using an input data file we can use the **network.injectSpikeFromData()** method which takes in a reference (&) to the output of either the **readTrainingData()** or **readTestData()** method. -->
+* If we are working with input data files (eg: trainingData and testData from the Reading Spike Data section) we have two options:
 
-###### Turning off learning
-we can manually stop learning at any time by calling the network method: **turnOffLearning(double timestamp)**
+    1. using the **injectSpikeFromData()** method with one argument: a reference (&) to the output of the DataParser **readData()** method
+    ```
+    network.injectSpikeFromData(&trainingData);
+    ```
 
-###### Qt Display Settings
-The QtDisplay class has 4 methods to control the settings:
+    2. using ``network.run(trainingData, timestep, timestep, testData, shift);`` which automatically calls **injectSpikeFromData()**.
 
-* **useHardwareAcceleration()** : a bool to control whether to use openGL for faster rendering of the plots
-* **trackLayer()** : an int to track a specific layer on the OutputViewer
-* **trackInputSublayer()** : an int to track a specific sublayer on the InputViewer
-* **trackOutputSublayer()** : an int to track a specific sublayer on the OutputViewer
-* **trackNeuron()** : an int to track the membrane potential of a neuron via its ID
-* **setTimeWindow()** : a double that defines the time window of the display
+  **PLEASE SEE THE NEXT SECTION - RUNNING THE NETWORK - FOR MORE DETAILS**
+
+
+if we are using an input data file we can use the **network.injectSpikeFromData()** method which takes in a reference (&) to the output of either the **readTrainingData()** or **readTestData()** method.
 
 ###### Running The Network
 There are two ways to run a network with the same method **run()**:
@@ -213,6 +245,6 @@ network.run(runtime, timestep);
 network.run(trainingData, timestep, timestep, testData, shift);
 ```
 
-###### Event-based and Clock-based mode selection
-* running the network with a **timestep = 0** will select the asynchronous, or **event-based** mode.
+###### Event-based and Clock-based Mode Selection
+* running the network with a **timestep = 0** will select the **asynchronous**, or **event-based** mode.
 * running the network with a **timestep > 0** will select the **clock-based** mode.
