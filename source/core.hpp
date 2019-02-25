@@ -60,7 +60,7 @@ namespace adonis {
         double   previousInputTime;
     };
     
-    enum spikeType {
+    enum class spikeType {
         normal,
         endOfIntegration,
         prediction,
@@ -112,7 +112,7 @@ namespace adonis {
         
 		// synchronous update method
 		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) {
-			update(timestamp, a, network, none);
+			update(timestamp, a, network, spikeType::none);
 		}
         
         // reset a neuron to its initial status
@@ -155,7 +155,7 @@ namespace adonis {
             if (!initialAxon.postNeuron) {
                 initialAxon.postNeuron = this;
             }
-            return spike{timestamp, &initialAxon, normal};
+            return spike{timestamp, &initialAxon, spikeType::normal};
         }
         
 		// utility function that returns true or false depending on a probability percentage
@@ -303,6 +303,7 @@ namespace adonis {
                 addOns(_addOns),
                 thAddOn(_thAddOn),
                 learningStatus(true),
+                asynchronous(false),
                 learningOffSignal(-1),
                 maxDelay(0) {}
 		
@@ -754,6 +755,10 @@ namespace adonis {
                 std::cout << "Running the network synchronously" << std::endl;
             }
 
+            if (_timestep == 0) {
+                asynchronous = true;
+            }
+            
             for (auto& n: neurons) {
                 n->initialisation(this);
             }
@@ -794,6 +799,10 @@ namespace adonis {
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
         void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr, int shift=20) {
+            if (_timestep == 0) {
+                asynchronous = true;
+            }
+            
             for (auto& n: neurons) {
                 n->initialisation(this);
             }
@@ -883,6 +892,10 @@ namespace adonis {
             return preTrainingLabelAssignment;
         }
         
+        bool getNetworkType() const {
+            return asynchronous;
+        }
+        
     protected:
 
         // -----PROTECTED NETWORK METHODS -----
@@ -920,9 +933,9 @@ namespace adonis {
         }
 
         void runHelper(double runtime, double timestep, bool classification=false) {
+
             if (!neurons.empty()) {
                 if (timestep == 0) {
-                    
                     while (!initialSpikes.empty() || !generatedSpikes.empty() || !predictedSpikes.empty()) {
                         // if only one list is filled
                         if (predictedSpikes.empty() && generatedSpikes.empty() && !initialSpikes.empty()) {
@@ -1150,5 +1163,6 @@ namespace adonis {
         int                                    maxDelay;
         std::string                            currentLabel;
         bool                                   preTrainingLabelAssignment;
+        bool                                   asynchronous;
     };
 }

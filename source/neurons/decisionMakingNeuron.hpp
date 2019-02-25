@@ -18,14 +18,19 @@ namespace adonis {
 	class DecisionMakingNeuron : public LIF {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		DecisionMakingNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _homeostasis=false, float _externalCurrent=100, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=1000, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, std::string _classLabel="") :
-                LIF(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _homeostasis, _externalCurrent, _resetCurrent, _decayPotential, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance),
+		DecisionMakingNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=1000, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100, std::string _classLabel="") :
+                LIF(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _resetCurrent, _decayPotential, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent),
                 classLabel(_classLabel){}
 		
 		virtual ~DecisionMakingNeuron(){}
 		
         // ----- PUBLIC DECISION MAKING NEURON METHODS -----
         virtual void initialisation(Network* network) override {
+            // checking which synaptic kernel was chosen in the asynchronous network
+            if (network->getNetworkType() == true && timeDependentCurrent == true) {
+                std::cout << "the asynchronous neuron only works with a constant current, this was used" << std::endl;
+            }
+            
             // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
             for (auto& rule: learningRuleHandler) {
                 if(AddOn* globalRule = dynamic_cast<AddOn*>(rule)) {
@@ -43,7 +48,7 @@ namespace adonis {
         }
         
         virtual void update(double timestamp, axon* a, Network* network, spikeType type) override {
-            if (type == normal) {
+            if (type == spikeType::normal) {
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
                     inhibited = false;
@@ -103,19 +108,19 @@ namespace adonis {
                         double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
                         
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + resetCurrent) {
-                            network->injectPredictedSpike(spike{predictedTimestamp, a, prediction}, prediction);
+                            network->injectPredictedSpike(spike{predictedTimestamp, a, spikeType::prediction}, spikeType::prediction);
                         } else {
-                            network->injectPredictedSpike(spike{timestamp + resetCurrent, a, endOfIntegration}, endOfIntegration);
+                            network->injectPredictedSpike(spike{timestamp + resetCurrent, a, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
                         potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
                     }
                 }
-            } else if (type == prediction) {
+            } else if (type == spikeType::prediction) {
                 if (active && !inhibited) {
                     potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
                 }
-            } else if (type == endOfIntegration) {
+            } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
                     potential = restingPotential + membraneResistance * current * (1 - std::exp(-resetCurrent/decayPotential)) + (potential - restingPotential) * std::exp(-resetCurrent/decayPotential);
                 }
@@ -144,7 +149,7 @@ namespace adonis {
                 }
                 
                 for (auto& p : postAxons) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
                 }
                 
                 requestLearning(timestamp, a, network);
@@ -180,9 +185,14 @@ namespace adonis {
                 active = true;
             }
             
-            // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
-            if (timestamp - previousInputTime > resetCurrent) {
-                current = 0;
+            if (timeDependentCurrent ) {
+                // current decay
+                current *= std::exp(-timestep/resetCurrent);
+            } else {
+                // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
+                if (timestamp - previousInputTime > resetCurrent) {
+                    current = 0;
+                }
             }
             
             // eligibility trace decay
@@ -232,8 +242,13 @@ namespace adonis {
                     }
                 }
                 
-                // membrane potential equation
-                potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
+                if (timeDependentCurrent ) {
+                    // membrane potential equation for time-dependant current (double exponential model)
+                    potential += (membraneResistance*resetCurrent/(resetCurrent - decayPotential)) * current * (std::exp(-timestep/resetCurrent) - std::exp(-timestep/decayPotential));
+                } else {
+                    // membrane potential equation for constant current
+                    potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
+                }
             }
             
             if (a) {
@@ -271,7 +286,7 @@ namespace adonis {
                 }
                 
                 for (auto& p : postAxons) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
                 }
                 
                 requestLearning(timestamp, activeAxon, network);

@@ -60,7 +60,7 @@ namespace adonis {
             }
             
             for (auto& p : postAxons) {
-                network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
+                network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
             }
             
             requestLearning(timestamp, a, network);
@@ -102,7 +102,7 @@ namespace adonis {
                 }
                 
                 for (auto& p : postAxons) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), normal});
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
                 }
                 
                 requestLearning(timestamp, a, network);
