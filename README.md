@@ -243,6 +243,8 @@ receptive field column index | byte 38 to 40
 
 Please note, the first layer we build does not have any presynaptic neurons. The presynaptic neuron ID will appear as -1 in such cases. The same strategy is used for neurons without any cartesian coordinates defined (spike logger)
 
+Additionally, all the logger files can be read using the LogReader class in the AdonisUtilities matlab toolbox (more details in the quick start guide provided upon installing the toolbox in matlab).
+
 _**Initialising the network**_
 
 To initialise the network we can either initialise it without any add-ons:
@@ -319,3 +321,13 @@ network.run(&trainingData, timestep, &testData, shift);
 ###### Event-based and Clock-based Mode Selection
 * running the network with a **timestep = 0** will select the **asynchronous**, or **event-based** mode.
 * running the network with a **timestep > 0** will select the **clock-based** mode.
+
+----------------------
+
+## To-do List
+
+- [ ] method to easily get the network connectivity diagram
+- [ ] JSON parser to avoid coding in C++
+- [ ] import/export a network
+- [ ] sepia integration to connect an event-based camera
+- [ ] python module similar to the AdonisUtilities matlab toolbox
