@@ -302,12 +302,12 @@ The QtDisplay class has 4 methods to control the settings:
 
 To create a network we have to add layers of neurons.
 
-Available Neuron Models | Use Case
------------------------ | ------------
-InputNeuron | initial layer that is fed external spikes. This neuron fires at every external spike  
-LIF | Leaky-Integrate-and-Fire (LIF) with two different synaptic kernels for current dynamics: **constant current** or **time-varying current**
-IF | Integrate-and-Fire model. similar to the LIF but without any decay in the membrane potential
-DecisionMakingNeuron | LIF neurons with the ability to be labelled at the start of the network, or after the training phase
+Available Neuron Models | Use Case | Arguments
+----------------------- | -------- | ---------
+InputNeuron | initial layer that is fed external spikes. This neuron fires at every external spike |eligibility decay, threshold, resting potential, membraneResistance
+LIF | Leaky-Integrate-and-Fire (LIF) with two different synaptic kernels for current dynamics: **constant current** or **time-varying current** | timeDependentCurrent, bool homeostasis, current decay, potential decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current
+IF | Integrate-and-Fire model. similar to the LIF but without any decay in the membrane potential | timeDependentCurrent, bool homeostasis, current decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current
+DecisionMakingNeuron | LIF neurons with the ability to be labelled at the start of the network, or after the training phase | timeDependentCurrent, bool homeostasis, current decay, potential decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current, label string
 
 Available Layer Methods | Use Case | Arguments
 ----------------------- | --------- | --------
@@ -325,6 +325,15 @@ network.addLayer<adonis::InputNeuron>(10, 1, 2, {});
 network.addLayer<adonis::InputNeuron>(10, 1, 2, {&stdp});
 ```
 
+As the final arguments for the layer creation methods we can customise any neuron parameter by simply adding one of the arguments from a neuron. For example, if we take the earlier example 10 LIF neurons and we need to customise the synaptic kernel used into the time-varying one:
+
+```
+// Changing the synaptic kernel
+bool timeVaryingCurrent = true;
+network.addLayer<adonis::InputNeuron>(10, 1, 2, {}, timeVaryingCurrent);
+```
+
+
 The **addReservoir()** method already connects the neurons within the reservoir so there is no need to use any of the available connection methods from the next section to interconnect the reservoir neurons
 
 #### **Connecting Neurons In The Network**
@@ -333,10 +342,10 @@ There are currently 4 ways to connect layers of neurons:
 
 Available Connection Methods | Use Case | Arguments
 ----------------------- | --------- | -------------
-allToAll | fully connect all neurons in two layers | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
-lateralInhibition | interconnects neurons in a layer with negative weights | layer - mean weight - weight standard deviation - connection
-convolution | connecting two layers according to their receptive fields | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
-pooling | subsampling the receptive fields (translation invariance) | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
+allToAll | fully connect all neurons in two layers | presynaptic layer, postsynaptic layer, mean weight, weight standard deviation, mean delay, delay standard deviation, connection probability
+lateralInhibition | interconnects neurons in a layer with negative weights | layer, mean weight, weight standard deviation, connection
+convolution | connecting two layers according to their receptive fields | presynaptic layer, postsynaptic layer, mean weight, weight standard deviation, mean delay, delay standard deviation, connection probability
+pooling | subsampling the receptive fields (translation invariance) | presynaptic layer, postsynaptic layer, mean weight, weight standard deviation, mean delay, delay standard deviation, connection probability
 
 the weight in question is scaled according to the input resistance R. So when weight w=1 the actual weight inside the projections is w/R. Additionally, by default the externalCurrent is set to 100. You can play with these parameters to control the shape of the membrane potential when a spike occurs
 
