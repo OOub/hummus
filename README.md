@@ -283,7 +283,43 @@ The QtDisplay class has 4 methods to control the settings:
 
 ###### Creating The Network
 
-###### Connecting The Network
+To create a network we have to add layers of neurons.
+
+Available Neuron Models | Use Case
+----------------------- | ------------
+InputNeuron | initial layer that is fed external spikes. This neuron fires at every external spike  
+LIF | Leaky-Integrate-and-Fire (LIF) with two different synaptic kernels for current dynamics: **constant current** or **time-varying current**
+IF | Integrate-and-Fire model. similar to the LIF but without any decay in the membrane potential
+DecisionMakingNeuron | LIF neurons with the ability to be labelled at the start of the network, or after the training phase
+
+Available Layer Methods | Use Case
+----------------------- | ---------
+addLayer | 1D neurons
+add2dLayer | grid of 2D neurons
+addReservoir | randomly-connected reservoir of non-learning 1D neurons for liquid state machines
+addDecisionMakingLayer | 1D layer of decision-making neurons for classification
+
+Each of these methods is a template; when calling them a class identifier needs to be specified. Creating a 1D layer of input neurons would look like this: ``addLayer<adonis::InputNeuron>()``
+
+The **addReservoir()** method already connects the neurons within the reservoir so there is no need to use any of the available connection methods from the next section to interconnect the reservoir neurons
+
+###### Connecting Neurons In The Network
+
+There are currently 4 ways to connect layers of neurons:
+
+Available Connection Methods | Use Case | Arguments
+----------------------- | --------- | -------------
+allToAll | fully connect all neurons in two layers | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
+lateralInhibition | interconnects neurons in a layer with negative weights | layer - mean weight - weight standard deviation - connection
+convolution | connecting two layers according to their receptive fields | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
+pooling | subsampling the receptive fields (translation invariance) | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability 
+
+the weight in question is scaled according to the input resistance R. So when weight w=1 the actual weight inside the projections is w/R. Additionally, by default the externalCurrent is set to 100. You can play with these parameters to control the shape of the membrane potential when a spike occurs
+
+```
+// Connecting two layers in an all-to-all fashion with a mean weight of 1 +- 0.1 and a 5ms delay +- 2ms
+network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0.1, 5, 2);
+```
 
 ###### Injecting Spikes
 
@@ -321,13 +357,3 @@ network.run(&trainingData, timestep, &testData, shift);
 ###### Event-based and Clock-based Mode Selection
 * running the network with a **timestep = 0** will select the **asynchronous**, or **event-based** mode.
 * running the network with a **timestep > 0** will select the **clock-based** mode.
-
-----------------------
-
-## To-do List
-
-- [ ] method to easily get the network connectivity diagram
-- [ ] JSON parser to avoid coding in C++
-- [ ] import/export a network
-- [ ] sepia integration to connect an event-based camera
-- [ ] python module similar to the AdonisUtilities matlab toolbox
