@@ -10,7 +10,7 @@ Event-based | Clock-based
 ------------|------------------
 performance | easier algorithms
 compatible with neuromorphic platforms | membrane potentials at every timestep
-Leaky-Integrate-and-Fire (LIF) neuron with constant current dynamics only | LIF neuron with constant and time-varying current dynamics
+Leaky-Integrate-and-Fire (LIF) neuron with constant current dynamics only | Leaky-Integrate-and-Fire (LIF) neuron with a choice between constant and time-varying current dynamics
 
 We will see later in the guide how to select a mode.
 
