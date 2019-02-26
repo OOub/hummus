@@ -7,7 +7,10 @@
 Adonis is a header-only hybrid spiking neural network simulator coded using C++ and built first and foremost for computer vision and pattern recognition tasks. The simulator has the ability to run in both **clock-based** and **event-based** modes. In the clock-based mode, neurons are updated at a certain time interval. In the event-based mode, neurons are only updated in response to a spike.
 
 ##### event-based or clock-based?
-![events](resources/events.png)
+Event-based | Clock-based
+------------|------------------
+performance | easier algorithms
+compatible with neuromorphic platforms | membrane potentials at every timestep
 
 We will see later in the guide how to select a mode.
 
@@ -108,20 +111,19 @@ all the classes are declared within the ``adonis`` namespace. Check out testNetw
 ###### Reading Spike Data
 the DataParser class is used to **parse spike data** from a text file **into a vector of input** via the **readData()** method which take in a string for the location of the input data file
 
-* input is a struct with 5 fields:
+input is a struct with 5 fields:
   * timestamp
   * neuronID
   * x
   * y
   * sublayerID
 
-
-* The text files can be formatted as such:
+The text files can be formatted as such:
   * 1D input data: _timestamp, index_
   * 2D input data:  _timestamp, X, Y_
   * 2D input data with sublayers (feature maps):  _timestamp, X, Y, sublayerID_
 
-<u>Example<u>
+**Example**
 
 ```
 #include "../source/dataParser
@@ -138,24 +140,7 @@ the trainingData and testData vectors can then be used to inject spikes into the
 
 * Initialising the optional Add-ons
 
-<!-- * the QtDisplay is initialised as such: ``adonis::QtDisplay qtDisplay;``
-* the SpikeLogger and the LearningLogger both take in an std::string as a parameter, to define the name of their corresponding output file. They are initialised as such:
-```
-adonis::SpikeLogger spikeLogger(std::string("spikeLog"));
-adonis::LearningLogger learningLogger(std::string("learningLog"));
-``` -->
 * Initialising the network
-
-<!-- * if no add-ons are used we can directly initialise the network as such: ``adonis::Network network``
-
-* the Network class can take in a vector of references for the standard delegates:
-``adonis::Network network({&spikeLogger, &learningLogger});``
-
-* the Network class can also take in a reference to a main thread delegate (only 1 main thread add-on can be used):
-``adonis::Network network(&qtDisplay);``
-
-* if both types of add-ons are being used then we initialise as such:
-``adonis::Network network({&spikeLogger, &learningLogger}, &qtDisplay);`` -->
 
 ###### Turning Off Learning
 we can manually stop learning at any time by calling the network method: **turnOffLearning(double timestamp)**
@@ -172,37 +157,7 @@ The QtDisplay class has 4 methods to control the settings:
 
 ###### Creating The Network
 
-<!-- * to create neurons defined in a 1D space, we use the Network method **addNeurons()** method
-
-* to create neurons defined in a 2D square grid (for computer vision tasks), we use the Network method **addReceptiveFields()** method which creates a grid where each square in that grid contains a separate neuron population. This method allows the network to retain spatial information
-
-* an important parameter in the methods to create neurons is the selection of a learning rule. Each learning rule available inherits from the polymorphic class LearningRuleHandler:
-
-1. The correct learning rule needs to be in the includes.
-2. A LearningRuleHandler object needs to be created, and passed as a reference to the neuron creation methods, and if we don't want a learning rule, we simply pass a **nullptr**
-
-currently, 3 learning rules are implemented: MyelinPlasticity, MyelinPlasticityReinforcement, and Stdp. -->
-
 ###### Connecting The Network
-
-<!-- * the network getter **getNeuronPopulations()** returns a vector of neuron populations that we just created. This getter returns a struct with 3 fields: **rfNeurons** a vector of neurons belonging to a population, **rfID** the ID of a receptive field in case the **addReceptivefields()** method was used, and **layerID** the ID of the layer a population belongs to.
-
-* the network method **allToAllConnectivity()** connects all neurons of a presynaptic population with all neurons from a postsynaptic population. It has 7 parameters:
-
-1. a reference to a presynaptic neuron population
-2. a reference to a postsynaptic neuron population
-3. a bool to randomise the projection weights around a value
-4. the weight value in question
-5. a bool to randomise the projection delays around a value
-6. the delay value in question
-7. a bool to allow redundant connectivity (more than one projection between a set of neurons)
-
-**it is important to note that the weight in question is scaled according to the input resistance R. So when weight w=1 the actual weight inside the projections is w/R. Additionally, by default the externalCurrent is set to 100. You can play with these parameters to control the shape of the membrane potential when a spike occurs**
-
-the following is an example of connectivity between 2 layers, with fixed weights, random delays with a maximum value of 20, and no redundant connectivity:
-```
-network.allToAllConnectivity(&network.getNeuronPopulations()[0].rfNeurons, &network.getNeuronPopulations()[1].rfNeurons, false, weight, true, 20, false);
-``` -->
 
 ###### Injecting Spikes
 
@@ -214,10 +169,7 @@ here we inject a spike at timestamp 10ms for the first neuron in the first neuro
 
 * If we are working with input data files (eg: trainingData and testData from the Reading Spike Data section) we have two options:
 
-    1. using the **injectSpikeFromData()** method with one argument: a reference (&) to the output of the DataParser **readData()** method
-    ```
-    network.injectSpikeFromData(&trainingData);
-    ```
+    1. using the **injectSpikeFromData()** method with one argument: a reference (&) to the output of the DataParser **readData()** method. This will look like this ``network.injectSpikeFromData(&trainingData);``
 
     2. using ``network.run(trainingData, timestep, timestep, testData, shift);`` which automatically calls **injectSpikeFromData()**.
 
@@ -229,13 +181,13 @@ if we are using an input data file we can use the **network.injectSpikeFromData(
 ###### Running The Network
 There are two ways to run a network with the same method **run()**:
 
-1. If spikes were manually injected via the **injectSpike()** method, or through an input data file via the **injectSpikeFromData()** then we can run the network for a specific time, with a _runtime_ and _timestep_ parameter
+* If spikes were manually injected via the **injectSpike()** method, or through an input data file via the **injectSpikeFromData()** then we can run the network for a specific time, with a _runtime_ and _timestep_ parameter
 
 ```
 network.run(runtime, timestep);
 ```
 
-2. We can also run the network with _trainingData_ vector, a _timestep_, an optional _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value shoudl be equivalent to the time window you are working with):
+* We can also run the network with _trainingData_ vector, a _timestep_, an optional _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value shoudl be equivalent to the time window you are working with):
   * inject spikes from training and test data
   * run the network on the training data
   * stop all learning and reset network time
