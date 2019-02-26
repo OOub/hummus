@@ -6,11 +6,11 @@
 
 Adonis is a header-only hybrid spiking neural network simulator coded using C++ and built first and foremost for computer vision and pattern recognition tasks. The simulator has the ability to run in both **clock-based** and **event-based** modes. In the clock-based mode, neurons are updated at a certain time interval. In the event-based mode, neurons are only updated in response to a spike.
 
-##### event-based or clock-based?
 Event-based | Clock-based
 ------------|------------------
 performance | easier algorithms
 compatible with neuromorphic platforms | membrane potentials at every timestep
+Leaky-Integrate-and-Fire (LIF) neuron with constant current dynamics only | LIF neuron with constant and time-varying current dynamics
 
 We will see later in the guide how to select a mode.
 
@@ -188,10 +188,10 @@ network.run(runtime, timestep);
 ```
 
 * We can also run the network with _trainingData_ vector, a _timestep_, an optional _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value shoudl be equivalent to the time window you are working with):
-  * inject spikes from training and test data
-  * run the network on the training data
-  * stop all learning and reset network time
-  * run the network on the test data
+      * inject spikes from training and test data
+      * run the network on the training data
+      * stop all learning and reset network time
+      * run the network on the test data
 
 ```
 network.run(trainingData, timestep, timestep, testData, shift);
