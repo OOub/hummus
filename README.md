@@ -14,24 +14,24 @@ Leaky-Integrate-and-Fire (LIF) neuron with constant current dynamics only | Leak
 
 We will see later in the guide how to select a mode.
 
-#### Main Goals
+#### **Main Goals**
 Adonis was born from the frustratingly complicated endeavour of using the standard simulators to create and work with novel concepts and learning rules that are "outside the box". One of the strong points of this simulator is the ease of implementing new ideas without having to delve into endless lines of code. As such, Adonis was developed with two goals in mind: flexibility and simplicity.
 
-##### Flexibility and Simplicity
+###### Flexibility and Simplicity
 In order keep things simple, polymorphic classes with virtual methods were implemented. This basically means we can create a new type of add-on, neuron, or learning rule in a completely separate file by simply inheriting from  a polymorphic class and overriding the available virtual methods. We can focus on the scientific part of our work without worrying about making any changes to the main code.
 
 To easily remember and work with these polymorphic classes, the virtual methods available in each class act like messages that occur in different scenarios. We will break down the structure of each in a diagram further down.
 
 Furthermore, Adonis allows full usage of both **weights** and **axonal conduction delays** in the learning rules
 
-#### What's provided
+#### **What's provided**
 A matlab toolbox called AdonisUtilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
 
 ----------------------
 
 ## Dependencies
 
-#### On macOS
+#### **On macOS**
 
 ###### Homebrew
 Homebrew is used to easily install macOS dependencies. Open a terminal and run ``/usr/bin/ruby -e “$(curl -fsSL [https://raw.githubusercontent.com/Homebrew/install/master](https://raw.githubusercontent.com/Homebrew/install/master) install)”``
@@ -52,7 +52,7 @@ Open a terminal and run ``brew install qt5``
 3. Make sure the Qt Charts add-on is selected
 4. Open the premake4.lua file and modify the moc, include and library paths depending on where Qt was installed
 
-#### On Linux
+#### **On Linux**
 
 ###### Premake 4
 Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get install premake4``
@@ -82,7 +82,7 @@ export LD\_LIBRARY\_PATH
 
 **_Disclaimer: some of the applications bundled with the simulator use a path relative to the executable to use one of the files present in the data folder. As such, executing ``./release/testNetwork`` instead of ``cd release && ./testNetwork`` could lead to an error message when the relative path is set incorrectly_**
 
-#### Premake Actions and Options
+#### **Premake Actions and Options**
 
 ###### Using xCode on macOS
 To use Xcode as an IDE on macOS, go the Adonis base directory and run ``premake4 xcode4``
@@ -97,23 +97,23 @@ Run ``premake4 --help`` for more information
 
 ## Using The Simulator
 
-#### Adonis UML Diagram
+#### **Adonis UML Diagram**
 
 ![chart](resources/flowchart.png)
 
 **Create a new class in a new file and override any of the pure virtual methods outlined in the diagram to create your own add-on, neuron or learning rule**
 
-#### Namespace
+#### **Namespace**
 all the classes are declared within the ``adonis`` namespace. Check out testNetwork.cpp for an example on how to build and run a spiking neural network.
 
-###### Important Includes
+#### **Important Includes**
 * base framework: ``#include "../source/core.hpp"``
 * Qt GUI: ``#include "../source/GUI/qtDisplay.hpp"``
 * neurons: ``#include "../source/neurons/[filename].hpp"``. Choose the neuron headers to include
 * learning rules: ``#include "../source/learningRules/[filename].hpp"`` Choose the learning rule headers to include
 * add-ons: ``#include "../source/addOns/[filename].hpp"`` Choose the add-on headers to include
 
-###### Reading Spike Data
+#### **Reading Spike Data**
 the DataParser class is used to **parse spike data** from a text file **into a vector of input** via the **readData()** method which take in a string for the location of the input data file
 
 * input is a struct with 5 fields:
@@ -142,17 +142,17 @@ auto testData = parser.readData([path to test file]);
 
 the trainingData and testData vectors can then be used to inject spikes into the network either through the **injectSpikeFromData()** method or the appropriate **run()** method which takes care of that for you. Please see below for more details on injecting spikes and running the network
 
-###### Initialisation
+#### **Initialisation**
 
-_**Initialising the optional Add-ons**_
+_** I- Initialising the optional Add-ons**_
 
   * **Qt display :** display useful information on runtime
   ```
-  adonis::QtDisplay qtDisplay
+  adonis::QtDisplay qtDisplay;
   ```
   * **Spike logger :** write the network output into a binary file.
   ```
-  adonis::SpikeLogger spikeLog(std::string filename)
+  adonis::SpikeLogger spikeLog(std::string filename);
   ```
 
 **The SpikeLogger binary file starts with an 8 bytes header**
@@ -174,7 +174,7 @@ y coordinate | byte 32 to 34
 
   * **Classification logger :** write into a binary file the spikes from the output layer when the learning is off.
   ```
-  adonis::ClassificationLogger classificationLog(std::string filename)
+  adonis::ClassificationLogger classificationLog(std::string filename);
   ```
 
 ClassificationLogger Binary File Specs |
@@ -193,16 +193,16 @@ postsynaptic neuron ID | byte 10 to 12
     2. Calling the **neuronSelection()** PotentialLogger class method in order to chose which neurons to plot . This method should be called **after** defining all the layers of our network **(PLEASE SEE THE NETWORK CREATION SECTION FOR MORE DETAILS ON HOW TO BUILD NEURON LAYERS)**.
     ```
     // 1. Choosing to log only one neuron via its ID
-    potentialLog.neuronSelection(int _neuronID)
+    potentialLog.neuronSelection(int _neuronID);
     ```
     ```
     // 2. Choosing to log all neurons of a specific layer
-    potentialLog.neuronSelection(layer _layerToLog)
+    potentialLog.neuronSelection(layer _layerToLog);
     ```
 
     In order to pass a layer to the method we can use normal indexing on the network getLayers() method, as it outputs a vector of all the layers we built. This looks like this:
     ```
-    potentialLog.neuronSelection(network.getLayers()[0]) // logging neurons in the first layer we built
+    potentialLog.neuronSelection(network.getLayers()[0]); // logging neurons in the first layer we built
     ```
 
 
@@ -214,7 +214,7 @@ postsynaptic neuron ID | byte 12 to 14
 
   * **Myelin plasticity logger :** write the learning rule's output into a binary file; In other words, which neurons are being modified (plastic neurons)at each learning epoch.
   ```
-  adonis::MyelinPlasticityLogger mpLog(std::string filename)
+  adonis::MyelinPlasticityLogger mpLog(std::string filename);
   ```
 
 MyelinPlasticityLogger Binary File Specs |
@@ -245,7 +245,7 @@ Please note, the first layer we build does not have any presynaptic neurons. The
 
 Additionally, all the logger files can be read using the LogReader class in the AdonisUtilities matlab toolbox (more details in the quick start guide provided upon installing the toolbox in matlab).
 
-_**Initialising the network**_
+_**II- Initialising the network**_
 
 To initialise the network we can either initialise it without any add-ons:
 ```
@@ -254,24 +254,41 @@ adonis::Network network;
 
 Or we can initialise it with add-ons. In that case, the Network constructor has two arguments: a vector of references for the addon constructors, and a reference for **one** main thread addon.
 ```
-// constructor to initialise normal add-ons
+// Constructor to initialise normal add-ons
 adonis::Network network({&spikeLogger, &learningLogger});
-```
 
-```
-// constructor to initialise only a MainThreadAddOn
+// Constructor to initialise only a MainThreadAddOn
 adonis::Network network(&qtDisplay);
-```
 
-```
-// constructor to initialise both normal add-ons and a MainThreadAddOn
+// Constructor to initialise both normal add-ons and a MainThreadAddOn
 adonis::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 ```
 
-###### Turning Off Learning
+_**III- Initialising the learning rules**_
+
+To initialise the learning rules all we have to do is build a constructor for the learning rule and pass it as a reference to a layer of neurons.
+
+Each neuron has a vector of pointers to learning rule constructors, making it capable of having multiple rules. Look at the stdpTest.cpp in the applications folder for an example of a network with a learning rule
+
+```
+// initialising the STDP rule
+adonis::STDP stdp(1, 1, 20, 20);
+
+// Creating a layer of 10 neurons with the STDP rule passed as a reference (more details in the network creation section)
+network.addLayer<adonis::InputNeuron>(10, 1, 2, {&stdp});
+```
+
+Available Learning Rules | Arguments
+----------------------- | ------------
+STDP | A+, A-, tau+, tau-
+RewardModulatedSTDP | Ar+, Ar-, Ap+, Ap-
+TimeInvariantSTDP | alpha+, alpha-, beta+, beta-
+MyelinPlasticity | delay_alpha, delay_lambda, weight_alpha, weight_lambda
+
+#### **Turning Off Learning**
 we can manually stop learning at any time by calling the network method: **turnOffLearning(double timestamp)**
 
-###### Qt Display Settings
+#### **Qt Display Settings**
 The QtDisplay class has 4 methods to control the settings:
 
 * **useHardwareAcceleration()** : a bool to control whether to use openGL for faster rendering of the plots
@@ -281,7 +298,7 @@ The QtDisplay class has 4 methods to control the settings:
 * **trackNeuron()** : an int to track the membrane potential of a neuron via its ID
 * **setTimeWindow()** : a double that defines the time window of the display
 
-###### Creating The Network
+#### **Creating The Network**
 
 To create a network we have to add layers of neurons.
 
@@ -292,18 +309,25 @@ LIF | Leaky-Integrate-and-Fire (LIF) with two different synaptic kernels for cur
 IF | Integrate-and-Fire model. similar to the LIF but without any decay in the membrane potential
 DecisionMakingNeuron | LIF neurons with the ability to be labelled at the start of the network, or after the training phase
 
-Available Layer Methods | Use Case
------------------------ | ---------
-addLayer | 1D neurons
-add2dLayer | grid of 2D neurons
-addReservoir | randomly-connected reservoir of non-learning 1D neurons for liquid state machines
-addDecisionMakingLayer | 1D layer of decision-making neurons for classification
+Available Layer Methods | Use Case | Arguments
+----------------------- | --------- | --------
+addLayer | 1D neurons | number of neurons, number of receptive fields, number of sublayers, vector of pointers to learning rules, neuron arguments (variadic templating)
+add2dLayer | grid of 2D neurons | number of neurons, window size, grid width, grid height, number of sublayers, bool for overlapping receptive fields (1 pixel stride), vector of pointers to learning rules, neuron arguments
+addReservoir | randomly-connected reservoir of non-learning 1D neurons for liquid state machines | number of neurons, mean weight, weight standard deviation, feedforward connection probability, feedback connection probability, self-excitation probability, neuron arguments
+addDecisionMakingLayer | 1D layer of decision-making neurons for classification | training label filename, bool to assign labels at the start of the network (after training if false), vector of pointers to learning rules, refractoryPeriod, bool for timeDependentCurrent (constant current if false), bool homeostasis, current decay, potential decay, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, externalCurrent
 
-Each of these methods is a template; when calling them a class identifier needs to be specified. Creating a 1D layer of input neurons would look like this: ``addLayer<adonis::InputNeuron>()``
+Each of these methods is a template; when calling them a class identifier needs to be specified. Creating a 1D layer of input neurons would look like this:
+```
+// Creating 10 1D input neurons with 1 receptive field, 2 sublayers and no learning rule (empty vector)
+network.addLayer<adonis::InputNeuron>(10, 1, 2, {});
+
+// Creating 10 1D LIF neurons with 1 receptive field, 2 sublayer and an learning rule
+network.addLayer<adonis::InputNeuron>(10, 1, 2, {&stdp});
+```
 
 The **addReservoir()** method already connects the neurons within the reservoir so there is no need to use any of the available connection methods from the next section to interconnect the reservoir neurons
 
-###### Connecting Neurons In The Network
+#### **Connecting Neurons In The Network**
 
 There are currently 4 ways to connect layers of neurons:
 
@@ -312,16 +336,16 @@ Available Connection Methods | Use Case | Arguments
 allToAll | fully connect all neurons in two layers | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
 lateralInhibition | interconnects neurons in a layer with negative weights | layer - mean weight - weight standard deviation - connection
 convolution | connecting two layers according to their receptive fields | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
-pooling | subsampling the receptive fields (translation invariance) | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability 
+pooling | subsampling the receptive fields (translation invariance) | presynaptic layer - postsynaptic layer - mean weight - weight standard deviation - mean delay - delay standard deviation - connection probability
 
 the weight in question is scaled according to the input resistance R. So when weight w=1 the actual weight inside the projections is w/R. Additionally, by default the externalCurrent is set to 100. You can play with these parameters to control the shape of the membrane potential when a spike occurs
 
 ```
-// Connecting two layers in an all-to-all fashion with a mean weight of 1 +- 0.1 and a 5ms delay +- 2ms
-network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0.1, 5, 2);
+// Connecting two layers in an all-to-all fashion with a mean weight of 1 +- 0.1,  a 5ms delay +- 2ms and 50% chance of making a connection
+network.allToAll(network.getLayers()[0], network.getLayers()[1], 1, 0.1, 5, 2, 50);
 ```
 
-###### Injecting Spikes
+#### **Injecting Spikes**
 
 * To manually inject a spike into the network, use the **injectSpike(neuronID, timestamp)** method:
 ```
@@ -335,7 +359,7 @@ here we inject a spike at timestamp 10ms for the first neuron in the first neuro
 
     2. using ``network.run(&trainingData, timestep, &testData, shift);`` which automatically calls **injectSpikeFromData()**. (**PLEASE SEE THE NEXT SECTION - RUNNING THE NETWORK - FOR MORE DETAILS**)
 
-###### Running The Network
+#### **Running The Network**
 There are two ways to run a network with the same method **run()**:
 
 * If spikes were manually injected via the **injectSpike()** method, or through an input data file via the **injectSpikeFromData()** then we can run the network for a specific time, with a _runtime_ and _timestep_ parameter
@@ -354,6 +378,6 @@ network.run(runtime, timestep);
 network.run(&trainingData, timestep, &testData, shift);
 ```
 
-###### Event-based and Clock-based Mode Selection
+#### **Event-based and Clock-based Mode Selection**
 * running the network with a **timestep = 0** will select the **asynchronous**, or **event-based** mode.
 * running the network with a **timestep > 0** will select the **clock-based** mode.
