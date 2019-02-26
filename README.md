@@ -111,17 +111,17 @@ all the classes are declared within the ``adonis`` namespace. Check out testNetw
 ###### Reading Spike Data
 the DataParser class is used to **parse spike data** from a text file **into a vector of input** via the **readData()** method which take in a string for the location of the input data file
 
-input is a struct with 5 fields:
-  * timestamp
-  * neuronID
-  * x
-  * y
-  * sublayerID
+* input is a struct with 5 fields:
+      * timestamp
+      * neuronID
+      * x
+      * y
+      * sublayerID
 
-The text files can be formatted as such:
-  * 1D input data: _timestamp, index_
-  * 2D input data:  _timestamp, X, Y_
-  * 2D input data with sublayers (feature maps):  _timestamp, X, Y, sublayerID_
+* The text files can be formatted as such:
+      * 1D input data: _timestamp, index_
+      * 2D input data:  _timestamp, X, Y_
+      * 2D input data with sublayers (feature maps):  _timestamp, X, Y, sublayerID_
 
 **Example**
 
