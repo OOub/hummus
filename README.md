@@ -59,7 +59,7 @@ Premake 4 is used to build the project. Open a terminal and run ``sudo apt-get i
 
 ###### Qt (optional if no GUI is needed)
 The Qt framework version 5.9 or newer is needed when using the GUI to visualise the output of a neural network. To install qt5 on Debian Buster or Ubuntu 18.04, type the following:
-``sudo apt-get install qt5-default libqt5charts5 libqt5charts5-dev libqt5qml5 qtdeclarative5-dev qml-module-qtcharts qml-module-qtquick-controls``
+``sudo apt-get install qt5-default libqt5charts5 libqt5charts5-dev libqt5qml5 qtdeclarative5-dev qml-module-qtcharts qml-module-qtquick-controls ``
 
 This should get you going in terms of dependencies. If your distribution does not support that version (Debian Stretch bundles 5.7), consider downloading the latest Qt manually.
 
@@ -132,7 +132,7 @@ the DataParser class is used to **parse spike data** from a text file **into a v
 **Example**
 
 ```
-#include "../source/dataParser
+#include "../source/dataParser.hpp
 
 adonis::DataParser parser;
 
@@ -295,7 +295,7 @@ here we inject a spike at timestamp 10ms for the first neuron in the first neuro
 
     1. using the **injectSpikeFromData()** method with one argument: a reference (&) to the output of the DataParser **readData()** method. This will look like this ``network.injectSpikeFromData(&trainingData);``
 
-    2. using ``network.run(trainingData, timestep, timestep, testData, shift);`` which automatically calls **injectSpikeFromData()**. (**PLEASE SEE THE NEXT SECTION - RUNNING THE NETWORK - FOR MORE DETAILS**)
+    2. using ``network.run(&trainingData, timestep, &testData, shift);`` which automatically calls **injectSpikeFromData()**. (**PLEASE SEE THE NEXT SECTION - RUNNING THE NETWORK - FOR MORE DETAILS**)
 
 ###### Running The Network
 There are two ways to run a network with the same method **run()**:
@@ -306,14 +306,14 @@ There are two ways to run a network with the same method **run()**:
 network.run(runtime, timestep);
 ```
 
-* We can also run the network with _trainingData_ vector, a _timestep_, an optional _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value shoudl be equivalent to the time window you are working with):
+* We can also run the network with a reference to a _trainingData_ vector, a _timestep_, an optional reference to a _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value shoudl be equivalent to the time window you are working with):
   * inject spikes from training and test data
   * run the network on the training data
   * stop all learning and reset network time
   * run the network on the test data
 
 ```
-network.run(trainingData, timestep, timestep, testData, shift);
+network.run(&trainingData, timestep, &testData, shift);
 ```
 
 ###### Event-based and Clock-based Mode Selection
