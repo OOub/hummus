@@ -30,9 +30,8 @@ int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
 	adonis::QtDisplay qtDisplay;
 	adonis::SpikeLogger spikeLog("10neurons_4patterns_unsupervised_spikeLog.bin");
-    adonis::PotentialLogger potentialLog("10neurons_4patterns_unsupervised_potentialLog.bin");
 	adonis::MyelinPlasticityLogger myelinPlasticityLog("10neurons_4patterns_unsupervised_learningLog.bin");
-    adonis::Network network({&potentialLog, &spikeLog, &myelinPlasticityLog}, &qtDisplay);
+    adonis::Network network({&spikeLog, &myelinPlasticityLog}, &qtDisplay);
     
     //  ----- NETWORK PARAMETERS -----
 	float resetCurrent = 10;

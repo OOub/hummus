@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 12/06/2018
  *
- * Information: Add-on used to write the learning rule's output into a log binary file; In other words, which neurons are being modified at each learning epoch. This can be read using the snnReader.m matlab function
+ * Information: Add-on used to write the learning rule's output into a binary file; In other words, which neurons are being modified at each learning epoch.
  */
 
 #pragma once

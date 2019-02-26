@@ -27,6 +27,8 @@ Furthermore, Adonis allows full usage of both **weights** and **axonal conductio
 #### What's provided
 A matlab toolbox called AdonisUtilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
 
+----------------------
+
 ## Dependencies
 
 #### On macOS
@@ -70,6 +72,7 @@ This should get you going in terms of dependencies. If your distribution does no
 LD\_LIBRARY\_PATH=[path to the Qt dynamic lib]
 export LD\_LIBRARY\_PATH
 ```
+----------------------
 
 ## Testing
 
@@ -89,6 +92,8 @@ In case you do not want to use the Qt GUI, you can build Adonis without any Qt d
 
 ###### Premake Help
 Run ``premake4 --help`` for more information
+
+----------------------
 
 ## Using The Simulator
 
@@ -112,16 +117,17 @@ all the classes are declared within the ``adonis`` namespace. Check out testNetw
 the DataParser class is used to **parse spike data** from a text file **into a vector of input** via the **readData()** method which take in a string for the location of the input data file
 
 * input is a struct with 5 fields:
-      * timestamp
-      * neuronID
-      * x
-      * y
-      * sublayerID
+    * timestamp
+    * neuronID
+    * x
+    * y      
+    * sublayerID
+
 
 * The text files can be formatted as such:
-      * 1D input data: _timestamp, index_
-      * 2D input data:  _timestamp, X, Y_
-      * 2D input data with sublayers (feature maps):  _timestamp, X, Y, sublayerID_
+  * 1D input data: _timestamp, index_
+  * 2D input data:  _timestamp, X, Y_
+  * 2D input data with sublayers (feature maps):  _timestamp, X, Y, sublayerID_
 
 **Example**
 
@@ -138,9 +144,127 @@ the trainingData and testData vectors can then be used to inject spikes into the
 
 ###### Initialisation
 
-* Initialising the optional Add-ons
+_**Initialising the optional Add-ons**_
 
-* Initialising the network
+  * **Qt display :** display useful information on runtime
+  ```
+  adonis::QtDisplay qtDisplay
+  ```
+  * **Spike logger :** write the network output into a binary file.
+  ```
+  adonis::SpikeLogger spikeLog(std::string filename)
+  ```
+
+**The SpikeLogger binary file starts with an 8 bytes header**
+
+SpikeLogger Binary File Specs |
+------------| --------
+timestamp | byte 0 to 8
+delay | byte 8 to 12
+weight | byte 12 to 16
+potential | byte 16 to 20
+presynaptic neuron ID | byte 20 to 22
+postsynaptic neuron ID | byte 22 to 24
+layer ID | byte 24 to 26
+receptive field row index | byte 26 to 28
+receptive field column index | byte 28 to 30
+x coordinate | byte 30 to 32
+y coordinate | byte 32 to 34
+
+
+  * **Classification logger :** write into a binary file the spikes from the output layer when the learning is off.
+  ```
+  adonis::ClassificationLogger classificationLog(std::string filename)
+  ```
+
+ClassificationLogger Binary File Specs |
+------------| --------
+timestamp | byte 0 to 8
+presynaptic neuron ID | byte 8 to 10
+postsynaptic neuron ID | byte 10 to 12
+
+  * **Potential logger :** write into a binary file the potential of specified neurons or layers of neurons at every timestep when learning is off (only logs potentials at spike times in the event-based mode). **Initialising the potential logger is a two-step process:**
+
+    1. initialising the constructor
+    ```
+    adonis::PotentialLogger potentialLog(std::string filename)
+    ```
+
+    2. Calling the **neuronSelection()** PotentialLogger class method in order to chose which neurons to plot . This method should be called **after** defining all the layers of our network **(PLEASE SEE THE NETWORK CREATION SECTION FOR MORE DETAILS ON HOW TO BUILD NEURON LAYERS)**.
+    ```
+    // 1. Choosing to log only one neuron via its ID
+    potentialLog.neuronSelection(int _neuronID)
+    ```
+    ```
+    // 2. Choosing to log all neurons of a specific layer
+    potentialLog.neuronSelection(layer _layerToLog)
+    ```
+
+    In order to pass a layer to the method we can use normal indexing on the network getLayers() method, as it outputs a vector of all the layers we built. This looks like this:
+    ```
+    potentialLog.neuronSelection(network.getLayers()[0]) // logging neurons in the first layer we built
+    ```
+
+
+PotentialLogger Binary File Specs |
+------------| --------
+timestamp | byte 0 to 8
+potential | byte 8 to 12
+postsynaptic neuron ID | byte 12 to 14
+
+  * **Myelin plasticity logger :** write the learning rule's output into a binary file; In other words, which neurons are being modified (plastic neurons)at each learning epoch.
+  ```
+  adonis::MyelinPlasticityLogger mpLog(std::string filename)
+  ```
+
+MyelinPlasticityLogger Binary File Specs |
+------------| --------
+bit size (number of plastic neurons varies) | byte 0 to 8
+timestamp | byte 8 to 16
+postsynaptic neuron ID | byte 16 to 18
+layer ID | byte 18 to 20
+receptive field row index | byte 20 to 22
+receptive field column index | byte 22 to 24
+
+The next set of bytes depends on the number of plastic neurons (bit size). These are the specs for one such neuron:
+
+Plastic Neurons |
+--------------- |
+time differences | byte 24 to 32
+x coordinate | byte 32 to 34
+y coordinate | byte 34 to 36
+receptive field row index | byte 36 to 38
+receptive field column index | byte 38 to 40
+
+  * **Analysis :** print the classification accuracy of the network
+  ```
+  adonis::Analysis analysis(std::string test_data_labels)
+  ```
+
+Please note, the first layer we build does not have any presynaptic neurons. The presynaptic neuron ID will appear as -1 in such cases. The same strategy is used for neurons without any cartesian coordinates defined (spike logger)
+
+_**Initialising the network**_
+
+To initialise the network we can either initialise it without any add-ons:
+```
+adonis::Network network;
+```
+
+Or we can initialise it with add-ons. In that case, the Network constructor has two arguments: a vector of references for the addon constructors, and a reference for **one** main thread addon.
+```
+// constructor to initialise normal add-ons
+adonis::Network network({&spikeLogger, &learningLogger});
+```
+
+```
+// constructor to initialise only a MainThreadAddOn
+adonis::Network network(&qtDisplay);
+```
+
+```
+// constructor to initialise both normal add-ons and a MainThreadAddOn
+adonis::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+```
 
 ###### Turning Off Learning
 we can manually stop learning at any time by calling the network method: **turnOffLearning(double timestamp)**
@@ -171,12 +295,7 @@ here we inject a spike at timestamp 10ms for the first neuron in the first neuro
 
     1. using the **injectSpikeFromData()** method with one argument: a reference (&) to the output of the DataParser **readData()** method. This will look like this ``network.injectSpikeFromData(&trainingData);``
 
-    2. using ``network.run(trainingData, timestep, timestep, testData, shift);`` which automatically calls **injectSpikeFromData()**.
-
-  **PLEASE SEE THE NEXT SECTION - RUNNING THE NETWORK - FOR MORE DETAILS**
-
-
-if we are using an input data file we can use the **network.injectSpikeFromData()** method which takes in a reference (&) to the output of either the **readTrainingData()** or **readTestData()** method.
+    2. using ``network.run(trainingData, timestep, timestep, testData, shift);`` which automatically calls **injectSpikeFromData()**. (**PLEASE SEE THE NEXT SECTION - RUNNING THE NETWORK - FOR MORE DETAILS**)
 
 ###### Running The Network
 There are two ways to run a network with the same method **run()**:
@@ -188,10 +307,10 @@ network.run(runtime, timestep);
 ```
 
 * We can also run the network with _trainingData_ vector, a _timestep_, an optional _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value shoudl be equivalent to the time window you are working with):
-      * inject spikes from training and test data
-      * run the network on the training data
-      * stop all learning and reset network time
-      * run the network on the test data
+  * inject spikes from training and test data
+  * run the network on the training data
+  * stop all learning and reset network time
+  * run the network on the test data
 
 ```
 network.run(trainingData, timestep, timestep, testData, shift);

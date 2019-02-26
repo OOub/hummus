@@ -27,58 +27,121 @@ namespace adonis {
         
     public:
     	// ----- CONSTRUCTOR -----
-        PotentialLogger(std::string filename) {
+        // constructor to log all neurons of a layer
+        PotentialLogger(std::string filename) :
+                initialisationTest(false) {
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
-		
+        
 		// ----- PUBLIC LOGGER METHODS -----
+        void neuronSelection(int _neuronID) {
+            // error handling
+            if (_neuronID < 0) {
+                throw std::logic_error("the neuron ID cannot be less than 0");
+            }
+            
+            initialisationTest = true;
+            neuronID = _neuronID;
+        }
+        
+        void neuronSelection(layer _layerToLog) {
+            initialisationTest = true;
+            neuronID = -2;
+            layerID = _layerToLog.ID;
+        }
+        
         void incomingSpike(double timestamp, axon* a, Network* network) override {
-            // logging only after learning is stopped
-            if (!network->getLearningStatus()) {
-                // restrict only to the output layer
-                if (a->postNeuron->getLayerID() == network->getLayers().back().ID) {
-                    std::array<char, 14> bytes;
-                    SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                    SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
-                    SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
-                    saveFile.write(bytes.data(), bytes.size());
+            if (initialisationTest) {
+                // logging only after learning is stopped
+                if (!network->getLearningStatus()) {
+                    // restrict only to the output layer
+                    if (neuronID == -2) {
+                        if (a->postNeuron->getLayerID() == layerID) {
+                            std::array<char, 14> bytes;
+                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
+                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
+                            saveFile.write(bytes.data(), bytes.size());
+                        }
+                    } else {
+                        if (a->postNeuron->getNeuronID() == neuronID) {
+                            std::array<char, 14> bytes;
+                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
+                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
+                            saveFile.write(bytes.data(), bytes.size());
+                        }
+                    }
                 }
+            } else {
+                throw std::logic_error("the method needs to be called after building all the layers of the network and before running it.");
             }
         }
         
         void neuronFired(double timestamp, axon* a, Network* network) override {
-            // logging only after learning is stopped
-            if (!network->getLearningStatus()) {
-                // restrict only to the output layer
-                if (a->postNeuron->getLayerID() == network->getLayers().back().ID) {
-                    std::array<char, 14> bytes;
-                    SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                    SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
-                    SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
-                    saveFile.write(bytes.data(), bytes.size());
+            if (initialisationTest) {
+                // logging only after learning is stopped
+                if (!network->getLearningStatus()) {
+                    // restrict only to the output layer
+                    if (neuronID == -2) {
+                        if (a->postNeuron->getLayerID() == layerID) {
+                            std::array<char, 14> bytes;
+                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
+                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
+                            saveFile.write(bytes.data(), bytes.size());
+                        }
+                    } else {
+                        if (a->postNeuron->getNeuronID() == neuronID) {
+                            std::array<char, 14> bytes;
+                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
+                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
+                            saveFile.write(bytes.data(), bytes.size());
+                        }
+                    }
                 }
+            } else {
+                throw std::logic_error("the method needs to be called after building all the layers of the network and before running it.");
             }
         }
         
         void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
-            // logging only after learning is stopped
-            if (!network->getLearningStatus()) {
-                // restrict only to the output layer
-                if (postNeuron->getNeuronID() == network->getLayers().back().ID) {
-                    std::array<char, 14> bytes;
-                    SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                    SpikeLogger::copy_to(bytes.data() + 8, postNeuron->getPotential());
-                    SpikeLogger::copy_to(bytes.data() + 12, postNeuron->getNeuronID());
-                    saveFile.write(bytes.data(), bytes.size());
+            if (initialisationTest) {
+                // logging only after learning is stopped
+                if (!network->getLearningStatus()) {
+                    // restrict only to the output layer
+                    if (neuronID == -2) {
+                        if (postNeuron->getLayerID() == layerID) {
+                            std::array<char, 14> bytes;
+                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                            SpikeLogger::copy_to(bytes.data() + 8, postNeuron->getPotential());
+                            SpikeLogger::copy_to(bytes.data() + 12, postNeuron->getNeuronID());
+                            saveFile.write(bytes.data(), bytes.size());
+                        }
+                    } else {
+                        if (postNeuron->getNeuronID() == neuronID) {
+                            std::array<char, 14> bytes;
+                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                            SpikeLogger::copy_to(bytes.data() + 8, postNeuron->getPotential());
+                            SpikeLogger::copy_to(bytes.data() + 12, postNeuron->getNeuronID());
+                            saveFile.write(bytes.data(), bytes.size());
+                        }
+                    }
                 }
+            } else {
+                throw std::logic_error("the method needs to be called after building all the layers of the network and before running it.");
             }
         }
 
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream        saveFile;
+        int                  layerID;
+        int                  neuronID;
+        bool                 initialisationTest;
 	};
 }
