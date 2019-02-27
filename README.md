@@ -2,11 +2,11 @@
 
 # Quick Start Guide
 
-Hummus recipe: Lemon Juice, chickpeas and tahini, spice things up and you're good to go!
+Lemon Juice, chickpeas and tahini, spice things up and you're good to go!
 
 ## Introduction
 
-Hummus is a header-only hybrid spiking neural network simulator coded using C++ and built first and foremost for neuromorphic computer vision and pattern recognition tasks.
+Hummus - HUmans, Meet My Unbelievable Simulator -  is a spiking neural network simulator coded using C++ and built first and foremost for neuromorphic computer vision and pattern recognition tasks.
 
 The simulator has the ability to run in both **clock-based** and **event-based** modes. In the clock-based mode, neurons are updated at a certain time interval. In the event-based mode, neurons are only updated in response to a spike.
 
