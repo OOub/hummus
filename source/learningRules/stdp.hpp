@@ -44,12 +44,8 @@ namespace hummus {
 				}
 			}
 			
-			for (auto& sub: network->getLayers()[preLayer].sublayers) {
-				for (auto& rf: sub.receptiveFields) {
-					for (auto& n: rf.neurons) {
-						network->getNeurons()[n]->addLearningRule(this);
-					}
-				}
+			for (auto& n: network->getLayers()[preLayer].neurons) {
+                network->getNeurons()[n]->addLearningRule(this);
 			}
 		}
 		

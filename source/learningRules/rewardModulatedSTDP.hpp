@@ -43,28 +43,25 @@ namespace hummus {
 		
 		// ----- PUBLIC METHODS -----
 		virtual void onStart(Network* network) override {
-			for (auto& l: network->getLayers()) {
-				for (auto& rule: network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLearningRuleHandler()) {
-					if (rule == this) {
-						if (network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLayerID()-1 >= 0) {
-							rl.emplace_back(reinforcementLayers{network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLayerID(), network->getNeurons()[l.sublayers[0].receptiveFields[0].neurons[0]]->getLayerID()-1});
-						} else {
-							throw std::logic_error("the reward-modulated STDP learning rule cannot be on the input layer");
-						}
-					}
-				}
-			}
+            for (auto& l: network->getLayers()) {
+                for (auto& rule: network->getNeurons()[l.neurons[0]]->getLearningRuleHandler())
+                {
+                    if (rule == this) {
+                        if (network->getNeurons()[l.neurons[0]]->getLayerID()-1 >= 0) {
+                            rl.emplace_back(reinforcementLayers{network->getNeurons()[l.neurons[0]]->getLayerID(), network->getNeurons()[l.neurons[0]]->getLayerID()-1});
+                        } else {
+                            throw std::logic_error("the reward-modulated STDP learning rule cannot be on the input layer");
+                        }
+                    }
+                }
+            }
 			
 			// add rstdp to decision-making layer which is on the last layer
-			for (auto& sub: network->getLayers().back().sublayers) {
-				for (auto& rf: sub.receptiveFields) {
-					for (auto& n: rf.neurons) {
-                        if (DecisionMakingNeuron* neuron = dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get())) {
-							dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get())->addLearningRule(this);
-						}
-					}
-				}
-			}
+            for (auto& n: network->getLayers().back().neurons) {
+                if (DecisionMakingNeuron* neuron = dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get())) {
+                    dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get())->addLearningRule(this);
+                }
+            }
 		}
 		
 		virtual void learn(double timestamp, axon* a, Network* network) override {
@@ -81,37 +78,29 @@ namespace hummus {
 				// propagating the error signal to every layer using the R-STDP learning rule
 				for (auto& layer: rl) {
 					// if preTime - postTime is positive
-					for (auto& sub: network->getLayers()[layer.preLayer].sublayers) {
-						for (auto& rf: sub.receptiveFields) {
-							for (auto& n: rf.neurons) {
-								if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
-									for (auto& postAxon: network->getNeurons()[n]->getPostAxons()) {
-                                        if (postAxon->weight >= 0 && postAxon->postNeuron->getEligibilityTrace() > 0.1) {
-											double delta = alpha*Ar_minus+beta*Ap_plus;
-											postAxon->weight += delta * postAxon->weight * (1./postAxon->postNeuron->getMembraneResistance() - postAxon->weight);
-                                            postAxon->postNeuron->setEligibilityTrace(0);
-										}
-									}
-								}
-							}
-						}
+					for (auto& n: network->getLayers()[layer.preLayer].neurons) {
+                        if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
+                            for (auto& postAxon: network->getNeurons()[n]->getPostAxons()) {
+                                if (postAxon->weight >= 0 && postAxon->postNeuron->getEligibilityTrace() > 0.1) {
+                                    double delta = alpha*Ar_minus+beta*Ap_plus;
+                                    postAxon->weight += delta * postAxon->weight * (1./postAxon->postNeuron->getMembraneResistance() - postAxon->weight);
+                                    postAxon->postNeuron->setEligibilityTrace(0);
+                                }
+                            }
+                        }
 					}
 
 					// if preTime - postTime is negative
-					for (auto& sub: network->getLayers()[layer.postLayer].sublayers) {
-						for (auto& rf: sub.receptiveFields) {
-							for (auto& n: rf.neurons) {
-								if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
-									for (auto& preAxon: network->getNeurons()[n]->getPreAxons()) {
-										if (preAxon->weight >= 0 && preAxon->preNeuron->getEligibilityTrace() > 0.1) {
-											double delta = alpha*Ar_plus+beta*Ap_minus;
-											preAxon->weight += delta * preAxon->weight * (1./preAxon->preNeuron->getMembraneResistance() - preAxon->weight);
-                                            preAxon->preNeuron->setEligibilityTrace(0);
-										}
-									}
-								}
-							}
-						}
+					for (auto& n: network->getLayers()[layer.postLayer].neurons) {
+                        if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
+                            for (auto& preAxon: network->getNeurons()[n]->getPreAxons()) {
+                                if (preAxon->weight >= 0 && preAxon->preNeuron->getEligibilityTrace() > 0.1) {
+                                    double delta = alpha*Ar_plus+beta*Ap_minus;
+                                    preAxon->weight += delta * preAxon->weight * (1./preAxon->preNeuron->getMembraneResistance() - preAxon->weight);
+                                    preAxon->preNeuron->setEligibilityTrace(0);
+                                }
+                            }
+                        }
 					}
 				}
 			}

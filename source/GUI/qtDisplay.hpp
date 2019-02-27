@@ -106,28 +106,21 @@ namespace hummus {
             // number of neurons in each layer
             std::vector<int> neuronsInLayers;
             for (auto& l: network->getLayers()) {
-                int count = 0;
-                for (auto& s: l.sublayers) {
-                    for (auto& r: s.receptiveFields) {
-                        count += r.neurons.size();
-                    }
-                }
-                neuronsInLayers.emplace_back(count);
+                neuronsInLayers.emplace_back(l.neurons.size());
             }
 
             // number of neurons in each sublayer
             std::vector<std::vector<int>> neuronsInSublayers(numberOfLayers);
-            for (auto i=0; i<network->getLayers().size(); i++) {
-                for (auto& s: network->getLayers()[i].sublayers) {
-                    int count = 0;
-                    for (auto& r: s.receptiveFields) {
-                        count += r.neurons.size();
-                    }
-                    neuronsInSublayers[i].emplace_back(count);
+            int idx = 0;
+            for (auto& l: network->getLayers()) {
+                for (auto& s: l.sublayers) {
+                    neuronsInSublayers[idx].emplace_back(s.neurons.size());
                 }
+                idx += 1;
             }
 
-            int neuronNumber = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.end(), 0);
+            int neuronNumber = static_cast<int>(network->getNeurons().size());
+            
             engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
             engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
             engine->rootContext()->setContextProperty("layers", numberOfLayers-1);

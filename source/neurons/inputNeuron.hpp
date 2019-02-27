@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 24/01/2019
  *
- * Information: input neurons take in spikes or events and instantly propagate them in the network. The potential does not decay and there is no refractory period. 
+ * Information: input neurons take in spikes or events and instantly propagate them in the network. The potential does not decay
  */
 
 #pragma once
@@ -18,8 +18,10 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
-                Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance){}
+		InputNeuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+                Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
+                active(true),
+                refractoryPeriod(_refractoryPeriod) {}
 		
 		virtual ~InputNeuron(){}
 		
@@ -35,52 +37,67 @@ namespace hummus {
 		}
 		
 		void update(double timestamp, axon* a, Network* network, spikeType type) override {
+            
+            // checking if the neuron is in a refractory period
+            if (timestamp - previousSpikeTime >= refractoryPeriod) {
+                active = true;
+            }
+            
             // eligibility trace decay
             eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
             
             // instantly making the input neuron fire at every input spike
-            a->previousInputTime = timestamp;
-            potential = threshold;
-            eligibilityTrace = 1;
-			
-            #ifndef NDEBUG
-            std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
-            #endif
-            
-            if (network->getMainThreadAddOn()) {
-                network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+            if (active) {
+                a->previousInputTime = timestamp;
+                potential = threshold;
+                eligibilityTrace = 1;
+                
+                #ifndef NDEBUG
+                std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
+                #endif
+                
+                if (network->getMainThreadAddOn()) {
+                    network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+                }
+                
+                for (auto addon: network->getAddOns()) {
+                    addon->neuronFired(timestamp, a, network);
+                }
+                
+                if (network->getMainThreadAddOn()) {
+                    network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
+                }
+                
+                for (auto& p : postAxons) {
+                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
+                }
+                
+                requestLearning(timestamp, a, network);
+                previousSpikeTime = timestamp;
+                potential = restingPotential;
+                active = false;
+                
+                if (network->getMainThreadAddOn()) {
+                    network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+                }
             }
-            
-            for (auto addon: network->getAddOns()) {
-                addon->neuronFired(timestamp, a, network);
-            }
-            
-            if (network->getMainThreadAddOn()) {
-                network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
-            }
-            
-            for (auto& p : postAxons) {
-                network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
-            }
-            
-            requestLearning(timestamp, a, network);
-            previousSpikeTime = timestamp;
-            potential = restingPotential;
-			
-            if (network->getMainThreadAddOn()) {
-				network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
-			}
 		}
         
         void updateSync(double timestamp, axon* a, Network* network, double timestep) override {
+            
             if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
                 timestep = 0;
+            }
+            
+            // checking if the neuron is in a refractory period
+            if (timestamp - previousSpikeTime >= refractoryPeriod) {
+                active = true;
             }
             
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
             
-            if (a) {
+            if (a && active) {
                 a->previousInputTime = timestamp;
                 potential = threshold;
                 eligibilityTrace = 1;
@@ -108,6 +125,7 @@ namespace hummus {
                 requestLearning(timestamp, a, network);
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
+                active = false;
             } else {
                 if (timestep > 0) {
                     for (auto addon: network->getAddOns()) {
@@ -132,5 +150,10 @@ namespace hummus {
                 }
             }
         }
+        
+        // ----- INPUT NEURON PARAMETERS -----
+        float refractoryPeriod;
+        bool  active;
+        
 	};
 }

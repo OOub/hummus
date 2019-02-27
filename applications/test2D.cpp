@@ -26,9 +26,9 @@ int main(int argc, char** argv) {
 	hummus::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
-    network.add2dLayer<hummus::InputNeuron>(0, 2, 8, 8, 2, false, {});
-    network.add2dLayer<hummus::LIF>(1, 2, 8, 8, 2, false, {}, true, false, 10, 20, 3, true);
-    network.addLayer<hummus::LIF>(1, 1, 1, {});
+    network.add2dLayer<hummus::InputNeuron>(8, 8, 2, {});
+    network.add2dLayer<hummus::LIF>(8, 8, 2, {}, true, false, 10, 20, 3, true);
+    network.addLayer<hummus::LIF>(1, 1, {});
 		
 	network.convolution(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1., 0);

@@ -363,10 +363,23 @@ namespace hummus {
 		
         // winner-take-all algorithm
 		virtual void WTA(double timestamp, Network* network) override {
-            for (auto& rf: network->getLayers()[layerID].sublayers[sublayerID].receptiveFields) {
-                if (rf.row == rfRow && rf.col == rfCol) {
-                    for (auto& n: rf.neurons) {
-                        if (network->getNeurons()[n]->getNeuronID() != neuronID) {
+            for (auto& sub: network->getLayers()[layerID].sublayers) {
+                // intra-sublayer WTA
+                if (sub.ID == sublayerID) {
+                    for (auto& n: sub.neurons) {
+                        if (network->getNeurons()[n]->getNeuronID() != neuronID && network->getNeurons()[n]->getRfRow() == rfRow && network->getNeurons()[n]->getRfCol() == rfCol) {
+                            network->getNeurons()[n]->setPotential(restingPotential);
+                            if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
+                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
+                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;
+                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibitionTime = timestamp;
+                            }
+                        }
+                    }
+                // inter-sublayer WTA
+                } else {
+                    for (auto& n: sub.neurons) {
+                        if (network->getNeurons()[n]->getRfRow() == rfRow && network->getNeurons()[n]->getRfCol() == rfCol) {
                             network->getNeurons()[n]->setPotential(restingPotential);
                             if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;

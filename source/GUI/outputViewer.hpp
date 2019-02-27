@@ -99,7 +99,7 @@ namespace hummus {
 		void changeLayer(int newLayer) {
 			layerTracker = newLayer;
 			sublayerTracker = 0;
-			engine->rootContext()->setContextProperty("sublayers", static_cast<int>(yLookupTable[layerTracker].size()-1));
+            engine->rootContext()->setContextProperty("sublayers", static_cast<int>(yLookupTable[layerTracker].size()-1));
 			int previousLayerNeurons = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.begin()+layerTracker, 0);
 			
 			minY = previousLayerNeurons;

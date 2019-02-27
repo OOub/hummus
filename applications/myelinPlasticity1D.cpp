@@ -49,8 +49,8 @@ int main(int argc, char** argv) {
 	hummus::MyelinPlasticity myelinPlasticity(1, 1, 1, 1);
 	
     //  ----- CREATING THE NETWORK -----
-    network.addLayer<hummus::InputNeuron>(inputNeurons, 1, 1, {});
-    network.addLayer<hummus::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
+    network.addLayer<hummus::InputNeuron>(inputNeurons, 1, {});
+    network.addLayer<hummus::LIF>(layer1Neurons, 1, {&myelinPlasticity}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.2, 0.1, 5, 3);

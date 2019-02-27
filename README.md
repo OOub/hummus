@@ -2,11 +2,11 @@
 
 # Quick Start Guide
 
-Lemon Juice, chickpeas and tahini, spice things up and you're good to go!
+Lemon Juice, chickpeas, tahini, and a dash of olive oil, spice things up and you're good to go!
 
 ## Introduction
 
-Hummus - HUmans, Meet My Unbelievable Simulator -  is a spiking neural network simulator coded using C++ and built first and foremost for neuromorphic computer vision and pattern recognition tasks.
+Hummus - **HUM**ble **M**odular ne**U**ral **S**imulator - is a spiking neural network simulator coded using C++ and built first and foremost for neuromorphic computer vision and pattern recognition tasks.
 
 The simulator has the ability to run in both **clock-based** and **event-based** modes. In the clock-based mode, neurons are updated at a certain time interval. In the event-based mode, neurons are only updated in response to a spike.
 
@@ -308,7 +308,7 @@ To create a network we have to add layers of neurons.
 
 Available Neuron Models | Use Case | Arguments
 ----------------------- | -------- | ---------
-InputNeuron | initial layer that is fed external spikes. This neuron fires at every external spike |eligibility decay, threshold, resting potential, membraneResistance
+InputNeuron | binary neuron for the initial layer that to feed external spikes | refractory period, eligibility decay, threshold, resting potential, membraneResistance
 LIF | Leaky-Integrate-and-Fire (LIF) with two different synaptic kernels for current dynamics: **constant current** or **time-varying current** | timeDependentCurrent, bool homeostasis, current decay, potential decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current
 IF | Integrate-and-Fire model. similar to the LIF but without any decay in the membrane potential | timeDependentCurrent, bool homeostasis, current decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current
 DecisionMakingNeuron | LIF neurons with the ability to be labelled at the start of the network, or after the training phase | timeDependentCurrent, bool homeostasis, current decay, potential decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current, label string

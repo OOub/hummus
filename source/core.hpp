@@ -32,24 +32,20 @@
 #include "learningRuleHandler.hpp"
 
 namespace hummus {
+    
 	class Neuron;
 	
-	struct receptiveField {
-		std::vector<std::size_t> neurons;
-		int16_t                  row;
-		int16_t                  col;
-	};
-	
 	struct sublayer {
-		std::vector<receptiveField> receptiveFields;
+		std::vector<std::size_t>    neurons;
 		int16_t                     ID;
 	};
 	
 	struct layer {
-		std::vector<sublayer> sublayers;
-		int16_t               ID;
-		int                   width;
-		int                   height;
+		std::vector<sublayer>       sublayers;
+        std::vector<std::size_t>    neurons;
+		int16_t                     ID;
+		int                         width;
+		int                         height;
 	};
 	
     struct axon {
@@ -266,7 +262,7 @@ namespace hummus {
     protected:
         
         // winner-take-all algorithm
-        virtual void WTA(double timestamp, Network* network){}
+        virtual void WTA(double timestamp, Network* network) {}
         
         // loops through any learning rules and activates them
         virtual void requestLearning(double timestamp, axon* a, Network* network){}
@@ -311,161 +307,90 @@ namespace hummus {
 		
 		// ----- NEURON CREATION METHODS -----
 		
-        // add neurons
+        // add one dimensional neurons
         template <typename T, typename... Args>
-        void addLayer(int _numberOfNeurons, int rfNumber, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+        void addLayer(int _numberOfNeurons, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+            
+            if (_numberOfNeurons < 0) {
+                throw std::logic_error("the number of neurons selected is wrong");
+            }
+            
             unsigned long shift = 0;
             
             // find the layer ID
             int16_t layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
-                    for (auto& s: l.sublayers) {
-                        for (auto& r: s.receptiveFields) {
-                            shift += r.neurons.size();
-                        }
-                    }
+                    shift += l.neurons.size();
                 }
                 layerID = layers.back().ID+1;
             }
 
-            // building a layer of one dimensional sublayers with no receptiveFields
-            int16_t counter = 0;
-            std::vector<sublayer> subTemp;
-            for (int16_t i=0; i<_sublayerNumber; i++) {
-                std::vector<receptiveField> rfTemp;
-                for (int16_t j=0; j<rfNumber; j++) {
-                    std::vector<std::size_t> neuronTemp;
-                    for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
-                        neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, j, 0, i, layerID, -1, -1, _learningRuleHandler, std::forward<Args>(args)...)));
-                        neuronTemp.emplace_back(neurons.size()-1);
-                    }
-                    rfTemp.emplace_back(receptiveField{neuronTemp, j, 0});
-                }
-                subTemp.emplace_back(sublayer{rfTemp, i});
-                counter += _numberOfNeurons;
+            // building a layer of one dimensional sublayers
+            std::vector<std::size_t> neuronsInLayer;
+            for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, std::forward<Args>(args)...)));
+                neuronsInLayer.emplace_back(neurons.size()-1);
             }
-            layers.emplace_back(layer{subTemp, layerID, -1, -1});
+            
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
         }
 		
-        // adds a 2 dimentional grid of neurons - thr number of neurons should be zero if we want a neuron for each pixel of the grid. Otherwise, we choose a positive number of neurons to define how many neurons we want per receptive field/window
+        // adds a 2 dimensional grid of neurons
         template <typename T, typename... Args>
-        void add2dLayer(int _numberOfNeurons, int rfSize, int gridW, int gridH, int _sublayerNumber, bool overlap, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
-            // error handling
-            if (rfSize <= 0 || rfSize > gridW || rfSize > gridH) {
-                throw std::logic_error("the selected window size is not valid");
-            }
-
-            if (_numberOfNeurons < 0) {
-                throw std::logic_error("the number of neurons selected is wrong");
-            }
-
-            int overlapSize = 0;
-            if (overlap) {
-                if (rfSize > 1) {
-                    overlapSize = rfSize-1;
-                } else if (rfSize == 1) {
-                    throw std::logic_error("For a window size equal to 1, consider using a layer with contiguous receptive fields by setting the overlap to false");
-                }
-            } else {
-                double dW_check = gridW / static_cast<double>(rfSize);
-                double dH_check = gridH / static_cast<double>(rfSize);
-
-                int iW_check = dW_check;
-                int iH_check = dH_check;
-
-                if (dW_check != iW_check || dH_check != iH_check) {
-                    throw std::logic_error("With contiguous receptive fields, the width and height of the grid need to be divisible by the receptive field size");
-                }
-            }
-
-            int16_t shift = 0;
+        void add2dLayer(int gridW, int gridH, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+            
+            // find number of neurons to build
+            int numberOfNeurons = gridW * gridH;
+            
+            unsigned long shift = 0;
+            
+            // find the layer ID
             int16_t layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
-                    for (auto& s: l.sublayers) {
-                        for (auto& r: s.receptiveFields) {
-                            shift += static_cast<int16_t>(r.neurons.size());
-                        }
-                    }
+                    shift += l.neurons.size();
                 }
                 layerID = layers.back().ID+1;
             }
-
+            
+            // building a layer of two dimensional sublayers
             int16_t counter = 0;
-            std::vector<sublayer> subTemp;
+            std::vector<sublayer> sublayers;
+            std::vector<std::size_t> neuronsInLayer;
             for (int16_t i=0; i<_sublayerNumber; i++) {
-                int16_t x = 0;
-                int16_t y = 0;
-
-                int16_t col = 0;
-                int16_t row = 0;
-
-                int16_t rowShift = 0;
-                int16_t colShift = 0;
-
-                int16_t rfCol = 0;
-                int16_t rfRow = 0;
-                int16_t neuronCounter = shift;
-
-                std::vector<std::size_t> neuronTemp;
-                std::vector<receptiveField> rfTemp;
-                while (true) {
-                    if (x == gridW-1 && y != gridH-1 && col == 0 && row == 0) {
-                        rfCol = 0;
-                        rfRow += 1;
-                        colShift = 0;
-                        rowShift += rfSize-overlapSize;
-                    }
-
-                    x = col+colShift;
-                    y = row+rowShift;
-
-                    if (_numberOfNeurons == 0) {
-                        neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, x, y, _learningRuleHandler, std::forward<Args>(args)...)));
-
-                        neuronCounter += 1;
-
-                        neuronTemp.emplace_back(neurons.size()-1);
-                    }
-
-                    col += 1;
-                    if (col == rfSize && row != rfSize-1) {
-                        col = 0;
-                        row += 1;
-                    } else if (col == rfSize && row == rfSize-1) {
-                        col = 0;
-                        row = 0;
-                        colShift += rfSize-overlapSize;
-                        if (_numberOfNeurons > 0) {
-                            for (auto j = 0; j < _numberOfNeurons; j++) {
-                                neurons.emplace_back(std::unique_ptr<T>(new T(neuronCounter+counter, rfRow, rfCol, i, layerID, -1, -1, _learningRuleHandler,  std::forward<Args>(args)...)));
-
-                                neuronCounter += 1;
-
-                                neuronTemp.emplace_back(neurons.size()-1);
-                            }
-                        }
-                        rfTemp.emplace_back(receptiveField{neuronTemp, rfRow, rfCol});
-                        rfCol += 1;
-                        neuronTemp.clear();
-                    }
-
-                    if (x == gridW-1 && y == gridH-1) {
-                        break;
-                    }
-
-                    if (x > gridW-1 || y > gridH-1) {
-                        throw std::logic_error("the window and the grid do not match. recheck the size parameters");
+                std::vector<std::size_t> neuronsInSublayer;
+                int x = 0; int y = 0;
+                for (int16_t k=0+shift; k<numberOfNeurons+shift; k++) {
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, 0, 0, i, layerID, x, y, _learningRuleHandler, std::forward<Args>(args)...)));
+                    neuronsInSublayer.emplace_back(neurons.size()-1);
+                    neuronsInLayer.emplace_back(neurons.size()-1);
+                    
+                    y += 1;
+                    if (y == gridW) {
+                        x += 1;
+                        y = 0;
                     }
                 }
-                subTemp.emplace_back(sublayer{rfTemp, i});
-                counter += neuronCounter;
+                sublayers.emplace_back(sublayer{neuronsInSublayer, i});
+                
+                // to shift the neuron IDs with the sublayers
+                counter += numberOfNeurons;
             }
-            layers.emplace_back(layer{subTemp, layerID, gridW, gridH});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH});
         }
 		
-        // add a one dimentional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
+        // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride
+        void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride=1, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
+            maxDelay = std::max(maxDelay, _delayMean);
+        }
+        
+        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size
+        void addPoolingLayer(layer presynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
+            maxDelay = std::max(maxDelay, _delayMean);
+        }
+        
+        // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
         void addDecisionMakingLayer(std::string trainingLabelFilename, bool _preTrainingLabelAssignment=true ,std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool _timeDependentCurrent=false, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) {
             DataParser dataParser;
@@ -479,66 +404,65 @@ namespace hummus {
                 }
             }
             
-            // add decision-making neurons
             unsigned long shift = 0;
+            
+            // find the layer ID
             int16_t layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
-                    for (auto& s: l.sublayers) {
-                        for (auto& r: s.receptiveFields) {
-                            shift += r.neurons.size();
-                        }
-                    }
+                    shift += l.neurons.size();
                 }
                 layerID = layers.back().ID+1;
             }
             
-            std::vector<std::size_t> neuronTemp;
+            // add decision-making neurons
+            std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
                 for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
                     neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
                     
-                    neuronTemp.emplace_back(neurons.size()-1);
+                    neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             } else {
                 for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
                     neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
                     
-                    neuronTemp.emplace_back(neurons.size()-1);
+                    neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             }
-            layers.emplace_back(layer{{sublayer{{receptiveField{neuronTemp, 0, 0}}, 0}}, layerID, -1, -1});
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
         }
         
-        // add a one-dimentional reservoir of randomly interconnected neurons without any learning rule (feedforward, feedback and self-excitation) with randomised weights and no delays.
+        // add a one-dimensional reservoir of randomly interconnected neurons without any learning rule (feedforward, feedback and self-excitation) with randomised weights and no delays.
         template <typename T, typename... Args>
         void addReservoir(int _numberOfNeurons, float _weightMean=1, float _weightstdev=0, int feedforwardProbability=100, int feedbackProbability=0, int selfExcitationProbability=0, Args&&... args) {
-
+            
+            if (_numberOfNeurons < 0) {
+                throw std::logic_error("the number of neurons selected is wrong");
+            }
+            
+            unsigned long shift = 0;
+            
             // find the layer ID
             int16_t layerID = 0;
-            unsigned long shift = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
-                    for (auto& s: l.sublayers) {
-                        for (auto& r: s.receptiveFields) {
-                            shift += r.neurons.size();
-                        }
-                    }
+                    shift += l.neurons.size();
                 }
                 layerID = layers.back().ID+1;
             }
             
             // creating the reservoir of neurons
-            std::vector<std::size_t> neuronTemp;
+            std::vector<std::size_t> neuronsInLayer;
             for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
                 neurons.emplace_back(std::unique_ptr<T>(new T(k, 1, 0, 0, layerID, -1, -1, {}, std::forward<Args>(args)...)));
-                neuronTemp.emplace_back(neurons.size()-1);
+                neuronsInLayer.emplace_back(neurons.size()-1);
             }
-            layers.emplace_back(layer{{sublayer{{receptiveField{neuronTemp, 1, 0}}, 0}}, layerID, -1, -1});
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
             
             // connecting the reservoir
-            for (auto pre: neuronTemp) {
-                for (auto post: neuronTemp) {
+            for (auto pre: neuronsInLayer) {
+                for (auto post: neuronsInLayer) {
                     // random engine initialisation
                     std::random_device device;
                     std::mt19937 randomEngine(device());
@@ -560,143 +484,139 @@ namespace hummus {
         
 		// ----- LAYER CONNECTION METHODS -----
 		
-        // all to all connections (for everything including sublayers and receptive fields)
-        void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
+        // all to all purely excitatory or purely inhibitory connections (if weightMean < 0 all connections will have a negative weight)
+        void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
             maxDelay = std::max(maxDelay, _delayMean);
 
-            for (auto& preSub: presynapticLayer.sublayers) {
-                for (auto& preRF: preSub.receptiveFields) {
-                    for (auto& pre: preRF.neurons) {
-                        for (auto& postSub: postsynapticLayer.sublayers) {
-                            for (auto& postRF: postSub.receptiveFields) {
-                                for (auto& post: postRF.neurons) {
-                                    std::random_device device;
-                                    std::mt19937 randomEngine(device());
-                                    std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-                                    std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                                    int sign = _weightMean<0?-1:_weightMean>=0;
-                                    
-                                    neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
-                                }
-                            }
-                        }
-                    }
+            for (auto& preNeurons: presynapticLayer.neurons) {
+                for (auto& postNeurons: postsynapticLayer.neurons) {
+                    // randomising weights and delays
+                    std::random_device device;
+                    std::mt19937 randomEngine(device());
+                    std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+                    std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+                    
+                    // all weights positive if mean weight is positive and vice-versa
+                    int sign = _weightMean<0?-1:_weightMean>=0;
+                    
+                    neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, true);
                 }
             }
         }
 		
         // interconnecting a layer with soft winner-takes-all axons, using negative weights
-        void lateralInhibition(layer l, float _weightMean=-1, float _weightstdev=0, int probability=100, bool redundantConnections=true) {
+        void lateralInhibition(layer l, float _weightMean=-1, float _weightstdev=0, int probability=100) {
             if (_weightMean != 0) {
                 if (_weightMean > 0) {
                     std::cout << "lateral inhibition axons must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
                 }
-
-                for (auto& preSub: l.sublayers) {
-                    for (auto& preRF: preSub.receptiveFields) {
-                        for (auto& pre: preRF.neurons) {
-                            for (auto& postSub: l.sublayers) {
-                                for (auto& postRF: postSub.receptiveFields) {
-                                    for (auto& post: postRF.neurons) {
-                                        if (pre != post) {
-                                            std::random_device device;
-                                            std::mt19937 randomEngine(device());
-                                            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                                            neurons[pre].get()->addAxon(neurons[post].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, redundantConnections);
-                                        }
-                                    }
-                                }
-                            }
+                
+                for (auto& preNeurons: l.neurons) {
+                    for (auto& postNeurons: l.neurons) {
+                        if (preNeurons != postNeurons) {
+                            std::random_device device;
+                            std::mt19937 randomEngine(device());
+                            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+                            neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
                         }
                     }
                 }
+                
             } else {
                 throw std::logic_error("lateral inhibition axons cannot have a null weight");
             }
         }
 		
-        // connecting two layers according to their receptive fields
-        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
-            // restrict to layers of the same size
-            if (presynapticLayer.width != postsynapticLayer.width || presynapticLayer.height != postsynapticLayer.height) {
-                throw std::logic_error("Convoluting two layers requires them to be the same size");
-            }
-            
+        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
             maxDelay = std::max(maxDelay, _delayMean);
-            
-            for (auto& preSub: presynapticLayer.sublayers) {
-                for (auto& preRF: preSub.receptiveFields) {
-                    for (auto& postSub: postsynapticLayer.sublayers) {
-                        for (auto& postRF: postSub.receptiveFields) {
-                            if (preRF.row == postRF.row && preRF.col == postRF.col) {
-                                for (auto& pre: preRF.neurons){
-                                    for (auto& post: postRF.neurons){
-                                        std::random_device device;
-                                        std::mt19937 randomEngine(device());
-                                        std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-                                        std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                                        int sign = _weightMean<0?-1:_weightMean>=0;
-                                        neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
-		
-        // subsampling connection of receptive fields
-        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
-            auto preMaxRows = presynapticLayer.sublayers[0].receptiveFields.back().row+1;
-            auto preMaxColumns = presynapticLayer.sublayers[0].receptiveFields.back().col+1;
-
-            auto postMaxRows = postsynapticLayer.sublayers[0].receptiveFields.back().row+1;
-            auto postMaxColumns = postsynapticLayer.sublayers[0].receptiveFields.back().col+1;
-
-            float fRow_check = preMaxRows / static_cast<float>(postMaxRows);
-            float fCol_check = preMaxColumns / static_cast<float>(postMaxColumns);
-
-            int rowPoolingFactor = fRow_check;
-            int colPoolingFactor = fCol_check;
-
-            if (rowPoolingFactor != fRow_check || colPoolingFactor != fCol_check) {
-                throw std::logic_error("the number of receptive fields in each layer is not proportional. The pooling factor cannot be calculated");
-            }
-
+        
+        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
             maxDelay = std::max(maxDelay, _delayMean);
-
-            for (auto& preSub: presynapticLayer.sublayers) {
-                for (auto& postSub: postsynapticLayer.sublayers) {
-                    // each presynaptic sublayer connects to the same postsynaptic sublayer
-                    if (preSub.ID == postSub.ID) {
-                        int rowShift = 0;
-                        int colShift = 0;
-                        for (auto& postRf: postSub.receptiveFields) {
-                            for (auto& preRf: preSub.receptiveFields) {
-                                if ( preRf.row >= 0+rowShift && preRf.row < rowPoolingFactor+rowShift && preRf.col >= 0+colShift && preRf.col < colPoolingFactor+colShift) {
-                                    for (auto& pre: preRf.neurons) {
-                                        for (auto& post: postRf.neurons) {
-                                            std::random_device device;
-                                            std::mt19937 randomEngine(device());
-                                            std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-                                            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                                            int sign = _weightMean<0?-1:_weightMean>=0;
-                                            neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
-                                        }
-                                    }
-                                }
-                            }
-                            colShift += colPoolingFactor;
-                            if (postRf.col == postMaxColumns-1) {
-                                colShift = 0;
-                                rowShift += rowPoolingFactor;
-                            }
-                        }
-                    }
-                }
-            }
         }
+        
+//        // connecting two layers according to their receptive fields
+//        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
+//            // restrict to layers of the same size
+//            if (presynapticLayer.width != postsynapticLayer.width || presynapticLayer.height != postsynapticLayer.height) {
+//                throw std::logic_error("Convoluting two layers requires them to be the same size");
+//            }
+//
+//            maxDelay = std::max(maxDelay, _delayMean);
+//
+//            for (auto& preSub: presynapticLayer.sublayers) {
+//                for (auto& preRF: preSub.receptiveFields) {
+//                    for (auto& postSub: postsynapticLayer.sublayers) {
+//                        for (auto& postRF: postSub.receptiveFields) {
+//                            if (preRF.row == postRF.row && preRF.col == postRF.col) {
+//                                for (auto& pre: preRF.neurons){
+//                                    for (auto& post: postRF.neurons){
+//                                        std::random_device device;
+//                                        std::mt19937 randomEngine(device());
+//                                        std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+//                                        std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+//                                        int sign = _weightMean<0?-1:_weightMean>=0;
+//                                        neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        // subsampling connection of receptive fields
+//        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
+//            auto preMaxRows = presynapticLayer.sublayers[0].receptiveFields.back().row+1;
+//            auto preMaxColumns = presynapticLayer.sublayers[0].receptiveFields.back().col+1;
+//
+//            auto postMaxRows = postsynapticLayer.sublayers[0].receptiveFields.back().row+1;
+//            auto postMaxColumns = postsynapticLayer.sublayers[0].receptiveFields.back().col+1;
+//
+//            float fRow_check = preMaxRows / static_cast<float>(postMaxRows);
+//            float fCol_check = preMaxColumns / static_cast<float>(postMaxColumns);
+//
+//            int rowPoolingFactor = fRow_check;
+//            int colPoolingFactor = fCol_check;
+//
+//            if (rowPoolingFactor != fRow_check || colPoolingFactor != fCol_check) {
+//                throw std::logic_error("the number of receptive fields in each layer is not proportional. The pooling factor cannot be calculated");
+//            }
+//
+//            maxDelay = std::max(maxDelay, _delayMean);
+//
+//            for (auto& preSub: presynapticLayer.sublayers) {
+//                for (auto& postSub: postsynapticLayer.sublayers) {
+//                    // each presynaptic sublayer connects to the same postsynaptic sublayer
+//                    if (preSub.ID == postSub.ID) {
+//                        int rowShift = 0;
+//                        int colShift = 0;
+//                        for (auto& postRf: postSub.receptiveFields) {
+//                            for (auto& preRf: preSub.receptiveFields) {
+//                                if ( preRf.row >= 0+rowShift && preRf.row < rowPoolingFactor+rowShift && preRf.col >= 0+colShift && preRf.col < colPoolingFactor+colShift) {
+//                                    for (auto& pre: preRf.neurons) {
+//                                        for (auto& post: postRf.neurons) {
+//                                            std::random_device device;
+//                                            std::mt19937 randomEngine(device());
+//                                            std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
+//                                            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+//                                            int sign = _weightMean<0?-1:_weightMean>=0;
+//                                            neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                            colShift += colPoolingFactor;
+//                            if (postRf.col == postMaxColumns-1) {
+//                                colShift = 0;
+//                                rowShift += rowPoolingFactor;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         // ----- PUBLIC NETWORK METHODS -----
         
@@ -739,51 +659,28 @@ namespace hummus {
             if (neurons.empty()) {
                 throw std::logic_error("add neurons before injecting spikes");
             }
-
-            if ((*data)[1].x == -1 && (*data)[1].y == -1) {
-                for (auto& event: *data) {
-                    for (auto& l: layers[0].sublayers) {
-                        if (event.sublayerID == l.ID) {
-                            for (auto& r: l.receptiveFields) {
-                                for (auto& n: r.neurons) {
-                                    if (neurons[n]->getNeuronID() == event.neuronID) {
-                                        injectSpike(n, event.timestamp);
-                                    }
-                                }
+            
+            for (auto& event: *data) {
+                for (auto& n: layers[0].neurons) {
+                    // 1D or 2D data not split into sublayers
+                    if (event.sublayerID == neurons[n]->getSublayerID()) {
+                        // one dimensional data
+                        if (event.x == -1) {
+                            if (neurons[n]->getNeuronID() == event.neuronID) {
+                                injectSpike(n, event.timestamp);
+                                break;
                             }
-                        } else if (event.sublayerID == -1) {
-                            for (auto& r: l.receptiveFields) {
-                                for (auto& n: r.neurons) {
-                                    if (neurons[n]->getNeuronID() == event.neuronID) {
-                                        injectSpike(n, event.timestamp);
-                                    }
-                                }
+                        // two dimensional data
+                        } else {
+                            if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y) {
+                                injectSpike(n, event.timestamp);
+                                break;
                             }
                         }
-                    }
-                }
-            } else {
-                for (auto& event: *data) {
-                    for (auto& l: layers[0].sublayers) {
-                        if (event.sublayerID == l.ID) {
-                            for (auto& r: l.receptiveFields) {
-                                for (auto& n: r.neurons) {
-                                    if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y) {
-                                        injectSpike(n, event.timestamp);
-                                        break;
-                                    }
-                                }
-                            }
-                        } else if (event.sublayerID == -1) {
-                            for (auto& r: l.receptiveFields) {
-                                for (auto& n: r.neurons) {
-                                    if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y) {
-                                        injectSpike(n, event.timestamp);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        
+                    // 2D data split into sublayers
+                    } else if (event.sublayerID == -1) {
+                        
                     }
                 }
             }

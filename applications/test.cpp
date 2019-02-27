@@ -40,11 +40,11 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
-    network.addLayer<hummus::InputNeuron>(1, 1, 1, {});
-    network.addLayer<hummus::LIF>(2, 1, 1, {}, true, false, 10, 20, 0, false);
+    network.addLayer<hummus::InputNeuron>(1, 1, {});
+    network.addLayer<hummus::LIF>(2, 1, {}, false, false, 5, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0.1);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
     network.lateralInhibition(network.getLayers()[1], -1);
     
     //  ----- INJECTING SPIKES -----
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     qtDisplay.trackNeuron(1);
 	
     //  ----- RUNNING THE NETWORK -----
-    network.run(100, 0.1);
+    network.run(100, 0);
     
     //  ----- EXITING APPLICATION -----
     return 0;
