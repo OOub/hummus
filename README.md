@@ -177,11 +177,11 @@ the DataParser class is used to **parse spike data** from a text file **into a v
 
 * The text files can be formatted as such:
 
-Input Text File Format | | | |
-------- | -- | -- |
-**1D data** | timestamp | neuron index |
-**2D data** | X coordinate | Y coordinate |
-**2D data with sublayers** | X coordinate | Y coordinate | sublayer ID
+Input Text File Format | | | | |
+------- | -- | -- |--|
+**1D data** | timestamp | neuron index | |
+**2D data** | timestamp |X | Y |
+**2D data with sublayers** | timestamp |X | Y | sublayer ID
 
 **Example**
 
