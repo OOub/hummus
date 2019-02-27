@@ -34,7 +34,7 @@ To easily remember and work with these polymorphic classes, the virtual methods 
 
 Hummus has axons that are characterised by **weights** and **delays**
 
-#### **What's provided**
+#### **The Extra Stuff**
 
 ###### Matlab Toolbox
 A matlab toolbox called Hummus Utilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
@@ -177,10 +177,10 @@ the DataParser class is used to **parse spike data** from a text file **into a v
 
 * The text files can be formatted as such:
 
-Input Text File Format |
-------- |
-**1D data** | timestamp | neuron index
-**2D data** | X coordinate | Y coordinate
+Input Text File Format | | | |
+------- | -- | -- |
+**1D data** | timestamp | neuron index |
+**2D data** | X coordinate | Y coordinate |
 **2D data with sublayers** | X coordinate | Y coordinate | sublayer ID
 
 **Example**
