@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0.1, &testData);
+    network.run(&trainingData, 1, &testData);
 
     //  ----- EXITING APPLICATION -----
     return 0;
