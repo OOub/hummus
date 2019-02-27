@@ -1,6 +1,6 @@
 /*
  * unsupervisedNetwork.cpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -23,15 +23,15 @@
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
-	adonis::DataParser dataParser;
+	hummus::DataParser dataParser;
 	
 	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
-	adonis::QtDisplay qtDisplay;
-	adonis::SpikeLogger spikeLog("10neurons_4patterns_unsupervised_spikeLog.bin");
-	adonis::MyelinPlasticityLogger myelinPlasticityLog("10neurons_4patterns_unsupervised_learningLog.bin");
-    adonis::Network network({&spikeLog, &myelinPlasticityLog}, &qtDisplay);
+	hummus::QtDisplay qtDisplay;
+	hummus::SpikeLogger spikeLog("10neurons_4patterns_unsupervised_spikeLog.bin");
+	hummus::MyelinPlasticityLogger myelinPlasticityLog("10neurons_4patterns_unsupervised_learningLog.bin");
+    hummus::Network network({&spikeLog, &myelinPlasticityLog}, &qtDisplay);
     
     //  ----- NETWORK PARAMETERS -----
 	float resetCurrent = 10;
@@ -46,11 +46,11 @@ int main(int argc, char** argv) {
 	bool homeostasis = false;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	adonis::MyelinPlasticity myelinPlasticity(1, 1, 1, 1);
+	hummus::MyelinPlasticity myelinPlasticity(1, 1, 1, 1);
 	
     //  ----- CREATING THE NETWORK -----
-    network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
-    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
+    network.addLayer<hummus::InputNeuron>(inputNeurons, 1, 1, {});
+    network.addLayer<hummus::LIF>(layer1Neurons, 1, 1, {&myelinPlasticity}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
 	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.2, 0.1, 5, 3);

@@ -1,6 +1,6 @@
 /*
  * inputViewer.hpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -33,7 +33,7 @@
 Q_DECLARE_METATYPE(QtCharts::QAbstractSeries *)
 Q_DECLARE_METATYPE(QtCharts::QValueAxis *)
 
-namespace adonis {
+namespace hummus {
     class InputViewer : public QObject {
         
     Q_OBJECT

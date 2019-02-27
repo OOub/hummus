@@ -1,6 +1,6 @@
 /*
  * pokerDVS.cpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -24,29 +24,29 @@
 
 int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
-    adonis::QtDisplay qtDisplay;
-    adonis::SpikeLogger spikeLog("spikeLog.bin");
-    adonis::ClassificationLogger classificationLog("predictionLog.bin");
-    adonis::MyelinPlasticityLogger mpLog("mpLog.bin");
+    hummus::QtDisplay qtDisplay;
+    hummus::SpikeLogger spikeLog("spikeLog.bin");
+    hummus::ClassificationLogger classificationLog("predictionLog.bin");
+    hummus::MyelinPlasticityLogger mpLog("mpLog.bin");
 
-    adonis::Network network({&spikeLog, &classificationLog, &mpLog}, &qtDisplay);
+    hummus::Network network({&spikeLog, &classificationLog, &mpLog}, &qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float eligibilityDecay = 100;
 
     //  ----- CREATING THE NETWORK -----
-    adonis::MyelinPlasticity mp(1, 1, 1, 1);
+    hummus::MyelinPlasticity mp(1, 1, 1, 1);
 
-    network.add2dLayer<adonis::InputNeuron>(0, 1, 34, 34, 1, false, {});
-    network.add2dLayer<adonis::LIF>(0, 1, 34, 34, 1, false, {&mp}, true, true, 10, 20, 3, true, false, eligibilityDecay);
-    network.addDecisionMakingLayer<adonis::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainLabel.txt", true, {&mp}, 1000, true, false, 10, 80, eligibilityDecay);
+    network.add2dLayer<hummus::InputNeuron>(0, 1, 34, 34, 1, false, {});
+    network.add2dLayer<hummus::LIF>(0, 1, 34, 34, 1, false, {&mp}, true, true, 10, 20, 3, true, false, eligibilityDecay);
+    network.addDecisionMakingLayer<hummus::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainLabel.txt", true, {&mp}, 1000, true, false, 10, 80, eligibilityDecay);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.006, 0.02, 50, 10);
     network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.06, 0.02);
 
 	//  ----- READING DATA FROM FILE -----
-    adonis::DataParser dataParser;
+    hummus::DataParser dataParser;
     auto trainingData = dataParser.readData("../../data/pokerDVS/DHtrain.txt");
     auto testData = dataParser.readData("../../data/pokerDVS/DHtest.txt");
 

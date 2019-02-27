@@ -1,5 +1,5 @@
 
-solution 'adonis' 
+solution 'hummus' 
     configurations {'Release', 'Debug'}
     location 'build'
 

@@ -1,6 +1,6 @@
 /*
  * stdp.hpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -16,7 +16,7 @@
 #include "../neurons/inputNeuron.hpp"
 #include "../neurons/LIF.hpp"
 
-namespace adonis {
+namespace hummus {
 	class Neuron;
 	
 	class STDP : public GlobalLearningRuleHandler {

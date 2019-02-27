@@ -1,6 +1,6 @@
 /*
  * analysis.hpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -17,7 +17,7 @@
 #include "../neurons/decisionMakingNeuron.hpp"
 #include "../dataParser.hpp"
 
-namespace adonis {
+namespace hummus {
 	class Analysis : public AddOn {
         
 	public:

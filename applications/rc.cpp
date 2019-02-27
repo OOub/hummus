@@ -1,6 +1,6 @@
 /*
  * rc.cpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -39,14 +39,14 @@ int main(int argc, char** argv) {
     bool wta = false; // winner-takes-all algorithm
     
     // ----- IMPORTING DATA -----
-    adonis::DataParser parser;
+    hummus::DataParser parser;
     auto data = parser.readData("path to file");
     
     //  ----- INITIALISING THE NETWORK -----
-    adonis::QtDisplay qtDisplay;
-    adonis::SpikeLogger spikeLog("rcSpike.bin");
-    adonis::PotentialLogger reservoirPLog("rervoirPotential.bin");
-    adonis::Network network({&spikeLog, &reservoirPLog});
+    hummus::QtDisplay qtDisplay;
+    hummus::SpikeLogger spikeLog("rcSpike.bin");
+    hummus::PotentialLogger reservoirPLog("rervoirPotential.bin");
+    hummus::Network network({&spikeLog, &reservoirPLog});
 
     //  ----- CREATING THE NETWORK -----
     

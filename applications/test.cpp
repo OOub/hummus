@@ -1,6 +1,6 @@
 /*
  * test.cpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -33,15 +33,15 @@
 int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
-    adonis::QtDisplay qtDisplay;
-    adonis::SpikeLogger spikeLog("testSpikeLog.bin");
-    adonis::Network network({&spikeLog}, &qtDisplay);
+    hummus::QtDisplay qtDisplay;
+    hummus::SpikeLogger spikeLog("testSpikeLog.bin");
+    hummus::Network network({&spikeLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
-    network.addLayer<adonis::InputNeuron>(1, 1, 1, {});
-    network.addLayer<adonis::LIF>(2, 1, 1, {}, true, false, 10, 20, 0, false);
+    network.addLayer<hummus::InputNeuron>(1, 1, 1, {});
+    network.addLayer<hummus::LIF>(2, 1, 1, {}, true, false, 10, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0.1);

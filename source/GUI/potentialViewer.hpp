@@ -1,6 +1,6 @@
 /*
  * potentialViewer.hpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -30,7 +30,7 @@
 
 #include "../core.hpp"
 
-namespace adonis {
+namespace hummus {
     class PotentialViewer : public QObject {
         
     Q_OBJECT

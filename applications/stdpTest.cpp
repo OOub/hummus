@@ -1,6 +1,6 @@
 /*
  * stdpPotentiation.cpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -25,13 +25,13 @@
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
-	adonis::DataParser dataParser;
+	hummus::DataParser dataParser;
 	
 	auto trainingData = dataParser.readData("../../data/stdpTest.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
-	adonis::QtDisplay qtDisplay;
-	adonis::Network network(&qtDisplay);
+	hummus::QtDisplay qtDisplay;
+	hummus::Network network(&qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
 	float resetCurrent = 10;
@@ -44,11 +44,11 @@ int main(int argc, char** argv) {
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-    adonis::STDP stdp;
+    hummus::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
-    network.addLayer<adonis::InputNeuron>(inputNeurons, 1, 1, {});
-    network.addLayer<adonis::LIF>(layer1Neurons, 1, 1, {&stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
+    network.addLayer<hummus::InputNeuron>(inputNeurons, 1, 1, {});
+    network.addLayer<hummus::LIF>(layer1Neurons, 1, 1, {&stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 1, 0);

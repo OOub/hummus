@@ -1,10 +1,14 @@
-![Logo](resources/adonis_logo.png)
+![Logo](resources/hummus.png)
 
 # Quick Start Guide
 
+Hummus recipe: Lemon Juice, chickpeas and tahini, spice things up and you're good to go!
+
 ## Introduction
 
-Adonis is a header-only hybrid spiking neural network simulator coded using C++ and built first and foremost for computer vision and pattern recognition tasks. The simulator has the ability to run in both **clock-based** and **event-based** modes. In the clock-based mode, neurons are updated at a certain time interval. In the event-based mode, neurons are only updated in response to a spike.
+Hummus is a header-only hybrid spiking neural network simulator coded using C++ and built first and foremost for neuromorphic computer vision and pattern recognition tasks.
+
+The simulator has the ability to run in both **clock-based** and **event-based** modes. In the clock-based mode, neurons are updated at a certain time interval. In the event-based mode, neurons are only updated in response to a spike.
 
 Event-based | Clock-based
 ------------|------------------
@@ -15,17 +19,17 @@ Leaky-Integrate-and-Fire (LIF) neuron with constant current dynamics only | Leak
 We will see later in the guide how to select a mode.
 
 #### **Main Goals**
-Adonis was born from the frustratingly complicated endeavour of using the standard simulators to create and work with novel concepts and learning rules that are "outside the box". One of the strong points of this simulator is the ease of implementing new ideas without having to delve into endless lines of code. As such, Adonis was developed with two goals in mind: flexibility and simplicity.
+Hummus was born from the frustratingly complicated endeavour of using the standard simulators to create and work with novel concepts and learning rules that are "outside the box". One of the strong points of this simulator is the ease of implementing new ideas without having to delve into endless lines of code. As such, Hummus was developed with two goals in mind: flexibility and simplicity.
 
 ###### Flexibility and Simplicity
 In order keep things simple, polymorphic classes with virtual methods were implemented. This basically means we can create a new type of add-on, neuron, or learning rule in a completely separate file by simply inheriting from  a polymorphic class and overriding the available virtual methods. We can focus on the scientific part of our work without worrying about making any changes to the main code.
 
 To easily remember and work with these polymorphic classes, the virtual methods available in each class act like messages that occur in different scenarios. We will break down the structure of each in a diagram further down.
 
-Furthermore, Adonis allows full usage of both **weights** and **axonal conduction delays** in the learning rules
+Furthermore, Hummus allows full usage of both **weights** and **axonal conduction delays** in the learning rules
 
 #### **What's provided**
-A matlab toolbox called AdonisUtilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
+A matlab toolbox called HummusUtilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
 
 ----------------------
 
@@ -76,7 +80,7 @@ export LD\_LIBRARY\_PATH
 
 ## Testing
 
-1. Go to the Adonis directory and run ``premake4 gmake && cd build && make`` or ``premake4 --without-qt gmake && cd build && make`` to build adonis without any Qt dependencies (you will lose the GUI in the process!)
+1. Go to the Hummus directory and run ``premake4 gmake && cd build && make`` or ``premake4 --without-qt gmake && cd build && make`` to build hummus without any Qt dependencies (you will lose the GUI in the process!)
 
 2. execute ``cd release && ./testNetwork`` to run the spiking neural network
 
@@ -85,10 +89,10 @@ export LD\_LIBRARY\_PATH
 #### **Premake Actions and Options**
 
 ###### Using xCode on macOS
-To use Xcode as an IDE on macOS, go the Adonis base directory and run ``premake4 xcode4``
+To use Xcode as an IDE on macOS, go the Hummus base directory and run ``premake4 xcode4``
 
 ###### Building Without Qt
-In case you do not want to use the Qt GUI, you can build Adonis without any Qt dependencies by running ``premake4 --without-qt gmake`` instead of ``premake4 gmake``
+In case you do not want to use the Qt GUI, you can build Hummus without any Qt dependencies by running ``premake4 --without-qt gmake`` instead of ``premake4 gmake``
 
 ###### Premake Help
 Run ``premake4 --help`` for more information
@@ -97,14 +101,14 @@ Run ``premake4 --help`` for more information
 
 ## Using The Simulator
 
-#### **Adonis UML Diagram**
+#### **Hummus UML Diagram**
 
 ![chart](resources/flowchart.png)
 
 **Create a new class in a new file and override any of the pure virtual methods outlined in the diagram to create your own add-on, neuron or learning rule**
 
 #### **Namespace**
-all the classes are declared within the ``adonis`` namespace. Check out testNetwork.cpp for an example on how to build and run a spiking neural network.
+all the classes are declared within the ``hummus`` namespace. Check out testNetwork.cpp for an example on how to build and run a spiking neural network.
 
 #### **Important Includes**
 * base framework: ``#include "../source/core.hpp"``
@@ -134,7 +138,7 @@ the DataParser class is used to **parse spike data** from a text file **into a v
 ```
 #include "../source/dataParser.hpp
 
-adonis::DataParser parser;
+hummus::DataParser parser;
 
 auto trainingData = parser.readData([path to training file]);
 auto testData = parser.readData([path to test file]);
@@ -148,11 +152,11 @@ _** I- Initialising the optional Add-ons**_
 
   * **Qt display :** display useful information on runtime
   ```
-  adonis::QtDisplay qtDisplay;
+  hummus::QtDisplay qtDisplay;
   ```
   * **Spike logger :** write the network output into a binary file.
   ```
-  adonis::SpikeLogger spikeLog(std::string filename);
+  hummus::SpikeLogger spikeLog(std::string filename);
   ```
 
 **The SpikeLogger binary file starts with an 8 bytes header**
@@ -174,7 +178,7 @@ y coordinate | byte 32 to 34
 
   * **Classification logger :** write into a binary file the spikes from the output layer when the learning is off.
   ```
-  adonis::ClassificationLogger classificationLog(std::string filename);
+  hummus::ClassificationLogger classificationLog(std::string filename);
   ```
 
 ClassificationLogger Binary File Specs |
@@ -187,7 +191,7 @@ postsynaptic neuron ID | byte 10 to 12
 
     1. initialising the constructor
     ```
-    adonis::PotentialLogger potentialLog(std::string filename)
+    hummus::PotentialLogger potentialLog(std::string filename)
     ```
 
     2. Calling the **neuronSelection()** PotentialLogger class method in order to chose which neurons to plot . This method should be called **after** defining all the layers of our network **(PLEASE SEE THE NETWORK CREATION SECTION FOR MORE DETAILS ON HOW TO BUILD NEURON LAYERS)**.
@@ -214,7 +218,7 @@ postsynaptic neuron ID | byte 12 to 14
 
   * **Myelin plasticity logger :** write the learning rule's output into a binary file; In other words, which neurons are being modified (plastic neurons)at each learning epoch.
   ```
-  adonis::MyelinPlasticityLogger mpLog(std::string filename);
+  hummus::MyelinPlasticityLogger mpLog(std::string filename);
   ```
 
 MyelinPlasticityLogger Binary File Specs |
@@ -238,30 +242,30 @@ receptive field column index | byte 38 to 40
 
   * **Analysis :** print the classification accuracy of the network
   ```
-  adonis::Analysis analysis(std::string test_data_labels)
+  hummus::Analysis analysis(std::string test_data_labels)
   ```
 
 Please note, the first layer we build does not have any presynaptic neurons. The presynaptic neuron ID will appear as -1 in such cases. The same strategy is used for neurons without any cartesian coordinates defined (spike logger)
 
-Additionally, all the logger files can be read using the LogReader class in the AdonisUtilities matlab toolbox (more details in the quick start guide provided upon installing the toolbox in matlab).
+Additionally, all the logger files can be read using the LogReader class in the HummusUtilities matlab toolbox (more details in the quick start guide provided upon installing the toolbox in matlab).
 
 _**II- Initialising the network**_
 
 To initialise the network we can either initialise it without any add-ons:
 ```
-adonis::Network network;
+hummus::Network network;
 ```
 
 Or we can initialise it with add-ons. In that case, the Network constructor has two arguments: a vector of references for the addon constructors, and a reference for **one** main thread addon.
 ```
 // Constructor to initialise normal add-ons
-adonis::Network network({&spikeLogger, &learningLogger});
+hummus::Network network({&spikeLogger, &learningLogger});
 
 // Constructor to initialise only a MainThreadAddOn
-adonis::Network network(&qtDisplay);
+hummus::Network network(&qtDisplay);
 
 // Constructor to initialise both normal add-ons and a MainThreadAddOn
-adonis::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
+hummus::Network network({&spikeLogger, &learningLogger}, &qtDisplay);
 ```
 
 _**III- Initialising the learning rules**_
@@ -272,10 +276,10 @@ Each neuron has a vector of pointers to learning rule constructors, making it ca
 
 ```
 // initialising the STDP rule
-adonis::STDP stdp(1, 1, 20, 20);
+hummus::STDP stdp(1, 1, 20, 20);
 
 // Creating a layer of 10 neurons with the STDP rule passed as a reference (more details in the network creation section)
-network.addLayer<adonis::InputNeuron>(10, 1, 2, {&stdp});
+network.addLayer<hummus::InputNeuron>(10, 1, 2, {&stdp});
 ```
 
 Available Learning Rules | Arguments
@@ -319,10 +323,10 @@ addDecisionMakingLayer | 1D layer of decision-making neurons for classification 
 Each of these methods is a template; when calling them a class identifier needs to be specified. Creating a 1D layer of input neurons would look like this:
 ```
 // Creating 10 1D input neurons with 1 receptive field, 2 sublayers and no learning rule (empty vector)
-network.addLayer<adonis::InputNeuron>(10, 1, 2, {});
+network.addLayer<hummus::InputNeuron>(10, 1, 2, {});
 
 // Creating 10 1D LIF neurons with 1 receptive field, 2 sublayer and an learning rule
-network.addLayer<adonis::InputNeuron>(10, 1, 2, {&stdp});
+network.addLayer<hummus::InputNeuron>(10, 1, 2, {&stdp});
 ```
 
 As the final arguments for the layer creation methods we can customise any neuron parameter by simply adding one of the arguments from a neuron. For example, if we take the earlier example 10 LIF neurons and we need to customise the synaptic kernel used into the time-varying one:
@@ -330,7 +334,7 @@ As the final arguments for the layer creation methods we can customise any neuro
 ```
 // Changing the synaptic kernel
 bool timeVaryingCurrent = true;
-network.addLayer<adonis::InputNeuron>(10, 1, 2, {}, timeVaryingCurrent);
+network.addLayer<hummus::InputNeuron>(10, 1, 2, {}, timeVaryingCurrent);
 ```
 
 

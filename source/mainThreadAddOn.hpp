@@ -1,6 +1,6 @@
 /*
  * mainThreadAddOn.hpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -13,7 +13,7 @@
 
 #include "addOn.hpp"
 
-namespace adonis {
+namespace hummus {
 	class MainThreadAddOn : public AddOn {
         
 	public:

@@ -1,6 +1,6 @@
 /*
  * addOn.hpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -11,7 +11,7 @@
 
 #pragma once
 
-namespace adonis {
+namespace hummus {
     class Neuron;
     class Network;
 	struct axon;

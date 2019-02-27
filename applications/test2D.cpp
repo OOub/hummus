@@ -1,6 +1,6 @@
 /*
  * test2D.cpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -18,17 +18,17 @@
 
 int main(int argc, char** argv) {
 	//  ----- READING TRAINING DATA FROM FILE -----
-	adonis::DataParser dataParser;
+	hummus::DataParser dataParser;
 	auto trainingData = dataParser.readData("../../data/2Dtest.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
-	adonis::QtDisplay qtDisplay;
-	adonis::Network network(&qtDisplay);
+	hummus::QtDisplay qtDisplay;
+	hummus::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
-    network.add2dLayer<adonis::InputNeuron>(0, 2, 8, 8, 2, false, {});
-    network.add2dLayer<adonis::LIF>(1, 2, 8, 8, 2, false, {}, true, false, 10, 20, 3, true);
-    network.addLayer<adonis::LIF>(1, 1, 1, {});
+    network.add2dLayer<hummus::InputNeuron>(0, 2, 8, 8, 2, false, {});
+    network.add2dLayer<hummus::LIF>(1, 2, 8, 8, 2, false, {}, true, false, 10, 20, 3, true);
+    network.addLayer<hummus::LIF>(1, 1, 1, {});
 		
 	network.convolution(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
 	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1., 0);

@@ -1,6 +1,6 @@
 /*
  * classificationLogger.hpp
- * Adonis - spiking neural network simulator
+ * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
@@ -21,7 +21,7 @@
 #include "spikeLogger.hpp"
 #include "../dataParser.hpp"
 
-namespace adonis {
+namespace hummus {
     class ClassificationLogger : public AddOn {
         
     public:
