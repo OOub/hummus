@@ -13,24 +13,38 @@ The simulator has the ability to run in both **clock-based** and **event-based**
 Event-based | Clock-based
 ------------|------------------
 performance | easier algorithms
-compatible with neuromorphic platforms | membrane potentials at every timestep
-Leaky-Integrate-and-Fire (LIF) neuron with constant current dynamics only | Leaky-Integrate-and-Fire (LIF) neuron with a choice between constant and time-varying current dynamics
+made for neuromorphic platforms | membrane potentials at every timestep
+2 synaptic kernels for current dynamics | 3 synaptic kernels for current dynamics
 
 We will see later in the guide how to select a mode.
 
 #### **Main Goals**
-Hummus was born from the frustratingly complicated endeavour of using the standard simulators to create and work with novel concepts and learning rules that are "outside the box". One of the strong points of this simulator is the ease of implementing new ideas without having to delve into endless lines of code. As such, Hummus was developed with two goals in mind: flexibility and simplicity.
+Hummus was born from the complicated endeavour of using other simulators to **easily create learning rules from scratch** and work with **neurons that include non-linear event-based current dynamics**.
+
+This simulator allows us to easily implement new ideas without having to delve into endless lines of code.
+
+Hummus was developed with two goals in mind: flexibility and simplicity.
 
 ###### Flexibility and Simplicity
-In order keep things simple, polymorphic classes with virtual methods were implemented. This basically means we can create a new type of add-on, neuron, or learning rule in a completely separate file by simply inheriting from  a polymorphic class and overriding the available virtual methods. We can focus on the scientific part of our work without worrying about making any changes to the main code.
+Polymorphic classes with virtual methods were implemented: we can create a new type of add-on, neuron, or learning rule in a completely separate header file by simply inheriting from a polymorphic class and overriding the available virtual methods.
 
-To easily remember and work with these polymorphic classes, the virtual methods available in each class act like messages that occur in different scenarios. We will break down the structure of each in a diagram further down.
+We can focus on the scientific part of our work without worrying about making any changes to, or even look at the main code.
 
-Furthermore, Hummus allows full usage of both **weights** and **axonal conduction delays** in the learning rules
+To easily remember and work with these polymorphic classes, the virtual methods available in each class act like messages that occur in different scenarios. We will break down the structure of each, in a diagram further down.
+
+Hummus has axons that are characterised by **weights** and **delays**
 
 #### **What's provided**
-A matlab toolbox called HummusUtilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
 
+###### Matlab Toolbox
+A matlab toolbox called Hummus Utilities is bundled, in order to easily generate data from popular databases to feed into a network, or to read and perform graphical and statistical analysis on the network output.
+
+to install:
+
+1. to to the hummus directory
+2. go to ``utilities/matlab/``
+3. double click on **Hummus Utilities.mltbx**
+4. read the bundled quick start guide in Matlab for examples on how to use the toolbox
 ----------------------
 
 ## Dependencies
@@ -105,8 +119,6 @@ Run ``premake4 --help`` for more information
 
 ![chart](resources/flowchart.png)
 
-**Create a new class in a new file and override any of the pure virtual methods outlined in the diagram to create your own add-on, neuron or learning rule**
-
 #### **Namespace**
 all the classes are declared within the ``hummus`` namespace. Check out testNetwork.cpp for an example on how to build and run a spiking neural network.
 
@@ -117,7 +129,42 @@ all the classes are declared within the ``hummus`` namespace. Check out testNetw
 * learning rules: ``#include "../source/learningRules/[filename].hpp"`` Choose the learning rule headers to include
 * add-ons: ``#include "../source/addOns/[filename].hpp"`` Choose the add-on headers to include
 
-#### **Reading Spike Data**
+#### Creating New Add-ons, Learning rules and Neurons
+To create new add-ons, learning rules or neuron models:
+
+1. find the correct folder inside ``hummus/source/``
+2. create a new header file
+3. include the core.hpp header
+4. create a new class inside the file that inherits from one of the polymorphic classes
+5. override the available virtual methods.
+6. wrap everything in the **hummus** namespace
+
+```
+// Example for a new add-on
+
+#include "../core.hpp"
+
+namespace hummus {
+
+    // Inheriting from the AddOn polymorphic class
+    class newAddOn : public AddOn {
+
+    public:
+
+        // constructor
+        newAddOn() {}
+
+        // overriding a virtual method (keep same arguments)
+        void onStart(Network* network) override {
+
+            // my new add-on does things defined here at the start of my network.
+        }
+}
+```
+
+the same concept applies to the LearningRuleHandler class's **learn()** virtual method
+
+#### **Reading Spike Data from .txt files**
 the DataParser class is used to **parse spike data** from a text file **into a vector of input** via the **readData()** method which take in a string for the location of the input data file
 
 * input is a struct with 5 fields:
@@ -129,9 +176,12 @@ the DataParser class is used to **parse spike data** from a text file **into a v
 
 
 * The text files can be formatted as such:
-  * 1D input data: _timestamp, index_
-  * 2D input data:  _timestamp, X, Y_
-  * 2D input data with sublayers (feature maps):  _timestamp, X, Y, sublayerID_
+
+Input Text File Format |
+------- |
+**1D data** | timestamp | neuron index
+**2D data** | X coordinate | Y coordinate
+**2D data with sublayers** | X coordinate | Y coordinate | sublayer ID
 
 **Example**
 
@@ -144,7 +194,9 @@ auto trainingData = parser.readData([path to training file]);
 auto testData = parser.readData([path to test file]);
 ```
 
-the trainingData and testData vectors can then be used to inject spikes into the network either through the **injectSpikeFromData()** method or the appropriate **run()** method which takes care of that for you. Please see below for more details on injecting spikes and running the network
+the trainingData and testData vectors can then be used to inject spikes into the network either through the **injectSpikeFromData()** method or the appropriate **run()** method which takes care of that for you.
+
+Please see below for more details on injecting spikes and running the network
 
 #### **Initialisation**
 
@@ -308,7 +360,7 @@ To create a network we have to add layers of neurons.
 
 Available Neuron Models | Use Case | Arguments
 ----------------------- | -------- | ---------
-InputNeuron | binary neuron for the initial layer that to feed external spikes | refractory period, eligibility decay, threshold, resting potential, membraneResistance
+InputNeuron | binary neuron for the initial layer to feed external spikes | refractory period, eligibility decay, threshold, resting potential, membraneResistance
 LIF | Leaky-Integrate-and-Fire (LIF) with two different synaptic kernels for current dynamics: **constant current** or **time-varying current** | timeDependentCurrent, bool homeostasis, current decay, potential decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current
 IF | Integrate-and-Fire model. similar to the LIF but without any decay in the membrane potential | timeDependentCurrent, bool homeostasis, current decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current
 DecisionMakingNeuron | LIF neurons with the ability to be labelled at the start of the network, or after the training phase | timeDependentCurrent, bool homeostasis, current decay, potential decay, refractory period, bool winner-take-all, bool bursting activity, eligibility decay, weight decay, homeostasis decay, homeostasis beta, threshold, resting potential, membrane resistance, external current, label string
@@ -346,7 +398,7 @@ There are currently 4 ways to connect layers of neurons:
 
 Available Connection Methods | Use Case | Arguments
 ----------------------- | --------- | -------------
-allToAll | fully connect all neurons in two layers | presynaptic layer, postsynaptic layer, mean weight, weight standard deviation, mean delay, delay standard deviation, connection probability
+allToAll | fully connects all neurons in two layers. **Negative mean weight = inhibitory axons**, and **Positive mean weight = excitatory axons** | presynaptic layer, postsynaptic layer, mean weight, weight standard deviation, mean delay, delay standard deviation, connection probability
 lateralInhibition | interconnects neurons in a layer with negative weights | layer, mean weight, weight standard deviation, connection
 convolution | connecting two layers according to their receptive fields | presynaptic layer, postsynaptic layer, mean weight, weight standard deviation, mean delay, delay standard deviation, connection probability
 pooling | subsampling the receptive fields (translation invariance) | presynaptic layer, postsynaptic layer, mean weight, weight standard deviation, mean delay, delay standard deviation, connection probability
