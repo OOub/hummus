@@ -364,7 +364,7 @@ namespace hummus {
         // winner-take-all algorithm
 		virtual void WTA(double timestamp, Network* network) override {
             for (auto& sub: network->getLayers()[layerID].sublayers) {
-                // intra-sublayer WTA
+                // intra-sublayer hard WTA
                 if (sub.ID == sublayerID) {
                     for (auto& n: sub.neurons) {
                         if (network->getNeurons()[n]->getNeuronID() != neuronID && network->getNeurons()[n]->getRfRow() == rfRow && network->getNeurons()[n]->getRfCol() == rfCol) {
@@ -376,7 +376,7 @@ namespace hummus {
                             }
                         }
                     }
-                // inter-sublayer WTA
+                // inter-sublayer hard WTA
                 } else {
                     for (auto& n: sub.neurons) {
                         if (network->getNeurons()[n]->getRfRow() == rfRow && network->getNeurons()[n]->getRfCol() == rfCol) {

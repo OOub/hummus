@@ -434,10 +434,10 @@ network.run(runtime, timestep);
 ```
 
 * We can also run the network with a reference to a _trainingData_ vector, a _timestep_, an optional reference to a _testData_ vector, and an optional _shift_ parameter that adds time to the overall runtime (to allow enough time to pass in case we are working with delayed spikes. This value should be equivalent to the time window you are working with):
-    * inject spikes from training and test data
-    * run the network on the training data
-    * stop all learning and reset network time
-    * run the network on the test data
+    1. inject spikes from training and test data
+    2. run the network on the training data
+    3. stop all learning and reset network time
+    4. run the network on the test data
 
 ```
 network.run(&trainingData, timestep, &testData, shift);

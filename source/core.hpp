@@ -35,11 +35,13 @@ namespace hummus {
     
 	class Neuron;
 	
+    // to be used as feature maps
 	struct sublayer {
 		std::vector<std::size_t>    neurons;
 		int16_t                     ID;
 	};
 	
+    // structure containing a population of neurons
 	struct layer {
 		std::vector<sublayer>       sublayers;
         std::vector<std::size_t>    neurons;
@@ -56,6 +58,7 @@ namespace hummus {
         double   previousInputTime;
     };
     
+    // used for the event-based mode only in order to predict spike times with dynamic currents
     enum class spikeType {
         normal,
         endOfIntegration,
@@ -119,7 +122,7 @@ namespace hummus {
             eligibilityTrace = 0;
         }
         
-        // connect two Neurons together
+        // adds an axon that connects two Neurons together - used to propagate spikes
         void addAxon(Neuron* postNeuron, float weight, float delay, int probability=100, bool redundantConnections=true) {
             if (postNeuron) {
                 if (connectionProbability(probability)) {
@@ -307,7 +310,7 @@ namespace hummus {
 		
 		// ----- NEURON CREATION METHODS -----
 		
-        // add one dimensional neurons
+        // adds one dimensional neurons
         template <typename T, typename... Args>
         void addLayer(int _numberOfNeurons, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
             
@@ -383,6 +386,8 @@ namespace hummus {
         // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride
         void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride=1, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
             maxDelay = std::max(maxDelay, _delayMean);
+            
+            std::cout << "convoluting 1D layer" << std::endl;
         }
         
         // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size
@@ -485,6 +490,7 @@ namespace hummus {
 		// ----- LAYER CONNECTION METHODS -----
 		
         // all to all purely excitatory or purely inhibitory connections (if weightMean < 0 all connections will have a negative weight)
+//        template <typename F>
         void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
             maxDelay = std::max(maxDelay, _delayMean);
 
@@ -511,13 +517,32 @@ namespace hummus {
                     std::cout << "lateral inhibition axons must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
                 }
                 
-                for (auto& preNeurons: l.neurons) {
-                    for (auto& postNeurons: l.neurons) {
-                        if (preNeurons != postNeurons) {
-                            std::random_device device;
-                            std::mt19937 randomEngine(device());
-                            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                            neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
+                for (auto& sub: l.sublayers) {
+                    // intra-sublayer soft WTA
+                    for (auto& preNeurons: sub.neurons) {
+                        for (auto& postNeurons: sub.neurons) {
+                            if (preNeurons != postNeurons) {
+                                std::random_device device;
+                                std::mt19937 randomEngine(device());
+                                std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+                                neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
+                            }
+                        }
+                    }
+                    
+                    // inter-sublayer soft WTA
+                    for (auto& subToInhibit: l.sublayers) {
+                        if (sub.ID != subToInhibit.ID) {
+                            for (auto& preNeurons: sub.neurons) {
+                                for (auto& postNeurons: subToInhibit.neurons) {
+                                    if (neurons[preNeurons]->getRfRow() == neurons[postNeurons]->getRfRow() && neurons[preNeurons]->getRfCol() == neurons[preNeurons]->getRfCol()) {
+                                        std::random_device device;
+                                        std::mt19937 randomEngine(device());
+                                        std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+                                        neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -526,97 +551,6 @@ namespace hummus {
                 throw std::logic_error("lateral inhibition axons cannot have a null weight");
             }
         }
-		
-        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
-            maxDelay = std::max(maxDelay, _delayMean);
-        }
-        
-        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
-            maxDelay = std::max(maxDelay, _delayMean);
-        }
-        
-//        // connecting two layers according to their receptive fields
-//        void convolution(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
-//            // restrict to layers of the same size
-//            if (presynapticLayer.width != postsynapticLayer.width || presynapticLayer.height != postsynapticLayer.height) {
-//                throw std::logic_error("Convoluting two layers requires them to be the same size");
-//            }
-//
-//            maxDelay = std::max(maxDelay, _delayMean);
-//
-//            for (auto& preSub: presynapticLayer.sublayers) {
-//                for (auto& preRF: preSub.receptiveFields) {
-//                    for (auto& postSub: postsynapticLayer.sublayers) {
-//                        for (auto& postRF: postSub.receptiveFields) {
-//                            if (preRF.row == postRF.row && preRF.col == postRF.col) {
-//                                for (auto& pre: preRF.neurons){
-//                                    for (auto& post: postRF.neurons){
-//                                        std::random_device device;
-//                                        std::mt19937 randomEngine(device());
-//                                        std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-//                                        std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-//                                        int sign = _weightMean<0?-1:_weightMean>=0;
-//                                        neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        // subsampling connection of receptive fields
-//        void pooling(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100, bool redundantConnections=true) {
-//            auto preMaxRows = presynapticLayer.sublayers[0].receptiveFields.back().row+1;
-//            auto preMaxColumns = presynapticLayer.sublayers[0].receptiveFields.back().col+1;
-//
-//            auto postMaxRows = postsynapticLayer.sublayers[0].receptiveFields.back().row+1;
-//            auto postMaxColumns = postsynapticLayer.sublayers[0].receptiveFields.back().col+1;
-//
-//            float fRow_check = preMaxRows / static_cast<float>(postMaxRows);
-//            float fCol_check = preMaxColumns / static_cast<float>(postMaxColumns);
-//
-//            int rowPoolingFactor = fRow_check;
-//            int colPoolingFactor = fCol_check;
-//
-//            if (rowPoolingFactor != fRow_check || colPoolingFactor != fCol_check) {
-//                throw std::logic_error("the number of receptive fields in each layer is not proportional. The pooling factor cannot be calculated");
-//            }
-//
-//            maxDelay = std::max(maxDelay, _delayMean);
-//
-//            for (auto& preSub: presynapticLayer.sublayers) {
-//                for (auto& postSub: postsynapticLayer.sublayers) {
-//                    // each presynaptic sublayer connects to the same postsynaptic sublayer
-//                    if (preSub.ID == postSub.ID) {
-//                        int rowShift = 0;
-//                        int colShift = 0;
-//                        for (auto& postRf: postSub.receptiveFields) {
-//                            for (auto& preRf: preSub.receptiveFields) {
-//                                if ( preRf.row >= 0+rowShift && preRf.row < rowPoolingFactor+rowShift && preRf.col >= 0+colShift && preRf.col < colPoolingFactor+colShift) {
-//                                    for (auto& pre: preRf.neurons) {
-//                                        for (auto& post: postRf.neurons) {
-//                                            std::random_device device;
-//                                            std::mt19937 randomEngine(device());
-//                                            std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-//                                            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-//                                            int sign = _weightMean<0?-1:_weightMean>=0;
-//                                            neurons[pre].get()->addAxon(neurons[post].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, redundantConnections);
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                            colShift += colPoolingFactor;
-//                            if (postRf.col == postMaxColumns-1) {
-//                                colShift = 0;
-//                                rowShift += rowPoolingFactor;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
 
         // ----- PUBLIC NETWORK METHODS -----
         

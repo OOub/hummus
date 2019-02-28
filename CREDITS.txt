@@ -1,5 +1,5 @@
-Special thanks to the following people for their valuable advice on the development of Hummus during my PhD:
+Special thanks to the following people for their contribution to the development of Hummus:
 
-Alexandre Marcireau
+Alexandre Marcireau 
 Laurent Dardelet
 Gregor Lenz

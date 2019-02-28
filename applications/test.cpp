@@ -40,8 +40,8 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
-    network.addLayer<hummus::InputNeuron>(1, 1, {});
-    network.addLayer<hummus::LIF>(2, 1, {}, false, false, 5, 20, 0, false);
+    network.addLayer<hummus::InputNeuron>(1, {});
+    network.addLayer<hummus::LIF>(2, {}, false, false, 5, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
