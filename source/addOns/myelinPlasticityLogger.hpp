@@ -40,8 +40,8 @@ namespace hummus {
 			SpikeLogger::copy_to(bytes.data() + 8, timestamp);
 			SpikeLogger::copy_to(bytes.data() + 16, postNeuron->getNeuronID());
 			SpikeLogger::copy_to(bytes.data() + 18, postNeuron->getLayerID());
-			SpikeLogger::copy_to(bytes.data() + 20, postNeuron->getRfRow());
-			SpikeLogger::copy_to(bytes.data() + 22, postNeuron->getRfCol());
+			SpikeLogger::copy_to(bytes.data() + 20, postNeuron->getRfCoordinates().first);
+			SpikeLogger::copy_to(bytes.data() + 22, postNeuron->getRfCoordinates().second);
 			
 			int count = 24;
 			for (auto i=0; i<timeDifferences.size(); i++) {

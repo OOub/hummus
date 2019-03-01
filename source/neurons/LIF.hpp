@@ -19,8 +19,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
-                Neuron(_neuronID, _rfRow, _rfCol, _sublayerID, _layerID, _xCoordinate, _yCoordinate, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
+		LIF(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 refractoryPeriod(_refractoryPeriod),
                 resetCurrent(_resetCurrent),
                 decayPotential(_decayPotential),
@@ -367,7 +367,7 @@ namespace hummus {
                 // intra-sublayer hard WTA
                 if (sub.ID == sublayerID) {
                     for (auto& n: sub.neurons) {
-                        if (network->getNeurons()[n]->getNeuronID() != neuronID && network->getNeurons()[n]->getRfRow() == rfRow && network->getNeurons()[n]->getRfCol() == rfCol) {
+                        if (network->getNeurons()[n]->getNeuronID() != neuronID && network->getNeurons()[n]->getRfCoordinates() == rfCoordinates) {
                             network->getNeurons()[n]->setPotential(restingPotential);
                             if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
@@ -379,7 +379,7 @@ namespace hummus {
                 // inter-sublayer hard WTA
                 } else {
                     for (auto& n: sub.neurons) {
-                        if (network->getNeurons()[n]->getRfRow() == rfRow && network->getNeurons()[n]->getRfCol() == rfCol) {
+                        if (network->getNeurons()[n]->getRfCoordinates() == rfCoordinates) {
                             network->getNeurons()[n]->setPotential(restingPotential);
                             if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
                                 dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;

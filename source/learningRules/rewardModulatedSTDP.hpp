@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include "../neurons/decisionMakingNeuron.hpp"
 #include "../globalLearningRuleHandler.hpp"
 
@@ -47,8 +49,17 @@ namespace hummus {
                 for (auto& rule: network->getNeurons()[l.neurons[0]]->getLearningRuleHandler())
                 {
                     if (rule == this) {
-                        if (network->getNeurons()[l.neurons[0]]->getLayerID()-1 >= 0) {
-                            rl.emplace_back(reinforcementLayers{network->getNeurons()[l.neurons[0]]->getLayerID(), network->getNeurons()[l.neurons[0]]->getLayerID()-1});
+                        int16_t presynapticLayer = -1;
+                        // making sure we don't add learning on a parallel layer
+                        for (auto& preAxon: network->getNeurons()[l.neurons[0]]->getPreAxons()) {
+                            // finding the closest presynaptic layer without overly relying on layerIDs
+                            if (preAxon->preNeuron && preAxon->preNeuron->getLayerID() < preAxon->postNeuron->getLayerID()) {
+                                presynapticLayer = std::max(preAxon->preNeuron->getLayerID(), presynapticLayer);
+                            }
+                        }
+                        
+                        if (presynapticLayer != -1) {
+                            rl.emplace_back(reinforcementLayers{network->getNeurons()[l.neurons[0]]->getLayerID(), presynapticLayer});
                         } else {
                             throw std::logic_error("the reward-modulated STDP learning rule cannot be on the input layer");
                         }

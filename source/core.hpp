@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: Last Version: 24/01/2019
+ * Last Version: Last Version: 28/02/2019
  *
  * Information: the core.hpp contains both the network and the polymorphic Neuron class:
  *  - The Network class acts as a spike manager
@@ -18,6 +18,7 @@
 #include <iostream>
 #include <numeric>
 #include <random>
+#include <utility>
 #include <vector>
 #include <chrono>
 #include <thread>
@@ -79,14 +80,12 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-    	Neuron(int16_t _neuronID, int16_t _rfRow=0, int16_t _rfCol=0, int16_t _sublayerID=0, int16_t _layerID=0, int16_t _xCoordinate=-1, int16_t _yCoordinate=-1, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+        Neuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
                 neuronID(_neuronID),
-                rfRow(_rfRow),
-                rfCol(_rfCol),
-                sublayerID(_sublayerID),
                 layerID(_layerID),
-                xCoordinate(_xCoordinate),
-                yCoordinate(_yCoordinate),
+                sublayerID(_sublayerID),
+                rfCoordinates(_rfCoordinates),
+                xyCoordinates(_xyCoordinates),
                 threshold(_threshold),
                 potential(_restingPotential),
                 restingPotential(_restingPotential),
@@ -156,43 +155,40 @@ namespace hummus {
             }
             return spike{timestamp, &initialAxon, spikeType::normal};
         }
-        
-		// utility function that returns true or false depending on a probability percentage
-		static bool connectionProbability(int probability) {
-			std::random_device device;
-			std::mt19937 randomEngine(device());
-			std::bernoulli_distribution dist(probability/100.);
-			return dist(randomEngine);
-		}
 		
+        // utility function that returns true or false depending on a probability percentage
+        static bool connectionProbability(int probability) {
+            std::random_device device;
+            std::mt19937 randomEngine(device());
+            std::bernoulli_distribution dist(probability/100.);
+            return dist(randomEngine);
+        }
+        
 		// ----- SETTERS AND GETTERS -----        
 		int16_t getNeuronID() const {
             return neuronID;
         }
 		
-		int16_t getRfRow() const {
-			return rfRow;
-		}
-		
-		int16_t getRfCol() const {
-			return rfCol;
-		}
-		
-		int16_t getSublayerID() const {
-			return sublayerID;
-		}
-		
-		int16_t getLayerID() const {
-			return layerID;
-		}
-		
-		int16_t getX() const {
-		    return xCoordinate;
-		}
-		
-		int16_t getY() const {
-		    return yCoordinate;
-		}
+        int16_t getLayerID() const {
+            return layerID;
+        }
+        
+        int16_t getSublayerID() const {
+            return sublayerID;
+        }
+        
+        std::pair<int16_t, int16_t> getRfCoordinates() const {
+            return rfCoordinates;
+        }
+        
+        void setRfCoordinates(int row, int col) {
+            rfCoordinates.first = row;
+            rfCoordinates.second = col;
+        }
+        
+        std::pair<int16_t, int16_t> getXYCoordinates() const {
+            return xyCoordinates;
+        }
         
         std::vector<axon*>& getPreAxons() {
             return preAxons;
@@ -272,12 +268,10 @@ namespace hummus {
         
 		// ----- NEURON PARAMETERS -----
         int16_t                            neuronID;
-		int16_t                            rfRow;
-		int16_t                            rfCol;
-		int16_t                            sublayerID;
-		int16_t                            layerID;
-		int16_t                            xCoordinate;
-		int16_t                            yCoordinate;
+        int16_t                            layerID;
+        int16_t                            sublayerID;
+        std::pair<int16_t, int16_t>        rfCoordinates;
+        std::pair<int16_t, int16_t>        xyCoordinates;
 		std::vector<axon*>                 preAxons;
         std::vector<std::unique_ptr<axon>> postAxons;
         axon                               initialAxon;
@@ -304,7 +298,11 @@ namespace hummus {
                 learningStatus(true),
                 asynchronous(false),
                 learningOffSignal(-1),
-                maxDelay(0) {}
+                maxDelay(0) {
+                    // seeding and initialising random engine with a Mersenne Twister pseudo-random generator
+                    std::random_device device;
+                    randomEngine = std::mt19937(device());
+                }
 		
 		Network(MainThreadAddOn* _thAddOn) : Network({}, _thAddOn) {}
 		
@@ -332,7 +330,7 @@ namespace hummus {
             // building a layer of one dimensional sublayers
             std::vector<std::size_t> neuronsInLayer;
             for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, std::forward<Args>(args)...)));
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleHandler, std::forward<Args>(args)...)));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             
@@ -363,16 +361,16 @@ namespace hummus {
             std::vector<std::size_t> neuronsInLayer;
             for (int16_t i=0; i<_sublayerNumber; i++) {
                 std::vector<std::size_t> neuronsInSublayer;
-                int x = 0; int y = 0;
+                int16_t x = 0; int16_t y = 0;
                 for (int16_t k=0+shift; k<numberOfNeurons+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, 0, 0, i, layerID, x, y, _learningRuleHandler, std::forward<Args>(args)...)));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, layerID, i, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(x, y), _learningRuleHandler, std::forward<Args>(args)...)));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
                     
-                    y += 1;
-                    if (y == gridW) {
-                        x += 1;
-                        y = 0;
+                    x += 1;
+                    if (x == gridW) {
+                        y += 1;
+                        x = 0;
                     }
                 }
                 sublayers.emplace_back(sublayer{neuronsInSublayer, i});
@@ -383,16 +381,104 @@ namespace hummus {
             layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH});
         }
 		
-        // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride
-        void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride=1, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
-            maxDelay = std::max(maxDelay, _delayMean);
+        // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron. We can even add more sublayers
+        template <typename T, typename F, typename... Args>
+        void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+            // error handling
+            if (kernelSize > presynapticLayer.width || kernelSize > presynapticLayer.height || kernelSize % 2 == 0) {
+                throw std::logic_error("the kernel size has to be an odd number, and it cannot be larger than the dimension of the presynaptic layer");
+            }
             
-            std::cout << "convoluting 1D layer" << std::endl;
+            // find how many neurons have previously spiked
+            int layershift = 0;
+            if (!layers.empty()) {
+                for (auto& l: layers) {
+                    if (l.ID != presynapticLayer.ID) {
+                        layershift += l.neurons.size();
+                    }
+                }
+            }
+
+            // finding the number of receptive fields
+            int newWidth = std::ceil((presynapticLayer.width - kernelSize + 1) / static_cast<float>(stride));
+            int newHeight = std::ceil((presynapticLayer.height - kernelSize + 1) / static_cast<float>(stride));
+            
+            int trimmedColumns = std::abs(newWidth - std::ceil((presynapticLayer.width - stride + 1) / static_cast<float>(stride)));
+            int trimmedRows = std::abs(newHeight - std::ceil((presynapticLayer.height - stride + 1) / static_cast<float>(stride)));
+            
+            // warning message that seom rws and columns of neurons might be ignored and left unconnected depending on the stride value
+            if (trimmedColumns > 0 && trimmedRows == 0) {
+                std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+            } else if (trimmedRows > 0 && trimmedColumns == 0) {
+                std::cout << "The new layer did not take into consideration the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+            } else if (trimmedRows > 0 && trimmedColumns > 0){
+                std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) and the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+            }
+            
+            // creating the new layer of neurons
+            add2dLayer<T>(newWidth, newHeight, _sublayerNumber, _learningRuleHandler, std::forward<Args>(args)...);
+
+            // finding range to calculate a moore neighborhood
+            int range = kernelSize - std::ceil(kernelSize / static_cast<float>(2));
+            
+            // number of neurons surrounding the center
+            int mooreNeighbors = std::pow((2*range + 1),2);
+            
+            // looping through the newly created layer to connect them to the correct receptive fields
+            for (auto& convSub: layers.back().sublayers) {
+                int sublayershift = 0;
+                for (auto& preSub: presynapticLayer.sublayers) {
+                    
+                    // inintialising window on the first center coordinates
+                    std::pair<int, int> centerCoordinates((kernelSize-1)/2, (kernelSize-1)/2);
+                    
+                    // number of neurons = number of receptive fields in the presynaptic Layer
+                    for (auto& n: convSub.neurons) {
+                            
+                        int row = 0; int col = 0;
+                        
+                        // finding the coordinates for the presynaptic neurons in each receptive field
+                        for (auto i=0; i<mooreNeighbors; i++) {
+                            int x = centerCoordinates.first + ((i % kernelSize) - range);
+                            int y = centerCoordinates.second + ((i / kernelSize) - range);
+
+                            // 2D to 1D mapping to get the index from x y coordinates
+                            int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
+                            // calculating weights and delays according to the provided distribution
+                            const std::pair<float, float> weight_delay = lambdaFunction(x, y, convSub.ID);
+
+                            // changing the neuron's receptive field coordinates from the default
+                            neurons[idx].get()->setRfCoordinates(row, col);
+
+                            // connecting neurons from the presynaptic ayer to the convolutional one according to their receptive field.
+                            neurons[idx].get()->addAxon(neurons[n].get(), weight_delay.first, weight_delay.second, probability, true);
+
+                            // to shift the network runtime by the maximum delay in the clock mode
+                            maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                        }
+                        
+                        // finding the coordinates for the center of each receptive field
+                        centerCoordinates.first += stride;
+                        if (centerCoordinates.first >= presynapticLayer.width - trimmedColumns) {
+                            centerCoordinates.first = (kernelSize-1)/2;
+                            centerCoordinates.second += stride;
+                        }
+                        
+                        // updating receptive field indices
+                        row += 1;
+                        if (row == newWidth) {
+                            col += 1;
+                            row = 0;
+                        }
+                    }
+                    sublayershift += preSub.neurons.size();
+                }
+            }
         }
         
-        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size
-        void addPoolingLayer(layer presynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
-            maxDelay = std::max(maxDelay, _delayMean);
+        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size. First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron
+        template <typename T, typename F, typename... Args>
+        void addPoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
         }
         
         // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
@@ -424,13 +510,13 @@ namespace hummus {
             std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
                 for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             } else {
                 for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k, 0, 0, 0, layerID, -1, -1, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
@@ -460,19 +546,17 @@ namespace hummus {
             // creating the reservoir of neurons
             std::vector<std::size_t> neuronsInLayer;
             for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, 1, 0, 0, layerID, -1, -1, {}, std::forward<Args>(args)...)));
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), {}, std::forward<Args>(args)...)));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
             
+            // generating normal distribution
+            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+            
             // connecting the reservoir
             for (auto pre: neuronsInLayer) {
                 for (auto post: neuronsInLayer) {
-                    // random engine initialisation
-                    std::random_device device;
-                    std::mt19937 randomEngine(device());
-                    std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                    
                     // self-excitation probability
                     if (pre == post) {
                         neurons[pre].get()->addAxon(neurons[post].get(), weightRandom(randomEngine), 0, selfExcitationProbability, true);
@@ -489,23 +573,45 @@ namespace hummus {
         
 		// ----- LAYER CONNECTION METHODS -----
 		
-        // all to all purely excitatory or purely inhibitory connections (if weightMean < 0 all connections will have a negative weight)
-//        template <typename F>
-        void allToAll(layer presynapticLayer, layer postsynapticLayer, float _weightMean=1, float _weightstdev=0, int _delayMean=0, int _delaystdev=0, int probability=100) {
-            maxDelay = std::max(maxDelay, _delayMean);
+        // one to one connections between layers. Takes in either a lambda function of the Rand class contructor to define a distribution for the weights and delays
+        template <typename F>
+        void oneToOne(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability=100) {
+            // error handling
+            if (presynapticLayer.neurons.size() != postsynapticLayer.neurons.size() && presynapticLayer.width == postsynapticLayer.width && presynapticLayer.height == postsynapticLayer.height) {
+                throw std::logic_error("The presynaptic and postsynaptic layers do not have the same number of neurons. Cannot do a one-to-one connection");
+            }
+            
+            for (auto preSubIdx=0; preSubIdx<presynapticLayer.sublayers.size(); preSubIdx++) {
+                for (auto preNeuronIdx=0; preNeuronIdx<presynapticLayer.sublayers[preSubIdx].neurons.size(); preNeuronIdx++) {
+                    for (auto postSubIdx=0; postSubIdx<postsynapticLayer.sublayers.size(); postSubIdx++) {
+                        for (auto postNeuronIdx=0; postNeuronIdx<postsynapticLayer.sublayers[postSubIdx].neurons.size(); postNeuronIdx++) {
+                            if (preNeuronIdx == postNeuronIdx) {
+                                const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().second, postsynapticLayer.sublayers[postSubIdx].ID);
+                                neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]].get()->addAxon(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), weight_delay.first, weight_delay.second, probability, true);
 
-            for (auto& preNeurons: presynapticLayer.neurons) {
-                for (auto& postNeurons: postsynapticLayer.neurons) {
-                    // randomising weights and delays
-                    std::random_device device;
-                    std::mt19937 randomEngine(device());
-                    std::normal_distribution<> delayRandom(_delayMean, _delaystdev);
-                    std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                    
-                    // all weights positive if mean weight is positive and vice-versa
-                    int sign = _weightMean<0?-1:_weightMean>=0;
-                    
-                    neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)), probability, true);
+                                // to shift the network runtime by the maximum delay in the clock mode
+                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // all to all connection between layers. Takes in either a lambda function of the Rand class contructor to define a distribution for the weights and delays
+        template <typename F>
+        void allToAll(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability=100) {
+            for (auto& preSub: presynapticLayer.sublayers) {
+                for (auto& preNeuron: preSub.neurons) {
+                    for (auto& postSub: postsynapticLayer.sublayers) {
+                        for (auto& postNeuron: postSub.neurons) {
+                            const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->getXYCoordinates().first, neurons[postNeuron]->getXYCoordinates().second, postSub.ID);
+                            neurons[preNeuron].get()->addAxon(neurons[postNeuron].get(), weight_delay.first, weight_delay.second, probability, true);
+                            
+                            // to shift the network runtime by the maximum delay in the clock mode
+                            maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                        }
+                    }
                 }
             }
         }
@@ -517,14 +623,14 @@ namespace hummus {
                     std::cout << "lateral inhibition axons must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
                 }
                 
+                // generating normal distribution
+                std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+                
                 for (auto& sub: l.sublayers) {
                     // intra-sublayer soft WTA
                     for (auto& preNeurons: sub.neurons) {
                         for (auto& postNeurons: sub.neurons) {
                             if (preNeurons != postNeurons) {
-                                std::random_device device;
-                                std::mt19937 randomEngine(device());
-                                std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
                                 neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
                             }
                         }
@@ -535,10 +641,7 @@ namespace hummus {
                         if (sub.ID != subToInhibit.ID) {
                             for (auto& preNeurons: sub.neurons) {
                                 for (auto& postNeurons: subToInhibit.neurons) {
-                                    if (neurons[preNeurons]->getRfRow() == neurons[postNeurons]->getRfRow() && neurons[preNeurons]->getRfCol() == neurons[preNeurons]->getRfCol()) {
-                                        std::random_device device;
-                                        std::mt19937 randomEngine(device());
-                                        std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+                                    if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
                                         neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
                                     }
                                 }
@@ -554,7 +657,7 @@ namespace hummus {
 
         // ----- PUBLIC NETWORK METHODS -----
         
-        // add spike to the network - user-friendly version that wraps a neuron's prepareInitialSpike method
+        // add spike to the network
         void injectSpike(int16_t neuronIndex, double timestamp) {
             initialSpikes.push_back(neurons[neuronIndex].get()->prepareInitialSpike(timestamp));
         }
@@ -606,7 +709,7 @@ namespace hummus {
                             }
                         // two dimensional data
                         } else {
-                            if (neurons[n]->getX() == event.x && neurons[n]->getY() == event.y) {
+                            if (neurons[n]->getXYCoordinates().first == event.x && neurons[n]->getXYCoordinates().second == event.y) {
                                 injectSpike(n, event.timestamp);
                                 break;
                             }
@@ -658,9 +761,13 @@ namespace hummus {
                 sync.unlock();
 
                 std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-
-                runHelper(_runtime, _timestep, false);
-
+                
+                if (_timestep == 0) {
+                    eventRunHelper(_runtime, _timestep, false);
+                } else {
+                    clockRunHelper(_runtime, _timestep, false);
+                }
+                    
                 std::cout << "Done." << std::endl;
 
                 std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
@@ -787,9 +894,13 @@ namespace hummus {
             
             std::cout << "Training the network..." << std::endl;
             std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-        
-            runHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
-
+            
+            if (timestep == 0) {
+                eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
+            } else {
+                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
+            }
+            
             std::cout << "Done." << std::endl;
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
             std::cout << "it took " << elapsed_seconds.count() << "s for the training phase." << std::endl;
@@ -807,211 +918,218 @@ namespace hummus {
             injectSpikeFromData(testData);
 
             std::cout << "Running classification based on a trained network..." << std::endl;
-
-            runHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
+            
+            if (timestep == 0) {
+                eventRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
+            } else {
+                clockRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
+            }
 
             std::cout << "Done." << std::endl;
         }
-
-        void runHelper(double runtime, double timestep, bool classification=false) {
-
+        
+        // helper function that runs the network when event-mode is selected
+        void eventRunHelper(double runtime, double timestep, bool classification=false) {
             if (!neurons.empty()) {
-                if (timestep == 0) {
-                    while (!initialSpikes.empty() || !generatedSpikes.empty() || !predictedSpikes.empty()) {
-                        // if only one list is filled
-                        if (predictedSpikes.empty() && generatedSpikes.empty() && !initialSpikes.empty()) {
-                            update(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        } else if (predictedSpikes.empty() && initialSpikes.empty() && !generatedSpikes.empty()) {
-                            update(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                        } else if (generatedSpikes.empty() && initialSpikes.empty() && !predictedSpikes.empty()) {
-                            update(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
+                while (!initialSpikes.empty() || !generatedSpikes.empty() || !predictedSpikes.empty()) {
+                    // if only one list is filled
+                    if (predictedSpikes.empty() && generatedSpikes.empty() && !initialSpikes.empty()) {
+                        requestUpdate(initialSpikes.front(), classification);
+                        initialSpikes.pop_front();
+                    } else if (predictedSpikes.empty() && initialSpikes.empty() && !generatedSpikes.empty()) {
+                        requestUpdate(generatedSpikes.front(), classification);
+                        generatedSpikes.pop_front();
+                    } else if (generatedSpikes.empty() && initialSpikes.empty() && !predictedSpikes.empty()) {
+                        requestUpdate(predictedSpikes.front(), classification, true);
+                        predictedSpikes.pop_front();
                         // if two lists are filled
-                        } else if (predictedSpikes.empty() && !generatedSpikes.empty() && !initialSpikes.empty()){
-                            if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp) {
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                            } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp) {
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                            } else {
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                                
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                            }
-                        } else if (generatedSpikes.empty() && !predictedSpikes.empty() && !initialSpikes.empty()){
-                            if (predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
-                            } else if (initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                            } else {
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
-                                
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                            }
-                        } else if (initialSpikes.empty() && !predictedSpikes.empty() && !generatedSpikes.empty()){
-                            if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp) {
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
-                            } else if (generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                            } else {
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                                
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
-                            }
-                        // if all lists are filled
+                    } else if (predictedSpikes.empty() && !generatedSpikes.empty() && !initialSpikes.empty()){
+                        if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp) {
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
+                        } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp) {
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
                         } else {
-                            // if one list spikes before the others
-                            if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp && initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                            } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp && generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                                
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                            } else if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp && predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
-                                
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
+                            
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
+                        }
+                    } else if (generatedSpikes.empty() && !predictedSpikes.empty() && !initialSpikes.empty()){
+                        if (predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                        } else if (initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
+                        } else {
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                            
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
+                        }
+                    } else if (initialSpikes.empty() && !predictedSpikes.empty() && !generatedSpikes.empty()){
+                        if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp) {
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                        } else if (generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
+                        } else {
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
+                            
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                        }
+                        // if all lists are filled
+                    } else {
+                        // if one list spikes before the others
+                        if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp && initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
+                        } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp && generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
+                            
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
+                        } else if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp && predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
+                            
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
                             // if two lists spike at the same time, define order of spike
-                            } else if (generatedSpikes.front().timestamp == initialSpikes.front().timestamp){
-                                
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                                
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                            } else if (generatedSpikes.front().timestamp == predictedSpikes.front().timestamp){
-                                
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                                
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
+                        } else if (generatedSpikes.front().timestamp == initialSpikes.front().timestamp){
                             
-                            } else if (initialSpikes.front().timestamp == predictedSpikes.front().timestamp){
-                                
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
-                                
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                                // if they all spike at the same time
-                            } else {
-                                
-                                update(generatedSpikes.front(), classification);
-                                generatedSpikes.pop_front();
-                                
-                                update(predictedSpikes.front(), classification, true);
-                                predictedSpikes.pop_front();
-                                
-                                update(initialSpikes.front(), classification);
-                                initialSpikes.pop_front();
-                            }
-                        }
-                    }
-                } else {
-                   
-                    for (double i=0; i<runtime; i+=timestep) {
-                        
-                        if (!classification) {
-                            if (!trainingLabels.empty()) {
-                                if (trainingLabels.front().onset <= i) {
-                                    currentLabel = trainingLabels.front().name;
-                                    trainingLabels.pop_front();
-                                }
-                            }
-
-                            if (learningOffSignal != -1) {
-                                if (learningStatus==true && i >= learningOffSignal) {
-                                    std::cout << "learning turned off at t=" << i << std::endl;
-                                    learningStatus = false;
-                                }
-                            }
-                        }
-
-                        std::vector<spike> currentSpikes;
-                        if (generatedSpikes.empty() && !initialSpikes.empty()) {
-
-                            while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
-                                currentSpikes.emplace_back(initialSpikes.front());
-                                initialSpikes.pop_front();
-                            }
-                        }
-                        else if (initialSpikes.empty() && !generatedSpikes.empty()) {
-                            while (!generatedSpikes.empty() && std::round(generatedSpikes.front().timestamp) <= i) {
-                                currentSpikes.emplace_back(generatedSpikes.front());
-                                generatedSpikes.pop_front();
-                            }
-                        }
-                        else {
-                            while (!generatedSpikes.empty() && std::round(generatedSpikes.front().timestamp) <= i) {
-                                currentSpikes.emplace_back(generatedSpikes.front());
-                                generatedSpikes.pop_front();
-                            }
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
                             
-                            while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
-                                currentSpikes.emplace_back(initialSpikes.front());
-                                initialSpikes.pop_front();
-                            }
-                        }
-                        
-                        for (auto& n: neurons) {
-                            std::vector<spike> local_currentSpikes(currentSpikes.size());
-                            const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
-                                if (s.propagationAxon) {
-                                    return s.propagationAxon->postNeuron->getNeuronID() == n->getNeuronID();
-                                }
-                                else {
-                                    return false;
-                                }
-                            });
-
-                            local_currentSpikes.resize(std::distance(local_currentSpikes.begin(), it));
-
-                            if (it != currentSpikes.end()) {
-                                for (auto& currentSpike: local_currentSpikes) {
-                                    n->updateSync(i, currentSpike.propagationAxon, this, timestep);
-                                }
-                            } else {
-                                n->updateSync(i, nullptr, this, timestep);
-                            }
-                        }
-
-                        // checking for new spikes
-                        std::vector<spike> newSpikes;
-                        if (!generatedSpikes.empty()) {
-                            while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i) {
-                                newSpikes.emplace_back(generatedSpikes.front());
-                                generatedSpikes.pop_front();
-                            }
-                        }
-
-                        for (auto& spike: newSpikes) {
-                            spike.propagationAxon->postNeuron->updateSync(i, spike.propagationAxon, this, timestep);
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
+                        } else if (generatedSpikes.front().timestamp == predictedSpikes.front().timestamp){
+                            
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
+                            
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                            
+                        } else if (initialSpikes.front().timestamp == predictedSpikes.front().timestamp){
+                            
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                            
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
+                            // if they all spike at the same time
+                        } else {
+                            
+                            requestUpdate(generatedSpikes.front(), classification);
+                            generatedSpikes.pop_front();
+                            
+                            requestUpdate(predictedSpikes.front(), classification, true);
+                            predictedSpikes.pop_front();
+                            
+                            requestUpdate(initialSpikes.front(), classification);
+                            initialSpikes.pop_front();
                         }
                     }
                 }
+            } else {
+                throw std::runtime_error("add neurons to the network before running it");
             }
-            else {
+        }
+        
+        // helper function that runs the network when clock-mode is selected
+        void clockRunHelper(double runtime, double timestep, bool classification=false) {
+            if (!neurons.empty()) {
+                for (double i=0; i<runtime; i+=timestep) {
+                    
+                    if (!classification) {
+                        if (!trainingLabels.empty()) {
+                            if (trainingLabels.front().onset <= i) {
+                                currentLabel = trainingLabels.front().name;
+                                trainingLabels.pop_front();
+                            }
+                        }
+                        
+                        if (learningOffSignal != -1) {
+                            if (learningStatus==true && i >= learningOffSignal) {
+                                std::cout << "learning turned off at t=" << i << std::endl;
+                                learningStatus = false;
+                            }
+                        }
+                    }
+                    
+                    std::vector<spike> currentSpikes;
+                    if (generatedSpikes.empty() && !initialSpikes.empty()) {
+                        
+                        while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
+                            currentSpikes.emplace_back(initialSpikes.front());
+                            initialSpikes.pop_front();
+                        }
+                    }
+                    else if (initialSpikes.empty() && !generatedSpikes.empty()) {
+                        while (!generatedSpikes.empty() && std::round(generatedSpikes.front().timestamp) <= i) {
+                            currentSpikes.emplace_back(generatedSpikes.front());
+                            generatedSpikes.pop_front();
+                        }
+                    }
+                    else {
+                        while (!generatedSpikes.empty() && std::round(generatedSpikes.front().timestamp) <= i) {
+                            currentSpikes.emplace_back(generatedSpikes.front());
+                            generatedSpikes.pop_front();
+                        }
+                        
+                        while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
+                            currentSpikes.emplace_back(initialSpikes.front());
+                            initialSpikes.pop_front();
+                        }
+                    }
+                    
+                    for (auto& n: neurons) {
+                        std::vector<spike> local_currentSpikes(currentSpikes.size());
+                        const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
+                            if (s.propagationAxon) {
+                                return s.propagationAxon->postNeuron->getNeuronID() == n->getNeuronID();
+                            }
+                            else {
+                                return false;
+                            }
+                        });
+                        
+                        local_currentSpikes.resize(std::distance(local_currentSpikes.begin(), it));
+                        
+                        if (it != currentSpikes.end()) {
+                            for (auto& currentSpike: local_currentSpikes) {
+                                n->updateSync(i, currentSpike.propagationAxon, this, timestep);
+                            }
+                        } else {
+                            n->updateSync(i, nullptr, this, timestep);
+                        }
+                    }
+                    
+                    // checking for new spikes
+                    std::vector<spike> newSpikes;
+                    if (!generatedSpikes.empty()) {
+                        while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i) {
+                            newSpikes.emplace_back(generatedSpikes.front());
+                            generatedSpikes.pop_front();
+                        }
+                    }
+                    
+                    for (auto& spike: newSpikes) {
+                        spike.propagationAxon->postNeuron->updateSync(i, spike.propagationAxon, this, timestep);
+                    }
+                }
+            } else {
                 throw std::runtime_error("add neurons to the network before running it");
             }
         }
         
         // update neuron status asynchronously
-        void update(spike s, bool classification=false, bool prediction=false) {
+        void requestUpdate(spike s, bool classification=false, bool prediction=false) {
             if (!classification) {
                 if (!trainingLabels.empty()) {
                     if (trainingLabels.front().onset <= s.timestamp) {
@@ -1046,5 +1164,6 @@ namespace hummus {
         std::string                            currentLabel;
         bool                                   preTrainingLabelAssignment;
         bool                                   asynchronous;
+        std::mt19937                           randomEngine;
     };
 }

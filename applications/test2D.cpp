@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
+#include "../source/rand.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/LIF.hpp"
@@ -26,22 +27,21 @@ int main(int argc, char** argv) {
 	hummus::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
-    network.add2dLayer<hummus::InputNeuron>(8, 8, 2, {});
-    network.add2dLayer<hummus::LIF>(8, 8, 2, {}, true, false, 10, 20, 3, true);
-    network.addLayer<hummus::LIF>(1, 1, {});
-		
-	network.convolution(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
-	network.allToAll(network.getLayers()[1], network.getLayers()[2], 1., 0);
-	
-	//  ----- DISPLAY SETTINGS -----
-  	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(100);
-  	qtDisplay.trackInputSublayer(0);
-  	qtDisplay.trackLayer(1);
-	qtDisplay.trackNeuron(128);
-	
+    network.add2dLayer<hummus::InputNeuron>(6, 6, 2, {});
+    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 3, hummus::Rand(), 100, 2, {}, false, false, 10, 20, 3, true);
+    network.addLayer<hummus::LIF>(1, {});
+    
+    network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Rand());
+
+    //  ----- DISPLAY SETTINGS -----
+    qtDisplay.useHardwareAcceleration(true);
+    qtDisplay.setTimeWindow(100);
+    qtDisplay.trackInputSublayer(0);
+    qtDisplay.trackLayer(1);
+    qtDisplay.trackNeuron(100);
+   
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0.1);
+    network.run(&trainingData, 0);
 
     //  ----- EXITING APPLICATION -----
     return 0;

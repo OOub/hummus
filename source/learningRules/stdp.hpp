@@ -33,10 +33,17 @@ namespace hummus {
 		virtual void onStart(Network* network) override  {
 			for (auto& n: network->getNeurons()) {
 				for (auto& rule: n->getLearningRuleHandler()) {
-					if(rule == this) {
+					if (rule == this) {
 						if (n->getLayerID() > 0) {
                             postLayer = n->getLayerID();
-                            preLayer = postLayer-1;
+                            
+                            // making sure we don't add learning on a parallel layer
+                            for (auto& preAxon: n->getPreAxons()) {
+                                if (preAxon->preNeuron->getLayerID() < preAxon->postNeuron->getLayerID()) {
+                                    // finding the closest presynaptic layer without overly relying on layerIDs
+                                    preLayer = std::max(preAxon->preNeuron->getLayerID(), preLayer);
+                                }
+                            }
 						} else {
 							throw std::logic_error("the STDP learning rule has to be on a postsynaptic layer");
 						}
@@ -92,11 +99,11 @@ namespace hummus {
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-		int preLayer;
-		int postLayer;
-		float A_plus;
-		float A_minus;
-		float tau_plus;
-		float tau_minus;
+		int16_t preLayer;
+		int16_t postLayer;
+		float   A_plus;
+		float   A_minus;
+		float   tau_plus;
+		float   tau_minus;
 	};
 }

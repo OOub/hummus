@@ -63,10 +63,10 @@ namespace hummus {
                     if (inputAxon->preNeuron->getEligibilityTrace() > 0.1) {
                         // saving relevant information in vectors for potential logging
                         plasticID.push_back(inputAxon->preNeuron->getNeuronID());
-                        plasticCoordinates[0].push_back(inputAxon->preNeuron->getX());
-                        plasticCoordinates[1].push_back(inputAxon->preNeuron->getY());
-                        plasticCoordinates[2].push_back(inputAxon->preNeuron->getRfRow());
-                        plasticCoordinates[3].push_back(inputAxon->preNeuron->getRfCol());
+                        plasticCoordinates[0].push_back(inputAxon->preNeuron->getXYCoordinates().first);
+                        plasticCoordinates[1].push_back(inputAxon->preNeuron->getXYCoordinates().second);
+                        plasticCoordinates[2].push_back(inputAxon->preNeuron->getRfCoordinates().first);
+                        plasticCoordinates[3].push_back(inputAxon->preNeuron->getRfCoordinates().second);
                         timeDifferences.push_back(timestamp - inputAxon->previousInputTime - inputAxon->delay);
 
                         float delta_delay = 0;

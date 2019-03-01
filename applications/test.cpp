@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-
+#include "../source/rand.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 
 #include "../source/neurons/inputNeuron.hpp"
@@ -30,6 +30,7 @@
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
+
 int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
@@ -40,11 +41,12 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
-    network.addLayer<hummus::InputNeuron>(1, {});
+    network.addLayer<hummus::InputNeuron>(2, {});
     network.addLayer<hummus::LIF>(2, {}, false, false, 5, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], 1./2, 0);
+//    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1./2));
+    network.oneToOne(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1.));
     network.lateralInhibition(network.getLayers()[1], -1);
     
     //  ----- INJECTING SPIKES -----

@@ -48,10 +48,10 @@ namespace hummus {
 			copy_to(bytes.data() + 20, a->preNeuron ? a->preNeuron->getNeuronID() : -1);
 			copy_to(bytes.data() + 22, a->postNeuron->getNeuronID());
 			copy_to(bytes.data() + 24, a->postNeuron->getLayerID());
-			copy_to(bytes.data() + 26, a->postNeuron->getRfRow());
-			copy_to(bytes.data() + 28, a->postNeuron->getRfCol());
-			copy_to(bytes.data() + 30, a->postNeuron->getX());
-			copy_to(bytes.data() + 32, a->postNeuron->getY());
+			copy_to(bytes.data() + 26, a->postNeuron->getRfCoordinates().first);
+			copy_to(bytes.data() + 28, a->postNeuron->getRfCoordinates().second);
+			copy_to(bytes.data() + 30, a->postNeuron->getXYCoordinates().first);
+			copy_to(bytes.data() + 32, a->postNeuron->getXYCoordinates().second);
 			saveFile.write(bytes.data(), bytes.size());
         }
 		
@@ -64,10 +64,10 @@ namespace hummus {
 			copy_to(bytes.data() + 20, a->preNeuron ? a->preNeuron->getNeuronID() : -1);
 			copy_to(bytes.data() + 22, a->postNeuron->getNeuronID());
 			copy_to(bytes.data() + 24, a->postNeuron->getLayerID());
-			copy_to(bytes.data() + 26, a->postNeuron->getRfRow());
-			copy_to(bytes.data() + 28, a->postNeuron->getRfCol());
-			copy_to(bytes.data() + 30, a->postNeuron->getX());
-			copy_to(bytes.data() + 32, a->postNeuron->getY());
+			copy_to(bytes.data() + 26, a->postNeuron->getRfCoordinates().first);
+			copy_to(bytes.data() + 28, a->postNeuron->getRfCoordinates().second);
+			copy_to(bytes.data() + 30, a->postNeuron->getXYCoordinates().first);
+			copy_to(bytes.data() + 32, a->postNeuron->getXYCoordinates().second);
 			saveFile.write(bytes.data(), bytes.size());
         }
 		
