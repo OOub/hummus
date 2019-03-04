@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
 	//  ----- CREATING THE NETWORK -----
     network.add2dLayer<hummus::InputNeuron>(6, 6, 2, {});
     network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 3, hummus::Rand(), 100, 2, {}, false, false, 10, 20, 3, true);
+    network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Rand(), 100, {}, false, false, 10, 20, 3, true);
     network.addLayer<hummus::LIF>(1, {});
     
     network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Rand());

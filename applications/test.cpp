@@ -41,14 +41,13 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
-    network.addLayer<hummus::InputNeuron>(2, {});
-    network.addLayer<hummus::LIF>(2, {}, false, false, 5, 20, 0, false);
+    network.addLayer<hummus::InputNeuron>(1, {});
+    network.addLayer<hummus::LIF>(10, {}, false, false, 5, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
-//    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1./2));
-    network.oneToOne(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1.));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1./2));
     network.lateralInhibition(network.getLayers()[1], -1);
-    
+	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
     network.injectSpike(0, 11);

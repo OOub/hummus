@@ -444,6 +444,7 @@ namespace hummus {
 
                             // 2D to 1D mapping to get the index from x y coordinates
                             int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
+							
                             // calculating weights and delays according to the provided distribution
                             const std::pair<float, float> weight_delay = lambdaFunction(x, y, convSub.ID);
 
@@ -479,6 +480,22 @@ namespace hummus {
         // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size. First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron
         template <typename T, typename F, typename... Args>
         void addPoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+        	// find greatest common denominator
+        	int gcd;
+        	for (auto i = 1; i <= presynapticLayer.width && i <= presynapticLayer.height; i++)
+			{
+				if (presynapticLayer.width % i == 0 && presynapticLayer.height % i == 0) {
+					gcd = i;
+				}
+			}
+			
+			std::cout << presynapticLayer.width << gcd << std::endl;
+			
+        	// create pooling layer of neurons with correct dimensions
+            add2dLayer<T>(presynapticLayer.width/gcd, presynapticLayer.height/gcd, presynapticLayer.sublayers.size(), _learningRuleHandler, std::forward<Args>(args)...);
+			
+        	// connect the layers
+        	
         }
         
         // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
