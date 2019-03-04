@@ -27,20 +27,20 @@ int main(int argc, char** argv) {
 	hummus::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
-    network.add2dLayer<hummus::InputNeuron>(6, 6, 2, {});
-    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 3, hummus::Rand(), 100, 2, {}, false, false, 10, 20, 3, true);
+    network.add2dLayer<hummus::InputNeuron>(12, 12, 1, {});
+    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 3, hummus::Rand(), 100, 1, {}, false, false, 10, 20, 3, true);
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Rand(), 100, {}, false, false, 10, 20, 3, true);
     network.addLayer<hummus::LIF>(1, {});
     
-    network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Rand());
-
+    network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Rand());
+    
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
     qtDisplay.setTimeWindow(100);
     qtDisplay.trackInputSublayer(0);
     qtDisplay.trackLayer(1);
     qtDisplay.trackNeuron(100);
-   
+
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0);
 

@@ -384,10 +384,6 @@ namespace hummus {
         // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron. We can even add more sublayers
         template <typename T, typename F, typename... Args>
         void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
-            // error handling
-            if (kernelSize > presynapticLayer.width || kernelSize > presynapticLayer.height || kernelSize % 2 == 0) {
-                throw std::logic_error("the kernel size has to be an odd number, and it cannot be larger than the dimension of the presynaptic layer");
-            }
             
             // find how many neurons have previously spiked
             int layershift = 0;
@@ -419,7 +415,13 @@ namespace hummus {
             add2dLayer<T>(newWidth, newHeight, _sublayerNumber, _learningRuleHandler, std::forward<Args>(args)...);
 
             // finding range to calculate a moore neighborhood
-            int range = kernelSize - std::ceil(kernelSize / static_cast<float>(2));
+            float range;
+            if (kernelSize % 2 == 0) {
+                range = kernelSize - std::ceil(kernelSize / static_cast<float>(2)) - 0.5;
+            }
+            else {
+                range = kernelSize - std::ceil(kernelSize / static_cast<float>(2));
+            }
             
             // number of neurons surrounding the center
             int mooreNeighbors = std::pow((2*range + 1),2);
@@ -429,13 +431,12 @@ namespace hummus {
                 int sublayershift = 0;
                 for (auto& preSub: presynapticLayer.sublayers) {
                     
-                    // inintialising window on the first center coordinates
-                    std::pair<int, int> centerCoordinates((kernelSize-1)/2, (kernelSize-1)/2);
+                    // initialising window on the first center coordinates
+                    std::pair<float, float> centerCoordinates((kernelSize-1)/static_cast<float>(2), (kernelSize-1)/static_cast<float>(2));
                     
                     // number of neurons = number of receptive fields in the presynaptic Layer
+                    int row = 0; int col = 0;
                     for (auto& n: convSub.neurons) {
-                            
-                        int row = 0; int col = 0;
                         
                         // finding the coordinates for the presynaptic neurons in each receptive field
                         for (auto i=0; i<mooreNeighbors; i++) {
@@ -451,9 +452,9 @@ namespace hummus {
                             // changing the neuron's receptive field coordinates from the default
                             neurons[idx].get()->setRfCoordinates(row, col);
 
-                            // connecting neurons from the presynaptic ayer to the convolutional one according to their receptive field.
+                            // connecting neurons from the presynaptic layer to the convolutional one
                             neurons[idx].get()->addAxon(neurons[n].get(), weight_delay.first, weight_delay.second, probability, true);
-
+                            
                             // to shift the network runtime by the maximum delay in the clock mode
                             maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
                         }
@@ -461,7 +462,7 @@ namespace hummus {
                         // finding the coordinates for the center of each receptive field
                         centerCoordinates.first += stride;
                         if (centerCoordinates.first >= presynapticLayer.width - trimmedColumns) {
-                            centerCoordinates.first = (kernelSize-1)/2;
+                            centerCoordinates.first = (kernelSize-1)/static_cast<float>(2);
                             centerCoordinates.second += stride;
                         }
                         
@@ -477,25 +478,106 @@ namespace hummus {
             }
         }
         
-        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size. First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron
+        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields). First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron
         template <typename T, typename F, typename... Args>
         void addPoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+            
+            // find how many neurons have previously spiked
+            int layershift = 0;
+            if (!layers.empty()) {
+                for (auto& l: layers) {
+                    if (l.ID != presynapticLayer.ID) {
+                        layershift += l.neurons.size();
+                    }
+                }
+            }
+            
         	// find greatest common denominator
-        	int gcd;
-        	for (auto i = 1; i <= presynapticLayer.width && i <= presynapticLayer.height; i++)
-			{
+        	int gcd = -1;
+        	for (auto i = 1; i <= presynapticLayer.width && i <= presynapticLayer.height; i++) {
 				if (presynapticLayer.width % i == 0 && presynapticLayer.height % i == 0) {
-					gcd = i;
+                    if ((presynapticLayer.width  == i || presynapticLayer.height == i) && gcd != -1) {
+                        break;
+                    } else {
+                        gcd = i;
+                    }
 				}
 			}
 			
-			std::cout << presynapticLayer.width << gcd << std::endl;
+			std::cout << "subsampling by a factor of " << gcd << std::endl;
 			
         	// create pooling layer of neurons with correct dimensions
-            add2dLayer<T>(presynapticLayer.width/gcd, presynapticLayer.height/gcd, presynapticLayer.sublayers.size(), _learningRuleHandler, std::forward<Args>(args)...);
+            add2dLayer<T>(presynapticLayer.width/gcd, presynapticLayer.height/gcd, static_cast<int>(presynapticLayer.sublayers.size()), _learningRuleHandler, std::forward<Args>(args)...);
 			
-        	// connect the layers
-        	
+            float range;
+            // if size of kernel is an even number
+            if (gcd % 2 == 0) {
+                range = gcd - std::ceil(gcd / static_cast<float>(2)) - 0.5;
+            // if size of kernel is an odd number
+            } else {
+                // finding range to calculate a moore neighborhood
+                range = gcd - std::ceil(gcd / static_cast<float>(2));
+            }
+            
+            // number of neurons surrounding the center
+            int mooreNeighbors = std::pow((2*range + 1),2);
+            
+            std::cout << range << " " << mooreNeighbors << std::endl;
+            
+            for (auto& poolSub: layers.back().sublayers) {
+                int sublayershift = 0;
+                for (auto& preSub: presynapticLayer.sublayers) {
+                    if (poolSub.ID == preSub.ID) {
+                        
+                        // initialising window on the first center coordinates
+                        std::pair<float, float> centerCoordinates((gcd-1)/static_cast<float>(2), (gcd-1)/static_cast<float>(2));
+                        
+                        // number of neurons = number of receptive fields in the presynaptic Layer
+                        int row = 0; int col = 0;
+                        for (auto& n: poolSub.neurons) {
+
+                            // finding the coordinates for the presynaptic neurons in each receptive field
+                            for (auto i=0; i<mooreNeighbors; i++) {
+                                
+                                int x = centerCoordinates.first + ((i % gcd) - range);
+                                int y = centerCoordinates.second + ((i / gcd) - range);
+                                
+                                // 2D to 1D mapping to get the index from x y coordinates
+                                int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
+                                
+                                // calculating weights and delays according to the provided distribution
+                                const std::pair<float, float> weight_delay = lambdaFunction(x, y, poolSub.ID);
+                                
+                                // changing the neuron's receptive field coordinates from the default
+                                neurons[idx].get()->setRfCoordinates(row, col);
+                                
+                                // connecting neurons from the presynaptic layer to the convolutional one
+                                neurons[idx].get()->addAxon(neurons[n].get(), weight_delay.first, weight_delay.second, probability, true);
+                                
+                                // to shift the network runtime by the maximum delay in the clock mode
+                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                            }
+                            
+                            // finding the coordinates for the center of each receptive field
+                            centerCoordinates.first += gcd;
+                            if (centerCoordinates.first >= presynapticLayer.width) {
+                                centerCoordinates.first = (gcd-1)/static_cast<float>(2);
+                                centerCoordinates.second += gcd;
+                            }
+                            
+                            // updating receptive field indices
+                            row += 1;
+                            if (row == presynapticLayer.width/gcd) {
+                                col += 1;
+                                row = 0;
+                            }
+                        }
+                    }
+                    sublayershift += preSub.neurons.size();
+                }
+            }
+			
+            
         }
         
         // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
