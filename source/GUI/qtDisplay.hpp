@@ -73,11 +73,11 @@ namespace hummus {
         }
 
     	// ----- PUBLIC DISPLAY METHODS -----
-		void incomingSpike(double timestamp, axon* a, Network* network) override {
+		void incomingSpike(double timestamp, synapse* a, Network* network) override {
 			potentialviewer->handleData(timestamp, a, network);
 		}
 
-        void neuronFired(double timestamp, axon* a, Network* network) override {
+        void neuronFired(double timestamp, synapse* a, Network* network) override {
 			inputviewer->handleData(timestamp, a, network);
 			outputviewer->handleData(timestamp, a, network);
 			potentialviewer->handleData(timestamp, a, network);
@@ -89,7 +89,7 @@ namespace hummus {
 			potentialviewer->handleTimestep(timestamp, network, postNeuron);
 		}
 
-        void statusUpdate(double timestamp, axon* a, Network* network) override {
+        void statusUpdate(double timestamp, synapse* a, Network* network) override {
             potentialviewer->handleData(timestamp, a, network);
         }
         

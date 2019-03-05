@@ -39,7 +39,7 @@ namespace hummus {
             saveFile.write(bytes.data(), bytes.size());
         }
         
-		void incomingSpike(double timestamp, axon* a, Network* network) override {
+		void incomingSpike(double timestamp, synapse* a, Network* network) override {
 			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
 			copy_to(bytes.data() + 8, a->delay);
@@ -55,7 +55,7 @@ namespace hummus {
 			saveFile.write(bytes.data(), bytes.size());
         }
 		
-		void neuronFired(double timestamp, axon* a, Network* network) override {
+		void neuronFired(double timestamp, synapse* a, Network* network) override {
 			std::array<char, 34> bytes;
 			copy_to(bytes.data() + 0, timestamp);
 			copy_to(bytes.data() + 8, a->delay);

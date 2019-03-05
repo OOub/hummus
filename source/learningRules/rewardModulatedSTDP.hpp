@@ -51,10 +51,10 @@ namespace hummus {
                     if (rule == this) {
                         int16_t presynapticLayer = -1;
                         // making sure we don't add learning on a parallel layer
-                        for (auto& preAxon: network->getNeurons()[l.neurons[0]]->getPreAxons()) {
+                        for (auto& preSynapse: network->getNeurons()[l.neurons[0]]->getPreSynapses()) {
                             // finding the closest presynaptic layer without overly relying on layerIDs
-                            if (preAxon->preNeuron && preAxon->preNeuron->getLayerID() < preAxon->postNeuron->getLayerID()) {
-                                presynapticLayer = std::max(preAxon->preNeuron->getLayerID(), presynapticLayer);
+                            if (preSynapse->preNeuron && preSynapse->preNeuron->getLayerID() < preSynapse->postNeuron->getLayerID()) {
+                                presynapticLayer = std::max(preSynapse->preNeuron->getLayerID(), presynapticLayer);
                             }
                         }
                         
@@ -75,7 +75,7 @@ namespace hummus {
             }
 		}
 		
-		virtual void learn(double timestamp, axon* a, Network* network) override {
+		virtual void learn(double timestamp, synapse* a, Network* network) override {
             if (DecisionMakingNeuron* n = dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)) {
 				// reward and punishement signal from the decision-making layer
 				int alpha = 0;
@@ -91,11 +91,11 @@ namespace hummus {
 					// if preTime - postTime is positive
 					for (auto& n: network->getLayers()[layer.preLayer].neurons) {
                         if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
-                            for (auto& postAxon: network->getNeurons()[n]->getPostAxons()) {
-                                if (postAxon->weight >= 0 && postAxon->postNeuron->getEligibilityTrace() > 0.1) {
+                            for (auto& postSynapse: network->getNeurons()[n]->getPostSynapses()) {
+                                if (postSynapse->weight >= 0 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_minus+beta*Ap_plus;
-                                    postAxon->weight += delta * postAxon->weight * (1./postAxon->postNeuron->getMembraneResistance() - postAxon->weight);
-                                    postAxon->postNeuron->setEligibilityTrace(0);
+                                    postSynapse->weight += delta * postSynapse->weight * (1./postSynapse->postNeuron->getMembraneResistance() - postSynapse->weight);
+                                    postSynapse->postNeuron->setEligibilityTrace(0);
                                 }
                             }
                         }
@@ -104,11 +104,11 @@ namespace hummus {
 					// if preTime - postTime is negative
 					for (auto& n: network->getLayers()[layer.postLayer].neurons) {
                         if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
-                            for (auto& preAxon: network->getNeurons()[n]->getPreAxons()) {
-                                if (preAxon->weight >= 0 && preAxon->preNeuron->getEligibilityTrace() > 0.1) {
+                            for (auto& preSynapse: network->getNeurons()[n]->getPreSynapses()) {
+                                if (preSynapse->weight >= 0 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_plus+beta*Ap_minus;
-                                    preAxon->weight += delta * preAxon->weight * (1./preAxon->preNeuron->getMembraneResistance() - preAxon->weight);
-                                    preAxon->preNeuron->setEligibilityTrace(0);
+                                    preSynapse->weight += delta * preSynapse->weight * (1./preSynapse->preNeuron->getMembraneResistance() - preSynapse->weight);
+                                    preSynapse->preNeuron->setEligibilityTrace(0);
                                 }
                             }
                         }

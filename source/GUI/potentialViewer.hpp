@@ -54,7 +54,7 @@ namespace hummus {
         virtual ~PotentialViewer(){}
 		
     	// ----- PUBLIC POTENTIALVIEWER METHODS -----
-		void handleData(double timestamp, axon* a, Network* network) {
+		void handleData(double timestamp, synapse* a, Network* network) {
 			if (a->postNeuron->getNeuronID() == neuronTracker) {
                 while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed) {

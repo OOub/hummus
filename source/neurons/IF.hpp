@@ -35,7 +35,7 @@ namespace hummus {
 			}
 		}
 		
-        virtual void update(double timestamp, axon* a, Network* network, spikeType type) override {
+        virtual void update(double timestamp, synapse* a, Network* network, spikeType type) override {
             if (type == spikeType::normal) {
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
@@ -60,7 +60,7 @@ namespace hummus {
                     threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousInputTime)/decayHomeostasis);
                 }
                 
-                // axon weight decay - synaptic pruning
+                // synapse weight decay - synaptic pruning
                 if (decayWeight != 0) {
                     a->weight *= std::exp(-(timestamp-previousInputTime)*synapticEfficacy/decayWeight);
                 }
@@ -128,7 +128,7 @@ namespace hummus {
                     network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
                 }
                 
-                for (auto& p : postAxons) {
+                for (auto& p : postSynapses) {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
                 }
                 
@@ -144,12 +144,12 @@ namespace hummus {
                 }
             }
             
-            // updating the timestamp when an axon was propagating a spike
+            // updating the timestamp when an synapse was propagating a spike
             previousInputTime = timestamp;
             a->previousInputTime = timestamp;
         }
         
-        virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) override {
+        virtual void updateSync(double timestamp, synapse* a, Network* network, double timestep) override {
             // handling multiple spikes at the same timestamp (to prevent excessive decay)
             if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
                 timestep = 0;
@@ -181,7 +181,7 @@ namespace hummus {
             }
             
             if (a) {
-                // axon weight decay - synaptic pruning
+                // synapse weight decay - synaptic pruning
                 if (decayWeight != 0) {
                     a->weight *= std::exp(-(timestamp-previousInputTime)*synapticEfficacy/decayWeight);
                 }
@@ -198,9 +198,9 @@ namespace hummus {
                     // updating the current
                     current += externalCurrent*a->weight;
                     
-                    activeAxon = a;
+                    activeSynapse = a;
                     
-                    // updating the timestamp when an axon was propagating a spike
+                    // updating the timestamp when an synapse was propagating a spike
                     previousInputTime = timestamp;
                     a->previousInputTime = timestamp;
                     
@@ -245,21 +245,21 @@ namespace hummus {
                 eligibilityTrace = 1;
                 
 #ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << (activeAxon->preNeuron ? activeAxon->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeAxon->weight << " d=" << activeAxon->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
+                std::cout << "t=" << timestamp << " " << (activeSynapse->preNeuron ? activeSynapse->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeSynapse->weight << " d=" << activeSynapse->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
 #endif
                 
                 for (auto addon: network->getAddOns()) {
-                    addon->neuronFired(timestamp, activeAxon, network);
+                    addon->neuronFired(timestamp, activeSynapse, network);
                 }
                 if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->neuronFired(timestamp, activeAxon, network);
+                    network->getMainThreadAddOn()->neuronFired(timestamp, activeSynapse, network);
                 }
                 
-                for (auto& p : postAxons) {
+                for (auto& p : postSynapses) {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
                 }
                 
-                requestLearning(timestamp, activeAxon, network);
+                requestLearning(timestamp, activeSynapse, network);
                 
                 previousSpikeTime = timestamp;
                 potential = restingPotential;

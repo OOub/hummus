@@ -53,7 +53,7 @@ namespace hummus {
             layerID = _layerToLog.ID;
         }
         
-        void incomingSpike(double timestamp, axon* a, Network* network) override {
+        void incomingSpike(double timestamp, synapse* a, Network* network) override {
             if (initialisationTest) {
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {
@@ -81,7 +81,7 @@ namespace hummus {
             }
         }
         
-        void neuronFired(double timestamp, axon* a, Network* network) override {
+        void neuronFired(double timestamp, synapse* a, Network* network) override {
             if (initialisationTest) {
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {

@@ -14,7 +14,7 @@
 namespace hummus {
     class Neuron;
     class Network;
-	struct axon;
+	struct synapse;
 	
 	// polymorphic class for add-ons
 	class AddOn {
@@ -33,10 +33,10 @@ namespace hummus {
 		virtual void onCompleted(Network* network){}
         
         // message that is activated whenever a neuron receives a spike
-		virtual void incomingSpike(double timestamp, axon* a, Network* network){}
+		virtual void incomingSpike(double timestamp, synapse* a, Network* network){}
         
         // message that is activated whenever a neuron emits a spike
-		virtual void neuronFired(double timestamp, axon* a, Network* network){}
+		virtual void neuronFired(double timestamp, synapse* a, Network* network){}
         
         // message that is activated on every timestep on the synchronous network only. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
 		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}

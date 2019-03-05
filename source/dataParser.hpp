@@ -29,20 +29,24 @@ namespace hummus {
 	
 	struct input {
 		double timestamp;
-		double neuronID;
+        double neuronID;
 		double x;
 		double y;
-		double sublayerID;
+        double polarity;
 	};
 	
 	class DataParser {
         
     public:
     	// ----- CONSTRUCTOR -----
-        DataParser() = default;
+        DataParser() {
+            std::random_device device;
+            randomEngine = std::mt19937(device());
+            gaussian = std::normal_distribution<>(0.0, 1.0);
+        };
 		
-		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data divided into sublayers (timestamp, X, Y, sublayerID)
-        std::vector<input> readData(std::string filename) {
+		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity used as the sublayerID (timestamp, X, Y, P)
+        std::vector<input> readData(std::string filename, bool timeJitter=false, int additiveNoise=0) {
             dataFile.open(filename);
             
             if (dataFile.good()) {
@@ -50,7 +54,11 @@ namespace hummus {
 				std::string line;
 				int dataType = 0;
 				double neuronCounter = 0;
+                
+                double maxID=0; double maxX=0; double maxY=0; double maxPolarity=0;
+                
 				std::cout << "Reading " << filename << std::endl;
+                
 				while (std::getline(dataFile, line)) {
                 	std::vector<std::string> fields;
                 	split(fields, line, " ");
@@ -58,29 +66,80 @@ namespace hummus {
                 	if (fields.size() == 2) {
                 		dataType = 0;
 						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1, -1});
+                        maxID = std::max(maxID, std::stod(fields[1]));
                     // 2D Data
 					} else if (fields.size() == 3) {
                 		dataType = 1;
                 		data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), -1});
+                        maxX = std::max(maxX, std::stod(fields[1]));
+                        maxY = std::max(maxY, std::stod(fields[2]));
+                        
                 		neuronCounter++;
-                    // 2D data with sublayer ID
 					} else if (fields.size() == 4) {
-						dataType = 2;
-						data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
-                		neuronCounter++;
-					}
+                        dataType = 2;
+                        data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
+                        maxX = std::max(maxX, std::stod(fields[1]));
+                        maxY = std::max(maxY, std::stod(fields[2]));
+                        maxPolarity = std::max(maxPolarity, std::stod(fields[3]));
+                        neuronCounter++;
+                    }
                 }
                 dataFile.close();
 				
-				
-				if (dataType == 0) {
-					std::cout << "1D data detected" << std::endl;
-				} else if (dataType == 1) {
-					std::cout << "2D data detected" << std::endl;
-				} else if (dataType == 2) {
-					std::cout << "2D data divided into sublayers detected" << std::endl;
-				}
-				
+                if (dataType == 0) {
+                    std::cout << "1D data detected" << std::endl;
+                } else if (dataType == 1) {
+                    std::cout << "2D data detected" << std::endl;
+                } else if (dataType == 2) {
+                    std::cout << "2D data with polarities detected" << std::endl;
+                }
+                
+                // adding gaussian time jitter
+                if (timeJitter) {
+                    for (auto& datum: data) {
+                        datum.timestamp += gaussian(randomEngine);
+                    }
+                }
+                
+                // additive noise
+                if (additiveNoise > 0) {
+                    // finding maximum timestamp
+                    auto it = std::max_element(data.begin(), data.end(), [&](input a, input b){ return a.timestamp < b.timestamp; });
+                    double maxTimestamp = data[std::distance(data.begin(), it)].timestamp;
+                    
+                    // uniform int distribution for the timestamps of spontaneous spikes
+                    std::uniform_int_distribution<> uniformTimestamp(0, maxTimestamp);
+                    
+                    // finding the number of spontaneous spikes to add to the data
+                    int additiveSpikes = std::round(data.size() * additiveNoise / 100.);
+                    
+                    // one-dimensional data
+                    if (dataType == 0) {
+                        std::uniform_int_distribution<> uniformID(0, maxID);
+                        
+                        for (auto i=0; i<additiveSpikes; i++) {
+                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), static_cast<double>(uniformID(randomEngine)), -1, -1});
+                        }
+                    // two-dimensional data
+                    } else if (dataType == 1){
+                        std::uniform_int_distribution<> uniformX(0, maxX);
+                        std::uniform_int_distribution<> uniformY(0, maxY);
+                        
+                        for (auto i=0; i<additiveSpikes; i++) {
+                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), -1});
+                        }
+                    } else if (dataType == 2){
+                        std::uniform_int_distribution<> uniformX(0, maxX);
+                        std::uniform_int_distribution<> uniformY(0, maxY);
+                        std::uniform_int_distribution<> uniformPolarity(0, maxPolarity);
+                        
+                        for (auto i=0; i<additiveSpikes; i++) {
+                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), static_cast<double>(uniformPolarity(randomEngine))});
+                        }
+                    }
+                }
+                
+                // sorting data according to timestamps
 				std::sort(data.begin(), data.end(), [](input a, input b) {
 					return a.timestamp < b.timestamp;
 				});
@@ -141,6 +200,8 @@ namespace hummus {
 	
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----
-        std::ifstream    dataFile;
+        std::ifstream                   dataFile;
+        std::mt19937                    randomEngine;
+        std::normal_distribution<>      gaussian;
 	};
 }

@@ -36,7 +36,7 @@ namespace hummus {
 			}
 		}
 		
-		void update(double timestamp, axon* a, Network* network, spikeType type) override {
+		void update(double timestamp, synapse* a, Network* network, spikeType type) override {
             
             // checking if the neuron is in a refractory period
             if (timestamp - previousSpikeTime >= refractoryPeriod) {
@@ -68,7 +68,7 @@ namespace hummus {
                     network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
                 }
                 
-                for (auto& p : postAxons) {
+                for (auto& p : postSynapses) {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
                 }
                 
@@ -83,7 +83,7 @@ namespace hummus {
             }
 		}
         
-        void updateSync(double timestamp, axon* a, Network* network, double timestep) override {
+        void updateSync(double timestamp, synapse* a, Network* network, double timestep) override {
             
             if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
                 timestep = 0;
@@ -118,7 +118,7 @@ namespace hummus {
                     network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
                 }
                 
-                for (auto& p : postAxons) {
+                for (auto& p : postSynapses) {
                     network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
                 }
                 
@@ -141,7 +141,7 @@ namespace hummus {
     protected:
         
         // loops through any learning rules and activates them
-        void requestLearning(double timestamp, axon* a ,Network* network) override {
+        void requestLearning(double timestamp, synapse* a ,Network* network) override {
             if (network->getLearningStatus()) {
                 if (!learningRuleHandler.empty()) {
                     for (auto& learningRule: learningRuleHandler) {

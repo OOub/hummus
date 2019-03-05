@@ -20,14 +20,14 @@
 int main(int argc, char** argv) {
 	//  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
-	auto trainingData = dataParser.readData("../../data/2Dtest.txt");
+	auto trainingData = dataParser.readData("../../data/2Dtest.txt", true, 50);
 	
     //  ----- INITIALISING THE NETWORK -----
 	hummus::QtDisplay qtDisplay;
 	hummus::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
-    network.add2dLayer<hummus::InputNeuron>(12, 12, 1, {});
+    network.add2dLayer<hummus::InputNeuron>(12, 12, 2, {});
     network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 3, hummus::Rand(), 100, 1, {}, false, false, 10, 20, 3, true);
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Rand(), 100, {}, false, false, 10, 20, 3, true);
     network.addLayer<hummus::LIF>(1, {});

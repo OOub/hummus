@@ -43,20 +43,20 @@ namespace hummus {
             }
         }
         
-		virtual void learn(double timestamp, axon* a, Network* network) override {
-            for (auto& preAxon: a->postNeuron->getPreAxons()) {
+		virtual void learn(double timestamp, synapse* a, Network* network) override {
+            for (auto& preSynapse: a->postNeuron->getPreSynapses()) {
                 // Long term potentiation for all presynaptic neurons that spiked
-                if (timestamp >= preAxon->preNeuron->getPreviousSpikeTime() && preAxon->preNeuron->getPreviousSpikeTime() > preAxon->postNeuron->getPreviousSpikeTime()) {
-                    float delta_weight = alpha_plus * std::exp(- beta_plus * preAxon->weight * preAxon->postNeuron->getMembraneResistance());
-                    preAxon->weight += delta_weight*(1./preAxon->postNeuron->getMembraneResistance());
+                if (timestamp >= preSynapse->preNeuron->getPreviousSpikeTime() && preSynapse->preNeuron->getPreviousSpikeTime() > preSynapse->postNeuron->getPreviousSpikeTime()) {
+                    float delta_weight = alpha_plus * std::exp(- beta_plus * preSynapse->weight * preSynapse->postNeuron->getMembraneResistance());
+                    preSynapse->weight += delta_weight*(1./preSynapse->postNeuron->getMembraneResistance());
                     
                 // Long term depression for all presynaptic neurons neurons that didn't spike
                 } else {
-                    float delta_weight = alpha_minus * std::exp(- beta_minus * (1 - preAxon->weight * preAxon->postNeuron->getMembraneResistance()));
-                    if (preAxon->weight > 0) {
-                        preAxon->weight -= delta_weight*(1./preAxon->postNeuron->getMembraneResistance());
-                        if (preAxon->weight < 0) {
-                            preAxon->weight = 0;
+                    float delta_weight = alpha_minus * std::exp(- beta_minus * (1 - preSynapse->weight * preSynapse->postNeuron->getMembraneResistance()));
+                    if (preSynapse->weight > 0) {
+                        preSynapse->weight -= delta_weight*(1./preSynapse->postNeuron->getMembraneResistance());
+                        if (preSynapse->weight < 0) {
+                            preSynapse->weight = 0;
                         }
                     }
                 }

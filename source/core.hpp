@@ -51,7 +51,7 @@ namespace hummus {
 		int                         height;
 	};
 	
-    struct axon {
+    struct synapse {
         Neuron*  preNeuron;
         Neuron*  postNeuron;
         float    weight;
@@ -69,7 +69,7 @@ namespace hummus {
     
     struct spike {
         double    timestamp;
-        axon*     propagationAxon;
+        synapse*  propagationSynapse;
         spikeType type;
     };
     
@@ -89,7 +89,7 @@ namespace hummus {
                 threshold(_threshold),
                 potential(_restingPotential),
                 restingPotential(_restingPotential),
-                initialAxon{nullptr, nullptr, 100/_membraneResistance, 0, 0},
+                initialSynapse{nullptr, nullptr, 100/_membraneResistance, 0, 0},
                 learningRuleHandler(_learningRuleHandler),
                 eligibilityTrace(0),
                 eligibilityDecay(_eligibilityDecay),
@@ -106,10 +106,10 @@ namespace hummus {
 		virtual void initialisation(Network* network){}
 		
 		// asynchronous update method
-		virtual void update(double timestamp, axon* a, Network* network, spikeType type) = 0;
+		virtual void update(double timestamp, synapse* a, Network* network, spikeType type) = 0;
         
 		// synchronous update method
-		virtual void updateSync(double timestamp, axon* a, Network* network, double timestep) {
+		virtual void updateSync(double timestamp, synapse* a, Network* network, double timestep) {
 			update(timestamp, a, network, spikeType::none);
 		}
         
@@ -121,26 +121,26 @@ namespace hummus {
             eligibilityTrace = 0;
         }
         
-        // adds an axon that connects two Neurons together - used to propagate spikes
-        void addAxon(Neuron* postNeuron, float weight, float delay, int probability=100, bool redundantConnections=true) {
+        // adds a synapse that connects two Neurons together - used to propagate spikes
+        void addSynapse(Neuron* postNeuron, float weight, float delay, int probability=100, bool redundantConnections=true) {
             if (postNeuron) {
                 if (connectionProbability(probability)) {
                     if (redundantConnections == false) {
                         int16_t ID = postNeuron->getNeuronID();
-                        auto result = std::find_if(postAxons.begin(), postAxons.end(), [&](std::unique_ptr<axon>& a){return a->postNeuron->getNeuronID() == ID;});
+                        auto result = std::find_if(postSynapses.begin(), postSynapses.end(), [&](std::unique_ptr<synapse>& a){return a->postNeuron->getNeuronID() == ID;});
                         
-                        if (result == postAxons.end()) {
-                            postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
-                            postNeuron->getPreAxons().emplace_back(postAxons.back().get());
+                        if (result == postSynapses.end()) {
+                            postSynapses.emplace_back(new synapse{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
+                            postNeuron->getPreSynapses().emplace_back(postSynapses.back().get());
                         } else {
 #ifndef NDEBUG
-                            std::cout << "axon " << neuronID << "->" << postNeuron->getNeuronID() << " already exists" << std::endl;
+                            std::cout << "synapse " << neuronID << "->" << postNeuron->getNeuronID() << " already exists" << std::endl;
 #endif
                         }
                     }
                     else {
-                        postAxons.emplace_back(new axon{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
-                        postNeuron->getPreAxons().emplace_back(postAxons.back().get());
+                        postSynapses.emplace_back(new synapse{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
+                        postNeuron->getPreSynapses().emplace_back(postSynapses.back().get());
                     }
                 }
             } else {
@@ -148,12 +148,12 @@ namespace hummus {
             }
         }
 		
-        // initialise the initial axon when a neuron receives an input event
+        // initialise the initial synapse when a neuron receives an input event
         spike prepareInitialSpike(double timestamp) {
-            if (!initialAxon.postNeuron) {
-                initialAxon.postNeuron = this;
+            if (!initialSynapse.postNeuron) {
+                initialSynapse.postNeuron = this;
             }
-            return spike{timestamp, &initialAxon, spikeType::normal};
+            return spike{timestamp, &initialSynapse, spikeType::normal};
         }
 		
         // utility function that returns true or false depending on a probability percentage
@@ -190,16 +190,16 @@ namespace hummus {
             return xyCoordinates;
         }
         
-        std::vector<axon*>& getPreAxons() {
-            return preAxons;
+        std::vector<synapse*>& getPreSynapses() {
+            return preSynapses;
         }
         
-        std::vector<std::unique_ptr<axon>>& getPostAxons() {
-            return postAxons;
+        std::vector<std::unique_ptr<synapse>>& getPostSynapses() {
+            return postSynapses;
         }
         
-        axon& getInitialAxon() {
-            return initialAxon;
+        synapse& getInitialSynapse() {
+            return initialSynapse;
         }
         
         float setPotential(float newPotential) {
@@ -264,27 +264,27 @@ namespace hummus {
         virtual void WTA(double timestamp, Network* network) {}
         
         // loops through any learning rules and activates them
-        virtual void requestLearning(double timestamp, axon* a, Network* network){}
+        virtual void requestLearning(double timestamp, synapse* a, Network* network){}
         
 		// ----- NEURON PARAMETERS -----
-        int16_t                            neuronID;
-        int16_t                            layerID;
-        int16_t                            sublayerID;
-        std::pair<int16_t, int16_t>        rfCoordinates;
-        std::pair<int16_t, int16_t>        xyCoordinates;
-		std::vector<axon*>                 preAxons;
-        std::vector<std::unique_ptr<axon>> postAxons;
-        axon                               initialAxon;
-        float                              threshold;
-        float                              potential;
-        float                              restingPotential;
-        std::vector<LearningRuleHandler*>  learningRuleHandler;
-        float                              eligibilityTrace;
-        float                              eligibilityDecay;
-        float                              membraneResistance;
-        double                             previousSpikeTime;
-        double                             previousInputTime;
-        float                              synapticEfficacy;
+        int16_t                               neuronID;
+        int16_t                               layerID;
+        int16_t                               sublayerID;
+        std::pair<int16_t, int16_t>           rfCoordinates;
+        std::pair<int16_t, int16_t>           xyCoordinates;
+		std::vector<synapse*>                 preSynapses;
+        std::vector<std::unique_ptr<synapse>> postSynapses;
+        synapse                               initialSynapse;
+        float                                 threshold;
+        float                                 potential;
+        float                                 restingPotential;
+        std::vector<LearningRuleHandler*>     learningRuleHandler;
+        float                                 eligibilityTrace;
+        float                                 eligibilityDecay;
+        float                                 membraneResistance;
+        double                                previousSpikeTime;
+        double                                previousInputTime;
+        float                                 synapticEfficacy;
     };
 	
     class Network {
@@ -381,7 +381,7 @@ namespace hummus {
             layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH});
         }
 		
-        // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron. We can even add more sublayers
+        // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron. We can even add more sublayers
         template <typename T, typename F, typename... Args>
         void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
             
@@ -453,7 +453,7 @@ namespace hummus {
                             neurons[idx].get()->setRfCoordinates(row, col);
 
                             // connecting neurons from the presynaptic layer to the convolutional one
-                            neurons[idx].get()->addAxon(neurons[n].get(), weight_delay.first, weight_delay.second, probability, true);
+                            neurons[idx].get()->addSynapse(neurons[n].get(), weight_delay.first, weight_delay.second, probability, true);
                             
                             // to shift the network runtime by the maximum delay in the clock mode
                             maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -478,7 +478,7 @@ namespace hummus {
             }
         }
         
-        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields). First set of paramaters are to characterize the axons. Second set of parameters are parameters for the neuron
+        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields). First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron
         template <typename T, typename F, typename... Args>
         void addPoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
             
@@ -522,8 +522,6 @@ namespace hummus {
             // number of neurons surrounding the center
             int mooreNeighbors = std::pow((2*range + 1),2);
             
-            std::cout << range << " " << mooreNeighbors << std::endl;
-            
             for (auto& poolSub: layers.back().sublayers) {
                 int sublayershift = 0;
                 for (auto& preSub: presynapticLayer.sublayers) {
@@ -552,7 +550,7 @@ namespace hummus {
                                 neurons[idx].get()->setRfCoordinates(row, col);
                                 
                                 // connecting neurons from the presynaptic layer to the convolutional one
-                                neurons[idx].get()->addAxon(neurons[n].get(), weight_delay.first, weight_delay.second, probability, true);
+                                neurons[idx].get()->addSynapse(neurons[n].get(), weight_delay.first, weight_delay.second, probability, true);
                                 
                                 // to shift the network runtime by the maximum delay in the clock mode
                                 maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -658,13 +656,13 @@ namespace hummus {
                 for (auto post: neuronsInLayer) {
                     // self-excitation probability
                     if (pre == post) {
-                        neurons[pre].get()->addAxon(neurons[post].get(), weightRandom(randomEngine), 0, selfExcitationProbability, true);
+                        neurons[pre].get()->addSynapse(neurons[post].get(), weightRandom(randomEngine), 0, selfExcitationProbability, true);
                     } else {
                         // feedforward probability
-                        neurons[pre].get()->addAxon(neurons[post].get(), weightRandom(randomEngine), 0, feedforwardProbability, true);
+                        neurons[pre].get()->addSynapse(neurons[post].get(), weightRandom(randomEngine), 0, feedforwardProbability, true);
                         
                         // feedback probability
-                        neurons[post].get()->addAxon(neurons[pre].get(), weightRandom(randomEngine), 0, feedbackProbability, true);
+                        neurons[post].get()->addSynapse(neurons[pre].get(), weightRandom(randomEngine), 0, feedbackProbability, true);
                     }
                 }
             }
@@ -686,7 +684,7 @@ namespace hummus {
                         for (auto postNeuronIdx=0; postNeuronIdx<postsynapticLayer.sublayers[postSubIdx].neurons.size(); postNeuronIdx++) {
                             if (preNeuronIdx == postNeuronIdx) {
                                 const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().second, postsynapticLayer.sublayers[postSubIdx].ID);
-                                neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]].get()->addAxon(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), weight_delay.first, weight_delay.second, probability, true);
+                                neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]].get()->addSynapse(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), weight_delay.first, weight_delay.second, probability, true);
 
                                 // to shift the network runtime by the maximum delay in the clock mode
                                 maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -705,7 +703,7 @@ namespace hummus {
                     for (auto& postSub: postsynapticLayer.sublayers) {
                         for (auto& postNeuron: postSub.neurons) {
                             const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->getXYCoordinates().first, neurons[postNeuron]->getXYCoordinates().second, postSub.ID);
-                            neurons[preNeuron].get()->addAxon(neurons[postNeuron].get(), weight_delay.first, weight_delay.second, probability, true);
+                            neurons[preNeuron].get()->addSynapse(neurons[postNeuron].get(), weight_delay.first, weight_delay.second, probability, true);
                             
                             // to shift the network runtime by the maximum delay in the clock mode
                             maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -715,11 +713,11 @@ namespace hummus {
             }
         }
 		
-        // interconnecting a layer with soft winner-takes-all axons, using negative weights
+        // interconnecting a layer with soft winner-takes-all synapses, using negative weights
         void lateralInhibition(layer l, float _weightMean=-1, float _weightstdev=0, int probability=100) {
             if (_weightMean != 0) {
                 if (_weightMean > 0) {
-                    std::cout << "lateral inhibition axons must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
+                    std::cout << "lateral inhibition synapses must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
                 }
                 
                 // generating normal distribution
@@ -730,7 +728,7 @@ namespace hummus {
                     for (auto& preNeurons: sub.neurons) {
                         for (auto& postNeurons: sub.neurons) {
                             if (preNeurons != postNeurons) {
-                                neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
+                                neurons[preNeurons].get()->addSynapse(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
                             }
                         }
                     }
@@ -741,7 +739,7 @@ namespace hummus {
                             for (auto& preNeurons: sub.neurons) {
                                 for (auto& postNeurons: subToInhibit.neurons) {
                                     if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
-                                        neurons[preNeurons].get()->addAxon(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
+                                        neurons[preNeurons].get()->addSynapse(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, true);
                                     }
                                 }
                             }
@@ -750,7 +748,7 @@ namespace hummus {
                 }
                 
             } else {
-                throw std::logic_error("lateral inhibition axons cannot have a null weight");
+                throw std::logic_error("lateral inhibition synapses cannot have a null weight");
             }
         }
 
@@ -772,7 +770,7 @@ namespace hummus {
         void injectPredictedSpike(spike s, spikeType stype) {
             // if spike doesn't already exist insert it in the list. if it does, just update the timestamp
             auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(),[&](spike oldSpike) {
-                return oldSpike.propagationAxon == s.propagationAxon;
+                return oldSpike.propagationSynapse == s.propagationSynapse;
             });
             
             if (it != predictedSpikes.end()) {
@@ -799,7 +797,7 @@ namespace hummus {
             for (auto& event: *data) {
                 for (auto& n: layers[0].neurons) {
                     // 1D or 2D data not split into sublayers
-                    if (event.sublayerID == neurons[n]->getSublayerID()) {
+                    if (event.polarity == -1) {
                         // one dimensional data
                         if (event.x == -1) {
                             if (neurons[n]->getNeuronID() == event.neuronID) {
@@ -814,9 +812,12 @@ namespace hummus {
                             }
                         }
                         
-                    // 2D data split into sublayers
-                    } else if (event.sublayerID == -1) {
-                        
+                    // 2D data split into sublayers (polarity)
+                    } else if (event.polarity == neurons[n]->getSublayerID()) {
+                        if (neurons[n]->getXYCoordinates().first == event.x && neurons[n]->getXYCoordinates().second == event.y) {
+                            injectSpike(n, event.timestamp);
+                            break;
+                        }
                     }
                 }
             }
@@ -1031,108 +1032,32 @@ namespace hummus {
         void eventRunHelper(double runtime, double timestep, bool classification=false) {
             if (!neurons.empty()) {
                 while (!initialSpikes.empty() || !generatedSpikes.empty() || !predictedSpikes.empty()) {
-                    // if only one list is filled
-                    if (predictedSpikes.empty() && generatedSpikes.empty() && !initialSpikes.empty()) {
-                        requestUpdate(initialSpikes.front(), classification);
-                        initialSpikes.pop_front();
-                    } else if (predictedSpikes.empty() && initialSpikes.empty() && !generatedSpikes.empty()) {
-                        requestUpdate(generatedSpikes.front(), classification);
+                    
+                    std::vector<std::pair<spike,int>> latestSpike;
+                    if (!generatedSpikes.empty()) {
+                        latestSpike.push_back(std::make_pair(generatedSpikes.front(), 1));
+                    }
+                    
+                    if (!predictedSpikes.empty()) {
+                        latestSpike.push_back(std::make_pair(predictedSpikes.front(), 2));
+                    }
+                    
+                    if (!initialSpikes.empty()) {
+                        latestSpike.push_back(std::make_pair(initialSpikes.front(), 3));
+                    }
+                    
+                    auto it = std::min_element(latestSpike.begin(), latestSpike.end(), [&](std::pair<spike,int>& a, std::pair<spike,int>& b){ return a.first.timestamp < b.first.timestamp;});
+                    auto idx = std::distance(latestSpike.begin(), it);
+                    
+                    if (latestSpike[idx].second == 1) {
+                        requestUpdate(latestSpike[idx].first, classification);
                         generatedSpikes.pop_front();
-                    } else if (generatedSpikes.empty() && initialSpikes.empty() && !predictedSpikes.empty()) {
-                        requestUpdate(predictedSpikes.front(), classification, true);
+                    } else if (latestSpike[idx].second == 2) {
+                        requestUpdate(latestSpike[idx].first, classification, true);
                         predictedSpikes.pop_front();
-                        // if two lists are filled
-                    } else if (predictedSpikes.empty() && !generatedSpikes.empty() && !initialSpikes.empty()){
-                        if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp) {
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp) {
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                        } else {
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                            
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        }
-                    } else if (generatedSpikes.empty() && !predictedSpikes.empty() && !initialSpikes.empty()){
-                        if (predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                        } else if (initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        } else {
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                            
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        }
-                    } else if (initialSpikes.empty() && !predictedSpikes.empty() && !generatedSpikes.empty()){
-                        if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp) {
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                        } else if (generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                        } else {
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                            
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                        }
-                        // if all lists are filled
                     } else {
-                        // if one list spikes before the others
-                        if (initialSpikes.front().timestamp < generatedSpikes.front().timestamp && initialSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        } else if (generatedSpikes.front().timestamp < initialSpikes.front().timestamp && generatedSpikes.front().timestamp < predictedSpikes.front().timestamp) {
-                            
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                        } else if (predictedSpikes.front().timestamp < generatedSpikes.front().timestamp && predictedSpikes.front().timestamp < initialSpikes.front().timestamp) {
-                            
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                            // if two lists spike at the same time, define order of spike
-                        } else if (generatedSpikes.front().timestamp == initialSpikes.front().timestamp){
-                            
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                            
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        } else if (generatedSpikes.front().timestamp == predictedSpikes.front().timestamp){
-                            
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                            
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                            
-                        } else if (initialSpikes.front().timestamp == predictedSpikes.front().timestamp){
-                            
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                            
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                            // if they all spike at the same time
-                        } else {
-                            
-                            requestUpdate(generatedSpikes.front(), classification);
-                            generatedSpikes.pop_front();
-                            
-                            requestUpdate(predictedSpikes.front(), classification, true);
-                            predictedSpikes.pop_front();
-                            
-                            requestUpdate(initialSpikes.front(), classification);
-                            initialSpikes.pop_front();
-                        }
+                        requestUpdate(latestSpike[idx].first, classification);
+                        initialSpikes.pop_front();
                     }
                 }
             } else {
@@ -1163,7 +1088,6 @@ namespace hummus {
                     
                     std::vector<spike> currentSpikes;
                     if (generatedSpikes.empty() && !initialSpikes.empty()) {
-                        
                         while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
                             currentSpikes.emplace_back(initialSpikes.front());
                             initialSpikes.pop_front();
@@ -1190,8 +1114,8 @@ namespace hummus {
                     for (auto& n: neurons) {
                         std::vector<spike> local_currentSpikes(currentSpikes.size());
                         const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
-                            if (s.propagationAxon) {
-                                return s.propagationAxon->postNeuron->getNeuronID() == n->getNeuronID();
+                            if (s.propagationSynapse) {
+                                return s.propagationSynapse->postNeuron->getNeuronID() == n->getNeuronID();
                             }
                             else {
                                 return false;
@@ -1202,7 +1126,7 @@ namespace hummus {
                         
                         if (it != currentSpikes.end()) {
                             for (auto& currentSpike: local_currentSpikes) {
-                                n->updateSync(i, currentSpike.propagationAxon, this, timestep);
+                                n->updateSync(i, currentSpike.propagationSynapse, this, timestep);
                             }
                         } else {
                             n->updateSync(i, nullptr, this, timestep);
@@ -1219,7 +1143,7 @@ namespace hummus {
                     }
                     
                     for (auto& spike: newSpikes) {
-                        spike.propagationAxon->postNeuron->updateSync(i, spike.propagationAxon, this, timestep);
+                        spike.propagationSynapse->postNeuron->updateSync(i, spike.propagationSynapse, this, timestep);
                     }
                 }
             } else {
@@ -1244,7 +1168,7 @@ namespace hummus {
                     }
                 }
             }
-            s.propagationAxon->postNeuron->update(s.timestamp, s.propagationAxon, this, s.type);
+            s.propagationSynapse->postNeuron->update(s.timestamp, s.propagationSynapse, this, s.type);
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----

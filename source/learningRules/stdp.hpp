@@ -38,10 +38,10 @@ namespace hummus {
                             postLayer = n->getLayerID();
                             
                             // making sure we don't add learning on a parallel layer
-                            for (auto& preAxon: n->getPreAxons()) {
-                                if (preAxon->preNeuron->getLayerID() < preAxon->postNeuron->getLayerID()) {
+                            for (auto& preSynapse: n->getPreSynapses()) {
+                                if (preSynapse->preNeuron->getLayerID() < preSynapse->postNeuron->getLayerID()) {
                                     // finding the closest presynaptic layer without overly relying on layerIDs
-                                    preLayer = std::max(preAxon->preNeuron->getLayerID(), preLayer);
+                                    preLayer = std::max(preSynapse->preNeuron->getLayerID(), preLayer);
                                 }
                             }
 						} else {
@@ -56,41 +56,41 @@ namespace hummus {
 			}
 		}
 		
-		virtual void learn(double timestamp, axon* a, Network* network) override {
+		virtual void learn(double timestamp, synapse* a, Network* network) override {
             // LTD whenever a neuron from the presynaptic layer spikes
             if (a->postNeuron->getLayerID() == preLayer) {
-                for (auto& postAxon: a->postNeuron->getPostAxons()) {
+                for (auto& postSynapse: a->postNeuron->getPostSynapses()) {
                     // if a postNeuron fired, the deltaT (preTime - postTime) should be positive
-                    if (postAxon->postNeuron->getEligibilityTrace() > 0.1) {
-                        float postTrace = - (timestamp - postAxon->postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postAxon->postNeuron->getPreviousSpikeTime())/tau_minus);
+                    if (postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
+                        float postTrace = - (timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus);
                         
-                        if (postAxon->weight > 0) {
-                            postAxon->weight += postTrace*(1/postAxon->postNeuron->getMembraneResistance());
+                        if (postSynapse->weight > 0) {
+                            postSynapse->weight += postTrace*(1/postSynapse->postNeuron->getMembraneResistance());
 
-                            if (postAxon->weight < 0) {
-                                postAxon->weight = 0;
+                            if (postSynapse->weight < 0) {
+                                postSynapse->weight = 0;
                             }
                         }
-                        postAxon->postNeuron->setEligibilityTrace(0);
+                        postSynapse->postNeuron->setEligibilityTrace(0);
                     }
                 }
             }
 			
 			// LTP whenever a neuron from the postsynaptic layer spikes
 			else if (a->postNeuron->getLayerID() == postLayer) {
-				for (auto& preAxon: a->postNeuron->getPreAxons()) {
+				for (auto& preSynapse: a->postNeuron->getPreSynapses()) {
 					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
-					if (preAxon->preNeuron->getEligibilityTrace() > 0.1) {
-						float preTrace = -(preAxon->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preAxon->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus);
+					if (preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
+						float preTrace = -(preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus);
 
-                        if (preAxon->weight < 1/preAxon->preNeuron->getMembraneResistance()) {
-                            preAxon->weight += preTrace*(1/preAxon->preNeuron->getMembraneResistance());
+                        if (preSynapse->weight < 1/preSynapse->preNeuron->getMembraneResistance()) {
+                            preSynapse->weight += preTrace*(1/preSynapse->preNeuron->getMembraneResistance());
 
-                            if (preAxon->weight > 1/preAxon->preNeuron->getMembraneResistance()) {
-                                preAxon->weight = 1/preAxon->preNeuron->getMembraneResistance();
+                            if (preSynapse->weight > 1/preSynapse->preNeuron->getMembraneResistance()) {
+                                preSynapse->weight = 1/preSynapse->preNeuron->getMembraneResistance();
                             }
                         }
-                        preAxon->preNeuron->setEligibilityTrace(0);
+                        preSynapse->preNeuron->setEligibilityTrace(0);
 					}
 				}
 			}

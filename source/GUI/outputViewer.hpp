@@ -54,7 +54,7 @@ namespace hummus {
         virtual ~OutputViewer(){}
 		
     	// ----- PUBLIC OUTPUTVIEWER METHODS -----		
-		void handleData(double timestamp, axon* a, Network* network) {
+		void handleData(double timestamp, synapse* a, Network* network) {
             input = timestamp;
 			if (a->postNeuron->getLayerID() == layerTracker) {
 				if (a->postNeuron->getSublayerID() == sublayerTracker) {
