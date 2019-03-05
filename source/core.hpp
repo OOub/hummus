@@ -32,6 +32,7 @@
 #include "addOn.hpp"
 #include "mainThreadAddOn.hpp"
 #include "learningRuleHandler.hpp"
+#include "dependencies/json.hpp"
 
 namespace hummus {
     
@@ -307,6 +308,21 @@ namespace hummus {
 		
 		Network(MainThreadAddOn* _thAddOn) : Network({}, _thAddOn) {}
 		
+        // ----- NETWORK IMPORT EXPORT METHODS -----
+        
+        // exporting the network into a JSON file
+        void save(std::string filename) {
+            nlohmann::json output = nlohmann::json::array();
+            
+            output.push_back({
+                {"value", 12},
+                {"hello", "world"}
+            });
+            
+            std::ofstream output_file(filename.append(".json"));
+            output_file << output.dump();
+        }
+        
 		// ----- NEURON CREATION METHODS -----
 		
         // adds one dimensional neurons
