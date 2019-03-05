@@ -10,3 +10,7 @@ data/hats/
 data/1D_patterns/
 
 \.DS_Store
+
+utilities/python/potentialLog\.bin
+
+utilities/python/spikeLog\.bin

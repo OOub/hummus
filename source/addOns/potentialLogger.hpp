@@ -7,7 +7,6 @@
  * Last Version: 06/02/2019
  *
  * Information: Add-on used to log the potential of specified neurons or layers of neurons at every timestep after learning is off
- * works only in clock-based
  */
 
 #pragma once
