@@ -20,12 +20,14 @@
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
 
+#include "tbb/tbb.h"
+
 int main(int argc, char** argv) {
 
     // ----- RESERVOIR PARAMETERS -----
     int numberOfNeurons = 10;
     float weightMean = 1; // gaussian parameter - for weights
-    float weightStd = 1; // standard deviation for gaussian - for weights
+    float weightStdDev = 1; // standard deviation for gaussian - for weights
     int feedforwardProbability = 100; // percentage likelihood of feedforward connections
     int feedbackProbability = 100; // percentage likelihood of feedback connections
     int selfExcitationProbability = 100; // percentage likelihood of self-excitation
@@ -49,7 +51,7 @@ int main(int argc, char** argv) {
     network.add2dLayer<hummus::InputNeuron>(28, 28, 1, {});
 
     // reservoir layer
-    network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStd, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, false, resetCurrent, refractoryPeriod, wta);
+    network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStdDev, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, false, resetCurrent, decayPotential, refractoryPeriod, wta);
 
     // initialising the potentialLoggers
     potentialLog.neuronSelection(network.getLayers()[1]);

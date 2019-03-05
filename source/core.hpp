@@ -624,7 +624,7 @@ namespace hummus {
         
         // add a one-dimensional reservoir of randomly interconnected neurons without any learning rule (feedforward, feedback and self-excitation) with randomised weights and no delays.
         template <typename T, typename... Args>
-        void addReservoir(int _numberOfNeurons, float _weightMean=1, float _weightstdev=0, int feedforwardProbability=100, int feedbackProbability=0, int selfExcitationProbability=0, Args&&... args) {
+        void addReservoir(int _numberOfNeurons, float _weightMean, float _weightstdev, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
             
             if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
