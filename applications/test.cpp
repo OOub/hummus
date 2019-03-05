@@ -60,9 +60,6 @@ int main(int argc, char** argv) {
     //  ----- RUNNING THE NETWORK -----
     network.run(100, 0);
     
-    network.save("saveState");
-    network.import("saveState.JSON");
-    
     //  ----- EXITING APPLICATION -----
     return 0;
 }
