@@ -27,6 +27,7 @@
 #include <mutex>
 #include <deque>
 
+#include "rand.hpp"
 #include "dataParser.hpp"
 #include "addOn.hpp"
 #include "mainThreadAddOn.hpp"

@@ -13,6 +13,7 @@
 
 #include <random>
 #include <cmath>
+
 namespace hummus {
 	
 	class Rand {

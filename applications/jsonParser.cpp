@@ -13,13 +13,23 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/dataParser.hpp"
-#include "../source/dependencies/json.hpp"
+#include "../source/rand.hpp"
 #include "../source/GUI/qtDisplay.hpp"
+
+#include "../source/neurons/inputNeuron.hpp"
+#include "../source/neurons/decisionMakingNeuron.hpp"
+#include "../source/neurons/LIF.hpp"
+#include "../source/neurons/IF.hpp"
+
 #include "../source/addOns/spikeLogger.hpp"
-#include "../source/learningRules/stdp.hpp"
+#include "../source/addOns/potentialLogger.hpp"
+#include "../source/addOns/classificationLogger.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"
+#include "../source/addOns/analysis.hpp"
+
 #include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/learningRules/rewardModulatedSTDP.hpp"
+#include "../source/learningRules/stdp.hpp"
 
 using json = nlohmann::json;
 

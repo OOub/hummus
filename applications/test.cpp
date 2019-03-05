@@ -30,7 +30,6 @@
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
-
 int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----

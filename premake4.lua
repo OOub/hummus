@@ -128,6 +128,7 @@ solution 'hummus'
 	            buildoptions {'-std=c++11', '-stdlib=libc++'}
 	            linkoptions {'-std=c++11','-stdlib=libc++'}
 
+
 	        -- Configuration for both
 	        configuration {}
 	            includedirs {'/usr/local/include'}

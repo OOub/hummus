@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
+#include "../source/rand.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/learningRules/stdp.hpp"
 #include "../source/learningRules/timeInvariantSTDP.hpp"
@@ -47,11 +48,11 @@ int main(int argc, char** argv) {
     hummus::STDP stdp;
 	
 	//  ----- CREATING THE NETWORK -----
-    network.addLayer<hummus::InputNeuron>(inputNeurons, 1, {});
-    network.addLayer<hummus::LIF>(layer1Neurons, 1, {&stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
+    network.addLayer<hummus::InputNeuron>(inputNeurons, {});
+    network.addLayer<hummus::LIF>(layer1Neurons, {&stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], weight, 0, 1, 0);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(weight, 0, 1, 0));
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);

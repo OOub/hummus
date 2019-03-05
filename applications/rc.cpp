@@ -4,20 +4,19 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 26/02/2019
+ * Last Version: 05/03/2019
  *
- * Information: Reservoir computer (without the readout function)
+ * Information: Reservoir network for N-MNIST without a readout function
  */
 
 #include <iostream>
 
 #include "../source/core.hpp"
+#include "../source/rand.hpp"
 #include "../source/dataParser.hpp
-
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/IF.hpp"
-
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
 
@@ -25,17 +24,14 @@ int main(int argc, char** argv) {
     
     // ----- RESERVOIR PARAMETERS -----
     int numberOfNeurons = 10;
-    float weightMean = 1;
-    float weightStd = 1;
-    int feedforwardProbability = 100;
-    int feedbackProbability = 100;
-    int selfExcitationProbability = 100;
-    
-    // ----- IF PARAMETERS -----
-    bool homeostasis = true; // changes threshold according to neuorn firing rate
-    bool timeDependentCurrent = true;
-    float resetCurrent = 10;
-    int refractoryPeriod = 3;
+    float weightMean = 1; // gaussian parameter - for weights
+    float weightStd = 1; // standard deviation for gaussian - for weights
+    int feedforwardProbability = 100; // percentage likelihood of feedforward connections
+    int feedbackProbability = 100; // percentage likelihood of feedback connections
+    int selfExcitationProbability = 100; // percentage likelihood of self-excitation
+    float resetCurrent = 10; // current step function reset value (integration time)
+    float decayPotential = 20; // time constant for membrane potential (decay)
+    int refractoryPeriod = 3; // neuron inactive for specified time after each spike
     bool wta = false; // winner-takes-all algorithm
     
     // ----- IMPORTING DATA -----
@@ -43,23 +39,23 @@ int main(int argc, char** argv) {
     auto data = parser.readData("path to file");
     
     //  ----- INITIALISING THE NETWORK -----
-    hummus::QtDisplay qtDisplay;
     hummus::SpikeLogger spikeLog("rcSpike.bin");
-    hummus::PotentialLogger reservoirPLog("rervoirPotential.bin");
-    hummus::Network network({&spikeLog, &reservoirPLog});
+    hummus::PotentialLogger potentialLog("rervoirPotential.bin");
+    hummus::Network network({&spikeLog, &potentialLog});
 
     //  ----- CREATING THE NETWORK -----
     
-    // creating layers of neurons
-//    network.add2DLayer<adonis::InputNeuron>(1, 1, 1, {});
+    // pixel grid layer
+    network.add2dLayer<adonis::InputNeuron>(28, 28, 1, {});
     
-    network.addReservoir<adonis::IF>(numberOfNeurons, weightMean, weightStd, feedforwardProbability, feedbackProbability, selfExcitationProbability, timeDependentCurrent, homeostasis, resetCurrent, refractoryPeriod, wta);
+    // reservoir layer
+    network.addReservoir<adonis::LIF>(numberOfNeurons, weightMean, weightStd, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, false, resetCurrent, refractoryPeriod, wta);
     
     // initialising the potentialLoggers
-    reservoirPLog.neuronSelection(network.getLayers()[1]);
+    potentialLog.neuronSelection(network.getLayers()[1]);
 	
-    //  ----- RUNNING THE NETWORK -----
-    network.run(&data, 0.1);
+    //  ----- RUNNING THE NETWORK ASYNCHRONOUSLY-----
+    network.run(&data, 0);
     
     //  ----- EXITING APPLICATION -----
     return 0;

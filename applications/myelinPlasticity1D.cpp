@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
+#include "../source/rand.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/addOns/spikeLogger.hpp"
@@ -49,11 +50,11 @@ int main(int argc, char** argv) {
 	hummus::MyelinPlasticity myelinPlasticity(1, 1, 1, 1);
 	
     //  ----- CREATING THE NETWORK -----
-    network.addLayer<hummus::InputNeuron>(inputNeurons, 1, {});
-    network.addLayer<hummus::LIF>(layer1Neurons, 1, {&myelinPlasticity}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
+    network.addLayer<hummus::InputNeuron>(inputNeurons, {});
+    network.addLayer<hummus::LIF>(layer1Neurons, {&myelinPlasticity}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-	network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.2, 0.1, 5, 3);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(0.2, 0.1, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);

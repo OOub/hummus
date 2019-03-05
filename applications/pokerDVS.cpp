@@ -12,17 +12,16 @@
 #include <iostream>
 
 #include "../source/core.hpp"
+#include "../source/rand.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 
 #include "../source/learningRules/timeInvariantSTDP.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
 
+#include "../source/neurons/LIF.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/decisionMakingNeuron.hpp"
-#include "../source/neurons/LIF.hpp"
 
 #include "../source/addOns/spikeLogger.hpp"
-#include "../source/addOns/myelinPlasticityLogger.hpp"
 
 int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
@@ -34,20 +33,17 @@ int main(int argc, char** argv) {
     bool timeVaryingCurrent = false;
     bool homeostasis = false;
     bool wta = true;
-    bool burst = false;
     
     //  ----- CREATING THE NETWORK -----
-    hummus::MyelinPlasticity mp(1, 1, 1, 1);
     hummus::TimeInvariantSTDP t_stdp(1, -8, 3, 0);
     
     network.add2dLayer<hummus::InputNeuron>(34, 34, 1, {});
-//    network.addLayer<hummus::LIF>(34*34, 1, 1, {&mp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta, burst, 20);
-//    network.addDecisionMakingLayer<hummus::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainingLabel.txt", true, {&t_stdp}, 2000, timeVaryingCurrent, homeostasis, 10, 80, 80);
+    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Rand(), 100, 1, {&t_stdp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
+    network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Rand(), 100, {}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
+    network.addDecisionMakingLayer<hummus::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainingLabel.txt");
     
     //  ----- CONNECTING THE NETWORK -----
-//    network.allToAll(network.getLayers()[0], network.getLayers()[1], 0.01, 0.005, 5, 3);
-//    network.allToAll(network.getLayers()[1], network.getLayers()[2], 0.1, 0.05, 5, 3);
-//    std::cout << "connection done" << std::endl;
+    network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Rand());
     
 	//  ----- READING DATA FROM FILE -----
     hummus::DataParser dataParser;
