@@ -956,6 +956,10 @@ namespace hummus {
         MainThreadAddOn* getMainThreadAddOn() {
             return thAddOn;
         }
+        
+        void setMainThreadAddOn(MainThreadAddOn* newThAddon) {
+            thAddOn = newThAddon;
+        }
 
         std::deque<spike>& getGeneratedSpikes() {
             return generatedSpikes;
