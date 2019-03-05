@@ -21,8 +21,8 @@
 #include "../source/addOns/potentialLogger.hpp"
 
 int main(int argc, char** argv) {
-    if (argc < 16) {
-        std::cout << "REQUIRED ARGUMENTS:\n" << "path to data file \n" << "name of output spike file\n" <<  "name of output potential file\n" << "pixel grid width (int) \n" << "pixel grid height (int)\n" << "number of neurons inside the reservoir (int) \n" << "gaussian mean for weights (float) \n" << "gaussian standard deviation for weights (float)\n" << "percentage likelihood of feedforward connections (int)\n" << "percentage likelihood of feedback connections (int) \n" << "percentage likelihood of self-excitation (int)\n" << "current step function reset value (int)\n" << "potential decay (int)\n" << "refractory period (int)\n" << "winner-takes-all (0 or 1 for true or false)\n" << "threshold adaptation to firing rate (0 or 1 for true or false)" << std::endl;
+    if (argc < 20) {
+        std::cout << "REQUIRED ARGUMENTS:\n" << "path to data file \n" << "name of output spike file\n" <<  "name of output potential file\n" << "pixel grid width (int) \n" << "pixel grid height (int)\n" << "number of neurons inside the reservoir (int) \n" << "gaussian mean for weights (float) \n" << "gaussian standard deviation for weights (float)\n" << "percentage likelihood of feedforward connections (int)\n" << "percentage likelihood of feedback connections (int) \n" << "percentage likelihood of self-excitation (int)\n" << "current step function reset value (int)\n" << "potential decay (int)\n" << "refractory period (int)\n" << "winner-takes-all (0 or 1 for true or false)\n" << "threshold adaptation to firing rate (0 or 1 for true or false)" << "timestep (for event-based, > 0 for clock-based)" << "time jitter (bool)"  << "percentage of additive noise" << std::endl;
         
         throw std::runtime_error("not enough arguments");
     }
@@ -44,10 +44,13 @@ int main(int argc, char** argv) {
     int refractoryPeriod = std::atoi(argv[14]); // neuron inactive for specified time after each spike
     bool wta = std::atoi(argv[15]); // winner-takes-all algorithm
     bool homeostasis = std::atoi(argv[16]); // threshold adaptation to firing rate
-
+    float timestep = std::atof(argv[17]); // 0 for event-based, > 0 for clock-based
+    bool timeJitter = std::atoi(argv[18]); // gaussian noise on timestamps of the data mean of 0 standard deviation of 1.0
+    int additiveNoise = std::atoi(argv[19]); // percentage of additive noise
+    
     // ----- IMPORTING DATA -----
     hummus::DataParser parser;
-    auto data = parser.readData(dataPath);
+    auto data = parser.readData(dataPath, timeJitter, additiveNoise);
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::SpikeLogger spikeLog(spikeLogName);
@@ -66,7 +69,7 @@ int main(int argc, char** argv) {
     potentialLog.neuronSelection(network.getLayers()[1]);
 
     //  ----- RUNNING THE NETWORK ASYNCHRONOUSLY-----
-    network.run(&data, 0);
+    network.run(&data, timestep);
 
     //  ----- EXITING APPLICATION -----
     return 0;
