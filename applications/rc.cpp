@@ -21,8 +21,8 @@
 #include "../source/addOns/potentialLogger.hpp"
 
 int main(int argc, char** argv) {
-    if (argc < 20) {
-        std::cout << "REQUIRED ARGUMENTS:\n" << "path to data file \n" << "name of output spike file\n" <<  "name of output potential file\n" << "pixel grid width (int) \n" << "pixel grid height (int)\n" << "number of neurons inside the reservoir (int) \n" << "gaussian mean for weights (float) \n" << "gaussian standard deviation for weights (float)\n" << "percentage likelihood of feedforward connections (int)\n" << "percentage likelihood of feedback connections (int) \n" << "percentage likelihood of self-excitation (int)\n" << "current step function reset value (int)\n" << "potential decay (int)\n" << "refractory period (int)\n" << "winner-takes-all (0 or 1 for true or false)\n" << "threshold adaptation to firing rate (0 or 1 for true or false)" << "timestep (for event-based, > 0 for clock-based)" << "time jitter (bool)"  << "percentage of additive noise" << std::endl;
+    if (argc < 21) {
+        std::cout << "REQUIRED ARGUMENTS:\n" << "path to data file \n" << "name of output spike file\n" <<  "name of output potential file\n" << "pixel grid width (int) \n" << "pixel grid height (int)\n" << "number of neurons inside the reservoir (int) \n" << "gaussian mean for weights (float) \n" << "gaussian standard deviation for weights (float)\n" << "percentage likelihood of feedforward connections (int)\n" << "percentage likelihood of feedback connections (int) \n" << "percentage likelihood of self-excitation (int)\n" << "current step function reset value (int)\n" << "potential decay (int)\n" << "refractory period (int)\n" << "winner-takes-all (0 or 1 for true or false)\n" << "threshold adaptation to firing rate (0 or 1 for true or false)" << "timestep (0 for event-based, > 0 for clock-based)" << "time jitter (bool)"  << "percentage of additive noise" << "use GUI (0 = false 1= true)" << std::endl;
         
         throw std::runtime_error("not enough arguments");
     }
@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
     float timestep = std::atof(argv[17]); // 0 for event-based, > 0 for clock-based
     bool timeJitter = std::atoi(argv[18]); // gaussian noise on timestamps of the data mean of 0 standard deviation of 1.0
     int additiveNoise = std::atoi(argv[19]); // percentage of additive noise
+    bool gui = std::atoi(argv[20]); // 0 to run without gui. 1 to run with gui
     
     // ----- IMPORTING DATA -----
     hummus::DataParser parser;
@@ -56,7 +57,14 @@ int main(int argc, char** argv) {
     hummus::SpikeLogger spikeLog(spikeLogName);
     hummus::PotentialLogger potentialLog(potentialLogName);
     hummus::Network network({&spikeLog, &potentialLog});
-
+    
+    if (gui) {
+        hummus::QtDisplay qtDisplay;
+        network.setMainThreadAddOn(&qtDisplay);
+        qtDisplay.useHardwareAcceleration(true);
+        qtDisplay.setTimeWindow(10000);
+    }
+    
     //  ----- CREATING THE NETWORK -----
 
     // pixel grid layer
