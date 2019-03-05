@@ -72,10 +72,12 @@ solution 'hummus'
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
-	        	includedirs {'/usr/local/include'}
-	            libdirs {'/usr/local/lib'}
+	        	-- includedirs {'/usr/local/include'}
+	         --    libdirs {'/usr/local/lib'}
 	            buildoptions {'-std=c++11'}
                 linkoptions {'-std=c++11'}
-	            -- buildoptions {'-std=c++11', '-stdlib=libc++'}
-	            -- linkoptions {'-std=c++11','-stdlib=libc++'}
+
+            -- Windows specific settings
+            configuration 'windows'
+            	files {'.clang-format'}
 end
