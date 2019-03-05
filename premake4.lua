@@ -65,19 +65,21 @@ solution 'hummus'
 	        -- Linux specific settings
 	        configuration 'linux'
 	        	links {'pthread'}
-	        	-- includedirs {'/usr/local/include'}
-	         --    libdirs {'/usr/local/lib'}
 	            buildoptions {'-std=c++11'}
 	            linkoptions {'-std=c++11'}
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
-	        	-- includedirs {'/usr/local/include'}
-	         --    libdirs {'/usr/local/lib'}
 	            buildoptions {'-std=c++11'}
                 linkoptions {'-std=c++11'}
+
+            configuration 'linux or macosx'
+            	includedirs {'/usr/local/include'}
+	        	libdirs {'/usr/local/lib'}
+  				defines { "POSIX" }
 
             -- Windows specific settings
             configuration 'windows'
             	files {'.clang-format'}
+            	defines { "WINDOWS" }
 end

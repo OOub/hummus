@@ -20,6 +20,16 @@
 #include <algorithm>
 #include <deque>
 
+#ifdef POSIX
+#include <sys/types.h>
+#include <dirent.h>
+#endif
+
+#ifdef WINDOWS
+#include <windows.h>
+#endif
+
+
 namespace hummus {
     
 	struct label {
@@ -175,7 +185,7 @@ namespace hummus {
 				}
 			}
 		}
-		
+        
 		template <typename Container>
 		static Container& split(Container& result, const typename Container::value_type& s, const typename Container::value_type& delimiters) {
 			result.clear();
