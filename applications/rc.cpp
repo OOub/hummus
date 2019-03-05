@@ -13,7 +13,7 @@
 
 #include "../source/core.hpp"
 #include "../source/rand.hpp"
-#include "../source/dataParser.hpp
+#include "../source/dataParser.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/IF.hpp"
@@ -21,7 +21,7 @@
 #include "../source/addOns/potentialLogger.hpp"
 
 int main(int argc, char** argv) {
-    
+
     // ----- RESERVOIR PARAMETERS -----
     int numberOfNeurons = 10;
     float weightMean = 1; // gaussian parameter - for weights
@@ -33,30 +33,30 @@ int main(int argc, char** argv) {
     float decayPotential = 20; // time constant for membrane potential (decay)
     int refractoryPeriod = 3; // neuron inactive for specified time after each spike
     bool wta = false; // winner-takes-all algorithm
-    
+
     // ----- IMPORTING DATA -----
     hummus::DataParser parser;
     auto data = parser.readData("path to file");
-    
+
     //  ----- INITIALISING THE NETWORK -----
     hummus::SpikeLogger spikeLog("rcSpike.bin");
     hummus::PotentialLogger potentialLog("rervoirPotential.bin");
     hummus::Network network({&spikeLog, &potentialLog});
 
     //  ----- CREATING THE NETWORK -----
-    
+
     // pixel grid layer
-    network.add2dLayer<adonis::InputNeuron>(28, 28, 1, {});
-    
+    network.add2dLayer<hummus::InputNeuron>(28, 28, 1, {});
+
     // reservoir layer
-    network.addReservoir<adonis::LIF>(numberOfNeurons, weightMean, weightStd, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, false, resetCurrent, refractoryPeriod, wta);
-    
+    network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStd, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, false, resetCurrent, refractoryPeriod, wta);
+
     // initialising the potentialLoggers
     potentialLog.neuronSelection(network.getLayers()[1]);
-	
+
     //  ----- RUNNING THE NETWORK ASYNCHRONOUSLY-----
     network.run(&data, 0);
-    
+
     //  ----- EXITING APPLICATION -----
     return 0;
 }

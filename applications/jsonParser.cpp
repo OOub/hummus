@@ -31,6 +31,8 @@
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
+#include "../source/dependencies/json.hpp"
+
 using json = nlohmann::json;
 
 int main(int argc, char** argv) {
@@ -50,7 +52,7 @@ int main(int argc, char** argv) {
 //	{
 //		throw std::logic_error(filename.append(" could not be opened"));
 //	}
-//	
+//
 //	std::cout << "yes" << std::endl;
 //    //  ----- EXITING APPLICATION -----
     return 0;
