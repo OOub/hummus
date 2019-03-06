@@ -8,6 +8,8 @@
  *
  * Information: The stdp learning rule has to be on a postsynaptic layer because it automatically detects the presynaptic layer.
  * Adapted From: Galluppi, F., Lagorce, X., Stromatias, E., Pfeiffer, M., Plana, L. A., Furber, S. B., & Benosman, R. B. (2015). A framework for plasticity implementation on the SpiNNaker neural architecture. Frontiers in Neuroscience, 8. doi:10.3389/fnins.2014.00429
+ *
+ * LEARNING RULE TYPE 1 (in JSON SAVE FILE)
  */
 
 #pragma once
@@ -27,6 +29,7 @@ namespace hummus {
                 A_plus(_A_plus),
                 A_minus(_A_minus),
                 tau_plus(_tau_plus),
+                preLayer(-1),
                 tau_minus(_tau_minus) {}
 		
 		// ----- PUBLIC METHODS -----
@@ -34,6 +37,7 @@ namespace hummus {
 			for (auto& n: network->getNeurons()) {
 				for (auto& rule: n->getLearningRuleHandler()) {
 					if (rule == this) {
+                        n->addLearningInfo(std::pair<int, std::vector<float>>(1, {A_plus, A_minus, tau_plus, tau_minus}));
 						if (n->getLayerID() > 0) {
                             postLayer = n->getLayerID();
                             

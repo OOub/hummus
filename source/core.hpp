@@ -37,7 +37,7 @@
 namespace hummus {
     
 	class Neuron;
-	
+    
     // to be used as feature maps
 	struct sublayer {
 		std::vector<std::size_t>    neurons;
@@ -98,6 +98,7 @@ namespace hummus {
                 membraneResistance(_membraneResistance),
                 previousSpikeTime(0),
                 previousInputTime(0),
+                neuronType(0),
                 synapticEfficacy(1) {}
     	
 		virtual ~Neuron(){}
@@ -122,6 +123,9 @@ namespace hummus {
             potential = restingPotential;
             eligibilityTrace = 0;
         }
+        
+        // write neuron parameters in a JSON format
+        virtual void toJson(nlohmann::json& output) {}
         
         // adds a synapse that connects two Neurons together - used to propagate spikes
         void addSynapse(Neuron* postNeuron, float weight, float delay, int probability=100, bool redundantConnections=true) {
@@ -212,6 +216,10 @@ namespace hummus {
             return potential;
         }
         
+        float getRestingPotential() const {
+            return restingPotential;
+        }
+        
         float getThreshold() const {
             return threshold;
         }
@@ -260,6 +268,18 @@ namespace hummus {
             return synapticEfficacy = newEfficacy;
         }
         
+        int getType() const {
+            return neuronType;
+        }
+        
+        std::vector<std::pair<int, std::vector<float>>> getLearningInfo() const {
+            return learningInfo;
+        }
+        
+        void addLearningInfo(std::pair<int, std::vector<float>> ruleInfo) {
+            learningInfo.push_back(ruleInfo);
+        }
+        
     protected:
         
         // winner-take-all algorithm
@@ -269,24 +289,26 @@ namespace hummus {
         virtual void requestLearning(double timestamp, synapse* a, Network* network){}
         
 		// ----- NEURON PARAMETERS -----
-        int16_t                               neuronID;
-        int16_t                               layerID;
-        int16_t                               sublayerID;
-        std::pair<int16_t, int16_t>           rfCoordinates;
-        std::pair<int16_t, int16_t>           xyCoordinates;
-		std::vector<synapse*>                 preSynapses;
-        std::vector<std::unique_ptr<synapse>> postSynapses;
-        synapse                               initialSynapse;
-        float                                 threshold;
-        float                                 potential;
-        float                                 restingPotential;
-        std::vector<LearningRuleHandler*>     learningRuleHandler;
-        float                                 eligibilityTrace;
-        float                                 eligibilityDecay;
-        float                                 membraneResistance;
-        double                                previousSpikeTime;
-        double                                previousInputTime;
-        float                                 synapticEfficacy;
+        int16_t                                          neuronID;
+        int16_t                                          layerID;
+        int16_t                                          sublayerID;
+        std::pair<int16_t, int16_t>                      rfCoordinates;
+        std::pair<int16_t, int16_t>                      xyCoordinates;
+		std::vector<synapse*>                            preSynapses;
+        std::vector<std::unique_ptr<synapse>>            postSynapses;
+        synapse                                          initialSynapse;
+        float                                            threshold;
+        float                                            potential;
+        float                                            restingPotential;
+        std::vector<LearningRuleHandler*>                learningRuleHandler;
+        float                                            eligibilityTrace;
+        float                                            eligibilityDecay;
+        float                                            membraneResistance;
+        double                                           previousSpikeTime;
+        double                                           previousInputTime;
+        float                                            synapticEfficacy;
+        int                                              neuronType;
+        std::vector<std::pair<int, std::vector<float>>>  learningInfo; // used to save network into JSON format
     };
 	
     class Network {
@@ -314,13 +336,34 @@ namespace hummus {
         void save(std::string filename) {
             nlohmann::json output = nlohmann::json::array();
             
-            output.push_back({
-                {"value", 12},
-                {"hello", "world"}
-            });
+            // initialising a JSON list
+            output.push_back({{"layers", nlohmann::json::array()}, {"neurons", nlohmann::json::array()}});
+            auto& jsonNetwork = output.back();
+            
+            // saving the important information needed from the layers
+            for (auto l: layers) {
+                jsonNetwork["layers"].push_back({
+                    {"ID",l.ID},
+                    {"width", l.width},
+                    {"height",l.height},
+                    {"sublayerNumber",l.sublayers.size()},
+                    {"neuronNumber",l.neurons.size()},
+                    {"neuronType",neurons[l.neurons[0]]->getType()},
+                    {"learningRules", nlohmann::json::array()},
+                });
+                auto& learningRules = jsonNetwork["layers"].back()["learningRules"];
+                for (auto rule: neurons[l.neurons[0]]->getLearningInfo()) {
+                    learningRules.push_back({{"ID",rule.first},{"Parameters", rule.second}});
+                }
+            }
+            
+            // saving the important information needed from the neurons
+            for (auto& n: neurons) {
+                n->toJson(jsonNetwork["neurons"]);
+            }
             
             std::ofstream output_file(filename.append(".json"));
-            output_file << output.dump();
+            output_file << output.dump(4);
         }
         
 		// ----- NEURON CREATION METHODS -----

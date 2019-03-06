@@ -6,7 +6,9 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 14/01/2019
  *
- * Information: The MyelinPlasticity learning rule compatible only with leaky integrate-and-fire neurons
+ * Information: The MyelinPlasticity learning rule compatible only with leaky integrate-and-fire neurons.
+ *
+ * LEARNING RULE TYPE 0 (in JSON SAVE FILE)
  */
 
 #pragma once
@@ -36,7 +38,7 @@ namespace hummus {
                 for (auto& rule: n->getLearningRuleHandler()) {
                     if (rule == this) {
                         if (LIF* typeCheck = dynamic_cast<LIF*>(n.get())) {
-                            continue;
+                            n->addLearningInfo(std::pair<int, std::vector<float>>(0, {delay_alpha, delay_lambda, weight_alpha, weight_lambda}));
                         } else {
                             throw std::logic_error("The myelin plasticity learning rule is only compatible with Leaky Integrate-and-Fire (LIF) neurons");
                         }

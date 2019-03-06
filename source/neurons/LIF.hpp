@@ -6,12 +6,15 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 21/01/2019
  *
- * Information: leaky integrate and fire (LIF) neuron model with current dynamics
+ * Information: leaky integrate and fire (LIF) neuron model with current dynamics.
+ *
+ * NEURON TYPE 1 (in JSON SAVE FILE)
  */
 
 #pragma once
 
 #include "../core.hpp"
+#include "../dependencies/json.hpp"
 
 namespace hummus {
     
@@ -49,6 +52,9 @@ namespace hummus {
     	    if (decayPotential <= 0) {
                 throw std::logic_error("The potential decay cannot less than or equal to 0");
             }
+                    
+            // LIF neuron type == 1 (for JSON save)
+            neuronType = 1;
 		}
 		
 		virtual ~LIF(){}
@@ -325,6 +331,58 @@ namespace hummus {
             threshold = restingThreshold;
         }
         
+        // write neuron parameters in a JSON format
+        virtual void toJson(nlohmann::json& output) override{
+            // general neuron parameters
+            output.push_back({
+                {"ID",neuronID},
+                {"layerID",layerID},
+                {"sublayerID", sublayerID},
+                {"receptiveFieldCoordinates", rfCoordinates},
+                {"XYCoordinates", xyCoordinates},
+                {"eligibilityDecay", eligibilityDecay},
+                {"threshold", threshold},
+                {"restingPotential", restingPotential},
+                {"resistance", membraneResistance},
+                {"refractoryPeriod", refractoryPeriod},
+                {"resetCurrent", resetCurrent},
+                {"decayPotential", decayPotential},
+                {"externalCurrent", externalCurrent},
+                {"burstingActivity", burstingActivity},
+                {"homeostasis", homeostasis},
+                {"restingThreshold", restingThreshold},
+                {"decayWeight", decayWeight},
+                {"decayHomeostasis", decayHomeostasis},
+                {"homeostasisBeta", homeostasisBeta},
+                {"timeDependentCurrent", timeDependentCurrent},
+                {"wta", wta},
+                {"dendriticSynapses", nlohmann::json::array()},
+                {"axonalSynapses", nlohmann::json::array()},
+            });
+            
+            // dendritic synapses (preSynapse)
+            auto& dendriticSynapses = output.back()["dendriticSynapses"];
+            for (auto& preS: preSynapses) {
+                dendriticSynapses.push_back({
+                    {"preNeuronID",preS->preNeuron->getNeuronID()},
+                    {"postNeuronID", preS->postNeuron->getNeuronID()},
+                    {"weight", preS->weight},
+                    {"delay", preS->delay},
+                });
+            }
+            
+            // axonal synapses (postSynapse)
+            auto& axonalSynapses = output.back()["axonalSynapses"];
+            for (auto& postS: postSynapses) {
+                axonalSynapses.push_back({
+                    {"preNeuronID",postS->preNeuron->getNeuronID()},
+                    {"postNeuronID", postS->postNeuron->getNeuronID()},
+                    {"weight", postS->weight},
+                    {"delay", postS->delay},
+                });
+            }
+        }
+        
 		// ----- SETTERS AND GETTERS -----
 		bool getActivity() const {
 			return active;
@@ -360,7 +418,7 @@ namespace hummus {
 		}
 		
 	protected:
-		
+        
         // winner-take-all algorithm
 		virtual void WTA(double timestamp, Network* network) override {
             for (auto& sub: network->getLayers()[layerID].sublayers) {

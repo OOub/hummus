@@ -8,6 +8,8 @@
  *
  * Information: The rewardModulatedSTDP learning rule has to be on a postsynaptic layer because it automatically detects the presynaptic layer.
  * Adapted From: Mozafari, M., Ganjtabesh, M., Nowzari-Dalini, A., Thorpe, S. J., Masquelier T. (2018). Combining STDP and Reward-Modulated STDP in Deep Convolutional Spiking Neural Networks for Digit Recognition. arXiv:1804.00227
+ *
+ * LEARNING RULE TYPE 3 (in JSON SAVE FILE)
  */
 
 #pragma once
@@ -49,6 +51,7 @@ namespace hummus {
                 for (auto& rule: network->getNeurons()[l.neurons[0]]->getLearningRuleHandler())
                 {
                     if (rule == this) {
+                        network->getNeurons()[l.neurons[0]]->addLearningInfo(std::pair<int, std::vector<float>>(3, {Ar_plus, Ar_minus, Ap_plus, Ap_minus}));
                         int16_t presynapticLayer = -1;
                         // making sure we don't add learning on a parallel layer
                         for (auto& preSynapse: network->getNeurons()[l.neurons[0]]->getPreSynapses()) {
