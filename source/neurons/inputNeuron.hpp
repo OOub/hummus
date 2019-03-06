@@ -6,12 +6,15 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 24/01/2019
  *
- * Information: input neurons take in spikes or events and instantly propagate them in the network. The potential does not decay
+ * Information: input neurons take in spikes or events and instantly propagate them in the network. The potential does not decay.
+ *
+ * NEURON TYPE 0 (in JSON SAVE FILE)
  */
 
 #pragma once
 
 #include "../core.hpp"
+#include "../dependencies/json.hpp"
 
 namespace hummus {
 	class InputNeuron : public Neuron {
@@ -135,6 +138,47 @@ namespace hummus {
                         network->getMainThreadAddOn()->timestep(timestamp, network, this);
                     }
                 }
+            }
+        }
+        
+        // write neuron parameters in a JSON format
+        virtual void toJson(nlohmann::json& output) override{
+            // general neuron parameters
+            output.push_back({
+                {"ID",neuronID},
+                {"layerID",layerID},
+                {"sublayerID", sublayerID},
+                {"receptiveFieldCoordinates", rfCoordinates},
+                {"XYCoordinates", xyCoordinates},
+                {"eligibilityDecay", eligibilityDecay},
+                {"threshold", threshold},
+                {"restingPotential", restingPotential},
+                {"resistance", membraneResistance},
+                {"refractoryPeriod", refractoryPeriod},
+                {"dendriticSynapses", nlohmann::json::array()},
+                {"axonalSynapses", nlohmann::json::array()},
+            });
+            
+            // dendritic synapses (preSynapse)
+            auto& dendriticSynapses = output.back()["dendriticSynapses"];
+            for (auto& preS: preSynapses) {
+                dendriticSynapses.push_back({
+                    {"preNeuronID",preS->preNeuron->getNeuronID()},
+                    {"postNeuronID", preS->postNeuron->getNeuronID()},
+                    {"weight", preS->weight},
+                    {"delay", preS->delay},
+                });
+            }
+            
+            // axonal synapses (postSynapse)
+            auto& axonalSynapses = output.back()["axonalSynapses"];
+            for (auto& postS: postSynapses) {
+                axonalSynapses.push_back({
+                    {"preNeuronID",postS->preNeuron->getNeuronID()},
+                    {"postNeuronID", postS->postNeuron->getNeuronID()},
+                    {"weight", postS->weight},
+                    {"delay", postS->delay},
+                });
             }
         }
         

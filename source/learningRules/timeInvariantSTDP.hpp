@@ -8,6 +8,8 @@
  *
  * Information: The timeInvariantSTDP learning rule works locally on a layer and does not depend on precise timing (the sign of the postsynaptic neuron time - postsynaptic neuron time only matters)
  * Adapted From: Thiele, J. C., Bichler, O., & Dupret, A. (2018). Event-Based, Timescale Invariant Unsupervised Online Deep Learning With STDP. Frontiers in Computational Neuroscience, 12. doi:10.3389/fncom.2018.00046
+ *
+ * LEARNING RULE TYPE 2 (in JSON SAVE FILE)
  */
 
 #pragma once
@@ -35,6 +37,7 @@ namespace hummus {
             for (auto& n: network->getNeurons()) {
                 for (auto& rule: n->getLearningRuleHandler()) {
                     if(rule == this) {
+                        n->addLearningInfo(std::pair<int, std::vector<float>>(2, {alpha_plus, alpha_minus, beta_plus, beta_minus}));
                         if (n->getLayerID() == 0) {
                             throw std::logic_error("the STDP learning rule has to be on a postsynaptic layer");
                         }

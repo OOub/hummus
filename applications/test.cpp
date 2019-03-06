@@ -35,13 +35,14 @@ int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     hummus::QtDisplay qtDisplay;
     hummus::SpikeLogger spikeLog("testSpikeLog.bin");
-    hummus::Network network({&spikeLog}, &qtDisplay);
+    hummus::Network network({&spikeLog});
 
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
+    hummus::STDP stdp;
     network.addLayer<hummus::InputNeuron>(1, {});
-    network.addLayer<hummus::LIF>(2, {}, false, false, 5, 20, 0, false);
+    network.addLayer<hummus::LIF>(2, {&stdp}, false, false, 5, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1./2));
@@ -59,6 +60,8 @@ int main(int argc, char** argv) {
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(100, 0);
+    
+    network.save("testSave");
     
     //  ----- EXITING APPLICATION -----
     return 0;

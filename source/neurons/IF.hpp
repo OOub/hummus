@@ -6,12 +6,15 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 19/02/2019
  *
- * Information: integrate-and-fire neuron without any leakage
+ * Information: integrate-and-fire neuron without any leakage.
+ *
+ * NEURON TYPE 2 (in JSON SAVE FILE)
  */
 
 #pragma once
 
 #include "../core.hpp"
+#include "../dependencies/json.hpp"
 #include "LIF.hpp"
 
 namespace hummus {
@@ -20,7 +23,11 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		IF(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
-            LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _resetCurrent, 1, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent){}
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _resetCurrent, 1, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent){
+                // IF neuron type = 2 for JSON save
+                neuronType = 2;
+            }
+        
 		
 		virtual ~IF(){}
 		
@@ -267,6 +274,58 @@ namespace hummus {
                     current = 0;
                 }
                 active = false;
+            }
+        }
+        
+        // write neuron parameters in a JSON format
+        virtual void toJson(nlohmann::json& output) override {
+            // general neuron parameters
+            output.push_back({
+                {"ID",neuronID},
+                {"layerID",layerID},
+                {"sublayerID", sublayerID},
+                {"receptiveFieldCoordinates", rfCoordinates},
+                {"XYCoordinates", xyCoordinates},
+                {"eligibilityDecay", eligibilityDecay},
+                {"threshold", threshold},
+                {"restingPotential", restingPotential},
+                {"resistance", membraneResistance},
+                {"refractoryPeriod", refractoryPeriod},
+                {"resetCurrent", resetCurrent},
+                {"decayPotential", decayPotential},
+                {"externalCurrent", externalCurrent},
+                {"burstingActivity", burstingActivity},
+                {"homeostasis", homeostasis},
+                {"restingThreshold", restingThreshold},
+                {"decayWeight", decayWeight},
+                {"decayHomeostasis", decayHomeostasis},
+                {"homeostasisBeta", homeostasisBeta},
+                {"timeDependentCurrent", timeDependentCurrent},
+                {"wta", wta},
+                {"dendriticSynapses", nlohmann::json::array()},
+                {"axonalSynapses", nlohmann::json::array()},
+            });
+            
+            // dendritic synapses (preSynapse)
+            auto& dendriticSynapses = output.back()["dendriticSynapses"];
+            for (auto& preS: preSynapses) {
+                dendriticSynapses.push_back({
+                    {"preNeuronID",preS->preNeuron->getNeuronID()},
+                    {"postNeuronID", preS->postNeuron->getNeuronID()},
+                    {"weight", preS->weight},
+                    {"delay", preS->delay},
+                });
+            }
+            
+            // axonal synapses (postSynapse)
+            auto& axonalSynapses = output.back()["axonalSynapses"];
+            for (auto& postS: postSynapses) {
+                axonalSynapses.push_back({
+                    {"preNeuronID",postS->preNeuron->getNeuronID()},
+                    {"postNeuronID", postS->postNeuron->getNeuronID()},
+                    {"weight", postS->weight},
+                    {"delay", postS->delay},
+                });
             }
         }
 	};
