@@ -15,7 +15,7 @@ import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtQuick.Controls 1.4 as OldCtrl
 import QtQuick.Layouts 1.11
-import QtQuick.Window 2.11
+import QtQuick.Window 2.4
 import QtCharts 2.2
 
 import InputViewer 1.0
