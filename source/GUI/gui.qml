@@ -11,12 +11,12 @@ R""(
  * Information: QML file that defines the GUI.
  */
 
-import QtQuick 2.11
-import QtQuick.Controls 2.4
+import QtQuick 2.1
+import QtQuick.Controls 2.1
 import QtQuick.Controls 1.4 as OldCtrl
-import QtQuick.Layouts 1.11
-import QtQuick.Window 2.4
-import QtCharts 2.2
+import QtQuick.Layouts 1.1
+import QtQuick.Window 2.1
+import QtCharts 2.1
 
 import InputViewer 1.0
 import OutputViewer 1.0
@@ -24,7 +24,7 @@ import PotentialViewer 1.0
 
 ApplicationWindow {
 	id: mainWindow
-	title: qsTr("Adonis")
+	title: qsTr("Hummus")
 	height: 900
 	width: 900
 	minimumHeight: 650
