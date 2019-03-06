@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
         network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(inputWeightMean, inputWeightStdDev, 0, 0));
 
         // initialising the potentialLoggers
+        network.turnOffLearning(0);
         potentialLog.neuronSelection(network.getLayers()[1]);
 
         //  ----- RUNNING THE NETWORK ASYNCHRONOUSLY-----
