@@ -14,3 +14,5 @@ data/1D_patterns/
 utilities/python/potentialLog\.bin
 
 utilities/python/spikeLog\.bin
+
+utilities/python/rcNetwork\.json
