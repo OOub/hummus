@@ -16,6 +16,7 @@
 #include <string>
 #include <array>
 #include <stdexcept>
+#include <algorithm>
 
 #include "../core.hpp"
 #include "spikeLogger.hpp"
@@ -36,20 +37,36 @@ namespace hummus {
         }
         
 		// ----- PUBLIC LOGGER METHODS -----
+        // select one neuron to track by its index
         void neuronSelection(int _neuronID) {
             // error handling
             if (_neuronID < 0) {
-                throw std::logic_error("the neuron ID cannot be less than 0");
+                throw std::logic_error("the neuron IDs cannot be less than 0");
+            } else {
+                neuronIDs.push_back(static_cast<size_t>(_neuronID));
             }
             
             initialisationTest = true;
-            neuronID = _neuronID;
         }
         
-        void neuronSelection(layer _layerToLog) {
+        // select multiple neurons to track by passing a vector of indices
+        void neuronSelection(std::vector<int> _neuronIDs) {
+            // error handling
+            for (auto nID: _neuronIDs) {
+                if (nID < 0) {
+                    throw std::logic_error("the neuron IDs cannot be less than 0");
+                } else {
+                    neuronIDs.push_back(static_cast<size_t>(nID));
+                }
+            }
+            
             initialisationTest = true;
-            neuronID = -2;
-            layerID = _layerToLog.ID;
+        }
+        
+        // select a whole layer to track
+        void neuronSelection(layer _layer) {
+            initialisationTest = true;
+            neuronIDs = _layer.neurons;
         }
         
         void incomingSpike(double timestamp, synapse* a, Network* network) override {
@@ -57,22 +74,12 @@ namespace hummus {
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {
                     // restrict only to the output layer
-                    if (neuronID == -2) {
-                        if (a->postNeuron->getLayerID() == layerID) {
-                            std::array<char, 14> bytes;
-                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
-                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
-                            saveFile.write(bytes.data(), bytes.size());
-                        }
-                    } else {
-                        if (a->postNeuron->getNeuronID() == neuronID) {
-                            std::array<char, 14> bytes;
-                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
-                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
-                            saveFile.write(bytes.data(), bytes.size());
-                        }
+                    if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(a->postNeuron->getNeuronID())) != neuronIDs.end()) {
+                        std::array<char, 14> bytes;
+                        SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                        SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
+                        SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
+                        saveFile.write(bytes.data(), bytes.size());
                     }
                 }
             } else {
@@ -85,22 +92,12 @@ namespace hummus {
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {
                     // restrict only to the output layer
-                    if (neuronID == -2) {
-                        if (a->postNeuron->getLayerID() == layerID) {
-                            std::array<char, 14> bytes;
-                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
-                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
-                            saveFile.write(bytes.data(), bytes.size());
-                        }
-                    } else {
-                        if (a->postNeuron->getNeuronID() == neuronID) {
-                            std::array<char, 14> bytes;
-                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                            SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
-                            SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
-                            saveFile.write(bytes.data(), bytes.size());
-                        }
+                    if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(a->postNeuron->getNeuronID())) != neuronIDs.end()) {
+                        std::array<char, 14> bytes;
+                        SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                        SpikeLogger::copy_to(bytes.data() + 8, a->postNeuron->getPotential());
+                        SpikeLogger::copy_to(bytes.data() + 12, a->postNeuron->getNeuronID());
+                        saveFile.write(bytes.data(), bytes.size());
                     }
                 }
             } else {
@@ -113,22 +110,12 @@ namespace hummus {
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {
                     // restrict only to the output layer
-                    if (neuronID == -2) {
-                        if (postNeuron->getLayerID() == layerID) {
-                            std::array<char, 14> bytes;
-                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                            SpikeLogger::copy_to(bytes.data() + 8, postNeuron->getPotential());
-                            SpikeLogger::copy_to(bytes.data() + 12, postNeuron->getNeuronID());
-                            saveFile.write(bytes.data(), bytes.size());
-                        }
-                    } else {
-                        if (postNeuron->getNeuronID() == neuronID) {
-                            std::array<char, 14> bytes;
-                            SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-                            SpikeLogger::copy_to(bytes.data() + 8, postNeuron->getPotential());
-                            SpikeLogger::copy_to(bytes.data() + 12, postNeuron->getNeuronID());
-                            saveFile.write(bytes.data(), bytes.size());
-                        }
+                    if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(postNeuron->getNeuronID())) != neuronIDs.end()) {
+                        std::array<char, 14> bytes;
+                        SpikeLogger::copy_to(bytes.data() + 0, timestamp);
+                        SpikeLogger::copy_to(bytes.data() + 8, postNeuron->getPotential());
+                        SpikeLogger::copy_to(bytes.data() + 12, postNeuron->getNeuronID());
+                        saveFile.write(bytes.data(), bytes.size());
                     }
                 }
             } else {
@@ -139,8 +126,7 @@ namespace hummus {
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream        saveFile;
-        int                  layerID;
-        int                  neuronID;
+        std::vector<size_t>  neuronIDs;
         bool                 initialisationTest;
 	};
 }

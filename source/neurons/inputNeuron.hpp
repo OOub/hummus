@@ -21,8 +21,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleHandler, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
+		InputNeuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleIndices, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 active(true),
                 refractoryPeriod(_refractoryPeriod) {}
 		
@@ -30,13 +30,14 @@ namespace hummus {
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
 		void initialisation(Network* network) override {
-			for (auto& rule: learningRuleHandler) {
-				if(AddOn* globalRule = dynamic_cast<AddOn*>(rule)) {
-					if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end()) {
-						network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
-					}
-				}
-			}
+            // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
+            for (auto& idx: learningRuleIndices) {
+                if (AddOn *globalRule = dynamic_cast<AddOn*>(&network->getLearningRule(idx))) {
+                    if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(&network->getLearningRule(idx))) == network->getAddOns().end()) {
+                        network->getAddOns().emplace_back(dynamic_cast<AddOn*>(&network->getLearningRule(idx)));
+                    }
+                }
+            }
 		}
 		
 		void update(double timestamp, synapse* a, Network* network, spikeType type) override {
@@ -185,11 +186,11 @@ namespace hummus {
     protected:
         
         // loops through any learning rules and activates them
-        void requestLearning(double timestamp, synapse* a ,Network* network) override {
+        virtual void requestLearning(double timestamp, synapse* a, Network* network) override {
             if (network->getLearningStatus()) {
-                if (!learningRuleHandler.empty()) {
-                    for (auto& learningRule: learningRuleHandler) {
-                        learningRule->learn(timestamp, a, network);
+                if (!learningRuleIndices.empty()) {
+                    for (auto& idx: learningRuleIndices) {
+                        network->getLearningRule(idx).learn(timestamp, a, network);
                     }
                 }
             }

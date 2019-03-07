@@ -21,8 +21,8 @@ namespace hummus {
 	class DecisionMakingNeuron : public LIF {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		DecisionMakingNeuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRuleHandler={}, bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=1000, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100, std::string _classLabel="") :
-                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _resetCurrent, _decayPotential, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent),
+		DecisionMakingNeuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=1000, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100, std::string _classLabel="") :
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleIndices, _timeDependentCurrent, _homeostasis, _resetCurrent, _decayPotential, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent),
                     classLabel(_classLabel) {
                 // DecisionMaking neuron type = 2 for JSON save
                 neuronType = 3;
@@ -38,10 +38,10 @@ namespace hummus {
             }
             
             // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
-            for (auto& rule: learningRuleHandler) {
-                if(AddOn* globalRule = dynamic_cast<AddOn*>(rule)) {
-                    if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end()) {
-                        network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
+            for (auto& idx: learningRuleIndices) {
+                if (AddOn *globalRule = dynamic_cast<AddOn*>(&network->getLearningRule(idx))) {
+                    if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(&network->getLearningRule(idx))) == network->getAddOns().end()) {
+                        network->getAddOns().emplace_back(dynamic_cast<AddOn*>(&network->getLearningRule(idx)));
                     }
                 }
             }
@@ -392,11 +392,11 @@ namespace hummus {
     protected:
         
         // loops through any learning rules and activates them
-        void requestLearning(double timestamp, synapse* a, Network* network) override {
+        virtual void requestLearning(double timestamp, synapse* a, Network* network) override {
             if (network->getLearningStatus()) {
-                if (!learningRuleHandler.empty()) {
-                    for (auto& learningRule: learningRuleHandler) {
-                        learningRule->learn(timestamp, a, network);
+                if (!learningRuleIndices.empty()) {
+                    for (auto& idx: learningRuleIndices) {
+                        network->getLearningRule(idx).learn(timestamp, a, network);
                     }
                 }
             }

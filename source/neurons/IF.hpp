@@ -22,8 +22,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		IF(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRuleHandler={},  bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
-                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleHandler, _timeDependentCurrent, _homeostasis, _resetCurrent, 1, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent){
+		IF(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<size_t> _learningRuleIndices={},  bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleIndices, _timeDependentCurrent, _homeostasis, _resetCurrent, 1, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent){
                 // IF neuron type = 2 for JSON save
                 neuronType = 2;
             }
@@ -33,13 +33,14 @@ namespace hummus {
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
 		void initialisation(Network* network) override {
-			for (auto& rule: learningRuleHandler) {
-				if(AddOn* globalRule = dynamic_cast<AddOn*>(rule)) {
-					if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end()) {
-						network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
-					}
-				}
-			}
+            // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
+            for (auto& idx: learningRuleIndices) {
+                if (AddOn *globalRule = dynamic_cast<AddOn*>(&network->getLearningRule(idx))) {
+                    if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(&network->getLearningRule(idx))) == network->getAddOns().end()) {
+                        network->getAddOns().emplace_back(dynamic_cast<AddOn*>(&network->getLearningRule(idx)));
+                    }
+                }
+            }
 		}
 		
         virtual void update(double timestamp, synapse* a, Network* network, spikeType type) override {
