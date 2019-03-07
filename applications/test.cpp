@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     hummus::QtDisplay qtDisplay;
     hummus::SpikeLogger spikeLog("testSpikeLog.bin");
-    hummus::Network network({&spikeLog});
+    hummus::Network network({&spikeLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
     
@@ -60,8 +60,6 @@ int main(int argc, char** argv) {
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(100, 0);
-    
-    network.save("testSave");
     
     //  ----- EXITING APPLICATION -----
     return 0;
