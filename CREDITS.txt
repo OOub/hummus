@@ -1,5 +1,7 @@
 Special thanks to the following people for their contribution to the development of Hummus:
 
-Alexandre Marcireau 
-Laurent Dardelet
-Gregor Lenz
+Alexandre Marcireau - Guidance and advice on the overall architecture
+
+Laurent Dardelet - Help with some of the equations behind the event-based LIF neuron
+
+Gregor Lenz - Setting up the git repository and contributions to the readMe
