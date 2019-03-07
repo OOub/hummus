@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 	
-	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt");
+	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt", false, 0);
 	
     //  ----- INITIALISING THE NETWORK -----
 	hummus::QtDisplay qtDisplay;
@@ -36,25 +36,25 @@ int main(int argc, char** argv) {
     
     //  ----- NETWORK PARAMETERS -----
 	float resetCurrent = 10;
-	float potentialDecay = 20;
+	float potentialDecay = 30;
     int inputNeurons = 10;
     int layer1Neurons = 4;
 	
-	float eligibilityDecay = 20;
+	float eligibilityDecay = 30;
 	
 	bool wta = true;
 	bool burst = false;
-	bool homeostasis = false;
+	bool homeostasis = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	hummus::MyelinPlasticity myelinPlasticity(1, 1, 1, 1);
-	
+	auto mp = network.makeLearningRule<hummus::MyelinPlasticity>(1, 1, 1, 1);
+    
     //  ----- CREATING THE NETWORK -----
     network.addLayer<hummus::InputNeuron>(inputNeurons, {});
-    network.addLayer<hummus::LIF>(layer1Neurons, {&myelinPlasticity}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
+    network.addLayer<hummus::LIF>(layer1Neurons, {mp}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(0.2, 0.1, 5, 3));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(0.2, 0.05, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);

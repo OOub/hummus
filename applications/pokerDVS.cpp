@@ -35,10 +35,10 @@ int main(int argc, char** argv) {
     bool wta = true;
     
     //  ----- CREATING THE NETWORK -----
-    hummus::TimeInvariantSTDP t_stdp(1, -8, 3, 0);
+    auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>();
     
     network.add2dLayer<hummus::InputNeuron>(34, 34, 1, {});
-    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Rand(), 100, 1, {&t_stdp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
+    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Rand(), 100, 1, {ti_stdp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Rand(), 100, {}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
     network.addDecisionMakingLayer<hummus::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainingLabel.txt");
     
