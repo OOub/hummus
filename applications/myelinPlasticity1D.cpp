@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 	
-	auto trainingData = dataParser.readData("../../data/1D_patterns/oneD_10neurons_4patterns_.txt", false, 0);
+	auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", false, 0);
 	
     //  ----- INITIALISING THE NETWORK -----
 	hummus::QtDisplay qtDisplay;

@@ -40,15 +40,15 @@ int main(int argc, char** argv) {
     network.add2dLayer<hummus::InputNeuron>(34, 34, 1, {});
     network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Rand(), 100, 1, {ti_stdp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Rand(), 100, {}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
-    network.addDecisionMakingLayer<hummus::DecisionMakingNeuron>("../../data/pokerDVS/DHtrainingLabel.txt");
+    network.addDecisionMakingLayer<hummus::DecisionMakingNeuron>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtrainingLabel.txt");
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Rand());
     
 	//  ----- READING DATA FROM FILE -----
     hummus::DataParser dataParser;
-    auto trainingData = dataParser.readData("../../data/pokerDVS/DHtraining.txt");
-    auto testData = dataParser.readData("../../data/pokerDVS/DHtest.txt");
+    auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtraining.txt");
+    auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtest.txt");
 
 	//  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
