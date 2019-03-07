@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     network.run(100, 0.1);
     
     network.save("testSave");
-    
+	
     //  ----- EXITING APPLICATION -----
     return 0;
 }

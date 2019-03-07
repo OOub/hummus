@@ -27,6 +27,10 @@
 #include <mutex>
 #include <deque>
 
+#ifdef TBB
+#include "tbb/tbb.h"
+#endif
+
 #include "rand.hpp"
 #include "dataParser.hpp"
 #include "addOn.hpp"
@@ -1177,7 +1181,7 @@ namespace hummus {
                             }
                         }
                     }
-                    
+					
                     std::vector<spike> currentSpikes;
                     if (generatedSpikes.empty() && !initialSpikes.empty()) {
                         while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
@@ -1202,7 +1206,7 @@ namespace hummus {
                             initialSpikes.pop_front();
                         }
                     }
-                    
+					
                     for (auto& n: neurons) {
                         std::vector<spike> local_currentSpikes(currentSpikes.size());
                         const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
