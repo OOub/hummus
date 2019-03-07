@@ -336,6 +336,7 @@ namespace hummus {
             // general neuron parameters
             output.push_back({
                 {"ID",neuronID},
+                {"Type",neuronType},
                 {"layerID",layerID},
                 {"sublayerID", sublayerID},
                 {"receptiveFieldCoordinates", rfCoordinates},
@@ -392,10 +393,18 @@ namespace hummus {
             return decayPotential;
         }
 		
+        void setDecayPotential(float newDecayPotential) {
+            decayPotential = newDecayPotential;
+        }
+        
         float getResetCurrent() const {
             return resetCurrent;
         }
 		
+        void setResetCurrent(float newResetCurrent) {
+            resetCurrent = newResetCurrent;
+        }
+        
         float getCurrent() const {
         	return current;
 		}
@@ -417,6 +426,42 @@ namespace hummus {
 			inhibited = inhibitionStatus;
 		}
 		
+        void setRefractoryPeriod(float newRefractoryPeriod) {
+            refractoryPeriod = newRefractoryPeriod;
+        }
+        
+        void setBurstingActivity(bool newBool) {
+            burstingActivity = newBool;
+        }
+        
+        void setHomeostasis(bool newBool) {
+            homeostasis = newBool;
+        }
+        
+        void setRestingThreshold(float newThres) {
+            restingThreshold = newThres;
+        }
+        
+        void setDecayWeight(float newDW) {
+            decayWeight = newDW;
+        }
+        
+        void setDecayHomeostasis(float newDH) {
+            decayHomeostasis = newDH;
+        }
+        
+        void setHomeostasisBeta(float newHB) {
+            homeostasisBeta = newHB;
+        }
+        
+        void setTimeDependentCurrent(bool newBool) {
+            timeDependentCurrent = newBool;
+        }
+        
+        void setWTA(bool newBool) {
+            wta = newBool;
+        }
+        
 	protected:
         
         // winner-take-all algorithm

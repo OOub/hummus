@@ -36,10 +36,23 @@
 
 int main(int argc, char** argv) {
     hummus::QtDisplay qtDisplay;
-    hummus::Network network(&qtDisplay);
+    
+    hummus::Network network(&qtDisplay);;
 
     hummus::Builder bob(&network);
     bob.import("../../data/testSave.json");
+    
+    //  ----- INJECTING SPIKES -----
+    network.injectSpike(0, 10);
+    network.injectSpike(0, 11);
+    network.injectSpike(0, 30);
+    
+    //  ----- DISPLAY SETTINGS -----
+    qtDisplay.useHardwareAcceleration(true);
+    qtDisplay.setTimeWindow(100);
+    qtDisplay.trackNeuron(1);
+    
+    network.run(100, 0.1);
     
     return 0;
 }
