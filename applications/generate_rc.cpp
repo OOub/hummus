@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     
     // pixel grid height
     int gridHeight = std::atoi(argv[2]);
-    std::cout << "Pixel height: " << std::setw(clean_cout-std::string("Pixel height: ").size()) << argv[3] << std::endl;
+    std::cout << "Pixel height: " << std::setw(clean_cout-std::string("Pixel height: ").size()) << argv[2] << std::endl;
 
     // gaussian mean for reservoir weights
     float inputWeightMean = std::atof(argv[3]);
