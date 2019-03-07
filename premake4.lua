@@ -18,10 +18,19 @@ solution 'hummus'
    				description = 'Compiles without Qt'
 			}
 
+			newoption {
+   				trigger     = 'tbb',
+   				description = 'Compiles with Intel TBB'
+			}
+
 			if _OPTIONS['without-qt'] then
    				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
    			else
    				with_qt = true
+			end
+
+			if _OPTIONS['tbb'] then
+				defines { }
 			end
 
 			-- All files in source
@@ -62,6 +71,12 @@ solution 'hummus'
 	            defines {'DEBUG'}
 	            flags {'Symbols'}
 
+	        configuration 'linux or macosx'
+            	includedirs {'/usr/local/include'}
+	        	libdirs {'/usr/local/lib'}
+  				defines { "POSIX" }
+  				linkoptions {'-ltbb'}
+
 	        -- Linux specific settings
 	        configuration 'linux'
 	        	links {'pthread'}
@@ -72,11 +87,6 @@ solution 'hummus'
 	        configuration 'macosx'
 	            buildoptions {'-std=c++11'}
                 linkoptions {'-std=c++11'}
-
-            configuration 'linux or macosx'
-            	includedirs {'/usr/local/include'}
-	        	libdirs {'/usr/local/lib'}
-  				defines { "POSIX" }
 
             -- Windows specific settings
             configuration 'windows'
