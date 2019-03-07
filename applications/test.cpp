@@ -28,6 +28,7 @@
 
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
+#include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
 int main(int argc, char** argv) {
@@ -40,9 +41,13 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
-    hummus::STDP stdp;
+    auto stdp = network.makeLearningRule<hummus::STDP>();
+    auto rstdp = network.makeLearningRule<hummus::RewardModulatedSTDP>();
+    auto mp = network.makeLearningRule<hummus::MyelinPlasticity>();
+    auto tistdp = network.makeLearningRule<hummus::TimeInvariantSTDP>();
+    
     network.addLayer<hummus::InputNeuron>(1, {});
-    network.addLayer<hummus::LIF>(2, {&stdp}, false, false, 5, 20, 0, false);
+    network.addLayer<hummus::LIF>(2, {stdp, rstdp, mp, tistdp}, false, false, 5, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1./2));

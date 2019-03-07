@@ -82,7 +82,7 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRuleHandler={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+        Neuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
                 neuronID(_neuronID),
                 layerID(_layerID),
                 sublayerID(_sublayerID),
@@ -92,7 +92,7 @@ namespace hummus {
                 potential(_restingPotential),
                 restingPotential(_restingPotential),
                 initialSynapse{nullptr, nullptr, 100/_membraneResistance, 0, 0},
-                learningRuleHandler(_learningRuleHandler),
+                learningRuleIndices(_learningRuleIndices),
                 eligibilityTrace(0),
                 eligibilityDecay(_eligibilityDecay),
                 membraneResistance(_membraneResistance),
@@ -228,12 +228,8 @@ namespace hummus {
             return threshold = _threshold;
         }
         
-        std::vector<LearningRuleHandler*> getLearningRuleHandler() const {
-            return learningRuleHandler;
-        }
-        
-        void addLearningRule(LearningRuleHandler* newRule) {
-            learningRuleHandler.emplace_back(newRule);
+        std::vector<size_t> getLearningRuleIndices() const {
+            return learningRuleIndices;
         }
         
         float getMembraneResistance() const {
@@ -272,6 +268,10 @@ namespace hummus {
             return neuronType;
         }
         
+        void addLearningRule(size_t index) {
+            learningRuleIndices.push_back(index);
+        }
+        
         std::vector<std::pair<int, std::vector<float>>> getLearningInfo() const {
             return learningInfo;
         }
@@ -300,7 +300,7 @@ namespace hummus {
         float                                            threshold;
         float                                            potential;
         float                                            restingPotential;
-        std::vector<LearningRuleHandler*>                learningRuleHandler;
+        std::vector<size_t>                              learningRuleIndices;
         float                                            eligibilityTrace;
         float                                            eligibilityDecay;
         float                                            membraneResistance;
@@ -370,7 +370,7 @@ namespace hummus {
 		
         // adds one dimensional neurons
         template <typename T, typename... Args>
-        void addLayer(int _numberOfNeurons, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+        void addLayer(int _numberOfNeurons, std::vector<size_t> _learningRuleIndices, Args&&... args) {
             
             if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
@@ -390,7 +390,7 @@ namespace hummus {
             // building a layer of one dimensional sublayers
             std::vector<std::size_t> neuronsInLayer;
             for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleHandler, std::forward<Args>(args)...)));
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleIndices, std::forward<Args>(args)...)));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             
@@ -399,7 +399,7 @@ namespace hummus {
 		
         // adds a 2 dimensional grid of neurons
         template <typename T, typename... Args>
-        void add2dLayer(int gridW, int gridH, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+        void add2dLayer(int gridW, int gridH, int _sublayerNumber, std::vector<size_t> _learningRuleIndices, Args&&... args) {
             
             // find number of neurons to build
             int numberOfNeurons = gridW * gridH;
@@ -423,7 +423,7 @@ namespace hummus {
                 std::vector<std::size_t> neuronsInSublayer;
                 int16_t x = 0; int16_t y = 0;
                 for (int16_t k=0+shift; k<numberOfNeurons+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, layerID, i, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(x, y), _learningRuleHandler, std::forward<Args>(args)...)));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, layerID, i, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(x, y), _learningRuleIndices, std::forward<Args>(args)...)));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
                     
@@ -443,7 +443,7 @@ namespace hummus {
 		
         // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron. We can even add more sublayers
         template <typename T, typename F, typename... Args>
-        void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+        void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<size_t> _learningRuleIndices, Args&&... args) {
             
             // find how many neurons have previously spiked
             int layershift = 0;
@@ -472,7 +472,7 @@ namespace hummus {
             }
             
             // creating the new layer of neurons
-            add2dLayer<T>(newWidth, newHeight, _sublayerNumber, _learningRuleHandler, std::forward<Args>(args)...);
+            add2dLayer<T>(newWidth, newHeight, _sublayerNumber, _learningRuleIndices, std::forward<Args>(args)...);
 
             // finding range to calculate a moore neighborhood
             float range;
@@ -540,7 +540,7 @@ namespace hummus {
         
         // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields). First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron
         template <typename T, typename F, typename... Args>
-        void addPoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<LearningRuleHandler*> _learningRuleHandler, Args&&... args) {
+        void addPoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<size_t> _learningRuleIndices, Args&&... args) {
             
             // find how many neurons have previously spiked
             int layershift = 0;
@@ -567,7 +567,7 @@ namespace hummus {
 			std::cout << "subsampling by a factor of " << gcd << std::endl;
 			
         	// create pooling layer of neurons with correct dimensions
-            add2dLayer<T>(presynapticLayer.width/gcd, presynapticLayer.height/gcd, static_cast<int>(presynapticLayer.sublayers.size()), _learningRuleHandler, std::forward<Args>(args)...);
+            add2dLayer<T>(presynapticLayer.width/gcd, presynapticLayer.height/gcd, static_cast<int>(presynapticLayer.sublayers.size()), _learningRuleIndices, std::forward<Args>(args)...);
 			
             float range;
             // if size of kernel is an even number
@@ -640,7 +640,7 @@ namespace hummus {
         
         // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
-        void addDecisionMakingLayer(std::string trainingLabelFilename, bool _preTrainingLabelAssignment=true ,std::vector<LearningRuleHandler*> _learningRuleHandler={}, int _refractoryPeriod=1000, bool _timeDependentCurrent=false, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) {
+        void addDecisionMakingLayer(std::string trainingLabelFilename, bool _preTrainingLabelAssignment=true ,std::vector<size_t> _learningRuleIndices={}, int _refractoryPeriod=1000, bool _timeDependentCurrent=false, bool _homeostasis=false, float _decayCurrent=10, float _decayPotential=20, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             preTrainingLabelAssignment = _preTrainingLabelAssignment;
@@ -667,13 +667,13 @@ namespace hummus {
             std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
                 for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             } else {
                 for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleHandler, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
@@ -998,8 +998,19 @@ namespace hummus {
             learningStatus = true;
             learningOffSignal = -1;
         }
-
+        
+        // initialises a learning rule and adds it to the learning rules vector
+        template <typename T, typename... Args>
+        size_t makeLearningRule(Args&&... args) {
+            learningRules.emplace_back(new T(std::forward<Args>(args)...));
+            return learningRules.size() - 1;
+        }
+        
         // ----- SETTERS AND GETTERS -----
+        LearningRuleHandler& getLearningRule(std::size_t index) {
+            return *dynamic_cast<LearningRuleHandler*>(learningRules[index].get());
+        }
+        
         std::vector<std::unique_ptr<Neuron>>& getNeurons() {
             return neurons;
         }
@@ -1051,7 +1062,7 @@ namespace hummus {
     protected:
 
         // -----PROTECTED NETWORK METHODS -----
-
+        
         // importing training data and running the network through the data
         void train(double timestep, std::vector<input>* trainingData, int shift) {
             injectSpikeFromData(trainingData);
@@ -1236,21 +1247,22 @@ namespace hummus {
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::deque<spike>                      initialSpikes;
-        std::deque<spike>                      generatedSpikes;
-        std::deque<spike>                      predictedSpikes;
-        std::vector<AddOn*>                    addOns;
-        MainThreadAddOn*                       thAddOn;
-        std::vector<layer>                     layers;
-		std::vector<std::unique_ptr<Neuron>>   neurons;
-		std::deque<label>                      trainingLabels;
-        std::vector<std::string>               uniqueLabels;
-		bool                                   learningStatus;
-		double                                 learningOffSignal;
-        int                                    maxDelay;
-        std::string                            currentLabel;
-        bool                                   preTrainingLabelAssignment;
-        bool                                   asynchronous;
-        std::mt19937                           randomEngine;
+		std::deque<spike>                                 initialSpikes;
+        std::deque<spike>                                 generatedSpikes;
+        std::deque<spike>                                 predictedSpikes;
+        std::vector<AddOn*>                               addOns;
+        MainThreadAddOn*                                  thAddOn;
+        std::vector<layer>                                layers;
+		std::vector<std::unique_ptr<Neuron>>              neurons;
+		std::deque<label>                                 trainingLabels;
+        std::vector<std::string>                          uniqueLabels;
+		bool                                              learningStatus;
+		double                                            learningOffSignal;
+        int                                               maxDelay;
+        std::string                                       currentLabel;
+        bool                                              preTrainingLabelAssignment;
+        bool                                              asynchronous;
+        std::mt19937                                      randomEngine;
+        std::vector<std::unique_ptr<LearningRuleHandler>> learningRules;
     };
 }
