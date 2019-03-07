@@ -147,6 +147,7 @@ namespace hummus {
             // general neuron parameters
             output.push_back({
                 {"ID",neuronID},
+                {"Type",neuronType},
                 {"layerID",layerID},
                 {"sublayerID", sublayerID},
                 {"receptiveFieldCoordinates", rfCoordinates},
@@ -181,6 +182,11 @@ namespace hummus {
                     {"delay", postS->delay},
                 });
             }
+        }
+        
+        // ----- SETTERS AND GETTERS -----
+        void setRefractoryPeriod(float newRefractoryPeriod) {
+            refractoryPeriod = newRefractoryPeriod;
         }
         
     protected:

@@ -196,6 +196,11 @@ namespace hummus {
             return xyCoordinates;
         }
         
+        void setXYCoordinates(int X, int Y) {
+            xyCoordinates.first = X;
+            xyCoordinates.second = Y;
+        }
+        
         std::vector<synapse*>& getPreSynapses() {
             return preSynapses;
         }
@@ -220,6 +225,10 @@ namespace hummus {
             return restingPotential;
         }
         
+        void setRestingPotential(float newE_l) {
+            restingPotential = newE_l;
+        }
+        
         float getThreshold() const {
             return threshold;
         }
@@ -236,12 +245,20 @@ namespace hummus {
             return membraneResistance;
         }
         
+        void setMembraneResistance(float newR) {
+            membraneResistance = newR;
+        }
+        
         float getEligibilityTrace() const {
             return eligibilityTrace;
         }
         
         float getEligibilityDecay() const {
             return eligibilityDecay;
+        }
+        
+        void setEligibilityDecay(float newDecay) {
+            eligibilityDecay = newDecay;
         }
         
         void setEligibilityTrace(float newtrace) {

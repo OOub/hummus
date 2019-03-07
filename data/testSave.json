@@ -13,17 +13,7 @@
             {
                 "ID": 1,
                 "height": -1,
-                "learningRules": [
-                    {
-                        "ID": 1,
-                        "Parameters": [
-                            1.0,
-                            1.0,
-                            20.0,
-                            20.0
-                        ]
-                    }
-                ],
+                "learningRules": [],
                 "neuronNumber": 2,
                 "neuronType": 1,
                 "sublayerNumber": 1,
@@ -33,6 +23,7 @@
         "neurons": [
             {
                 "ID": 0,
+                "Type": 0,
                 "XYCoordinates": [
                     -1,
                     -1
@@ -42,13 +33,13 @@
                         "delay": 0.0,
                         "postNeuronID": 1,
                         "preNeuronID": 0,
-                        "weight": 6.165528157464628e-12
+                        "weight": 7.378612477959567e-12
                     },
                     {
                         "delay": 0.0,
                         "postNeuronID": 2,
                         "preNeuronID": 0,
-                        "weight": 9.999999960041972e-12
+                        "weight": 1.0663335665850315e-11
                     }
                 ],
                 "dendriticSynapses": [],
@@ -66,6 +57,7 @@
             },
             {
                 "ID": 1,
+                "Type": 1,
                 "XYCoordinates": [
                     -1,
                     -1
@@ -87,7 +79,7 @@
                         "delay": 0.0,
                         "postNeuronID": 1,
                         "preNeuronID": 0,
-                        "weight": 6.165528157464628e-12
+                        "weight": 7.378612477959567e-12
                     },
                     {
                         "delay": 0.0,
@@ -106,17 +98,18 @@
                     0
                 ],
                 "refractoryPeriod": 0.0,
-                "resetCurrent": 5.0,
+                "resetCurrent": 10.0,
                 "resistance": 49999998976.0,
                 "restingPotential": -70.0,
                 "restingThreshold": -50.0,
                 "sublayerID": 0,
                 "threshold": -50.0,
-                "timeDependentCurrent": false,
+                "timeDependentCurrent": true,
                 "wta": false
             },
             {
                 "ID": 2,
+                "Type": 1,
                 "XYCoordinates": [
                     -1,
                     -1
@@ -138,7 +131,7 @@
                         "delay": 0.0,
                         "postNeuronID": 2,
                         "preNeuronID": 0,
-                        "weight": 9.999999960041972e-12
+                        "weight": 1.0663335665850315e-11
                     },
                     {
                         "delay": 0.0,
@@ -157,13 +150,13 @@
                     0
                 ],
                 "refractoryPeriod": 0.0,
-                "resetCurrent": 5.0,
+                "resetCurrent": 10.0,
                 "resistance": 49999998976.0,
                 "restingPotential": -70.0,
                 "restingThreshold": -50.0,
                 "sublayerID": 0,
                 "threshold": -50.0,
-                "timeDependentCurrent": false,
+                "timeDependentCurrent": true,
                 "wta": false
             }
         ]
