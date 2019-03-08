@@ -39,6 +39,7 @@
 #include "addOn.hpp"
 #include "mainThreadAddOn.hpp"
 #include "learningRuleHandler.hpp"
+#include "synapticKernelHandler.hpp"
 #include "dependencies/json.hpp"
 
 namespace hummus {
@@ -1029,11 +1030,23 @@ namespace hummus {
             learningRules.emplace_back(new T(std::forward<Args>(args)...));
             return learningRules.size() - 1;
         }
+		
+        // initialises a synaptic kernel and adds it to the synaptic kernels vector
+        template <typename T, typename... Args>
+        size_t makeSynapticKernel(Args&&... args) {
+            synapticKernels.emplace_back(new T(std::forward<Args>(args)...));
+            return synapticKernels.size() - 1;
+        }
         
         // ----- SETTERS AND GETTERS -----
         LearningRuleHandler& getLearningRule(std::size_t index) {
             return *dynamic_cast<LearningRuleHandler*>(learningRules[index].get());
         }
+		
+        SynapticKernelHandler& getSynapticKernel(std::size_t index) {
+            return *dynamic_cast<SynapticKernelHandler*>(synapticKernels[index].get());
+        }
+		
         
         std::vector<std::unique_ptr<Neuron>>& getNeurons() {
             return neurons;
@@ -1271,22 +1284,23 @@ namespace hummus {
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::deque<spike>                                 initialSpikes;
-        std::deque<spike>                                 generatedSpikes;
-        std::deque<spike>                                 predictedSpikes;
-        std::vector<AddOn*>                               addOns;
-        MainThreadAddOn*                                  thAddOn;
-        std::vector<layer>                                layers;
-		std::vector<std::unique_ptr<Neuron>>              neurons;
-		std::deque<label>                                 trainingLabels;
-        std::vector<std::string>                          uniqueLabels;
-		bool                                              learningStatus;
-		double                                            learningOffSignal;
-        int                                               maxDelay;
-        std::string                                       currentLabel;
-        bool                                              preTrainingLabelAssignment;
-        bool                                              asynchronous;
-        std::mt19937                                      randomEngine;
-        std::vector<std::unique_ptr<LearningRuleHandler>> learningRules;
+		std::deque<spike>                                  initialSpikes;
+        std::deque<spike>                                   generatedSpikes;
+        std::deque<spike>                                   predictedSpikes;
+        std::vector<AddOn*>                                 addOns;
+        MainThreadAddOn*                                    thAddOn;
+        std::vector<layer>                                  layers;
+		std::vector<std::unique_ptr<Neuron>>                neurons;
+		std::deque<label>                                   trainingLabels;
+        std::vector<std::string>                            uniqueLabels;
+		bool                                                learningStatus;
+		double                                              learningOffSignal;
+        int                                                 maxDelay;
+        std::string                                         currentLabel;
+        bool                                                preTrainingLabelAssignment;
+        bool                                                asynchronous;
+        std::mt19937                                        randomEngine;
+        std::vector<std::unique_ptr<LearningRuleHandler>>   learningRules;
+        std::vector<std::unique_ptr<SynapticKernelHandler>> synapticKernels;
     };
 }
