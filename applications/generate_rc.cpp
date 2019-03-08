@@ -29,59 +29,59 @@ int main(int argc, char** argv) {
     
     // pixel grid width
     int gridWidth = std::atoi(argv[1]);
-    std::cout << "Pixel width: " << std::setw(clean_cout-std::string("Pixel width: ").size()) << argv[1] << std::endl;
+    std::cout << "Pixel width: " << std::setw(static_cast<int>(clean_cout-std::string("Pixel width: ").size())) << argv[1] << std::endl;
     
     // pixel grid height
     int gridHeight = std::atoi(argv[2]);
-    std::cout << "Pixel height: " << std::setw(clean_cout-std::string("Pixel height: ").size()) << argv[2] << std::endl;
+    std::cout << "Pixel height: " << std::setw(static_cast<int>(clean_cout-std::string("Pixel height: ").size())) << argv[2] << std::endl;
 
     // gaussian mean for reservoir weights
     float inputWeightMean = std::atof(argv[3]);
-    std::cout << "Input Weight Mean: " << std::setw(clean_cout-std::string("Input Weight Mean: ").size()) << argv[3] << std::endl;
+    std::cout << "Input Weight Mean: " << std::setw(static_cast<int>(clean_cout-std::string("Input Weight Mean: ").size())) << argv[3] << std::endl;
     
     // gaussian standard deviation for reservoir weights
     float inputWeightStdDev = std::atof(argv[4]);
-    std::cout << "Input Weight Std: " << std::setw(clean_cout-std::string("Input Weight Std: ").size()) << argv[4] << std::endl;
+    std::cout << "Input Weight Std: " << std::setw(static_cast<int>(clean_cout-std::string("Input Weight Std: ").size())) << argv[4] << std::endl;
 
     // number of neurons inside the reservoir
     int numberOfNeurons = std::atoi(argv[5]);
-    std::cout << "Reservoir Neurons: " << std::setw(clean_cout-std::string("Reservoir Neurons: ").size()) << argv[5] << std::endl;
+    std::cout << "Reservoir Neurons: " << std::setw(static_cast<int>(clean_cout-std::string("Reservoir Neurons: ").size())) << argv[5] << std::endl;
     
     // gaussian mean for weights
     float weightMean = std::atof(argv[6]);
-    std::cout << "Weight mean: " << std::setw(clean_cout-std::string("Weight mean: ").size()) << argv[6] << std::endl;
+    std::cout << "Weight mean: " << std::setw(static_cast<int>(clean_cout-std::string("Weight mean: ").size())) << argv[6] << std::endl;
     
     // gaussian standard deviation for weights
     float weightStdDev = std::atof(argv[7]);
-    std::cout << "Weight std: " << std::setw(clean_cout-std::string("Weight std: ").size()) << argv[7] << std::endl;
+    std::cout << "Weight std: " << std::setw(static_cast<int>(clean_cout-std::string("Weight std: ").size())) << argv[7] << std::endl;
     
     // percentage likelihood of feedforward connections
     int feedforwardProbability = std::atoi(argv[8]);
-    std::cout << "Forward connection probability: " << std::setw(clean_cout-std::string("Forward connection probability: ").size()) << argv[8] << std::endl;
+    std::cout << "Forward connection probability: " << std::setw(static_cast<int>(clean_cout-std::string("Forward connection probability: ").size())) << argv[8] << std::endl;
     
     // percentage likelihood of feedback connections
     int feedbackProbability = std::atoi(argv[9]);
-    std::cout << "Back connection probability: " << std::setw(clean_cout-std::string("Back connection probability: ").size()) << argv[9] << std::endl;
+    std::cout << "Back connection probability: " << std::setw(static_cast<int>(clean_cout-std::string("Back connection probability: ").size())) << argv[9] << std::endl;
     
     // percentage likelihood of self-excitation
     int selfExcitationProbability = std::atoi(argv[10]);
-    std::cout << "Stay connection probability: " << std::setw(clean_cout-std::string("Stay connection probability: ").size()) << argv[10] << std::endl;
+    std::cout << "Stay connection probability: " << std::setw(static_cast<int>(clean_cout-std::string("Stay connection probability: ").size())) << argv[10] << std::endl;
     
     // current step function reset value (integration time)
     float resetCurrent = std::atof(argv[11]);
-    std::cout << "Reset current duration " << std::setw(clean_cout-std::string("Reset current duration ").size()) << argv[11] << std::endl;
+    std::cout << "Reset current duration " << std::setw(static_cast<int>(clean_cout-std::string("Reset current duration ").size())) << argv[11] << std::endl;
     
     // time constant for membrane potential (decay)
     float decayPotential = std::atof(argv[12]);
-    std::cout << "Potential decay time: " << std::setw(clean_cout-std::string("Potential decay time: ").size()) << argv[12] << std::endl;
+    std::cout << "Potential decay time: " << std::setw(static_cast<int>(clean_cout-std::string("Potential decay time: ").size())) << argv[12] << std::endl;
     
     // neuron inactive for specified time after each spike
     int refractoryPeriod = std::atoi(argv[13]);
-    std::cout << "Refractory Period: " << std::setw(clean_cout-std::string("Refractory Period: ").size()) << argv[13] << std::endl;
+    std::cout << "Refractory Period: " << std::setw(static_cast<int>(clean_cout-std::string("Refractory Period: ").size())) << argv[13] << std::endl;
     
     // winner-takes-all algorithm
     bool wta = std::atoi(argv[14]);
-    std::cout << "Winner takes all: " << std::setw(clean_cout-std::string("Winner takes all: ").size()) << argv[14] << std::endl;
+    std::cout << "Winner takes all: " << std::setw(static_cast<int>(clean_cout-std::string("Winner takes all: ").size())) << argv[14] << std::endl;
     
     // threshold adaptation to firing rate
     bool homeostasis = std::atoi(argv[15]);
