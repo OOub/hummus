@@ -19,7 +19,7 @@
 #include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
-#include "../source/neurons/inputNeuron.hpp"
+#include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
 
 int main(int argc, char** argv) {
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 	auto mp = network.makeLearningRule<hummus::MyelinPlasticity>(1, 1, 1, 1);
     
     //  ----- CREATING THE NETWORK -----
-    network.addLayer<hummus::InputNeuron>(inputNeurons, {});
+    network.addLayer<hummus::Input>(inputNeurons, {});
     network.addLayer<hummus::LIF>(layer1Neurons, {mp}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----

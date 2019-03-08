@@ -20,8 +20,8 @@
 
 #include "../source/GUI/qtDisplay.hpp"
 
-#include "../source/neurons/inputNeuron.hpp"
-#include "../source/neurons/decisionMakingNeuron.hpp"
+#include "../source/neurons/input.hpp"
+#include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/IF.hpp"
 
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     
-    network.addLayer<hummus::InputNeuron>(1, {});
+    network.addLayer<hummus::Input>(1, {});
     network.addLayer<hummus::LIF>(2, {}, true, false, 10, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----

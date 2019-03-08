@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-#include "../neurons/decisionMakingNeuron.hpp"
+#include "../neurons/decisionMaking.hpp"
 #include "../globalLearningRuleHandler.hpp"
 
 namespace hummus {
@@ -72,18 +72,18 @@ namespace hummus {
 			
 			// add rstdp to decision-making layer which is on the last layer
             for (auto& n: network->getLayers().back().neurons) {
-                if (DecisionMakingNeuron* neuron = dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get())) {
-                    dynamic_cast<DecisionMakingNeuron*>(network->getNeurons()[n].get())->addLearningRule(ruleIndex);
+                if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())) {
+                    dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())->addLearningRule(ruleIndex);
                 }
             }
 		}
 		
 		virtual void learn(double timestamp, synapse* a, Network* network) override {
-            if (DecisionMakingNeuron* n = dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)) {
+            if (DecisionMaking* n = dynamic_cast<DecisionMaking*>(a->postNeuron)) {
 				// reward and punishement signal from the decision-making layer
 				int alpha = 0;
 				int beta = 0;
-				if (dynamic_cast<DecisionMakingNeuron*>(a->postNeuron)->getClassLabel() == network->getCurrentLabel()) {
+				if (dynamic_cast<DecisionMaking*>(a->postNeuron)->getClassLabel() == network->getCurrentLabel()) {
 					alpha = 1;
 				} else {
 					beta = 1;

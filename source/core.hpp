@@ -447,7 +447,7 @@ namespace hummus {
                 std::vector<std::size_t> neuronsInSublayer;
                 int x = 0; int y = 0;
                 for (auto k=0+shift; k<numberOfNeurons+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), _learningRuleIndices, std::forward<Args>(args)...)));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), _learningRuleIndices, std::forward<Args>(args)...)));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
                     
@@ -1030,21 +1030,10 @@ namespace hummus {
             learningRules.emplace_back(new T(std::forward<Args>(args)...));
             return learningRules.size() - 1;
         }
-		
-        // initialises a synaptic kernel and adds it to the synaptic kernels vector
-        template <typename T, typename... Args>
-        size_t makeSynapticKernel(Args&&... args) {
-            synapticKernels.emplace_back(new T(std::forward<Args>(args)...));
-            return synapticKernels.size() - 1;
-        }
         
         // ----- SETTERS AND GETTERS -----
         LearningRuleHandler& getLearningRule(std::size_t index) {
             return *dynamic_cast<LearningRuleHandler*>(learningRules[index].get());
-        }
-		
-        SynapticKernelHandler& getSynapticKernel(std::size_t index) {
-            return *dynamic_cast<SynapticKernelHandler*>(synapticKernels[index].get());
         }
 		
         
@@ -1301,6 +1290,5 @@ namespace hummus {
         bool                                                asynchronous;
         std::mt19937                                        randomEngine;
         std::vector<std::unique_ptr<LearningRuleHandler>>   learningRules;
-        std::vector<std::unique_ptr<SynapticKernelHandler>> synapticKernels;
     };
 }

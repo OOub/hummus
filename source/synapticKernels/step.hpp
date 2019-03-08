@@ -24,6 +24,12 @@ namespace hummus {
 		virtual ~Step(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual float synapticIntegration(float neuronCurrent, float externalCurrent, double synapseWeight){}
+		virtual double updateCurrent(double timestamp, float neuronCurrent) override {
+		
+		}
+		
+		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
+		
+		}
 	};
 }

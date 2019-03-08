@@ -19,18 +19,17 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		SynapticKernelHandler() : previousInputTime(0) {}
+		SynapticKernelHandler() = default;
 		
 		virtual ~SynapticKernelHandler(){}
 		
 		// ----- PUBLIC METHODS -----
-        
-        // pure virtual function that needs to be implemented in every synaptic kernel, and output an updated current value
-		virtual float synapticIntegration(float neuronCurrent, float externalCurrent, double synapseWeight) = 0;
-	
-	protected:
-	
-		double previousInputTime;
+		
+		// pure virtual method that updates the status of current before integrating a spike
+        virtual double updateCurrent(double timestamp, float neuronCurrent) = 0;
+		
+        // pure virtual method that outputs an updated current value
+		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) = 0;
 	};
 }
 
