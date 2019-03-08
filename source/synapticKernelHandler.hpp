@@ -24,7 +24,7 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
         
         // pure virtual function that needs to be implemented in every synaptic kernel.
-		virtual void updateCurrent(double timestamp, axon* a, Network* network) = 0;
+		virtual void updateCurrent() = 0;
 	};
 }
 
