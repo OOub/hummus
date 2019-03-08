@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/rand.hpp"
+#include "../source/randomDistributions/normal.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/LIF.hpp"
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Rand(), 100, {}, false, false, 10, 20, 3, true);
     network.addLayer<hummus::LIF>(1, {});
     
-    network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Rand());
+    network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Normal());
     
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);

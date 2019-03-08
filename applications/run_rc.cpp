@@ -14,7 +14,6 @@
 
 #include "../source/core.hpp"
 #include "../source/builder.hpp"
-#include "../source/rand.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/LIF.hpp"

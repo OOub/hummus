@@ -14,7 +14,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/rand.hpp"
+#include "../source/randomDistributions/normal.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/learningRules/stdp.hpp"
 #include "../source/learningRules/timeInvariantSTDP.hpp"
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     network.addLayer<hummus::LIF>(layer1Neurons, {stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(weight, 0, 1, 0));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(weight, 0, 1, 0));
 	
     //  ----- DISPLAY SETTINGS -----
   	qtDisplay.useHardwareAcceleration(true);

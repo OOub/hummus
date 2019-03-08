@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/rand.hpp"
+#include "../source/randomDistributions/normal.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 
 #include "../source/learningRules/timeInvariantSTDP.hpp"
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     network.addDecisionMakingLayer<hummus::DecisionMakingNeuron>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtrainingLabel.txt");
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Rand());
+    network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Normal());
     
 	//  ----- READING DATA FROM FILE -----
     hummus::DataParser dataParser;
