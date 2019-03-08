@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 28/02/2019
  *
- * Information: The Normal class can be used as an input for network methods that require lambda function to connect layers with weights and delays following a particular distribution (eg. allToAll). In this case, the distribution is a normal distribution
+ * Information: The Normal class can be used as an input for network methods that require lambda function to connect layers with weights and delays following a particular distribution (eg. allToAll). In this case, the distribution is a normal distribution. Delays are always positive so we take the absolute value of the random output
  */
 
 #pragma once

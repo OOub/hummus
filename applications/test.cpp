@@ -66,7 +66,8 @@ int main(int argc, char** argv) {
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(100, 0.1);
-    
+	
+	//  ----- SAVING THE NETWORK -----
     network.save("testSave");
 	
     //  ----- EXITING APPLICATION -----

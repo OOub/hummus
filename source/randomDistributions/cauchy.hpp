@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 28/02/2019
  *
- * Information: The Cauchy class can be used as an input for network methods that require lambda function to connect layers with weights and delays following a particular distribution (eg. allToAll). In this case, the distribution is a cauchy distribution
+ * Information: The Cauchy class can be used as an input for network methods that require lambda function to connect layers with weights and delays following a particular distribution (eg. allToAll). In this case, the distribution is a cauchy distribution. Delays are always positive so we take the absolute value of the random output
  */
 
 #pragma once
@@ -30,7 +30,7 @@ namespace hummus {
         }
 		
         std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
-			return std::make_pair(weightRandom(randomEngine), delayRandom(randomEngine));
+			return std::make_pair(weightRandom(randomEngine), std::abs(delayRandom(randomEngine)));
         }
         
     protected :

@@ -27,6 +27,11 @@ namespace hummus {
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         Uniform(float weight_lowerLimit=0, float weight_higherLimit=1, float delay_lowerLimit=0, float delay_higherLimit=0, uniformType _int_or_real=uniformType::integerType) :
         		int_or_real(_int_or_real) {
+			
+			// error handling
+			if (delay_lowerLimit < 0 || delay_higherLimit < 0) {
+				throw std::logic_error("the delays cannot be in a negative range");
+			}
 
             // randomising weights and delays
             std::random_device device;
