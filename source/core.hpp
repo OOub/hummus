@@ -413,8 +413,8 @@ namespace hummus {
 
             // building a layer of one dimensional sublayers
             std::vector<std::size_t> neuronsInLayer;
-            for (int k=0+shift; k<_numberOfNeurons+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRuleIndices, std::forward<Args>(args)...)));
+            for (auto k=0+shift; k<_numberOfNeurons+shift; k++) {
+                neurons.emplace_back(std::unique_ptr<T>(new T(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRuleIndices, std::forward<Args>(args)...)));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             
@@ -446,7 +446,7 @@ namespace hummus {
             for (int i=0; i<_sublayerNumber; i++) {
                 std::vector<std::size_t> neuronsInSublayer;
                 int x = 0; int y = 0;
-                for (int k=0+shift; k<numberOfNeurons+shift; k++) {
+                for (auto k=0+shift; k<numberOfNeurons+shift; k++) {
                     neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), _learningRuleIndices, std::forward<Args>(args)...)));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
@@ -690,13 +690,13 @@ namespace hummus {
             // add decision-making neurons
             std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
-                for (int k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
+                for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
                     neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             } else {
-                for (int k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
+                for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
                     neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
@@ -727,7 +727,7 @@ namespace hummus {
             
             // creating the reservoir of neurons
             std::vector<std::size_t> neuronsInLayer;
-            for (int k=0+shift; k<_numberOfNeurons+shift; k++) {
+            for (auto k=0+shift; k<_numberOfNeurons+shift; k++) {
                 neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), {}, std::forward<Args>(args)...)));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
@@ -886,13 +886,13 @@ namespace hummus {
                         // one dimensional data
                         if (event.x == -1) {
                             if (neurons[n]->getNeuronID() == event.neuronID) {
-                                injectSpike(n, event.timestamp);
+                                injectSpike(static_cast<int>(n), event.timestamp);
                                 break;
                             }
                         // two dimensional data
                         } else {
                             if (neurons[n]->getXYCoordinates().first == event.x && neurons[n]->getXYCoordinates().second == event.y) {
-                                injectSpike(n, event.timestamp);
+                                injectSpike(static_cast<int>(n), event.timestamp);
                                 break;
                             }
                         }
@@ -900,7 +900,7 @@ namespace hummus {
                     // 2D data split into sublayers (polarity)
                     } else if (event.polarity == neurons[n]->getSublayerID()) {
                         if (neurons[n]->getXYCoordinates().first == event.x && neurons[n]->getXYCoordinates().second == event.y) {
-                            injectSpike(n, event.timestamp);
+                            injectSpike(static_cast<int>(n), event.timestamp);
                             break;
                         }
                     }
