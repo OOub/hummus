@@ -35,9 +35,8 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
 		virtual void onStart(Network* network) override  {
 			for (auto& n: network->getNeurons()) {
-				for (auto& idx: n->getLearningRuleIndices()) {
-					if (&network->getLearningRule(idx) == this) {
-                        ruleIndex = idx;
+				for (auto& rule: n->getLearningRules()) {
+					if (rule == this) {
                         n->addLearningInfo(std::pair<int, std::vector<float>>(1, {A_plus, A_minus, tau_plus, tau_minus}));
 						if (n->getLayerID() > 0) {
                             postLayer = n->getLayerID();
@@ -57,7 +56,7 @@ namespace hummus {
 			}
 			
 			for (auto& n: network->getLayers()[preLayer].neurons) {
-                network->getNeurons()[n]->addLearningRule(ruleIndex);
+                network->getNeurons()[n]->addLearningRule(this);
 			}
 		}
 		
@@ -110,6 +109,5 @@ namespace hummus {
 		float   A_minus;
 		float   tau_plus;
 		float   tau_minus;
-        size_t  ruleIndex;
 	};
 }

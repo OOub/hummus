@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	
 	//  ----- CREATING THE NETWORK -----
     network.addLayer<hummus::Input>(inputNeurons, {});
-    network.addLayer<hummus::LIF>(layer1Neurons, {stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
+    network.addLayer<hummus::LIF>(layer1Neurons, {&stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(weight, 0, 1, 0));

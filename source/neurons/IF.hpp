@@ -22,22 +22,22 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		IF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
-                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleIndices, _timeDependentCurrent, _homeostasis, _resetCurrent, 1, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent){
+		IF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules={}, bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _timeDependentCurrent, _homeostasis, _resetCurrent, 1, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent) {
                 // IF neuron type = 2 for JSON save
                 neuronType = 2;
             }
         
 		
-		virtual ~IF(){}
+		virtual ~IF() {}
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
 		void initialisation(Network* network) override {
             // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
-            for (auto& idx: learningRuleIndices) {
-                if (AddOn *globalRule = dynamic_cast<AddOn*>(&network->getLearningRule(idx))) {
-                    if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(&network->getLearningRule(idx))) == network->getAddOns().end()) {
-                        network->getAddOns().emplace_back(dynamic_cast<AddOn*>(&network->getLearningRule(idx)));
+            for (auto& rule: learningRules) {
+                if (AddOn *globalRule = dynamic_cast<AddOn*>(rule)) {
+                    if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end()) {
+                        network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
                     }
                 }
             }

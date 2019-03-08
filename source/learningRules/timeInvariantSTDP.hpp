@@ -35,8 +35,8 @@ namespace hummus {
         virtual void onStart(Network* network) override{
             // error handling
             for (auto& n: network->getNeurons()) {
-                for (auto& idx: n->getLearningRuleIndices()) {
-                    if (&network->getLearningRule(idx) == this) {
+                for (auto& rule: n->getLearningRules()) {
+                    if (rule == this) {
                         n->addLearningInfo(std::pair<int, std::vector<float>>(2, {alpha_plus, alpha_minus, beta_plus, beta_minus}));
                         if (n->getLayerID() == 0) {
                             throw std::logic_error("the STDP learning rule has to be on a postsynaptic layer");
