@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>();
     
     network.add2dLayer<hummus::Input>(34, 34, 1, {});
-    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(), 100, 1, {ti_stdp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
+    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(), 100, 1, {&ti_stdp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
     network.addDecisionMakingLayer<hummus::DecisionMaking>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtrainingLabel.txt");
     

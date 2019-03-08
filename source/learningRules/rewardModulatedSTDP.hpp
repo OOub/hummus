@@ -48,9 +48,8 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
 		virtual void onStart(Network* network) override {
             for (auto& l: network->getLayers()) {
-                for (auto& idx: network->getNeurons()[l.neurons[0]]->getLearningRuleIndices()) {
-                    if (&network->getLearningRule(idx) == this) {
-                        ruleIndex = idx;
+                for (auto& rule: network->getNeurons()[l.neurons[0]]->getLearningRules()) {
+                    if (rule == this) {
                         network->getNeurons()[l.neurons[0]]->addLearningInfo(std::pair<int, std::vector<float>>(3, {Ar_plus, Ar_minus, Ap_plus, Ap_minus}));
                         int presynapticLayer = -1;
                         // making sure we don't add learning on a parallel layer
@@ -73,7 +72,7 @@ namespace hummus {
 			// add rstdp to decision-making layer which is on the last layer
             for (auto& n: network->getLayers().back().neurons) {
                 if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())) {
-                    dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())->addLearningRule(ruleIndex);
+                    dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())->addLearningRule(this);
                 }
             }
 		}
@@ -128,6 +127,5 @@ namespace hummus {
 		float                            Ar_minus;
 		float                            Ap_plus;
 		float                            Ap_minus;
-        size_t                           ruleIndex;
 	};
 }

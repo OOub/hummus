@@ -35,8 +35,8 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
         virtual void onStart(Network* network) override {
             for (auto& n: network->getNeurons()) {
-                for (auto& idx: n->getLearningRuleIndices()) {
-                    if (&network->getLearningRule(idx) == this) {
+                for (auto& rule: n->getLearningRules()) {
+                    if (rule == this) {
                         if (LIF* typeCheck = dynamic_cast<LIF*>(n.get())) {
                             n->addLearningInfo(std::pair<int, std::vector<float>>(0, {delay_alpha, delay_lambda, weight_alpha, weight_lambda}));
                         } else {

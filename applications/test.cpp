@@ -46,7 +46,6 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     
     // creating layers of neurons
-    
     network.addLayer<hummus::Input>(1, {});
     network.addLayer<hummus::LIF>(2, {}, true, false, 10, 20, 0, false);
     
