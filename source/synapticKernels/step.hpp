@@ -20,10 +20,10 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Step() = default;
+		Step() : SynapticKernelHandler() {}
 		virtual ~Step(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual void updateCurrent(){}
+		virtual float synapticIntegration(float neuronCurrent, float externalCurrent, double synapseWeight){}
 	};
 }

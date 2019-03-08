@@ -20,10 +20,10 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Gaussian() = default;
+		Gaussian() : SynapticKernelHandler() {}
 		virtual ~Gaussian(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual void updateCurrent(){}
+		virtual float synapticIntegration(float neuronCurrent, float externalCurrent, double synapseWeight){}
 	};
 }

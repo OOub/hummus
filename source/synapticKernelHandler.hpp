@@ -19,12 +19,18 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		SynapticKernelHandler() = default;
+		SynapticKernelHandler() : previousInputTime(0) {}
+		
+		virtual ~SynapticKernelHandler(){}
 		
 		// ----- PUBLIC METHODS -----
         
-        // pure virtual function that needs to be implemented in every synaptic kernel.
-		virtual void updateCurrent() = 0;
+        // pure virtual function that needs to be implemented in every synaptic kernel, and output an updated current value
+		virtual float synapticIntegration(float neuronCurrent, float externalCurrent, double synapseWeight) = 0;
+	
+	protected:
+	
+		double previousInputTime;
 	};
 }
 

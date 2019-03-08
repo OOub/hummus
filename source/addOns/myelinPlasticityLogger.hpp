@@ -33,7 +33,7 @@ namespace hummus {
         }
 
 		// ----- PUBLIC LOGGER METHODS -----
-		void myelinPlasticityEvent(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int16_t>>& plasticNeurons) {
+		void myelinPlasticityEvent(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int>>& plasticNeurons) {
 			const int64_t bitSize = 24+8*timeDifferences.size()+8*plasticNeurons[0].size();
 			std::vector<char> bytes(bitSize);
 			SpikeLogger::copy_to(bytes.data() + 0, bitSize);

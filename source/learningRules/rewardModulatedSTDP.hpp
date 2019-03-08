@@ -52,7 +52,7 @@ namespace hummus {
                     if (&network->getLearningRule(idx) == this) {
                         ruleIndex = idx;
                         network->getNeurons()[l.neurons[0]]->addLearningInfo(std::pair<int, std::vector<float>>(3, {Ar_plus, Ar_minus, Ap_plus, Ap_minus}));
-                        int16_t presynapticLayer = -1;
+                        int presynapticLayer = -1;
                         // making sure we don't add learning on a parallel layer
                         for (auto& preSynapse: network->getNeurons()[l.neurons[0]]->getPreSynapses()) {
                             // finding the closest presynaptic layer without overly relying on layerIDs

@@ -104,8 +104,8 @@ namespace hummus {
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-		int16_t preLayer;
-		int16_t postLayer;
+		int preLayer;
+		int postLayer;
 		float   A_plus;
 		float   A_minus;
 		float   tau_plus;
