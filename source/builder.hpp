@@ -97,14 +97,14 @@ namespace hummus {
                                 if (dendriticSynapse[i]["weight"].is_number()) {
                                     weight = dendriticSynapse[i]["weight"].get<double>();
                                 } else {
-                                    throw std::logic_error("axonal synapse weight incorrectly formatted");
+                                    throw std::logic_error("dendritic synapse weight incorrectly formatted");
                                 }
                                 
                                 double delay = 0;
                                 if (dendriticSynapse[i]["delay"].is_number()) {
                                     delay = dendriticSynapse[i]["delay"].get<double>();
                                 } else {
-                                    throw std::logic_error("axonal synapse weight incorrectly formatted");
+                                    throw std::logic_error("dendritic synapse weight incorrectly formatted");
                                 }
                                 
                                 n->getPreSynapses()[i]->weight = weight;

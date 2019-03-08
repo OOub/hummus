@@ -364,7 +364,6 @@ namespace hummus {
             // saving the important information needed from the layers
             for (auto l: layers) {
                 jsonNetwork["layers"].push_back({
-                    {"ID",l.ID},
                     {"width", l.width},
                     {"height",l.height},
                     {"sublayerNumber",l.sublayers.size()},

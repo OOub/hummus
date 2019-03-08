@@ -335,7 +335,6 @@ namespace hummus {
         virtual void toJson(nlohmann::json& output) override{
             // general neuron parameters
             output.push_back({
-                {"ID",neuronID},
                 {"Type",neuronType},
                 {"layerID",layerID},
                 {"sublayerID", sublayerID},
@@ -365,8 +364,6 @@ namespace hummus {
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
             for (auto& preS: preSynapses) {
                 dendriticSynapses.push_back({
-                    {"preNeuronID",preS->preNeuron->getNeuronID()},
-                    {"postNeuronID", preS->postNeuron->getNeuronID()},
                     {"weight", preS->weight},
                     {"delay", preS->delay},
                 });
@@ -376,7 +373,6 @@ namespace hummus {
             auto& axonalSynapses = output.back()["axonalSynapses"];
             for (auto& postS: postSynapses) {
                 axonalSynapses.push_back({
-                    {"preNeuronID",postS->preNeuron->getNeuronID()},
                     {"postNeuronID", postS->postNeuron->getNeuronID()},
                     {"weight", postS->weight},
                     {"delay", postS->delay},
