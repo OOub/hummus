@@ -12,7 +12,12 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/rand.hpp"
+
+#include "../source/randomDistributions/normal.hpp"
+#include "../source/randomDistributions/cauchy.hpp"
+#include "../source/randomDistributions/lognormal.hpp"
+#include "../source/randomDistributions/uniform.hpp"
+
 #include "../source/GUI/qtDisplay.hpp"
 
 #include "../source/neurons/inputNeuron.hpp"
@@ -46,7 +51,7 @@ int main(int argc, char** argv) {
     network.addLayer<hummus::LIF>(2, {}, true, false, 10, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(1./2, 0.1));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0.1));
     network.lateralInhibition(network.getLayers()[1], -1);
 	
     //  ----- INJECTING SPIKES -----

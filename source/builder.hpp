@@ -12,7 +12,6 @@
 #pragma once
 
 #include "core.hpp"
-#include "rand.hpp"
 
 #include "neurons/inputNeuron.hpp"
 #include "neurons/decisionMakingNeuron.hpp"

@@ -1,12 +1,12 @@
 /*
- * rand.hpp
+ * normal.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 28/02/2019
  *
- * Information: The Rand class can be used as an input for network methods that require lambda function to connect layers with weights and delays following a particular distribution (eg. allToAll). In this case, the distribution is a normal distribution 
+ * Information: The Normal class can be used as an input for network methods that require lambda function to connect layers with weights and delays following a particular distribution (eg. allToAll). In this case, the distribution is a normal distribution
  */
 
 #pragma once
@@ -16,11 +16,12 @@
 
 namespace hummus {
 	
-	class Rand {
+	class Normal {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Rand(float weightMean=1, float weightStdDev=0, int delayMean=0, int delayStdDev=0) {
+        Normal(float weightMean=1, float weightStdDev=0, float delayMean=0, float delayStdDev=0, bool _weightSameSign=true) :
+        		weightSameSign(_weightSameSign) {
 
             // randomising weights and delays
             std::random_device device;
@@ -33,7 +34,11 @@ namespace hummus {
         }
 		
         std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
-            return std::make_pair(sign*std::abs(weightRandom(randomEngine)), std::floor(std::abs(delayRandom(randomEngine))));
+        	if (weightSameSign) {
+            	return std::make_pair(sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)));
+			} else {
+				return std::make_pair(weightRandom(randomEngine), std::abs(delayRandom(randomEngine)));
+			}
         }
         
     protected :
@@ -43,6 +48,7 @@ namespace hummus {
         std::mt19937               randomEngine;
         std::normal_distribution<> delayRandom;
         std::normal_distribution<> weightRandom;
+        bool                       weightSameSign;
 	};
 }
 

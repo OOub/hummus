@@ -31,7 +31,10 @@
 #include "tbb/tbb.h"
 #endif
 
-#include "rand.hpp"
+#include "randomDistributions/normal.hpp"
+#include "randomDistributions/cauchy.hpp"
+#include "randomDistributions/lognormal.hpp"
+#include "randomDistributions/uniform.hpp"
 #include "dataParser.hpp"
 #include "addOn.hpp"
 #include "mainThreadAddOn.hpp"
@@ -461,7 +464,7 @@ namespace hummus {
             layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH});
         }
 		
-        // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron. We can even add more sublayers
+        // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron. We can even add more sublayers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
         void addConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<size_t> _learningRuleIndices, Args&&... args) {
             
@@ -558,7 +561,7 @@ namespace hummus {
             }
         }
         
-        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields). First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron
+        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields). First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
         void addPoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<size_t> _learningRuleIndices, Args&&... args) {
             
@@ -701,9 +704,10 @@ namespace hummus {
             layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
         }
         
-        // add a one-dimensional reservoir of randomly interconnected neurons without any learning rule (feedforward, feedback and self-excitation) with randomised weights and no delays.
-        template <typename T, typename... Args>
-        void addReservoir(int _numberOfNeurons, float _weightMean, float _weightstdev, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
+        // add a one-dimensional reservoir of randomly interconnected neurons without any learning rule (feedforward, feedback and self-excitation) with randomised weights and no delays. lambdaFunction: Takes in one of the classes inside the randomDistributions folder to define a distribution for the weights.
+		
+        template <typename T, typename F, typename... Args>
+        void addReservoir(int _numberOfNeurons, F&& lambdaFunction, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
             
             if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
@@ -728,21 +732,21 @@ namespace hummus {
             }
             layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
             
-            // generating normal distribution
-            std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+            // calculating weights and delays according to the provided distribution
+			const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
             
             // connecting the reservoir
             for (auto pre: neuronsInLayer) {
                 for (auto post: neuronsInLayer) {
                     // self-excitation probability
                     if (pre == post) {
-                        neurons[pre].get()->addSynapse(neurons[post].get(), weightRandom(randomEngine), 0, selfExcitationProbability, true);
+                        neurons[pre].get()->addSynapse(neurons[post].get(), weight_delay.first, 0, selfExcitationProbability, true);
                     } else {
                         // feedforward probability
-                        neurons[pre].get()->addSynapse(neurons[post].get(), weightRandom(randomEngine), 0, feedforwardProbability, true);
+                        neurons[pre].get()->addSynapse(neurons[post].get(), weight_delay.first, 0, feedforwardProbability, true);
                         
                         // feedback probability
-                        neurons[post].get()->addSynapse(neurons[pre].get(), weightRandom(randomEngine), 0, feedbackProbability, true);
+                        neurons[post].get()->addSynapse(neurons[pre].get(), weight_delay.first, 0, feedbackProbability, true);
                     }
                 }
             }
@@ -750,7 +754,7 @@ namespace hummus {
         
 		// ----- LAYER CONNECTION METHODS -----
 		
-        // one to one connections between layers. Takes in either a lambda function of the Rand class contructor to define a distribution for the weights and delays
+        // one to one connections between layers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename F>
         void oneToOne(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability=100) {
             // error handling
@@ -775,7 +779,7 @@ namespace hummus {
             }
         }
         
-        // all to all connection between layers. Takes in either a lambda function of the Rand class contructor to define a distribution for the weights and delays
+        // all to all connection between layers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename F>
         void allToAll(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability=100) {
             for (auto& preSub: presynapticLayer.sublayers) {

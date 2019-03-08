@@ -12,7 +12,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/rand.hpp"
+#include "../source/randomDistributions/normal.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/addOns/spikeLogger.hpp"
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     network.addLayer<hummus::LIF>(layer1Neurons, {mp}, true, homeostasis, resetCurrent, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(0.2, 0.05, 5, 3));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.2, 0.05, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);

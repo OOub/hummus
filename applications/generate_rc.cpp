@@ -14,7 +14,7 @@
 #include <iomanip>
 
 #include "../source/core.hpp"
-#include "../source/rand.hpp"
+#include "../source/randomDistributions/normal.hpp"
 #include "../source/neurons/inputNeuron.hpp"
 #include "../source/neurons/LIF.hpp"
 
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     // reservoir layer
     network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStdDev, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, homeostasis, resetCurrent, decayPotential, refractoryPeriod, wta);
 
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Rand(inputWeightMean, inputWeightStdDev, 0, 0));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(inputWeightMean, inputWeightStdDev));
 
     std::cout << "\nsaving network into rcNetwork.json file..." << std::endl;
     

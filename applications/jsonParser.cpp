@@ -14,7 +14,7 @@
 
 #include "../source/builder.hpp"
 #include "../source/core.hpp"
-#include "../source/rand.hpp"
+#include "../source/randomDistributions/normal.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 
 #include "../source/neurons/inputNeuron.hpp"
