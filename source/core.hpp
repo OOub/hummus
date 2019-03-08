@@ -49,14 +49,14 @@ namespace hummus {
     // to be used as feature maps
 	struct sublayer {
 		std::vector<std::size_t>    neurons;
-		int16_t                     ID;
+		int                         ID;
 	};
 	
     // structure containing a population of neurons
 	struct layer {
 		std::vector<sublayer>       sublayers;
         std::vector<std::size_t>    neurons;
-		int16_t                     ID;
+		int                         ID;
 		int                         width;
 		int                         height;
 	};
@@ -90,7 +90,7 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int16_t _neuronID, int16_t _layerID, int16_t _sublayerID, std::pair<int16_t, int16_t> _rfCoordinates,  std::pair<int16_t, int16_t> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
                 neuronID(_neuronID),
                 layerID(_layerID),
                 sublayerID(_sublayerID),
@@ -140,7 +140,7 @@ namespace hummus {
             if (postNeuron) {
                 if (connectionProbability(probability)) {
                     if (redundantConnections == false) {
-                        int16_t ID = postNeuron->getNeuronID();
+                        int ID = postNeuron->getNeuronID();
                         auto result = std::find_if(postSynapses.begin(), postSynapses.end(), [&](std::unique_ptr<synapse>& a){return a->postNeuron->getNeuronID() == ID;});
                         
                         if (result == postSynapses.end()) {
@@ -179,19 +179,19 @@ namespace hummus {
         }
         
 		// ----- SETTERS AND GETTERS -----        
-		int16_t getNeuronID() const {
+		int getNeuronID() const {
             return neuronID;
         }
 		
-        int16_t getLayerID() const {
+        int getLayerID() const {
             return layerID;
         }
         
-        int16_t getSublayerID() const {
+        int getSublayerID() const {
             return sublayerID;
         }
         
-        std::pair<int16_t, int16_t> getRfCoordinates() const {
+        std::pair<int, int> getRfCoordinates() const {
             return rfCoordinates;
         }
         
@@ -200,7 +200,7 @@ namespace hummus {
             rfCoordinates.second = col;
         }
         
-        std::pair<int16_t, int16_t> getXYCoordinates() const {
+        std::pair<int, int> getXYCoordinates() const {
             return xyCoordinates;
         }
         
@@ -314,11 +314,11 @@ namespace hummus {
         virtual void requestLearning(double timestamp, synapse* a, Network* network){}
         
 		// ----- NEURON PARAMETERS -----
-        int16_t                                          neuronID;
-        int16_t                                          layerID;
-        int16_t                                          sublayerID;
-        std::pair<int16_t, int16_t>                      rfCoordinates;
-        std::pair<int16_t, int16_t>                      xyCoordinates;
+        int                                              neuronID;
+        int                                              layerID;
+        int                                              sublayerID;
+        std::pair<int, int>                              rfCoordinates;
+        std::pair<int, int>                              xyCoordinates;
 		std::vector<synapse*>                            preSynapses;
         std::vector<std::unique_ptr<synapse>>            postSynapses;
         synapse                                          initialSynapse;
@@ -403,7 +403,7 @@ namespace hummus {
             unsigned long shift = 0;
             
             // find the layer ID
-            int16_t layerID = 0;
+            int layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += l.neurons.size();
@@ -413,8 +413,8 @@ namespace hummus {
 
             // building a layer of one dimensional sublayers
             std::vector<std::size_t> neuronsInLayer;
-            for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleIndices, std::forward<Args>(args)...)));
+            for (int k=0+shift; k<_numberOfNeurons+shift; k++) {
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRuleIndices, std::forward<Args>(args)...)));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             
@@ -431,7 +431,7 @@ namespace hummus {
             unsigned long shift = 0;
             
             // find the layer ID
-            int16_t layerID = 0;
+            int layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += l.neurons.size();
@@ -440,14 +440,14 @@ namespace hummus {
             }
             
             // building a layer of two dimensional sublayers
-            int16_t counter = 0;
+            int counter = 0;
             std::vector<sublayer> sublayers;
             std::vector<std::size_t> neuronsInLayer;
-            for (int16_t i=0; i<_sublayerNumber; i++) {
+            for (int i=0; i<_sublayerNumber; i++) {
                 std::vector<std::size_t> neuronsInSublayer;
-                int16_t x = 0; int16_t y = 0;
-                for (int16_t k=0+shift; k<numberOfNeurons+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, layerID, i, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(x, y), _learningRuleIndices, std::forward<Args>(args)...)));
+                int x = 0; int y = 0;
+                for (int k=0+shift; k<numberOfNeurons+shift; k++) {
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), _learningRuleIndices, std::forward<Args>(args)...)));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
                     
@@ -679,7 +679,7 @@ namespace hummus {
             unsigned long shift = 0;
             
             // find the layer ID
-            int16_t layerID = 0;
+            int layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += l.neurons.size();
@@ -690,14 +690,14 @@ namespace hummus {
             // add decision-making neurons
             std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
-                for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
+                for (int k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             } else {
-                for (int16_t k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
+                for (int k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
+                    neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRuleIndices, _timeDependentCurrent, _homeostasis, _decayCurrent, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
@@ -717,7 +717,7 @@ namespace hummus {
             unsigned long shift = 0;
             
             // find the layer ID
-            int16_t layerID = 0;
+            int layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += l.neurons.size();
@@ -727,8 +727,8 @@ namespace hummus {
             
             // creating the reservoir of neurons
             std::vector<std::size_t> neuronsInLayer;
-            for (int16_t k=0+shift; k<_numberOfNeurons+shift; k++) {
-                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int16_t, int16_t>(0, 0), std::pair<int16_t, int16_t>(-1, -1), {}, std::forward<Args>(args)...)));
+            for (int k=0+shift; k<_numberOfNeurons+shift; k++) {
+                neurons.emplace_back(std::unique_ptr<T>(new T(k, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), {}, std::forward<Args>(args)...)));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
@@ -840,7 +840,7 @@ namespace hummus {
         // ----- PUBLIC NETWORK METHODS -----
         
         // add spike to the network
-        void injectSpike(int16_t neuronIndex, double timestamp) {
+        void injectSpike(int neuronIndex, double timestamp) {
             initialSpikes.push_back(neurons[neuronIndex].get()->prepareInitialSpike(timestamp));
         }
         
@@ -1284,7 +1284,7 @@ namespace hummus {
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::deque<spike>                                  initialSpikes;
+		std::deque<spike>                                   initialSpikes;
         std::deque<spike>                                   generatedSpikes;
         std::deque<spike>                                   predictedSpikes;
         std::vector<AddOn*>                                 addOns;

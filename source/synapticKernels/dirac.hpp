@@ -20,10 +20,11 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac() = default;
+		Dirac() : SynapticKernelHandler() {}
+		
 		virtual ~Dirac(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual void updateCurrent(){}
+		virtual float synapticIntegration(float neuronCurrent, float externalCurrent, double synapseWeight){}
 	};
 }

@@ -52,8 +52,8 @@ namespace hummus {
             LIF* n = dynamic_cast<LIF*>(a->postNeuron);
 
             std::vector<double> timeDifferences;
-            std::vector<int16_t> plasticID;
-            std::vector<std::vector<int16_t>> plasticCoordinates(4);
+            std::vector<int> plasticID;
+            std::vector<std::vector<int>> plasticCoordinates(4);
 #ifndef NDEBUG
             std::cout << "New learning epoch at t=" << timestamp << std::endl;
 #endif
@@ -112,7 +112,7 @@ namespace hummus {
             for (auto i=0; i<a->postNeuron->getPreSynapses().size(); i++) {
                 // discarding inhibitory synapses
                 if (a->postNeuron->getPreSynapses()[i]->weight >= 0) {
-                    int16_t ID = a->postNeuron->getPreSynapses()[i]->preNeuron->getNeuronID();
+                    int ID = a->postNeuron->getPreSynapses()[i]->preNeuron->getNeuronID();
                     if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
                         float weightDifference = (desiredWeight* a->postNeuron->getMembraneResistance()) - (a->postNeuron->getPreSynapses()[i]->weight*a->postNeuron->getMembraneResistance());
                         float change = - std::exp( - std::pow(weight_alpha*weightDifference,2)) + 1;
