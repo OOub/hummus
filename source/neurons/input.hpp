@@ -1,5 +1,5 @@
 /*
- * inputNeuron.hpp
+ * input.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -17,16 +17,16 @@
 #include "../dependencies/json.hpp"
 
 namespace hummus {
-	class InputNeuron : public Neuron {
+	class Input : public Neuron {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		InputNeuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+		Input(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<size_t> _learningRuleIndices={}, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRuleIndices, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 active(true),
                 refractoryPeriod(_refractoryPeriod) {}
 		
-		virtual ~InputNeuron(){}
+		virtual ~Input(){}
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
 		void initialisation(Network* network) override {

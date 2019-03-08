@@ -17,8 +17,8 @@
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/GUI/qtDisplay.hpp"
 
-#include "../source/neurons/inputNeuron.hpp"
-#include "../source/neurons/decisionMakingNeuron.hpp"
+#include "../source/neurons/input.hpp"
+#include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/IF.hpp"
 

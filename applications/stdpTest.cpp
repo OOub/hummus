@@ -20,9 +20,9 @@
 #include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
-#include "../source/neurons/inputNeuron.hpp"
+#include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/decisionMakingNeuron.hpp"
+#include "../source/neurons/decisionMaking.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     auto stdp = network.makeLearningRule<hummus::STDP>();
 	
 	//  ----- CREATING THE NETWORK -----
-    network.addLayer<hummus::InputNeuron>(inputNeurons, {});
+    network.addLayer<hummus::Input>(inputNeurons, {});
     network.addLayer<hummus::LIF>(layer1Neurons, {stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----

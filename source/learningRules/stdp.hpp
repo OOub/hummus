@@ -15,7 +15,7 @@
 #pragma once
 
 #include "../globalLearningRuleHandler.hpp"
-#include "../neurons/inputNeuron.hpp"
+#include "../neurons/input.hpp"
 #include "../neurons/LIF.hpp"
 
 namespace hummus {

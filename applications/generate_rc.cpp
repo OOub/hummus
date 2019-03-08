@@ -15,7 +15,7 @@
 
 #include "../source/core.hpp"
 #include "../source/randomDistributions/normal.hpp"
-#include "../source/neurons/inputNeuron.hpp"
+#include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
 
 int main(int argc, char** argv) {
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
     hummus::Network network;
     
     // pixel grid layer
-    network.add2dLayer<hummus::InputNeuron>(gridWidth, gridHeight, 1, {});
+    network.add2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {});
 
     // reservoir layer
     network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStdDev, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, homeostasis, resetCurrent, decayPotential, refractoryPeriod, wta);
