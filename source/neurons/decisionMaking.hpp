@@ -21,8 +21,8 @@ namespace hummus {
 	class DecisionMaking : public LIF {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules={}, bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=1000, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100, std::string _classLabel="") :
-                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _timeDependentCurrent, _homeostasis, _resetCurrent, _decayPotential, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent),
+		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=1000, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100, std::string _classLabel="") :
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent),
                     classLabel(_classLabel) {
                 // DecisionMaking neuron type = 2 for JSON save
                 neuronType = 3;
@@ -33,8 +33,10 @@ namespace hummus {
         // ----- PUBLIC DECISION MAKING NEURON METHODS -----
         virtual void initialisation(Network* network) override {
             // checking which synaptic kernel was chosen in the asynchronous network
-            if (network->getNetworkType() == true && timeDependentCurrent == true) {
-                std::cout << "the asynchronous neuron only works with a constant current, this was used" << std::endl;
+            if (network->getNetworkType() == true) {
+                if (Exponential *kernel = dynamic_cast<Exponential*>(synapticKernel)) {
+                	throw std::logic_error("the event-based LIF neuron does not work with the Exponential kernel, as the biexponential model it is based on, does not have an analytical solution");
+				}
             }
             
             // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
@@ -64,11 +66,9 @@ namespace hummus {
                 if (timestamp - previousSpikeTime >= refractoryPeriod) {
                     active = true;
                 }
-                
-                // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
-                if (timestamp - previousInputTime > resetCurrent) {
-                    current = 0;
-                }
+				
+                // updating the current
+                current = synapticKernel->updateCurrent(timestamp, current);
                 
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
@@ -94,9 +94,9 @@ namespace hummus {
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
                     }
-                    
-                    // updating the current
-                    current += externalCurrent*a->weight;
+					
+                    // synaptic integration
+                    current = synapticKernel->integrateSpike(current, externalCurrent, a->weight);
 #ifndef NDEBUG
                     std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
 #endif
@@ -191,15 +191,8 @@ namespace hummus {
                 active = true;
             }
             
-            if (timeDependentCurrent ) {
-                // current decay
-                current *= std::exp(-timestep/resetCurrent);
-            } else {
-                // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
-                if (timestamp - previousInputTime > resetCurrent) {
-                    current = 0;
-                }
-            }
+            // updating the current
+			current = synapticKernel->updateCurrent(timestamp, current);
             
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
@@ -228,7 +221,8 @@ namespace hummus {
                     }
                     
                     // updating the current
-                    current += externalCurrent*a->weight;
+                    // synaptic integration
+					current = synapticKernel->integrateSpike(current, externalCurrent, a->weight);
                     activeSynapse = a;
                     
                     // updating the timestamp when a synapse was propagating a spike
@@ -350,7 +344,6 @@ namespace hummus {
                 {"decayWeight", decayWeight},
                 {"decayHomeostasis", decayHomeostasis},
                 {"homeostasisBeta", homeostasisBeta},
-                {"timeDependentCurrent", timeDependentCurrent},
                 {"wta", wta},
                 {"classLabel", classLabel},
                 {"dendriticSynapses", nlohmann::json::array()},

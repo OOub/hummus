@@ -15,6 +15,7 @@
 
 #include "../core.hpp"
 #include "../dependencies/json.hpp"
+#include "../synapticKernels/exponential.hpp"
 
 namespace hummus {
     
@@ -22,10 +23,9 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules={}, bool _timeDependentCurrent=false, bool _homeostasis=false, float _resetCurrent=10, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 refractoryPeriod(_refractoryPeriod),
-                resetCurrent(_resetCurrent),
                 decayPotential(_decayPotential),
                 externalCurrent(_externalCurrent),
                 current(0),
@@ -38,16 +38,9 @@ namespace hummus {
                 homeostasisBeta(_homeostasisBeta),
                 inhibited(false),
                 inhibitionTime(0),
-                timeDependentCurrent(_timeDependentCurrent),
+                synapticKernel(_synapticKernel),
                 wta(_wta) {
 			// error handling
-			if (resetCurrent == decayPotential) {
-                throw std::logic_error("The current decay and the potential decay cannot be equal: a division by 0 occurs");
-            }
-			
-			if (resetCurrent <= 0) {
-                throw std::logic_error("The potential decay cannot less than or equal to 0");
-            }
 					
     	    if (decayPotential <= 0) {
                 throw std::logic_error("The potential decay cannot less than or equal to 0");
@@ -62,8 +55,10 @@ namespace hummus {
 		// ----- PUBLIC LIF METHODS -----
 		virtual void initialisation(Network* network) override {
             // checking which synaptic kernel was chosen in the asynchronous network 
-            if (network->getNetworkType() == true && timeDependentCurrent == true) {
-                std::cout << "the asynchronous neuron only works with a constant current, this was used" << std::endl;
+            if (network->getNetworkType() == true) {
+            	if (Exponential *kernel = dynamic_cast<Exponential*>(synapticKernel)) {
+                	throw std::logic_error("the event-based LIF neuron does not work with the Exponential kernel, as the biexponential model it is based on, does not have an analytical solution");
+				}
             }
             
             // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
@@ -87,11 +82,9 @@ namespace hummus {
                 if (timestamp - previousSpikeTime >= refractoryPeriod) {
                     active = true;
                 }
-                
-                // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
-                if (timestamp - previousInputTime > resetCurrent) {
-                    current = 0;
-                }
+				
+				// updating the current
+                current = synapticKernel->updateCurrent(timestamp, current);
 				
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
@@ -117,9 +110,10 @@ namespace hummus {
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
                     }
-                    
-                    // updating the current
-                    current += externalCurrent*a->weight;
+					
+                    // synaptic integration
+					current = synapticKernel->integrateSpike(current, externalCurrent, a->weight);
+
 #ifndef NDEBUG
                     std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
 #endif
@@ -208,17 +202,9 @@ namespace hummus {
             if (timestamp - previousSpikeTime >= refractoryPeriod) {
                 active = true;
             }
-            
-            if (timeDependentCurrent ) {
-                // current decay
-                current *= std::exp(-timestep/resetCurrent);
-            } else {
-                // reset the current to 0 in the absence of incoming spikes by the time t + resetCurrent
-                if (timestamp - previousInputTime > resetCurrent) {
-                    current = 0;
-                }
-            }
-            
+			
+            synapticKernel->updateCurrent(timestamp, current);
+			
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
             
@@ -246,7 +232,8 @@ namespace hummus {
 					}
                     
                     // updating the current
-                    current += externalCurrent*a->weight;
+                    current += synapticKernel->integrateSpike(current, externalCurrent, a->weight);
+//                    current += externalCurrent*a->weight;
 
 					activeSynapse = a;
                     
@@ -268,10 +255,10 @@ namespace hummus {
 				}
                 
                 if (timeDependentCurrent ) {
-                    // membrane potential equation for time-dependant current (double exponential model)
+                    // membrane potential equation for exponential synapse (double exponential model)
                     potential += (membraneResistance*resetCurrent/(resetCurrent - decayPotential)) * current * (std::exp(-timestep/resetCurrent) - std::exp(-timestep/decayPotential));
                 } else {
-                    // membrane potential equation for constant current
+                    // membrane potential equation for step synapse
                     potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
                 }
             }
@@ -345,7 +332,6 @@ namespace hummus {
                 {"restingPotential", restingPotential},
                 {"resistance", membraneResistance},
                 {"refractoryPeriod", refractoryPeriod},
-                {"resetCurrent", resetCurrent},
                 {"decayPotential", decayPotential},
                 {"externalCurrent", externalCurrent},
                 {"burstingActivity", burstingActivity},
@@ -354,7 +340,6 @@ namespace hummus {
                 {"decayWeight", decayWeight},
                 {"decayHomeostasis", decayHomeostasis},
                 {"homeostasisBeta", homeostasisBeta},
-                {"timeDependentCurrent", timeDependentCurrent},
                 {"wta", wta},
                 {"dendriticSynapses", nlohmann::json::array()},
                 {"axonalSynapses", nlohmann::json::array()},
@@ -450,10 +435,6 @@ namespace hummus {
             homeostasisBeta = newHB;
         }
         
-        void setTimeDependentCurrent(bool newBool) {
-            timeDependentCurrent = newBool;
-        }
-        
         void setWTA(bool newBool) {
             wta = newBool;
         }
@@ -522,6 +503,6 @@ namespace hummus {
 		float                                    homeostasisBeta;
 		bool                                     wta;
 		synapse*                                 activeSynapse;
-        bool                                     timeDependentCurrent;
+        SynapticKernelHandler*                   synapticKernel;
 	};
 }
