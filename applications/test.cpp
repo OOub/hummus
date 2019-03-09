@@ -44,10 +44,11 @@ int main(int argc, char** argv) {
     hummus::Network network({&spikeLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
-    
+    auto exponential = network.makeSynapticKernel<hummus::Exponential>(10);
+	
     // creating layers of neurons
     network.addLayer<hummus::Input>(1, {});
-    network.addLayer<hummus::LIF>(2, {}, true, false, 10, 20, 0, false);
+    network.addLayer<hummus::LIF>(2, {}, &exponential, true, false, 10, 20, 0, false);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0.1));
