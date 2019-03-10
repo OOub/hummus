@@ -44,21 +44,20 @@ int main(int argc, char** argv) {
     hummus::Network network({&spikeLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
-    auto exponential = network.makeSynapticKernel<hummus::Exponential>(10);
+    auto exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
     // creating layers of neurons
     network.addLayer<hummus::Input>(1, {});
-    network.addLayer<hummus::LIF>(2, {}, &exponential, true, false, 10, 20, 0, false);
+    network.addLayer<hummus::LIF>(1, {}, &exponential, false, 20, 3, true);
     
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0.1));
-    network.lateralInhibition(network.getLayers()[1], -1);
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
     network.injectSpike(0, 11);
     network.injectSpike(0, 30);
-    
+	
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
     qtDisplay.setTimeWindow(100);

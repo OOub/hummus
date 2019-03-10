@@ -22,8 +22,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		IF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
-                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _synapticKernel, _homeostasis, 1, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent) {
+		IF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, int _potentialRisingTime=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _synapticKernel, _homeostasis, _potentialRisingTime, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent) {
                 // IF neuron type = 2 for JSON save
                 neuronType = 2;
             }
@@ -63,7 +63,7 @@ namespace hummus {
                 }
 				
 				// updating the current
-                current = synapticKernel->updateCurrent(timestamp, current);
+                current = synapticKernel->updateCurrent(timestamp, 0, previousInputTime, current);
                 
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
@@ -105,10 +105,10 @@ namespace hummus {
                         // calculating time at which potential = threshold
                         double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
                         
-                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + resetCurrent) {
+                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + synapticKernel->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, a, spikeType::prediction}, spikeType::prediction);
                         } else {
-                            network->injectPredictedSpike(spike{timestamp + resetCurrent, a, spikeType::endOfIntegration}, spikeType::endOfIntegration);
+                            network->injectPredictedSpike(spike{timestamp + synapticKernel->getSynapseTimeConstant(), a, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
                         potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
@@ -120,7 +120,7 @@ namespace hummus {
                 }
             } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-resetCurrent/decayPotential)) + (potential - restingPotential) * std::exp(-resetCurrent/decayPotential);
+                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-synapticKernel->getSynapseTimeConstant()/decayPotential)) + (potential - restingPotential) * std::exp(-synapticKernel->getSynapseTimeConstant()/decayPotential);
                 }
             }
             
@@ -179,8 +179,8 @@ namespace hummus {
             }
             
             // updating the current
-			current = synapticKernel->updateCurrent(timestamp, current);
-            
+			current = synapticKernel->updateCurrent(timestamp, timestep, previousInputTime, current);
+			
             // threshold decay
             if (homeostasis) {
                 threshold = restingThreshold + (threshold-restingThreshold)*exp(-timestep/decayHomeostasis);
@@ -222,14 +222,8 @@ namespace hummus {
                         network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
                     }
                 }
-                
-                if (timeDependentCurrent ) {
-                    // membrane potential equation for time-dependant current (double exponential model)
-                    potential += (membraneResistance*resetCurrent/(resetCurrent - decayPotential)) * current * (std::exp(-timestep/resetCurrent) - std::exp(-timestep/decayPotential));
-                } else {
-                    // membrane potential equation for constant current
-                    potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
-                }
+				
+				potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
             }
             
             if (a) {
@@ -290,7 +284,6 @@ namespace hummus {
                 {"restingPotential", restingPotential},
                 {"resistance", membraneResistance},
                 {"refractoryPeriod", refractoryPeriod},
-                {"resetCurrent", resetCurrent},
                 {"decayPotential", decayPotential},
                 {"externalCurrent", externalCurrent},
                 {"burstingActivity", burstingActivity},

@@ -7,12 +7,14 @@
  * Last Version: 23/01/2019
  *
  * Information: a synaptic kernel that instantly rises then exponentially decays
+  * kernel type 1
  */
 
 #pragma once
 
 #include <random>
 
+#include "../dependencies/json.hpp"
 #include "../synapticKernelHandler.hpp"
 
 namespace hummus {
@@ -23,9 +25,12 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR -----
 		Exponential(float _decayCurrent=10, float gaussianStandardDeviation=0) :
-				decayCurrent(_decayCurrent),
-				previousTimestamp(0) {
+				SynapticKernelHandler() {
 				
+			synapseTimeConstant = _decayCurrent;
+			gaussianStdDev = gaussianStandardDeviation;
+			type = 1;
+			
 			// error handling
 			if (_decayCurrent <= 0) {
                 throw std::logic_error("The current decay value cannot be less than or equal to 0");
@@ -40,20 +45,31 @@ namespace hummus {
 		virtual ~Exponential(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double updateCurrent(double timestamp, float neuronCurrent) override {
-			double updatedCurrent = neuronCurrent * std::exp(-(timestamp - previousTimestamp)/decayCurrent);
-			previousTimestamp = timestamp;
+		virtual double updateCurrent(double timestamp, double timestep, double previousInputTime, float neuronCurrent) override {
 			
-			return updatedCurrent;
+			// event-based
+			if (timestep == 0) {
+				return neuronCurrent * std::exp(-(timestep-previousInputTime)/synapseTimeConstant);
+			// clock-based
+			} else {
+				return neuronCurrent * std::exp(-timestep/synapseTimeConstant);
+			}
 		}
 		
 		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-			return (neuronCurrent + externalCurrent * synapseWeight) + normalDistribution(randomEngine);
+			return (neuronCurrent + (externalCurrent * synapseWeight)) + normalDistribution(randomEngine);
 		}
 	
+		virtual void toJson(nlohmann::json& output) override {
+			// general synaptic kernel parameters
+            output.push_back({
+            	{"type", type},
+				{"gaussianStdDev", gaussianStdDev},
+				{"decayCurrent", synapseTimeConstant},
+            });
+		}
+		
 	protected:
-		float                      decayCurrent;
-		double                     previousTimestamp;
 		std::mt19937               randomEngine;
 		std::normal_distribution<> normalDistribution;
 	};

@@ -42,6 +42,10 @@
 #include "synapticKernelHandler.hpp"
 #include "dependencies/json.hpp"
 
+#include "synapticKernels/exponential.hpp"
+#include "synapticKernels/dirac.hpp"
+#include "synapticKernels/step.hpp"
+
 namespace hummus {
     
 	class Neuron;
@@ -374,13 +378,21 @@ namespace hummus {
                     {"neuronNumber",l.neurons.size()},
                     {"neuronType",neurons[l.neurons[0]]->getType()},
                     {"learningRules", nlohmann::json::array()},
+					{"synapticKernels", nlohmann::json::array()},
                 });
                 auto& learningRules = jsonNetwork["layers"].back()["learningRules"];
                 for (auto rule: neurons[l.neurons[0]]->getLearningInfo()) {
                     learningRules.push_back({{"ID",rule.first},{"Parameters", rule.second}});
                 }
+				
+                // saving the synaptic kernels and what layer they were used in
+				for (auto& s: synapticKernels) {
+					s->toJson(jsonNetwork["layers"]["synapticKernels"]);
+				}
+				
             }
-            
+			
+			
             // saving the important information needed from the neurons
             for (auto& n: neurons) {
                 n->toJson(jsonNetwork["neurons"]);
