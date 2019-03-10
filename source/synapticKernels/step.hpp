@@ -7,12 +7,14 @@
  * Last Version: 23/01/2019
  *
  * Information: a synaptic kernel updating the current according to a step function; the current stays constant for a period of time then resets
+ * kernel type 2
  */
 
 #pragma once
 
 #include <random>
 
+#include "../dependencies/json.hpp"
 #include "../synapticKernelHandler.hpp"
 
 namespace hummus {
@@ -23,11 +25,14 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR -----
 		Step(float _resetCurrent=5, float gaussianStandardDeviation=0) :
-				resetCurrent(_resetCurrent),
-				previousTimestamp(0) {
-				
+				SynapticKernelHandler() {
+			
+			synapseTimeConstant = _resetCurrent;
+			gaussianStdDev = gaussianStandardDeviation;
+			type = 2;
+			
 			// error handling
-			if (resetCurrent <= 0) {
+			if (_resetCurrent <= 0) {
                 throw std::logic_error("The current reset value cannot be less than or equal to 0");
             }
 					
@@ -39,26 +44,29 @@ namespace hummus {
 		virtual ~Step(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double updateCurrent(double timestamp, float neuronCurrent) override {
-			double updatedCurrent;
-			if (timestamp - previousInputTime > resetCurrent) {
-				updatedCurrent = 0;
+		virtual double updateCurrent(double timestamp, double timestep, double previousInputTime, float neuronCurrent) override {
+
+			if (timestamp - previousInputTime > synapseTimeConstant) {
+				return  0;
 			} else {
-				updatedCurrent = neuronCurrent;
+				return neuronCurrent;
 			}
-			
-			previousTimestamp = timestamp;
-			
-			return updatedCurrent;
 		}
 		
 		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
 			return (neuronCurrent + externalCurrent * synapseWeight) + normalDistribution(randomEngine);
 		}
 		
+		virtual void toJson(nlohmann::json& output) override {
+			// general synaptic kernel parameters
+            output.push_back({
+            	{"type", type},
+				{"gaussianStdDev", gaussianStdDev},
+				{"resetCurrent", synapseTimeConstant},
+            });
+		}
+		
 	protected:
-		float            		   resetCurrent;
-		double            	 	   previousTimestamp;
 		std::mt19937               randomEngine;
 		std::normal_distribution<> normalDistribution;
 	};

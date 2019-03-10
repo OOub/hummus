@@ -68,7 +68,7 @@ namespace hummus {
                 }
 				
                 // updating the current
-                current = synapticKernel->updateCurrent(timestamp, current);
+                current = synapticKernel->updateCurrent(timestamp, 0, previousInputTime, current);
                 
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
@@ -113,10 +113,10 @@ namespace hummus {
                         // calculating time at which potential = threshold
                         double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
                         
-                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + resetCurrent) {
+                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + synapticKernel->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, a, spikeType::prediction}, spikeType::prediction);
                         } else {
-                            network->injectPredictedSpike(spike{timestamp + resetCurrent, a, spikeType::endOfIntegration}, spikeType::endOfIntegration);
+                            network->injectPredictedSpike(spike{timestamp + synapticKernel->getSynapseTimeConstant(), a, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
                         potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
@@ -128,7 +128,7 @@ namespace hummus {
                 }
             } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-resetCurrent/decayPotential)) + (potential - restingPotential) * std::exp(-resetCurrent/decayPotential);
+                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-synapticKernel->getSynapseTimeConstant()/decayPotential)) + (potential - restingPotential) * std::exp(-synapticKernel->getSynapseTimeConstant()/decayPotential);
                 }
             }
             
@@ -192,7 +192,7 @@ namespace hummus {
             }
             
             // updating the current
-			current = synapticKernel->updateCurrent(timestamp, current);
+			current = synapticKernel->updateCurrent(timestamp, timestep, previousInputTime, current);
             
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
@@ -220,7 +220,6 @@ namespace hummus {
                         threshold += homeostasisBeta/decayHomeostasis;
                     }
                     
-                    // updating the current
                     // synaptic integration
 					current = synapticKernel->integrateSpike(current, externalCurrent, a->weight);
                     activeSynapse = a;
@@ -241,14 +240,8 @@ namespace hummus {
                         network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
                     }
                 }
-                
-                if (timeDependentCurrent ) {
-                    // membrane potential equation for time-dependant current (double exponential model)
-                    potential += (membraneResistance*resetCurrent/(resetCurrent - decayPotential)) * current * (std::exp(-timestep/resetCurrent) - std::exp(-timestep/decayPotential));
-                } else {
-                    // membrane potential equation for constant current
-                    potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
-                }
+				
+				potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
             }
             
             if (a) {
@@ -335,7 +328,6 @@ namespace hummus {
                 {"restingPotential", restingPotential},
                 {"resistance", membraneResistance},
                 {"refractoryPeriod", refractoryPeriod},
-                {"resetCurrent", resetCurrent},
                 {"decayPotential", decayPotential},
                 {"externalCurrent", externalCurrent},
                 {"burstingActivity", burstingActivity},

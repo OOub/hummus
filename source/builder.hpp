@@ -23,6 +23,10 @@
 #include "learningRules/myelinPlasticity.hpp"
 #include "learningRules/rewardModulatedSTDP.hpp"
 
+#include "synapticKernels/exponential.hpp"
+#include "synapticKernels/dirac.hpp"
+#include "synapticKernels/step.hpp"
+
 #include "dependencies/json.hpp"
 
 namespace hummus {

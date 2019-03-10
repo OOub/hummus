@@ -16,6 +16,8 @@
 #include "../core.hpp"
 #include "../dependencies/json.hpp"
 #include "../synapticKernels/exponential.hpp"
+#include "../synapticKernels/dirac.hpp"
+#include "../synapticKernels/step.hpp"
 
 namespace hummus {
     
@@ -40,8 +42,8 @@ namespace hummus {
                 inhibitionTime(0),
                 synapticKernel(_synapticKernel),
                 wta(_wta) {
-			// error handling
 					
+			// error handling
     	    if (decayPotential <= 0) {
                 throw std::logic_error("The potential decay cannot less than or equal to 0");
             }
@@ -84,7 +86,7 @@ namespace hummus {
                 }
 				
 				// updating the current
-                current = synapticKernel->updateCurrent(timestamp, current);
+                current = synapticKernel->updateCurrent(timestamp, 0, previousInputTime, current);
 				
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
@@ -130,10 +132,10 @@ namespace hummus {
                         // calculating time at which potential = threshold
                         double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + membraneResistance * current) + std::log( membraneResistance * current - potential + restingPotential)) + timestamp;
                         
-                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + resetCurrent) {
+                        if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + synapticKernel->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, a, spikeType::prediction}, spikeType::prediction);
                         } else {
-                            network->injectPredictedSpike(spike{timestamp + resetCurrent, a, spikeType::endOfIntegration}, spikeType::endOfIntegration);
+                            network->injectPredictedSpike(spike{timestamp + synapticKernel->getSynapseTimeConstant(), a, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
                         potential = restingPotential + membraneResistance * current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
@@ -145,7 +147,7 @@ namespace hummus {
                 }
             } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-resetCurrent/decayPotential)) + (potential - restingPotential) * std::exp(-resetCurrent/decayPotential);
+                    potential = restingPotential + membraneResistance * current * (1 - std::exp(-synapticKernel->getSynapseTimeConstant()/decayPotential)) + (potential - restingPotential) * std::exp(-synapticKernel->getSynapseTimeConstant()/decayPotential);
                 }
             }
         
@@ -203,7 +205,8 @@ namespace hummus {
                 active = true;
             }
 			
-            synapticKernel->updateCurrent(timestamp, current);
+			// updating the current
+            current = synapticKernel->updateCurrent(timestamp, timestep, previousInputTime, current);
 			
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
@@ -231,9 +234,8 @@ namespace hummus {
 						threshold += homeostasisBeta/decayHomeostasis;
 					}
                     
-                    // updating the current
-                    current += synapticKernel->integrateSpike(current, externalCurrent, a->weight);
-//                    current += externalCurrent*a->weight;
+                    // integrating spike
+                    current = synapticKernel->integrateSpike(current, externalCurrent, a->weight);
 
 					activeSynapse = a;
                     
@@ -253,14 +255,9 @@ namespace hummus {
                         network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
                     }
 				}
-                
-                if (timeDependentCurrent ) {
-                    // membrane potential equation for exponential synapse (double exponential model)
-                    potential += (membraneResistance*resetCurrent/(resetCurrent - decayPotential)) * current * (std::exp(-timestep/resetCurrent) - std::exp(-timestep/decayPotential));
-                } else {
-                    // membrane potential equation for step synapse
-                    potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
-                }
+				
+				potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
+
             }
             
             if (a) {
@@ -366,6 +363,10 @@ namespace hummus {
         }
         
 		// ----- SETTERS AND GETTERS -----
+		SynapticKernelHandler* getSynapticKernel() {
+			return synapticKernel;
+		}
+		
 		bool getActivity() const {
 			return active;
 		}
@@ -377,15 +378,7 @@ namespace hummus {
         void setDecayPotential(float newDecayPotential) {
             decayPotential = newDecayPotential;
         }
-        
-        float getResetCurrent() const {
-            return resetCurrent;
-        }
 		
-        void setResetCurrent(float newResetCurrent) {
-            resetCurrent = newResetCurrent;
-        }
-        
         float getCurrent() const {
         	return current;
 		}
@@ -488,7 +481,6 @@ namespace hummus {
         
 		// ----- LIF PARAMETERS -----
         float                                    decayWeight;
-		float                                    resetCurrent;
 		float                                    decayPotential;
         float                                    current;
 		bool                                     active;
