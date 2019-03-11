@@ -16,6 +16,7 @@
 #include "../source/GUI/qtDisplay.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
+#include "../source/synapticKernels/step.hpp"
 
 int main(int argc, char** argv) {
 	//  ----- READING TRAINING DATA FROM FILE -----
@@ -27,10 +28,12 @@ int main(int argc, char** argv) {
 	hummus::Network network(&qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
+	auto step = network.makeSynapticKernel<hummus::Step>();
+	
     network.add2dLayer<hummus::Input>(12, 12, 2, {});
-    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 3, hummus::Normal(), 100, 1, {}, false, false, 10, 20, 3, true);
-    network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, false, false, 10, 20, 3, true);
-    network.addLayer<hummus::LIF>(1, {});
+    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 3, hummus::Normal(), 100, 1, {}, &step, false, 20, 3, true);
+    network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, &step, false, 20, 3, true);
+    network.addLayer<hummus::LIF>(1, {}, &step);
     
     network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Normal());
     

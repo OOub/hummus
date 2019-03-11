@@ -36,6 +36,8 @@
 #include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
+#include "../source/synapticKernels/exponential.hpp"
+
 int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
