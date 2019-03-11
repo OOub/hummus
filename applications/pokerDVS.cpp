@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 	
     auto exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
-    network.add2dLayer<hummus::Input>(34, 34, 1, {});
+    network.add2dLayer<hummus::Input>(34, 34, 1, {}, nullptr);
     network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(), 100, 1, {&ti_stdp}, &exponential, homeostasis, 20, 3, wta);
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, &exponential, homeostasis, 20, 3, wta);
     network.addDecisionMakingLayer<hummus::DecisionMaking>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtrainingLabel.txt", &exponential);

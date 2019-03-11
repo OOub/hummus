@@ -26,7 +26,7 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _synapticKernel, _eligibilityDecay, _threshold, _restingPotential, _membraneResistance),
                 refractoryPeriod(_refractoryPeriod),
                 decayPotential(_decayPotential),
                 externalCurrent(_externalCurrent),
@@ -40,14 +40,17 @@ namespace hummus {
                 homeostasisBeta(_homeostasisBeta),
                 inhibited(false),
                 inhibitionTime(0),
-                synapticKernel(_synapticKernel),
                 wta(_wta) {
 					
 			// error handling
     	    if (decayPotential <= 0) {
                 throw std::logic_error("The potential decay cannot less than or equal to 0");
             }
-                    
+					
+            if (decayPotential == synapticKernel->getSynapseTimeConstant()) {
+                throw std::logic_error("The potential decay and the synapse time constant cannot be equal");
+            }
+					
             // LIF neuron type == 1 (for JSON save)
             neuronType = 1;
 		}
@@ -363,10 +366,6 @@ namespace hummus {
         }
         
 		// ----- SETTERS AND GETTERS -----
-		SynapticKernelHandler* getSynapticKernel() {
-			return synapticKernel;
-		}
-		
 		bool getActivity() const {
 			return active;
 		}
@@ -495,6 +494,5 @@ namespace hummus {
 		float                                    homeostasisBeta;
 		bool                                     wta;
 		synapse*                                 activeSynapse;
-        SynapticKernelHandler*                   synapticKernel;
 	};
 }

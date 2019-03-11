@@ -24,6 +24,7 @@ namespace hummus {
 		SynapticKernelHandler() :
 				gaussianStdDev(0),
 				type(0),
+				kernelID(0),
 				synapseTimeConstant(0) {}
 		
 		virtual ~SynapticKernelHandler(){}
@@ -44,7 +45,16 @@ namespace hummus {
 			return synapseTimeConstant;
 		}
 		
+		int getKernelID() const {
+			return kernelID;
+		}
+		
+		void setKernelID(int ID) {
+			kernelID = ID;
+		}
+		
 	protected:
+		int   kernelID;
 		float gaussianStdDev;
 		int   type;
 		float synapseTimeConstant;

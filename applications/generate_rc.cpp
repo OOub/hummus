@@ -14,7 +14,8 @@
 #include <iomanip>
 
 #include "../source/core.hpp"
- #include "../source/synapticKernels/step.hpp"
+#include "../source/synapticKernels/step.hpp"
+#include "../source/randomDistributions/cauchy.hpp"
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
@@ -48,13 +49,13 @@ int main(int argc, char** argv) {
     int numberOfNeurons = std::atoi(argv[5]);
     std::cout << "Reservoir Neurons: " << std::setw(static_cast<int>(clean_cout-std::string("Reservoir Neurons: ").size())) << argv[5] << std::endl;
     
-    // gaussian mean for weights
-    float weightMean = std::atof(argv[6]);
-    std::cout << "Weight mean: " << std::setw(static_cast<int>(clean_cout-std::string("Weight mean: ").size())) << argv[6] << std::endl;
+    // cauchy location for weights
+    float weightLocation = std::atof(argv[6]);
+    std::cout << "Weight location: " << std::setw(static_cast<int>(clean_cout-std::string("Weight location: ").size())) << argv[6] << std::endl;
     
-    // gaussian standard deviation for weights
-    float weightStdDev = std::atof(argv[7]);
-    std::cout << "Weight std: " << std::setw(static_cast<int>(clean_cout-std::string("Weight std: ").size())) << argv[7] << std::endl;
+    // cauchy scalefor weights
+    float weightScale = std::atof(argv[7]);
+    std::cout << "Weight scale: " << std::setw(static_cast<int>(clean_cout-std::string("Weight scale: ").size())) << argv[7] << std::endl;
     
     // percentage likelihood of feedforward connections
     int feedforwardProbability = std::atoi(argv[8]);
@@ -96,12 +97,12 @@ int main(int argc, char** argv) {
     hummus::Network network;
     
     // pixel grid layer
-    network.add2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {});
+    network.add2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {}, nullptr);
 
     // reservoir layer
     auto step = network.makeSynapticKernel<hummus::Step>(resetCurrent);
     
-    network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStdDev, feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
+    network.addReservoir<hummus::LIF>(numberOfNeurons, hummus::Cauchy(weightLocation, weightScale), feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
 
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(inputWeightMean, inputWeightStdDev));
 

@@ -94,7 +94,7 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
                 neuronID(_neuronID),
                 layerID(_layerID),
                 sublayerID(_sublayerID),
@@ -111,6 +111,7 @@ namespace hummus {
                 previousSpikeTime(0),
                 previousInputTime(0),
                 neuronType(0),
+                synapticKernel(_synapticKernel),
                 synapticEfficacy(1) {}
     	
 		virtual ~Neuron(){}
@@ -308,7 +309,11 @@ namespace hummus {
         void addLearningInfo(std::pair<int, std::vector<float>> ruleInfo) {
             learningInfo.push_back(ruleInfo);
         }
-        
+		
+        SynapticKernelHandler* getSynapticKernel() {
+			return synapticKernel;
+		}
+		
     protected:
         
         // winner-take-all algorithm
@@ -337,6 +342,7 @@ namespace hummus {
         double                                           previousInputTime;
         float                                            synapticEfficacy;
         int                                              neuronType;
+        SynapticKernelHandler*                           synapticKernel;
         std::vector<std::pair<int, std::vector<float>>>  learningInfo; // used to save network into JSON format
     };
 	
@@ -387,7 +393,11 @@ namespace hummus {
 				
                 // saving the synaptic kernels and what layer they were used in
 				for (auto& s: synapticKernels) {
-					s->toJson(jsonNetwork["layers"].back()["synapticKernels"]);
+					if (neurons[l.neurons[0]]->getSynapticKernel()) {
+						if (s.get()->getKernelID() == neurons[l.neurons[0]]->getSynapticKernel()->getKernelID()) {
+							s->toJson(jsonNetwork["layers"].back()["synapticKernels"]);
+						}
+					}
 				}
 				
             }
@@ -1047,10 +1057,15 @@ namespace hummus {
         template <typename T, typename... Args>
         T& makeSynapticKernel(Args&&... args) {
             synapticKernels.emplace_back(new T(std::forward<Args>(args)...));
+            synapticKernels.back().get()->setKernelID(static_cast<int>(synapticKernels.size()));
             return *dynamic_cast<T*>(synapticKernels.back().get());
         }
 		
         // ----- SETTERS AND GETTERS -----
+		
+		std::vector<std::unique_ptr<SynapticKernelHandler>>& getSynapticKernels() {
+            return synapticKernels;
+        }
 		
         std::vector<std::unique_ptr<Neuron>>& getNeurons() {
             return neurons;
