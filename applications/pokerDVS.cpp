@@ -22,6 +22,7 @@
 #include "../source/neurons/decisionMaking.hpp"
 
 #include "../source/addOns/spikeLogger.hpp"
+#include "../source/synapticKernels/exponential.hpp"
 
 int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
@@ -30,17 +31,18 @@ int main(int argc, char** argv) {
     hummus::Network network(&qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
-    bool timeVaryingCurrent = false;
     bool homeostasis = false;
     bool wta = true;
     
     //  ----- CREATING THE NETWORK -----
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>();
-    
+	
+    auto exponential = network.makeSynapticKernel<hummus::Exponential>();
+	
     network.add2dLayer<hummus::Input>(34, 34, 1, {});
-    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(), 100, 1, {&ti_stdp}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
-    network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, timeVaryingCurrent, homeostasis, 10, 20, 3, wta);
-    network.addDecisionMakingLayer<hummus::DecisionMaking>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtrainingLabel.txt");
+    network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(), 100, 1, {&ti_stdp}, &exponential, homeostasis, 20, 3, wta);
+    network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, &exponential, homeostasis, 20, 3, wta);
+    network.addDecisionMakingLayer<hummus::DecisionMaking>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/pokerDVS/DHtrainingLabel.txt", &exponential);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Normal());

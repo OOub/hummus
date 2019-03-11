@@ -32,6 +32,10 @@
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
+#include "../source/synapticKernels/exponential.hpp"
+#include "../source/synapticKernels/dirac.hpp"
+#include "../source/synapticKernels/step.hpp"
+
 #include "../source/dependencies/json.hpp"
 
 int main(int argc, char** argv) {

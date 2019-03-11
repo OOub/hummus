@@ -14,6 +14,7 @@
 #include <iomanip>
 
 #include "../source/core.hpp"
+ #include "../source/synapticKernels/step.hpp"
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
@@ -34,7 +35,7 @@ int main(int argc, char** argv) {
     // pixel grid height
     int gridHeight = std::atoi(argv[2]);
     std::cout << "Pixel height: " << std::setw(static_cast<int>(clean_cout-std::string("Pixel height: ").size())) << argv[2] << std::endl;
-
+	
     // gaussian mean for reservoir weights
     float inputWeightMean = std::atof(argv[3]);
     std::cout << "Input Weight Mean: " << std::setw(static_cast<int>(clean_cout-std::string("Input Weight Mean: ").size())) << argv[3] << std::endl;
@@ -66,25 +67,25 @@ int main(int argc, char** argv) {
     // percentage likelihood of self-excitation
     int selfExcitationProbability = std::atoi(argv[10]);
     std::cout << "Stay connection probability: " << std::setw(static_cast<int>(clean_cout-std::string("Stay connection probability: ").size())) << argv[10] << std::endl;
-    
+	
     // current step function reset value (integration time)
     float resetCurrent = std::atof(argv[11]);
     std::cout << "Reset current duration " << std::setw(static_cast<int>(clean_cout-std::string("Reset current duration ").size())) << argv[11] << std::endl;
-    
+	
     // time constant for membrane potential (decay)
-    float decayPotential = std::atof(argv[12]);
+    float decayPotential = std::atof(argv[11]);
     std::cout << "Potential decay time: " << std::setw(static_cast<int>(clean_cout-std::string("Potential decay time: ").size())) << argv[12] << std::endl;
     
     // neuron inactive for specified time after each spike
-    int refractoryPeriod = std::atoi(argv[13]);
+    int refractoryPeriod = std::atoi(argv[12]);
     std::cout << "Refractory Period: " << std::setw(static_cast<int>(clean_cout-std::string("Refractory Period: ").size())) << argv[13] << std::endl;
     
     // winner-takes-all algorithm
-    bool wta = std::atoi(argv[14]);
+    bool wta = std::atoi(argv[13]);
     std::cout << "Winner takes all: " << std::setw(static_cast<int>(clean_cout-std::string("Winner takes all: ").size())) << argv[14] << std::endl;
     
     // threshold adaptation to firing rate
-    bool homeostasis = std::atoi(argv[15]);
+    bool homeostasis = std::atoi(argv[14]);
     std::cout << "Threshold Adaptation to firing rate: " << std::setw(10) << argv[15] << std::endl;
 
     //  ----- CREATING THE NETWORK -----
@@ -98,7 +99,9 @@ int main(int argc, char** argv) {
     network.add2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {});
 
     // reservoir layer
-    network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStdDev, feedforwardProbability, feedbackProbability, selfExcitationProbability, false, homeostasis, resetCurrent, decayPotential, refractoryPeriod, wta);
+    auto step = network.makeSynapticKernel<hummus::Step>(resetCurrent);
+    
+    network.addReservoir<hummus::LIF>(numberOfNeurons, weightMean, weightStdDev, feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
 
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(inputWeightMean, inputWeightStdDev));
 

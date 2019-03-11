@@ -30,7 +30,8 @@ solution 'hummus'
 			end
 
 			if _OPTIONS['tbb'] then
-				defines { }
+				with_tbb = true;
+				defines {'TBB'}
 			end
 
 			-- All files in source
@@ -75,7 +76,9 @@ solution 'hummus'
             	includedirs {'/usr/local/include'}
 	        	libdirs {'/usr/local/lib'}
   				defines { "POSIX" }
-  				linkoptions {'-ltbb'}
+  				if with_tbb then
+  					linkoptions {'-ltbb'}
+  				end
 
 	        -- Linux specific settings
 	        configuration 'linux'

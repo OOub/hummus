@@ -23,6 +23,7 @@
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/decisionMaking.hpp"
+#include "../source/synapticKernels/exponential.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
@@ -35,7 +36,6 @@ int main(int argc, char** argv) {
 	hummus::Network network(&qtDisplay);
 
     //  ----- NETWORK PARAMETERS -----
-	float resetCurrent = 10;
 	float potentialDecay = 20;
 	float refractoryPeriod = 30;
 	
@@ -48,8 +48,10 @@ int main(int argc, char** argv) {
     auto stdp = network.makeLearningRule<hummus::STDP>();
 	
 	//  ----- CREATING THE NETWORK -----
+	auto exponential = network.makeSynapticKernel<hummus::Exponential>();
+	
     network.addLayer<hummus::Input>(inputNeurons, {});
-    network.addLayer<hummus::LIF>(layer1Neurons, {&stdp}, true, false, resetCurrent, potentialDecay, refractoryPeriod);
+    network.addLayer<hummus::LIF>(layer1Neurons, {&stdp}, &exponential, false, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(weight, 0, 1, 0));
