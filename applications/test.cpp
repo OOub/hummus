@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     auto exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
     // creating layers of neurons
-    network.addLayer<hummus::Input>(1, {});
+    network.addLayer<hummus::Input>(1, {}, nullptr);
     network.addLayer<hummus::LIF>(1, {}, &exponential, false, 20, 3, true);
     
     //  ----- CONNECTING THE NETWORK -----

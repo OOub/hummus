@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 	//  ----- CREATING THE NETWORK -----
 	auto exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
-    network.addLayer<hummus::Input>(inputNeurons, {});
+    network.addLayer<hummus::Input>(inputNeurons, {}, nullptr);
     network.addLayer<hummus::LIF>(layer1Neurons, {&stdp}, &exponential, false, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----

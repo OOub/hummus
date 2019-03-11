@@ -13,8 +13,8 @@
 
 #include "core.hpp"
 
-#include "neurons/inputNeuron.hpp"
-#include "neurons/decisionMakingNeuron.hpp"
+#include "neurons/input.hpp"
+#include "neurons/decisionMaking.hpp"
 #include "neurons/LIF.hpp"
 #include "neurons/IF.hpp"
 
@@ -60,11 +60,12 @@ namespace hummus {
                 if (input.back()["layers"].is_array()){
                     auto& layer = input.back()["layers"];
                     for (auto i=0; i<layer.size(); i++) {
+	
                         if (layer[i]["neuronType"].is_number()) {
                             int neuronType = layer[i]["neuronType"].get<int>();
                             // creating input neuron layer
                             if (neuronType == 0) {
-                                layerHelper<InputNeuron>(layer[i]);
+                                layerHelper<Input>(layer[i]);
                             // creating LIF layer
                             } else if (neuronType == 1) {
                                 layerHelper<LIF>(layer[i]);
@@ -73,10 +74,10 @@ namespace hummus {
                                 layerHelper<IF>(layer[i]);
                             // creating DecisionMaking layer
                             } else if (neuronType == 3) {
-                                layerHelper<DecisionMakingNeuron>(layer[i]);
+                                layerHelper<DecisionMaking>(layer[i]);
                             }
                         } else {
-                            throw std::logic_error("neuronType should be a number. ) for InputNeuron, 1 for LIF, 2 for IF, 3 for DecisionMakingNeuron");
+                            throw std::logic_error("neuronType should be a number. 0 for InputNeuron, 1 for LIF, 2 for IF, 3 for DecisionMakingNeuron");
                         }
                     }
                 } else {
@@ -163,7 +164,7 @@ namespace hummus {
                 if (type == 0) {
                     
                     if (input["refractoryPeriod"].is_number()) {
-                        dynamic_cast<InputNeuron*>(n)->setRefractoryPeriod(input["refractoryPeriod"].get<float>());
+                        dynamic_cast<Input*>(n)->setRefractoryPeriod(input["refractoryPeriod"].get<float>());
                     }
                     
                 // LIF neuron
@@ -178,10 +179,10 @@ namespace hummus {
                 // DecisionMaking neuron
                 } else if (type == 3) {
                     
-                    captureLIFParameters<DecisionMakingNeuron>(input, n);
+                    captureLIFParameters<DecisionMaking>(input, n);
                     
                     if (input["classLabel"].is_string()) {
-                        dynamic_cast<DecisionMakingNeuron*>(n)->setClassLabel(input["refractoryPeriod"].get<std::string>());
+                        dynamic_cast<DecisionMaking*>(n)->setClassLabel(input["refractoryPeriod"].get<std::string>());
                     }
                     
                 }
@@ -219,14 +220,15 @@ namespace hummus {
         template<typename T>
         void layerHelper(nlohmann::json& input) {
             // vector of learning rules for a layer
-            std::vector<size_t> learningRuleIndices;
+            std::vector<hummus::LearningRuleHandler*> learningRules;
+			
             if (input["neuronNumber"].is_number() & input["sublayerNumber"].is_number()) {
                 // getting number of neurons
                 int neuronNumber = input["neuronNumber"].get<int>();
                 
                 // getting number of sublayers
                 int sublayerNumber = input["sublayerNumber"].get<int>();
-                
+				
                 // getting the learning rules
                 if (input["learningRules"].is_array() && !input["learningRules"].empty()) {
                     auto& rule = input["learningRules"];
@@ -246,7 +248,7 @@ namespace hummus {
                                 }
             
                                 auto myelinPlasticity = network->makeLearningRule<MyelinPlasticity>(delay_alpha, delay_lambda, weight_alpha, weight_lambda);
-                                learningRuleIndices.push_back(myelinPlasticity);
+                                learningRules.push_back(&myelinPlasticity);
                                 
                             // stdp
                             } else if (rule[i]["ID"].get<int>() == 1){
@@ -261,7 +263,7 @@ namespace hummus {
                                 }
                                 
                                 auto stdp = network->makeLearningRule<STDP>(A_plus, A_minus, tau_plus, tau_minus);
-                                learningRuleIndices.push_back(stdp);
+                                learningRules.push_back(&stdp);
                                 
                             // time-invariant stdp
                             } else if (rule[i]["ID"].get<int>() == 2){
@@ -276,7 +278,7 @@ namespace hummus {
                                 }
                                 
                                 auto timeInvariantStdp = network->makeLearningRule<TimeInvariantSTDP>(alpha_plus, alpha_minus, beta_plus, beta_minus);
-                                learningRuleIndices.push_back(timeInvariantStdp);
+                                learningRules.push_back(&timeInvariantStdp);
                             
                             // reward-modulated stdp
                             } else if (rule[i]["ID"].get<int>() == 3){
@@ -291,7 +293,7 @@ namespace hummus {
                                 }
                                 
                                 auto RewardModulatedStdp = network->makeLearningRule<RewardModulatedSTDP>(Ar_plus, Ar_minus, Ap_plus, Ap_minus);
-                                learningRuleIndices.push_back(RewardModulatedStdp);
+                                learningRules.push_back(&RewardModulatedStdp);
                             }
                         } else {
                             throw std::logic_error("incorrect format: ruleID should be a number. 0 for MyelinPlasticity, 1 for STDP, 2 for TimeInvariantSTDP, 3 for RewardModulatedSTDP");
@@ -302,13 +304,39 @@ namespace hummus {
                 if (input["width"].is_number() && input["height"].is_number()) {
                     int width = input["width"].get<int>();
                     int height = input["height"].get<int>();
-                    
-                    // checking if 1D or 2D layer
-                    if (width == -1 && height == -1) {
-                        network->addLayer<T>(neuronNumber, learningRuleIndices);
-                    } else {
-                        network->add2dLayer<T>(width, height, sublayerNumber, learningRuleIndices);
-                    }
+					
+					// initialising synaptic kernel
+					if (input["synapticKernels"].is_array() && !input["synapticKernels"].empty()) {
+						for (auto i=0; i<input["synapticKernels"].size(); i++) {
+							if (input["synapticKernels"][i]["type"].is_number()) {
+								// dirac synaptic kernel
+								if (input["synapticKernels"][i]["type"].get<int>() == 0) {
+									network->makeSynapticKernel<Dirac>();
+								// exponential synaptic kernel
+								} else if (input["synapticKernels"][i]["type"].get<int>() == 1) {
+									network->makeSynapticKernel<Exponential>();
+								// step synaptic kernel
+								} else if (input["synapticKernels"][i]["type"].get<int>() == 2) {
+									network->makeSynapticKernel<Step>();
+								}
+							}
+						}
+						
+						// checking if 1D or 2D layer
+						if (width == -1 && height == -1) {
+							network->addLayer<T>(neuronNumber, learningRules, network->getSynapticKernels().back().get());
+						} else {
+							network->add2dLayer<T>(width, height, sublayerNumber, learningRules, network->getSynapticKernels().back().get());
+						}
+					} else {
+						// checking if 1D or 2D layer
+						if (width == -1 && height == -1) {
+							network->addLayer<T>(neuronNumber, learningRules, nullptr);
+						} else {
+							network->add2dLayer<T>(width, height, sublayerNumber, learningRules, nullptr);
+						}
+					}
+
                 } else {
                     throw std::logic_error("incorrect format: width and height should be numbers");
                 }
@@ -353,16 +381,8 @@ namespace hummus {
                 dynamic_cast<T*>(n)->setHomeostasisBeta(input["homeostasisBeta"].get<float>());
             }
             
-            if (input["resetCurrent"].is_number()) {
-                dynamic_cast<T*>(n)->setResetCurrent(input["resetCurrent"].get<float>());
-            }
-            
             if (input["restingThreshold"].is_number()) {
                 dynamic_cast<T*>(n)->setRestingThreshold(input["restingThreshold"].get<float>());
-            }
-            
-            if (input["timeDependentCurrent"].is_boolean()) {
-                dynamic_cast<T*>(n)->setTimeDependentCurrent(input["timeDependentCurrent"].get<bool>());
             }
             
             if (input["T"].is_boolean()) {
