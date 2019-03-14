@@ -97,9 +97,11 @@ namespace hummus {
 					
                     // synaptic integration
                     current = synapticKernel->integrateSpike(current, externalCurrent, a->weight);
-#ifndef NDEBUG
-                    std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
-#endif
+                    
+                    if (network->getVerbose() == 2) {
+                        std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
+                    }
+                    
                     for (auto addon: network->getAddOns()) {
                         if (potential < threshold) {
                             addon->incomingSpike(timestamp, a, network);
@@ -143,9 +145,10 @@ namespace hummus {
                 labelTracker[idx] += 1;
                 
                 eligibilityTrace = 1;
-#ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
-#endif
+
+                if (network->getVerbose() == 2) {
+                    std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
+                }
                 
                 for (auto addon: network->getAddOns()) {
                     addon->neuronFired(timestamp, a, network);
@@ -228,9 +231,10 @@ namespace hummus {
                     previousInputTime = timestamp;
                     a->previousInputTime = timestamp;
                     
-#ifndef NDEBUG
-                    std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
-#endif
+                    if (network->getVerbose() == 2) {
+                        std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
+                    }
+                    
                     for (auto addon: network->getAddOns()) {
                         if (potential < threshold) {
                             addon->incomingSpike(timestamp, a, network);
@@ -267,9 +271,9 @@ namespace hummus {
                 
                 eligibilityTrace = 1;
                 
-#ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << (activeSynapse->preNeuron ? activeSynapse->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeSynapse->weight << " d=" << activeSynapse->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
-#endif
+                if (network->getVerbose() == 2) {
+                    std::cout << "t=" << timestamp << " " << (activeSynapse->preNeuron ? activeSynapse->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeSynapse->weight << " d=" << activeSynapse->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
+                }
                 
                 for (auto addon: network->getAddOns()) {
                     addon->neuronFired(timestamp, activeSynapse, network);
@@ -309,7 +313,10 @@ namespace hummus {
                 auto it = std::max_element(labelTracker.begin(), labelTracker.end());
                 auto idx = std::distance(labelTracker.begin(), it);
                 classLabel = network->getUniqueLabels()[idx];
-                std::cout << neuronID << " specialised to the " << classLabel << " label" << std::endl;
+                
+                if (network->getVerbose() == 2) {
+                    std::cout << neuronID << " specialised to the " << classLabel << " label" << std::endl;
+                }
             }
             
         }

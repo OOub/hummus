@@ -54,9 +54,9 @@ namespace hummus {
             std::vector<double> timeDifferences;
             std::vector<int> plasticID;
             std::vector<std::vector<int>> plasticCoordinates(4);
-#ifndef NDEBUG
-            std::cout << "New learning epoch at t=" << timestamp << std::endl;
-#endif
+            if (network->getVerbose() == 2) {
+                std::cout << "New learning epoch at t=" << timestamp << std::endl;
+            }
 
             for (auto& inputSynapse: n->getPreSynapses()) {
                 // discarding inhibitory synapses
@@ -77,16 +77,16 @@ namespace hummus {
                             delta_delay = delay_lambda*(n->getMembraneResistance()/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()))*n->getSynapticEfficacy();
 
                             inputSynapse->delay += delta_delay;
-#ifndef NDEBUG
-                            std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
-#endif
+                            if (network->getVerbose() == 2) {
+                                std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
+                            }
                         } else if (timeDifferences.back() < 0) {
                             delta_delay = -delay_lambda*((n->getMembraneResistance()/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())))*n->getSynapticEfficacy();
 
                             inputSynapse->delay += delta_delay;
-#ifndef NDEBUG
-                            std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
-#endif
+                            if (network->getVerbose() == 2) {
+                                std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
+                            }
                         }
                         n->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
 
