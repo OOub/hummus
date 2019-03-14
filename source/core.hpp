@@ -103,7 +103,7 @@ namespace hummus {
                 threshold(_threshold),
                 potential(_restingPotential),
                 restingPotential(_restingPotential),
-                initialSynapse{nullptr, nullptr, 100/_membraneResistance, 0, 0},
+                initialSynapse{nullptr, nullptr, 1/_membraneResistance, 0, 0},
                 learningRules(_learningRules),
                 eligibilityTrace(0),
                 eligibilityDecay(_eligibilityDecay),
