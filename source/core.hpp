@@ -151,11 +151,7 @@ namespace hummus {
                         if (result == postSynapses.end()) {
                             postSynapses.emplace_back(new synapse{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
                             postNeuron->getPreSynapses().emplace_back(postSynapses.back().get());
-                        } else {
-#ifndef NDEBUG
-                            std::cout << "synapse " << neuronID << "->" << postNeuron->getNeuronID() << " already exists" << std::endl;
-#endif
-                        }
+                        } 
                     }
                     else {
                         postSynapses.emplace_back(new synapse{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
@@ -357,6 +353,7 @@ namespace hummus {
                 learningStatus(true),
                 asynchronous(false),
                 learningOffSignal(-1),
+                verbose(0),
                 maxDelay(0) {
                     // seeding and initialising random engine with a Mersenne Twister pseudo-random generator
                     std::random_device device;
@@ -508,13 +505,15 @@ namespace hummus {
             int trimmedColumns = std::abs(newWidth - std::ceil((presynapticLayer.width - stride + 1) / static_cast<float>(stride)));
             int trimmedRows = std::abs(newHeight - std::ceil((presynapticLayer.height - stride + 1) / static_cast<float>(stride)));
             
-            // warning message that seom rws and columns of neurons might be ignored and left unconnected depending on the stride value
-            if (trimmedColumns > 0 && trimmedRows == 0) {
-                std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
-            } else if (trimmedRows > 0 && trimmedColumns == 0) {
-                std::cout << "The new layer did not take into consideration the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
-            } else if (trimmedRows > 0 && trimmedColumns > 0){
-                std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) and the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+            // warning message that some rows and columns of neurons might be ignored and left unconnected depending on the stride value
+            if (verbose != 0) {
+                if (trimmedColumns > 0 && trimmedRows == 0) {
+                    std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+                } else if (trimmedRows > 0 && trimmedColumns == 0) {
+                    std::cout << "The new layer did not take into consideration the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+                } else if (trimmedRows > 0 && trimmedColumns > 0){
+                    std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) and the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+                }
             }
             
             // creating the new layer of neurons
@@ -610,8 +609,10 @@ namespace hummus {
 				}
 			}
 			
-			std::cout << "subsampling by a factor of " << gcd << std::endl;
-			
+            if (verbose != 0) {
+                std::cout << "subsampling by a factor of " << gcd << std::endl;
+            }
+            
         	// create pooling layer of neurons with correct dimensions
             add2dLayer<T>(presynapticLayer.width/gcd, presynapticLayer.height/gcd, static_cast<int>(presynapticLayer.sublayers.size()), _learningRules, std::forward<Args>(args)...);
 			
@@ -823,7 +824,7 @@ namespace hummus {
         // interconnecting a layer with soft winner-takes-all synapses, using negative weights
         void lateralInhibition(layer l, float _weightMean=-1, float _weightstdev=0, int probability=100) {
             if (_weightMean != 0) {
-                if (_weightMean > 0) {
+                if (_weightMean > 0 && verbose != 0) {
                     std::cout << "lateral inhibition synapses must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
                 }
                 
@@ -941,9 +942,13 @@ namespace hummus {
             if (_timestep < 0) {
                 throw std::logic_error("the timestep cannot be negative");
             } else if (_timestep == 0) {
-                std::cout << "Running the network asynchronously" << std::endl;
+                if (verbose != 0) {
+                    std::cout << "Running the network asynchronously" << std::endl;
+                }
             } else {
-                std::cout << "Running the network synchronously" << std::endl;
+                if (verbose != 0) {
+                    std::cout << "Running the network synchronously" << std::endl;
+                }
             }
 
             if (_timestep == 0) {
@@ -968,18 +973,20 @@ namespace hummus {
                 sync.unlock();
 
                 std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-                
+
+                    
                 if (_timestep == 0) {
                     eventRunHelper(_runtime, _timestep, false);
                 } else {
                     clockRunHelper(_runtime, _timestep, false);
                 }
-                    
-                std::cout << "Done." << std::endl;
-
+                
                 std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
-                std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
-
+                    
+                if (verbose != 0) {
+                    std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
+                }
+                    
                 for (auto addon: addOns) {
                     addon->onCompleted(this);
                 }
@@ -1115,6 +1122,19 @@ namespace hummus {
             return asynchronous;
         }
         
+        int getVerbose() const {
+            return verbose;
+        }
+        
+        // verbose argument (0 for no couts at all, 1 for network-related print-outs, 2 for network and neuron-related print-outs
+        void setVerbose(int value) {
+            if (value >= 0 && value <= 2) {
+                verbose = value;
+            } else {
+                throw std::logic_error("the verbose argument shoud be set to 0 to remove all print-outs, 1 to get network-related print-outs and 2 for network and neuron-related print-outs");
+            }
+        }
+        
     protected:
 
         // -----PROTECTED NETWORK METHODS -----
@@ -1123,8 +1143,10 @@ namespace hummus {
         void train(double timestep, std::vector<input>* trainingData, int shift) {
             injectSpikeFromData(trainingData);
             
-            std::cout << "Training the network..." << std::endl;
             std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+            if (verbose != 0) {
+                std::cout << "Training the network..." << std::endl;
+            }
             
             if (timestep == 0) {
                 eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
@@ -1132,9 +1154,10 @@ namespace hummus {
                 clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
             }
             
-            std::cout << "Done." << std::endl;
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
-            std::cout << "it took " << elapsed_seconds.count() << "s for the training phase." << std::endl;
+            if (verbose != 0) {
+                std::cout << "it took " << elapsed_seconds.count() << "s for the training phase." << std::endl;
+            }
         }
 
         // importing test data and running it through the network for classification
@@ -1147,16 +1170,20 @@ namespace hummus {
             }
 
             injectSpikeFromData(testData);
-
-            std::cout << "Running classification based on a trained network..." << std::endl;
+            
+            if (verbose != 0) {
+                std::cout << "Running classification based on a trained network..." << std::endl;
+            }
             
             if (timestep == 0) {
                 eventRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
             } else {
                 clockRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
             }
-
-            std::cout << "Done." << std::endl;
+            
+            if (verbose != 0) {
+                std::cout << "Done." << std::endl;
+            }
         }
         
         // helper function that runs the network when event-mode is selected
@@ -1211,7 +1238,9 @@ namespace hummus {
                         
                         if (learningOffSignal != -1) {
                             if (learningStatus==true && i >= learningOffSignal) {
-                                std::cout << "learning turned off at t=" << i << std::endl;
+                                if (verbose != 0) {
+                                    std::cout << "learning turned off at t=" << i << std::endl;
+                                }
                                 learningStatus = false;
                             }
                         }
@@ -1294,7 +1323,9 @@ namespace hummus {
 
                 if (learningOffSignal != -1) {
                     if (learningStatus==true && s.timestamp >= learningOffSignal) {
-                        std::cout << "learning turned off at t=" << s.timestamp << std::endl;
+                        if (verbose != 0) {
+                            std::cout << "learning turned off at t=" << s.timestamp << std::endl;
+                        }
                         learningStatus = false;
                     }
                 }
@@ -1303,6 +1334,7 @@ namespace hummus {
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----
+        int                                                 verbose;
 		std::deque<spike>                                   initialSpikes;
         std::deque<spike>                                   generatedSpikes;
         std::deque<spike>                                   predictedSpikes;

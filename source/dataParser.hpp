@@ -67,8 +67,6 @@ namespace hummus {
                 
                 double maxID=0; double maxX=0; double maxY=0; double maxPolarity=0;
                 
-				std::cout << "Reading " << filename << std::endl;
-                
 				while (std::getline(dataFile, line)) {
                 	std::vector<std::string> fields;
                 	split(fields, line, " ");
@@ -95,14 +93,6 @@ namespace hummus {
                     }
                 }
                 dataFile.close();
-				
-                if (dataType == 0) {
-                    std::cout << "1D data detected" << std::endl;
-                } else if (dataType == 1) {
-                    std::cout << "2D data detected" << std::endl;
-                } else if (dataType == 2) {
-                    std::cout << "2D data with polarities detected" << std::endl;
-                }
                 
                 // adding gaussian time jitter
                 if (timeJitter) {
@@ -154,7 +144,6 @@ namespace hummus {
 					return a.timestamp < b.timestamp;
 				});
 				
-				std::cout << "Done." << std::endl;
 				return data;
             } else {
                 throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName"));
@@ -169,7 +158,7 @@ namespace hummus {
 				if (dataFile.good()) {
 					std::deque<label> dataLabels;
 					std::string line;
-					std::cout << "Reading labels from " << labels << std::endl;
+					
 					while (std::getline(dataFile, line)) {
 						std::vector<std::string> fields;
 						split(fields, line, " ");
@@ -178,7 +167,7 @@ namespace hummus {
 						}
 					}
 					dataFile.close();
-					std::cout << "Done." << std::endl;
+					
 					return dataLabels;
 				} else {
 					throw std::runtime_error(labels.append(" could not be opened. Please check that the path is set correctly"));

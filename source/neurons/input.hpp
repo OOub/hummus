@@ -56,9 +56,9 @@ namespace hummus {
                 potential = threshold;
                 eligibilityTrace = 1;
                 
-                #ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
-                #endif
+                if (network->getVerbose() == 2) {
+                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
+                }
                 
                 if (network->getMainThreadAddOn()) {
                     network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
@@ -106,9 +106,9 @@ namespace hummus {
                 potential = threshold;
                 eligibilityTrace = 1;
                 
-#ifndef NDEBUG
-                std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
-#endif
+                if (network->getVerbose() == 2) {
+                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
+                }
                 
                 if (network->getMainThreadAddOn()) {
                     network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
