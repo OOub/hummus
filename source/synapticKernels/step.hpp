@@ -54,7 +54,7 @@ namespace hummus {
 		}
 		
 		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-			return (neuronCurrent + externalCurrent * synapseWeight) + normalDistribution(randomEngine);
+            return (neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight);
 		}
 		
 		virtual void toJson(nlohmann::json& output) override {

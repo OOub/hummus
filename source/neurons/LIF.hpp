@@ -212,7 +212,7 @@ namespace hummus {
 			
 			// updating the current
             current = synapticKernel->updateCurrent(timestamp, timestep, previousInputTime, current);
-			
+            
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
             
@@ -262,8 +262,7 @@ namespace hummus {
                     }
 				}
 				
-				potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
-
+                potential += membraneResistance * current * (1 - std::exp(-timestep/decayPotential));
             }
             
             if (a) {
