@@ -115,25 +115,20 @@ namespace hummus {
                     int ID = a->postNeuron->getPreSynapses()[i]->preNeuron->getNeuronID();
                     if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
                         float weightDifference = (desiredWeight* a->postNeuron->getMembraneResistance()) - (a->postNeuron->getPreSynapses()[i]->weight*a->postNeuron->getMembraneResistance());
-                        float change = - std::exp( - std::pow(weight_alpha*weightDifference,2)) + 1;
+                        float change = - std::exp(- std::pow(weight_alpha*weightDifference,2)) + 1;
                         if (weightDifference >= 0) {
-                            a->postNeuron->getPreSynapses()[i]->weight += weight_lambda*change*(1/a->postNeuron->getMembraneResistance());
+                            a->postNeuron->getPreSynapses()[i]->weight += weight_lambda*change*(1./a->postNeuron->getMembraneResistance()) * (1./a->postNeuron->getMembraneResistance() - a->weight);
                         } else {
-                            a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda*change*(1/a->postNeuron->getMembraneResistance());
+                            a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda*change*(1./a->postNeuron->getMembraneResistance()) * (1./a->postNeuron->getMembraneResistance() - a->weight);
                         }
                     } else {
-                        if (a->postNeuron->getPreSynapses()[i]->weight > 0) {
-                            a->postNeuron->getPreSynapses()[i]->weight -= 0.01* 1/a->postNeuron->getMembraneResistance();
-                            if (a->postNeuron->getPreSynapses()[i]->weight < 0) {
-                                a->postNeuron->getPreSynapses()[i]->weight = 0;
-                            }
-                        }
+                        a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda * (1./a->postNeuron->getMembraneResistance()) * (1./a->postNeuron->getMembraneResistance() - a->weight);
                     }
                 }
             }
 
             for (auto addon: network->getAddOns()) {
-                if(MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
+                if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
                     dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, network, a->postNeuron, timeDifferences, plasticCoordinates);
                 }
             }

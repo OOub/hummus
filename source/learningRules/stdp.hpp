@@ -65,16 +65,11 @@ namespace hummus {
             if (a->postNeuron->getLayerID() == preLayer) {
                 for (auto& postSynapse: a->postNeuron->getPostSynapses()) {
                     // if a postNeuron fired, the deltaT (preTime - postTime) should be positive
-                    if (postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
+                    // ignoring inhibitory synapses
+                    if (postSynapse->weight >=0 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
                         float postTrace = - (timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus);
                         
-                        if (postSynapse->weight > 0) {
-                            postSynapse->weight += postTrace*(1/postSynapse->postNeuron->getMembraneResistance());
-
-                            if (postSynapse->weight < 0) {
-                                postSynapse->weight = 0;
-                            }
-                        }
+                        postSynapse->weight += postTrace*(1./postSynapse->postNeuron->getMembraneResistance()) * (1./postSynapse->postNeuron->getMembraneResistance() - postSynapse->weight);
                         postSynapse->postNeuron->setEligibilityTrace(0);
                     }
                 }
@@ -84,16 +79,11 @@ namespace hummus {
 			else if (a->postNeuron->getLayerID() == postLayer) {
 				for (auto& preSynapse: a->postNeuron->getPreSynapses()) {
 					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
-					if (preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
+                    // ignoring inhibitory synapses
+					if (preSynapse->weight >= 0 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
 						float preTrace = -(preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus);
 
-                        if (preSynapse->weight < 1/preSynapse->preNeuron->getMembraneResistance()) {
-                            preSynapse->weight += preTrace*(1/preSynapse->preNeuron->getMembraneResistance());
-
-                            if (preSynapse->weight > 1/preSynapse->preNeuron->getMembraneResistance()) {
-                                preSynapse->weight = 1/preSynapse->preNeuron->getMembraneResistance();
-                            }
-                        }
+                        preSynapse->weight += preTrace * (1./preSynapse->preNeuron->getMembraneResistance()) * (1./preSynapse->preNeuron->getMembraneResistance() - preSynapse->weight);
                         preSynapse->preNeuron->setEligibilityTrace(0);
 					}
 				}
