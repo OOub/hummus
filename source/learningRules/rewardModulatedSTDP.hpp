@@ -94,6 +94,7 @@ namespace hummus {
 					for (auto& n: network->getLayers()[layer.preLayer].neurons) {
                         if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
                             for (auto& postSynapse: network->getNeurons()[n]->getPostSynapses()) {
+                                // ignoring inhibitory synapses
                                 if (postSynapse->weight >= 0 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_minus+beta*Ap_plus;
                                     postSynapse->weight += delta * postSynapse->weight * (1./postSynapse->postNeuron->getMembraneResistance() - postSynapse->weight);
@@ -107,6 +108,7 @@ namespace hummus {
 					for (auto& n: network->getLayers()[layer.postLayer].neurons) {
                         if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
                             for (auto& preSynapse: network->getNeurons()[n]->getPreSynapses()) {
+                                // ignoring inhibitory synapses
                                 if (preSynapse->weight >= 0 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_plus+beta*Ap_minus;
                                     preSynapse->weight += delta * preSynapse->weight * (1./preSynapse->preNeuron->getMembraneResistance() - preSynapse->weight);
