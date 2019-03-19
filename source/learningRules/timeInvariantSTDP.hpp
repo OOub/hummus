@@ -25,12 +25,13 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        TimeInvariantSTDP(float _alpha_plus=1, float _alpha_minus=-1, float _beta_plus=1, float _beta_minus=-1) :
+        TimeInvariantSTDP(float _alpha_plus=1, float _alpha_minus=-0.1, float _beta_plus=3, float _beta_minus=1, float _leak_scaling_factor=1) :
                 alpha_plus(_alpha_plus),
                 alpha_minus(_alpha_minus),
                 beta_plus(_beta_plus),
-                beta_minus(_beta_minus) {}
-		
+                beta_minus(_beta_minus),
+                leak_scaling_factor(_leak_scaling_factor) {}
+        
 		// ----- PUBLIC METHODS -----
         virtual void onStart(Network* network) override{
             // error handling
@@ -52,13 +53,45 @@ namespace hummus {
                 if (preSynapse->weight >= 0) {
                     // Long term potentiation for all presynaptic neurons that spiked
                     if (timestamp >= preSynapse->preNeuron->getPreviousSpikeTime() && preSynapse->preNeuron->getPreviousSpikeTime() > preSynapse->postNeuron->getPreviousSpikeTime()) {
-                        float delta_weight = alpha_plus * std::exp(- beta_plus * preSynapse->weight * preSynapse->postNeuron->getMembraneResistance());
-                        preSynapse->weight += delta_weight*(1./preSynapse->postNeuron->getMembraneResistance()) * (1./preSynapse->postNeuron->getMembraneResistance() - preSynapse->weight);
+                        
+                        // positive weight change
+                        float delta_weight = (alpha_plus * std::exp(- beta_plus * preSynapse->weight)) * (1 - preSynapse->weight);
+                        preSynapse->weight += delta_weight;
+                        if (network->getVerbose() >= 1) {
+                            std::cout << "LTP weight change " << delta_weight << std::endl;
+                        }
+                        
+                        // negative change in leak adaptation (increasing leakage)
+                        float leakAdaptation = leak_scaling_factor * std::exp(- preSynapse->weight);
+                        if (leakAdaptation > 0.1) {
+                            preSynapse->postNeuron->setAdaptation(leakAdaptation);
+
+                            if (network->getVerbose() >= 1) {
+                                std::cout << "LTP leak adaptation " << leakAdaptation << std::endl;
+                            }
+                        }
+
                         
                     // Long term depression for all presynaptic neurons neurons that didn't spike
                     } else {
-                        float delta_weight = alpha_minus * std::exp(- beta_minus * (1 - preSynapse->weight * preSynapse->postNeuron->getMembraneResistance()));
-                        preSynapse->weight -= delta_weight*(1./preSynapse->postNeuron->getMembraneResistance()) * (1./preSynapse->postNeuron->getMembraneResistance() - preSynapse->weight);
+                        
+                        // negative weight change
+                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - preSynapse->weight))) * (1 - preSynapse->weight);
+                        preSynapse->weight += delta_weight;
+
+                        // making sure the weight stays in the [0,1] range
+                        if (preSynapse->weight < 0) {
+                            preSynapse->weight = 0;
+                        }
+                    
+                        // positive change in leak adaptation (decreasing leakage)
+                        float leakAdaptation = leak_scaling_factor * std::exp(- preSynapse->weight);
+
+                        preSynapse->postNeuron->setAdaptation(leakAdaptation);
+
+                        if (network->getVerbose() >= 1) {
+                            std::cout << "LTD weight change " << delta_weight << " leak adaptation " << leakAdaptation << std::endl;
+                        }
                     }
                 }
             }
@@ -71,5 +104,6 @@ namespace hummus {
         float alpha_minus;
         float beta_plus;
         float beta_minus;
+        float leak_scaling_factor;
 	};
 }

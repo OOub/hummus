@@ -8,7 +8,7 @@
  *
  * Information: the core.hpp contains both the network and the polymorphic Neuron class:
  *  - The Network class acts as a spike manager
- *  - The Neuron class defines a neuron and its parameters. It can take in a pointer to a LearningRuleHandler object to define which learning rule it follows. The weight is automatically scaled depending on the input resistance used.
+ *  - The Neuron class defines a neuron and its parameters. It can take in a pointer to a LearningRuleHandler object to define which learning rule it follows
  */
 
 #pragma once
@@ -94,7 +94,7 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9) :
+        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
                 neuronID(_neuronID),
                 layerID(_layerID),
                 sublayerID(_sublayerID),
@@ -103,15 +103,15 @@ namespace hummus {
                 threshold(_threshold),
                 potential(_restingPotential),
                 restingPotential(_restingPotential),
-                initialSynapse{nullptr, nullptr, 1/_membraneResistance, 0, 0},
+                initialSynapse{nullptr, nullptr, 1, 0, 0},
                 learningRules(_learningRules),
                 eligibilityTrace(0),
                 eligibilityDecay(_eligibilityDecay),
-                membraneResistance(_membraneResistance),
                 previousSpikeTime(0),
                 previousInputTime(0),
                 neuronType(0),
                 synapticKernel(_synapticKernel),
+                adaptation(1),
                 synapticEfficacy(1) {}
     	
 		virtual ~Neuron(){}
@@ -149,12 +149,12 @@ namespace hummus {
                         auto result = std::find_if(postSynapses.begin(), postSynapses.end(), [&](std::unique_ptr<synapse>& a){return a->postNeuron->getNeuronID() == ID;});
                         
                         if (result == postSynapses.end()) {
-                            postSynapses.emplace_back(new synapse{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
+                            postSynapses.emplace_back(new synapse{this, postNeuron, weight, delay, 0});
                             postNeuron->getPreSynapses().emplace_back(postSynapses.back().get());
                         } 
                     }
                     else {
-                        postSynapses.emplace_back(new synapse{this, postNeuron, weight*(1/postNeuron->getMembraneResistance()), delay, 0});
+                        postSynapses.emplace_back(new synapse{this, postNeuron, weight, delay, 0});
                         postNeuron->getPreSynapses().emplace_back(postSynapses.back().get());
                     }
                 }
@@ -250,14 +250,6 @@ namespace hummus {
             return learningRules;
         }
         
-        float getMembraneResistance() const {
-            return membraneResistance;
-        }
-        
-        void setMembraneResistance(float newR) {
-            membraneResistance = newR;
-        }
-        
         float getEligibilityTrace() const {
             return eligibilityTrace;
         }
@@ -290,6 +282,13 @@ namespace hummus {
             return synapticEfficacy = newEfficacy;
         }
         
+        float getAdaptation() const {
+            return adaptation;
+        }
+        
+        float setAdaptation(float newValue) {
+            return adaptation = newValue;
+        }
         int getType() const {
             return neuronType;
         }
@@ -333,10 +332,10 @@ namespace hummus {
         std::vector<LearningRuleHandler*>                learningRules;
         float                                            eligibilityTrace;
         float                                            eligibilityDecay;
-        float                                            membraneResistance;
         double                                           previousSpikeTime;
         double                                           previousInputTime;
         float                                            synapticEfficacy;
+        float                                            adaptation;
         int                                              neuronType;
         SynapticKernelHandler*                           synapticKernel;
         std::vector<std::pair<int, std::vector<float>>>  learningInfo; // used to save network into JSON format
@@ -687,7 +686,7 @@ namespace hummus {
         
         // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
-        void addDecisionMakingLayer(std::string trainingLabelFilename, SynapticKernelHandler* _synapticKernel, bool _preTrainingLabelAssignment=true, std::vector<LearningRuleHandler*> _learningRules={}, int _refractoryPeriod=1000, bool _homeostasis=false, float _decayPotential=20, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _membraneResistance=50e9, float _externalCurrent=100) {
+        void addDecisionMakingLayer(std::string trainingLabelFilename, SynapticKernelHandler* _synapticKernel, bool _preTrainingLabelAssignment=true, std::vector<LearningRuleHandler*> _learningRules={}, int _refractoryPeriod=1000, bool _homeostasis=false, float _decayPotential=20, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=10, float _homeostasisBeta=1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             preTrainingLabelAssignment = _preTrainingLabelAssignment;
@@ -714,13 +713,13 @@ namespace hummus {
             std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
                 for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRules, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, uniqueLabels[k-shift])));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRules, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _externalCurrent, uniqueLabels[k-shift])));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             } else {
                 for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(std::unique_ptr<T>(new T(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRules, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _membraneResistance, _externalCurrent, "")));
+                    neurons.emplace_back(std::unique_ptr<T>(new T(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), _learningRules, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, _eligibilityDecay, _decayWeight, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _externalCurrent, "")));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
@@ -1126,7 +1125,7 @@ namespace hummus {
             return verbose;
         }
         
-        // verbose argument (0 for no couts at all, 1 for network-related print-outs, 2 for network and neuron-related print-outs
+        // verbose argument (0 for no couts at all, 1 for network-related print-outs and learning rule print-outs, 2 for network and neuron-related print-outs
         void setVerbose(int value) {
             if (value >= 0 && value <= 2) {
                 verbose = value;

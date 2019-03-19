@@ -45,9 +45,9 @@ namespace hummus {
 		
 		// ----- PUBLIC METHODS -----
 		virtual double updateCurrent(double timestamp, double timestep, double previousInputTime, float neuronCurrent) override {
-
+            
 			if (timestamp - previousInputTime > synapseTimeConstant) {
-				return  0;
+				return 0;
 			} else {
 				return neuronCurrent;
 			}

@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		STDP(float _A_plus=1, float _A_minus=1, float _tau_plus=20, float _tau_minus=20) :
+		STDP(float _A_plus=0.1, float _A_minus=0.04, float _tau_plus=20, float _tau_minus=40) :
                 A_plus(_A_plus),
                 A_minus(_A_minus),
                 tau_plus(_tau_plus),
@@ -67,10 +67,17 @@ namespace hummus {
                     // if a postNeuron fired, the deltaT (preTime - postTime) should be positive
                     // ignoring inhibitory synapses
                     if (postSynapse->weight >=0 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
-                        float postTrace = - (timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus * A_minus*std::exp(-(timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus);
+                        float postTrace = (- A_minus * std::exp(-(timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus)) * (1 - postSynapse->weight);
                         
-                        postSynapse->weight += postTrace*(1./postSynapse->postNeuron->getMembraneResistance()) * (1./postSynapse->postNeuron->getMembraneResistance() - postSynapse->weight);
-                        postSynapse->postNeuron->setEligibilityTrace(0);
+                        postSynapse->weight += postTrace;
+                        
+                        if (network->getVerbose() >= 1) {
+                            std::cout << "LTD weight change " << postTrace << std::endl;
+                        }
+                        
+                        if (postSynapse->weight < 0) {
+                            postSynapse->weight = 0;
+                        }
                     }
                 }
             }
@@ -81,10 +88,13 @@ namespace hummus {
 					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
                     // ignoring inhibitory synapses
 					if (preSynapse->weight >= 0 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
-						float preTrace = -(preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus * A_plus*std::exp((preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus);
-
-                        preSynapse->weight += preTrace * (1./preSynapse->preNeuron->getMembraneResistance()) * (1./preSynapse->preNeuron->getMembraneResistance() - preSynapse->weight);
-                        preSynapse->preNeuron->setEligibilityTrace(0);
+						float preTrace = (A_plus * std::exp((preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus)) * (1 - preSynapse->weight);
+                        
+                        preSynapse->weight += preTrace;
+                        
+                        if (network->getVerbose() >= 1) {
+                            std::cout << "LTP weight change " << preTrace << std::endl;
+                        }
 					}
 				}
 			}
