@@ -54,7 +54,7 @@ namespace hummus {
             std::vector<double> timeDifferences;
             std::vector<int> plasticID;
             std::vector<std::vector<int>> plasticCoordinates(4);
-            if (network->getVerbose() == 2) {
+            if (network->getVerbose() >= 1) {
                 std::cout << "New learning epoch at t=" << timestamp << std::endl;
             }
 
@@ -74,17 +74,17 @@ namespace hummus {
                         float delta_delay = 0;
 
                         if (timeDifferences.back() > 0) {
-                            delta_delay = delay_lambda*(n->getMembraneResistance()/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()))*n->getSynapticEfficacy();
+                            delta_delay = delay_lambda*(1/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()))*n->getSynapticEfficacy();
 
                             inputSynapse->delay += delta_delay;
-                            if (network->getVerbose() == 2) {
+                            if (network->getVerbose() >= 1) {
                                 std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         } else if (timeDifferences.back() < 0) {
-                            delta_delay = -delay_lambda*((n->getMembraneResistance()/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())))*n->getSynapticEfficacy();
+                            delta_delay = -delay_lambda*((1/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())))*n->getSynapticEfficacy();
 
                             inputSynapse->delay += delta_delay;
-                            if (network->getVerbose() == 2) {
+                            if (network->getVerbose() >= 1) {
                                 std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         }
@@ -107,22 +107,22 @@ namespace hummus {
             }
 
             // shifting weights to be equal to the number of plastic neurons
-            float desiredWeight = 1./plasticID.size()*(1/a->postNeuron->getMembraneResistance());
+            float desiredWeight = 1./plasticID.size();
 
             for (auto i=0; i<a->postNeuron->getPreSynapses().size(); i++) {
                 // discarding inhibitory synapses
                 if (a->postNeuron->getPreSynapses()[i]->weight >= 0) {
                     int ID = a->postNeuron->getPreSynapses()[i]->preNeuron->getNeuronID();
                     if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
-                        float weightDifference = (desiredWeight* a->postNeuron->getMembraneResistance()) - (a->postNeuron->getPreSynapses()[i]->weight*a->postNeuron->getMembraneResistance());
+                        float weightDifference = desiredWeight - a->postNeuron->getPreSynapses()[i]->weight;
                         float change = - std::exp(- std::pow(weight_alpha*weightDifference,2)) + 1;
                         if (weightDifference >= 0) {
-                            a->postNeuron->getPreSynapses()[i]->weight += weight_lambda*change*(1./a->postNeuron->getMembraneResistance()) * (1./a->postNeuron->getMembraneResistance() - a->weight);
+                            a->postNeuron->getPreSynapses()[i]->weight += weight_lambda*change * (1 - a->weight);
                         } else {
-                            a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda*change*(1./a->postNeuron->getMembraneResistance()) * (1./a->postNeuron->getMembraneResistance() - a->weight);
+                            a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda*change * (1 - a->weight);
                         }
                     } else {
-                        a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda * (1./a->postNeuron->getMembraneResistance()) * (1./a->postNeuron->getMembraneResistance() - a->weight);
+                        a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda * (1 - a->weight);
                     }
                 }
             }

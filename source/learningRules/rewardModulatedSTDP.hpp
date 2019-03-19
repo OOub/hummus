@@ -97,8 +97,12 @@ namespace hummus {
                                 // ignoring inhibitory synapses
                                 if (postSynapse->weight >= 0 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_minus+beta*Ap_plus;
-                                    postSynapse->weight += delta * postSynapse->weight * (1./postSynapse->postNeuron->getMembraneResistance() - postSynapse->weight);
-                                    postSynapse->postNeuron->setEligibilityTrace(0);
+                                    
+                                    if (network->getVerbose() >= 1) {
+                                        std::cout << "LTD weight change " << delta * postSynapse->weight * (1 - postSynapse->weight) << std::endl;
+                                    }
+                                    
+                                    postSynapse->weight += delta * postSynapse->weight * (1 - postSynapse->weight);
                                 }
                             }
                         }
@@ -111,8 +115,12 @@ namespace hummus {
                                 // ignoring inhibitory synapses
                                 if (preSynapse->weight >= 0 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_plus+beta*Ap_minus;
-                                    preSynapse->weight += delta * preSynapse->weight * (1./preSynapse->preNeuron->getMembraneResistance() - preSynapse->weight);
-                                    preSynapse->preNeuron->setEligibilityTrace(0);
+                                    
+                                    if (network->getVerbose() >= 1) {
+                                        std::cout << "LTP weight change " << delta * preSynapse->weight * (1 - preSynapse->weight) << std::endl;
+                                    }
+                                    
+                                    preSynapse->weight += delta * preSynapse->weight * (1 - preSynapse->weight);
                                 }
                             }
                         }

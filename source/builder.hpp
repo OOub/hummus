@@ -144,10 +144,6 @@ namespace hummus {
                 n->setEligibilityDecay(input["eligibilityDecay"].get<float>());
             }
             
-            if (input["resistance"].is_number()) {
-                n->setMembraneResistance(std::round(input["resistance"].get<float>()));
-            }
-            
             if (input["restingPotential"].is_number()) {
                 n->setRestingPotential(input["restingPotential"].get<float>());
             }

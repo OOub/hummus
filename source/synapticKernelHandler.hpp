@@ -25,6 +25,7 @@ namespace hummus {
 				gaussianStdDev(0),
 				type(0),
 				kernelID(0),
+                leakageAdaptation(1),
 				synapseTimeConstant(0) {}
 		
 		virtual ~SynapticKernelHandler(){}
@@ -45,6 +46,10 @@ namespace hummus {
 			return synapseTimeConstant;
 		}
 		
+        double getLeakageAdaptation() const {
+            return leakageAdaptation;
+        }
+        
 		int getKernelID() const {
 			return kernelID;
 		}
@@ -54,10 +59,11 @@ namespace hummus {
 		}
 		
 	protected:
-		int   kernelID;
-		float gaussianStdDev;
-		int   type;
-		float synapseTimeConstant;
+		int    kernelID;
+		float  gaussianStdDev;
+		int    type;
+		float  synapseTimeConstant;
+        double leakageAdaptation;
 	};
 }
 
