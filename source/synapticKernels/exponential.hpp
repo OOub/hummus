@@ -52,31 +52,17 @@ namespace hummus {
 			// event-based
 			if (timestep == 0) {
 				current = neuronCurrent * std::exp(-(timestamp-previousInputTime)*leakageAdaptation/synapseTimeConstant);
-                if (std::isinf(current)) {
-                    throw std::logic_error("decay overflow");
-                }
                 
 			// clock-based
 			} else {
 				current = neuronCurrent * std::exp(-timestep*leakageAdaptation/synapseTimeConstant);
-                if (std::isinf(current)) {
-                    throw std::logic_error("decay overflow");
-                }
 			}
             
             return current;
 		}
 		
 		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-            if (neuronCurrent > 100) {
-                std::cout << "before " << neuronCurrent << std::endl;
-            }
-            double current = (neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight);
-            
-            if (neuronCurrent > 100) {
-                std::cout << "after " << current << std::endl;
-            }
-            return current;
+            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight;
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {
