@@ -15,7 +15,7 @@
 
 #include "../source/core.hpp"
 #include "../source/randomDistributions/normal.hpp"
-#include "../source/GUI/qtDisplay.hpp"
+#include "../source/GUI/qt/qtDisplay.hpp"
 #include "../source/learningRules/stdp.hpp"
 #include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"

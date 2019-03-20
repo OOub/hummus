@@ -28,7 +28,7 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-#include "../core.hpp"
+#include "../../core.hpp"
 
 Q_DECLARE_METATYPE(QtCharts::QAbstractSeries *)
 Q_DECLARE_METATYPE(QtCharts::QValueAxis *)

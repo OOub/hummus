@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 31/07/2018
  *
- * Information: Add-on to the Network class, used to display a GUI of the spiking neural network output. Depends on Qt5
+ * Information: Add-on used to display a GUI of the spiking neural network output using Qt (Qt5 dependency)
  */
 
 #pragma once
@@ -22,7 +22,7 @@
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
 
-#include "../core.hpp"
+#include "../../core.hpp"
 #include "inputViewer.hpp"
 #include "outputViewer.hpp"
 #include "potentialViewer.hpp"

@@ -18,7 +18,7 @@
 #include "../source/randomDistributions/lognormal.hpp"
 #include "../source/randomDistributions/uniform.hpp"
 
-#include "../source/GUI/qtDisplay.hpp"
+#include "../source/GUI/qt/qtDisplay.hpp"
 
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/decisionMaking.hpp"

@@ -28,7 +28,7 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-#include "../core.hpp"
+#include "../../core.hpp"
 
 namespace hummus {
     class PotentialViewer : public QObject {
