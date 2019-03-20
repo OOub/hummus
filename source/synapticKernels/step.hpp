@@ -24,7 +24,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Step(float _resetCurrent=5, float gaussianStandardDeviation=0) :
+		Step(float _resetCurrent=5, float gaussianStandardDeviation=0, float _efficacyScaling=0.1) :
+                efficacyScaling(_efficacyScaling),
 				SynapticKernelHandler() {
 			
 			synapseTimeConstant = _resetCurrent;
@@ -54,7 +55,10 @@ namespace hummus {
 		}
 		
 		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight;
+            
+            efficacy = std::exp(- efficacyScaling * neuronCurrent);
+            
+            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine) * efficacy) * synapseWeight;
 		}
 		
 		virtual void toJson(nlohmann::json& output) override {
@@ -67,6 +71,7 @@ namespace hummus {
 		}
 		
 	protected:
+        float                      efficacyScaling;
 		std::mt19937               randomEngine;
 		std::normal_distribution<> normalDistribution;
 	};

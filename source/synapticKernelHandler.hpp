@@ -25,7 +25,8 @@ namespace hummus {
 				gaussianStdDev(0),
 				type(0),
 				kernelID(0),
-				synapseTimeConstant(0) {}
+				synapseTimeConstant(0),
+                efficacy(1) {}
 		
 		virtual ~SynapticKernelHandler(){}
 		
@@ -58,6 +59,7 @@ namespace hummus {
 		float  gaussianStdDev;
 		int    type;
 		float  synapseTimeConstant;
+        float  efficacy;
 	};
 }
 
