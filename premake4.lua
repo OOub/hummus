@@ -38,7 +38,8 @@ solution 'hummus'
         	files {'source/**.hpp',
         		'source/addOns/**.hpp', 
         		'source/dependencies/**.hpp', 
-        		'source/GUI/**.hpp', 
+        		'source/GUI/qt/**.hpp',
+        		'source/GUI/puffin/**.hpp', 
         		'source/learningRules/**.hpp', 
         		'source/neurons/**.hpp', 
         		'source/synapticKernels/**.hpp', 
@@ -48,9 +49,9 @@ solution 'hummus'
 
 			if with_qt then
 				-- Qt-dependent files
-				files(qt.moc({'source/GUI/inputViewer.hpp', 
-							  'source/GUI/outputViewer.hpp', 
-					          'source/GUI/potentialViewer.hpp'
+				files(qt.moc({'source/GUI/qt/inputViewer.hpp', 
+							  'source/GUI/qt/outputViewer.hpp', 
+					          'source/GUI/qt/potentialViewer.hpp'
 					          }, 
 							  'build/moc'))
 
