@@ -596,33 +596,30 @@ namespace hummus {
                 }
             }
             
-        	// find greatest common denominator
-        	int gcd = -1;
-        	for (auto i = 1; i <= presynapticLayer.width && i <= presynapticLayer.height; i++) {
-				if (presynapticLayer.width % i == 0 && presynapticLayer.height % i == 0) {
-                    if ((presynapticLayer.width  == i || presynapticLayer.height == i) && gcd != -1) {
-                        break;
-                    } else {
-                        gcd = i;
-                    }
-				}
-			}
+        	// find common divisor
+            int lcd = 1;
+            for (auto i = 2; i <= presynapticLayer.width && i <= presynapticLayer.height; i++) {
+                if (presynapticLayer.width % i == 0 && presynapticLayer.height % i == 0) {
+                    lcd = i;
+                    break;
+                }
+            }
 			
             if (verbose != 0) {
-                std::cout << "subsampling by a factor of " << gcd << std::endl;
+                std::cout << "subsampling by a factor of " << lcd << std::endl;
             }
             
         	// create pooling layer of neurons with correct dimensions
-            add2dLayer<T>(presynapticLayer.width/gcd, presynapticLayer.height/gcd, static_cast<int>(presynapticLayer.sublayers.size()), _learningRules, std::forward<Args>(args)...);
+            add2dLayer<T>(presynapticLayer.width/lcd, presynapticLayer.height/lcd, static_cast<int>(presynapticLayer.sublayers.size()), _learningRules, std::forward<Args>(args)...);
 			
             float range;
             // if size of kernel is an even number
-            if (gcd % 2 == 0) {
-                range = gcd - std::ceil(gcd / static_cast<float>(2)) - 0.5;
+            if (lcd % 2 == 0) {
+                range = lcd - std::ceil(lcd / static_cast<float>(2)) - 0.5;
             // if size of kernel is an odd number
             } else {
                 // finding range to calculate a moore neighborhood
-                range = gcd - std::ceil(gcd / static_cast<float>(2));
+                range = lcd - std::ceil(lcd / static_cast<float>(2));
             }
             
             // number of neurons surrounding the center
@@ -634,7 +631,7 @@ namespace hummus {
                     if (poolSub.ID == preSub.ID) {
                         
                         // initialising window on the first center coordinates
-                        std::pair<float, float> centerCoordinates((gcd-1)/static_cast<float>(2), (gcd-1)/static_cast<float>(2));
+                        std::pair<float, float> centerCoordinates((lcd-1)/static_cast<float>(2), (lcd-1)/static_cast<float>(2));
                         
                         // number of neurons = number of receptive fields in the presynaptic Layer
                         int row = 0; int col = 0;
@@ -643,8 +640,8 @@ namespace hummus {
                             // finding the coordinates for the presynaptic neurons in each receptive field
                             for (auto i=0; i<mooreNeighbors; i++) {
                                 
-                                int x = centerCoordinates.first + ((i % gcd) - range);
-                                int y = centerCoordinates.second + ((i / gcd) - range);
+                                int x = centerCoordinates.first + ((i % lcd) - range);
+                                int y = centerCoordinates.second + ((i / lcd) - range);
                                 
                                 // 2D to 1D mapping to get the index from x y coordinates
                                 int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
@@ -663,15 +660,15 @@ namespace hummus {
                             }
                             
                             // finding the coordinates for the center of each receptive field
-                            centerCoordinates.first += gcd;
+                            centerCoordinates.first += lcd;
                             if (centerCoordinates.first >= presynapticLayer.width) {
-                                centerCoordinates.first = (gcd-1)/static_cast<float>(2);
-                                centerCoordinates.second += gcd;
+                                centerCoordinates.first = (lcd-1)/static_cast<float>(2);
+                                centerCoordinates.second += lcd;
                             }
                             
                             // updating receptive field indices
                             row += 1;
-                            if (row == presynapticLayer.width/gcd) {
+                            if (row == presynapticLayer.width/lcd) {
                                 col += 1;
                                 row = 0;
                             }
@@ -1066,7 +1063,7 @@ namespace hummus {
             synapticKernels.back().get()->setKernelID(static_cast<int>(synapticKernels.size()));
             return *dynamic_cast<T*>(synapticKernels.back().get());
         }
-		
+        
         // ----- SETTERS AND GETTERS -----
 		
 		std::vector<std::unique_ptr<SynapticKernelHandler>>& getSynapticKernels() {

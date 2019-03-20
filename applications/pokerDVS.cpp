@@ -28,54 +28,58 @@
 
 int main(int argc, char** argv) {
     
-    bool deepSpiking = true; // choose between feedforward or deep spiking neural network
+    bool networkType = 1; // choose between feedforward, deep spiking neural network or myelin plasticity network
     
     //  ----- INITIALISING THE NETWORK -----
     hummus::QtDisplay qtDisplay;
-    hummus::ClassificationLogger classifLog("pokerClassifLog.bin");
-	hummus::SpikeLogger spikeLog("pokerSpikeLog.bin");
-    hummus::Network network({&spikeLog, &classifLog}, &qtDisplay);
+    hummus::SpikeLogger spikeLog("pokerSpikeLog.bin");
+    hummus::Network network({&spikeLog}, &qtDisplay);
     
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
-    auto kernel = network.makeSynapticKernel<hummus::Step>(5); // exponential synaptic kernel
+    auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
+    network.setVerbose(0);
     
-    if (deepSpiking) {
+    if (networkType == 1) {
         //  ----- DEEP SPIKING NEURAL NETWORK -----
         
         /// parameters
+        bool burst = true;
         bool homeostasis = true;
-        bool conv_wta = false;
-        bool pool_wta = true;
+        bool conv_wta = true;
+        bool pool_wta = false;
 
         /// creating the layers
-        network.add2dLayer<hummus::Input>(34, 34, 1, {}, nullptr); // input layer
-        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.8, 0.1, 5, 3), 80, 2, {&ti_stdp}, &kernel, homeostasis, 20, 3, conv_wta); // first convolution
-        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &kernel, homeostasis, 20, 3, pool_wta); // first pooling
-        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.8, 0.1, 5, 3), 80, 4, {&ti_stdp}, &kernel, homeostasis, 60, 3, conv_wta); // second convolution
-        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &kernel, homeostasis, 60, 3, pool_wta); // second pooling
-        network.addDecisionMakingLayer<hummus::DecisionMaking>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", &kernel, false, {}, 2500, homeostasis, 80); // decision-making
+        network.add2dLayer<hummus::Input>(40, 40, 1, {}, nullptr); // input layer
+        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.8, 0.1), 100, 4, {&ti_stdp}, &step, homeostasis, 20, 10, conv_wta, burst); // first convolution
+        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, homeostasis, 20, 0, pool_wta, false); // first pooling
+        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.8, 0.1), 100, 8, {&ti_stdp}, &step, homeostasis, 100, 10, conv_wta, burst); // second convolution
+        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, homeostasis, 20, 0, pool_wta, false); // second pooling
+        network.addLayer<hummus::LIF>(2, {&ti_stdp}, &step, homeostasis, 500, 10, conv_wta, burst, 20, 0, 40, 1, -60, -70, 100); // output layer with 2 neurons
         
         /// connecting the layers
-        network.lateralInhibition(network.getLayers()[1], -0.8);
-        network.lateralInhibition(network.getLayers()[3], -0.8);
-        network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.8, 0.1));
-    } else {
+        network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1));
+        network.allToAll(network.getLayers()[5], network.getLayers()[6], hummus::Normal(1, 0));
+        
+        qtDisplay.trackLayer(5);
+        
+    } else if (networkType == 0){
         // ----- SIMPLE FEEDFORWARD -----
         
         /// parameters
         bool homeostasis = true;
-        bool wta = false;
+        bool wta = true;
         bool burst = true;
         
         /// creating the layers
         network.add2dLayer<hummus::Input>(34, 34, 1, {}, nullptr); // input layer
-        network.addLayer<hummus::LIF>(100, {&ti_stdp}, &kernel, homeostasis, 20, 3, wta, burst); // hidden layer with STDP
-        network.addLayer<hummus::LIF>(2, {}, &kernel, homeostasis, 80, 2500, true, burst); // output layer with 2 neurons
+        network.addLayer<hummus::LIF>(100, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // hidden layer with STDP
+        network.addLayer<hummus::LIF>(2, {&ti_stdp}, &step, homeostasis, 500, 10, wta, burst, 20, 0, 40, 1, -60, -70, 100); // output layer with 2 neurons
         
         /// connecting the layers
-        network.lateralInhibition(network.getLayers()[1], -0.8);
-        network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.05, 0.1, 5, 3), 80);
-        network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Normal(0.04, 0.01));
+        network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.8, 0.1));
+        network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Normal(0.8, 0.1));
+        
+        qtDisplay.trackLayer(2);
     }
     
 	//  ----- READING DATA FROM FILE -----
@@ -86,10 +90,9 @@ int main(int argc, char** argv) {
 	//  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
     qtDisplay.setTimeWindow(10000);
-    qtDisplay.trackLayer(1);
-    qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
     
-    network.setVerbose(0);
+    std::cout << "output neuron IDs " << network.getNeurons().back()->getNeuronID() - 1 << " " << network.getNeurons().back()->getNeuronID() << std::endl;
+    qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
     
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0, &testData);

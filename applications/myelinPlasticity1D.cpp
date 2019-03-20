@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 	bool homeostasis = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto mp = network.makeLearningRule<hummus::MyelinPlasticity>(1, 1, 0.01, 1);
+	auto mp = network.makeLearningRule<hummus::MyelinPlasticity>(1, 1, 0.1, 1);
     
     //  ----- CREATING THE NETWORK -----
     auto exponential = network.makeSynapticKernel<hummus::Exponential>();

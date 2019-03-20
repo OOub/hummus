@@ -34,7 +34,7 @@ namespace hummus {
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
-                restingThreshold(-50),
+                restingThreshold(_threshold),
                 decayWeight(_decayWeight),
                 decayHomeostasis(_decayHomeostasis),
                 homeostasisBeta(_homeostasisBeta),
@@ -96,7 +96,7 @@ namespace hummus {
                 
                 // potential decay
                 potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)*adaptation/decayPotential);
-				
+                
                 // threshold decay
                 if (homeostasis) {
                     threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousInputTime)*adaptation/decayHomeostasis);
@@ -110,7 +110,7 @@ namespace hummus {
                 if (active && !inhibited) {
 					// calculating the potential
                     potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
-
+                    
                     // updating the threshold
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
