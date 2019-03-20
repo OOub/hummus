@@ -596,7 +596,7 @@ namespace hummus {
                 }
             }
             
-        	// find common divisor
+        	// find lowest common divisor
             int lcd = 1;
             for (auto i = 2; i <= presynapticLayer.width && i <= presynapticLayer.height; i++) {
                 if (presynapticLayer.width % i == 0 && presynapticLayer.height % i == 0) {
@@ -605,6 +605,10 @@ namespace hummus {
                 }
             }
 			
+            if (lcd == 1) {
+                throw std::logic_error("The pooling cannot find a common divisor that's different than 1 for the size of the previous layer.");
+            }
+            
             if (verbose != 0) {
                 std::cout << "subsampling by a factor of " << lcd << std::endl;
             }
