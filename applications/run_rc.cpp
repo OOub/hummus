@@ -20,7 +20,7 @@
 #include "../source/neurons/IF.hpp"
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
-#include "../source/GUI/qtqtDisplay.hpp"
+#include "../source/GUI/qt/qtDisplay.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 9) {
