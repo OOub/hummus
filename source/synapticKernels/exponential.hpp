@@ -51,11 +51,11 @@ namespace hummus {
             
 			// event-based
 			if (timestep == 0) {
-				current = neuronCurrent * std::exp(-(timestamp-previousInputTime)*leakageAdaptation/synapseTimeConstant);
+				current = neuronCurrent * std::exp(-(timestamp-previousInputTime)/synapseTimeConstant);
                 
 			// clock-based
 			} else {
-				current = neuronCurrent * std::exp(-timestep*leakageAdaptation/synapseTimeConstant);
+				current = neuronCurrent * std::exp(-timestep/synapseTimeConstant);
 			}
             
             return current;

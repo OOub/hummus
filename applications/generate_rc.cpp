@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 07/03/2019
  *
- * Information: Application to generate a reservoir computer twork and save it in a JSON file
+ * Information: Application to generate a reservoir network and save it in a JSON file
  */
 
 #include <iostream>

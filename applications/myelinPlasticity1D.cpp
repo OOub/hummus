@@ -14,7 +14,7 @@
 #include "../source/core.hpp"
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/dataParser.hpp"
-#include "../source/GUI/qtDisplay.hpp"
+#include "../source/GUI/qt/qtDisplay.hpp"
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/myelinPlasticityLogger.hpp"

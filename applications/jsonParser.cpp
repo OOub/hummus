@@ -15,7 +15,7 @@
 #include "../source/builder.hpp"
 #include "../source/core.hpp"
 #include "../source/randomDistributions/normal.hpp"
-#include "../source/GUI/qtDisplay.hpp"
+#include "../source/GUI/qt/qtDisplay.hpp"
 
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/decisionMaking.hpp"
