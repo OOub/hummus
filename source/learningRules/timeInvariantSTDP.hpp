@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        TimeInvariantSTDP(float _alpha_plus=0.01, float _alpha_minus=-0.08, float _beta_plus=3, float _beta_minus=1, float _leak_scaling_factor=0.1) :
+        TimeInvariantSTDP(float _alpha_plus=0.1, float _alpha_minus=-0.8, float _beta_plus=3, float _beta_minus=1, float _leak_scaling_factor=0.1) :
                 alpha_plus(_alpha_plus),
                 alpha_minus(_alpha_minus),
                 beta_plus(_beta_plus),

@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
     
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
     auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
+    
     network.setVerbose(0);
     
     if (networkType == 1) {
@@ -50,15 +51,14 @@ int main(int argc, char** argv) {
 
         /// creating the layers
         network.add2dLayer<hummus::Input>(40, 40, 1, {}, nullptr); // input layer
-        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.8, 0.1), 100, 4, {&ti_stdp}, &step, homeostasis, 20, 10, conv_wta, burst); // first convolution
-        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, homeostasis, 20, 0, pool_wta, false); // first pooling
-        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.8, 0.1), 100, 8, {&ti_stdp}, &step, homeostasis, 100, 10, conv_wta, burst); // second convolution
-        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, homeostasis, 20, 0, pool_wta, false); // second pooling
-        network.addLayer<hummus::LIF>(2, {&ti_stdp}, &step, homeostasis, 500, 10, conv_wta, burst, 20, 0, 40, 1, -60, -70, 100); // output layer with 2 neurons
+        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.6, 0.1), 100, 4, {&ti_stdp}, &step, homeostasis, 20, 10, conv_wta, burst); // first convolution
+        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // first pooling
+        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.6, 0.1), 100, 8, {&ti_stdp}, &step, homeostasis, 100, 10, conv_wta, burst); // second convolution
+        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // second pooling
+        network.addLayer<hummus::LIF>(2, {&ti_stdp}, &step, homeostasis, 200, 10, conv_wta, burst, 20, 0, 20, 0.1, -50, -70, 100); // output layer with 2 neurons
         
         /// connecting the layers
         network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1));
-        network.allToAll(network.getLayers()[5], network.getLayers()[6], hummus::Normal(1, 0));
         
         qtDisplay.trackLayer(5);
         
