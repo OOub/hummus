@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     network.addLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.2, 0.05, 5, 3));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.2, 0.01, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);

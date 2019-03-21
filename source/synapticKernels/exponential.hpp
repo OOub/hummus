@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(float _decayCurrent=10, float gaussianStandardDeviation=0, float _efficacyScaling=0.1) :
+		Exponential(float _decayCurrent=10, float gaussianStandardDeviation=0, float _efficacyScaling=0.001) :
                 efficacyScaling(_efficacyScaling),
 				SynapticKernelHandler() {
 				

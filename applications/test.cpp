@@ -42,8 +42,11 @@ int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::QtDisplay qtDisplay;
-    hummus::SpikeLogger spikeLog("testSpikeLog.bin");
-    hummus::Network network({&spikeLog}, &qtDisplay);
+    hummus::SpikeLogger spikeLog("spikeLog.bin");
+    hummus::ClassificationLogger classificationLog("classificationLog.bin");
+    hummus::PotentialLogger potentialLog("potentialLog.bin");
+    
+    hummus::Network network({&spikeLog, &classificationLog, &potentialLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
     auto exponential = network.makeSynapticKernel<hummus::Exponential>();
@@ -66,6 +69,8 @@ int main(int argc, char** argv) {
     qtDisplay.trackNeuron(1);
     
     //  ----- RUNNING THE NETWORK -----
+    network.turnOffLearning(0);
+    potentialLog.neuronSelection(1);
     network.run(100, 0.1);
 	
 	//  ----- SAVING THE NETWORK -----
