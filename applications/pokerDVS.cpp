@@ -31,9 +31,10 @@ int main(int argc, char** argv) {
     bool networkType = 1; // choose between feedforward, deep spiking neural network or myelin plasticity network
     
     //  ----- INITIALISING THE NETWORK -----
-    hummus::QtDisplay qtDisplay;
+//    hummus::QtDisplay qtDisplay;
     hummus::SpikeLogger spikeLog("pokerSpikeLog.bin");
-    hummus::Network network({&spikeLog}, &qtDisplay);
+//    hummus::Network network({&spikeLog}, &qtDisplay);
+    hummus::Network network({&spikeLog});
     
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
     auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
@@ -60,7 +61,7 @@ int main(int argc, char** argv) {
         /// connecting the layers
         network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1));
         
-        qtDisplay.trackLayer(5);
+//        qtDisplay.trackLayer(5);
         
     } else if (networkType == 0){
         // ----- SIMPLE FEEDFORWARD -----
@@ -79,7 +80,7 @@ int main(int argc, char** argv) {
         network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.8, 0.1));
         network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Normal(0.8, 0.1));
         
-        qtDisplay.trackLayer(2);
+//        qtDisplay.trackLayer(2);
     }
     
 	//  ----- READING DATA FROM FILE -----
@@ -88,11 +89,11 @@ int main(int argc, char** argv) {
     auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
 
 	//  ----- DISPLAY SETTINGS -----
-    qtDisplay.useHardwareAcceleration(true);
-    qtDisplay.setTimeWindow(10000);
-    
-    std::cout << "output neuron IDs " << network.getNeurons().back()->getNeuronID() - 1 << " " << network.getNeurons().back()->getNeuronID() << std::endl;
-    qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
+//    qtDisplay.useHardwareAcceleration(true);
+//    qtDisplay.setTimeWindow(10000);
+//
+//    std::cout << "output neuron IDs " << network.getNeurons().back()->getNeuronID() - 1 << " " << network.getNeurons().back()->getNeuronID() << std::endl;
+//    qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
     
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0, &testData);

@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 12/06/2018
  *
- * Information: Add-on used to write the learning rule's output into a binary file; In other words, which neurons are being modified at each learning epoch.
+ * Information: Add-on used to write the learning rule's output into a binary file; In other words, which neurons are being modified at each learning epoch. The logger is constrained to reduce file size
  */
 
 #pragma once
@@ -25,7 +25,9 @@ namespace hummus {
         
     public:
     	// ----- CONSTRUCTOR -----
-        MyelinPlasticityLogger(std::string filename) {
+        MyelinPlasticityLogger(std::string filename) :
+                previousTimestamp(0) {
+                    
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
@@ -34,29 +36,37 @@ namespace hummus {
 
 		// ----- PUBLIC LOGGER METHODS -----
 		void myelinPlasticityEvent(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int>>& plasticNeurons) {
-			const int64_t bitSize = 24+8*timeDifferences.size()+8*plasticNeurons[0].size();
+            
+            // defining what to save and constraining it so that file size doesn't blow up
+			const int16_t bitSize = 9+2*timeDifferences.size()+4*plasticNeurons[0].size();
 			std::vector<char> bytes(bitSize);
-			SpikeLogger::copy_to(bytes.data() + 0, bitSize);
-			SpikeLogger::copy_to(bytes.data() + 8, timestamp);
-			SpikeLogger::copy_to(bytes.data() + 16, postNeuron->getNeuronID());
-			SpikeLogger::copy_to(bytes.data() + 18, postNeuron->getLayerID());
-			SpikeLogger::copy_to(bytes.data() + 20, postNeuron->getRfCoordinates().first);
-			SpikeLogger::copy_to(bytes.data() + 22, postNeuron->getRfCoordinates().second);
+			SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
+			SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>((timestamp - previousTimestamp) * 100));
+			SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getNeuronID()));
+			SpikeLogger::copy_to(bytes.data() + 6, static_cast<int8_t>(postNeuron->getLayerID()));
+			SpikeLogger::copy_to(bytes.data() + 7, static_cast<int8_t>(postNeuron->getRfCoordinates().first));
+			SpikeLogger::copy_to(bytes.data() + 8, static_cast<int8_t>(postNeuron->getRfCoordinates().second));
 			
-			int count = 24;
+			int count = 9;
 			for (auto i=0; i<timeDifferences.size(); i++) {
-				SpikeLogger::copy_to(bytes.data() + count, timeDifferences[i]);
-				SpikeLogger::copy_to(bytes.data() + count+8, plasticNeurons[0][i]);
-				SpikeLogger::copy_to(bytes.data() + count+10, plasticNeurons[1][i]);
-				SpikeLogger::copy_to(bytes.data() + count+12, plasticNeurons[2][i]);
-				SpikeLogger::copy_to(bytes.data() + count+14, plasticNeurons[3][i]);
-				count += 16;
+				SpikeLogger::copy_to(bytes.data() + count,   static_cast<int16_t>(timeDifferences[i] * 100));
+				SpikeLogger::copy_to(bytes.data() + count+2, static_cast<int8_t>(plasticNeurons[0][i]));
+				SpikeLogger::copy_to(bytes.data() + count+3, static_cast<int8_t>(plasticNeurons[1][i]));
+				SpikeLogger::copy_to(bytes.data() + count+4, static_cast<int8_t>(plasticNeurons[2][i]));
+				SpikeLogger::copy_to(bytes.data() + count+5, static_cast<int8_t>(plasticNeurons[3][i]));
+				count += 6;
 			}
-			saveFile.write(bytes.data(), bytes.size());
+            
+            // saving to file
+            saveFile.write(bytes.data(), bytes.size());
+            
+            // changing the previoud timestamp
+            previousTimestamp = timestamp;
 		}
 
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream saveFile;
+        double        previousTimestamp;
 	};
 }

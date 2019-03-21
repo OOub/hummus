@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Step(float _resetCurrent=5, float gaussianStandardDeviation=0, float _efficacyScaling=0.1) :
+		Step(float _resetCurrent=5, float gaussianStandardDeviation=0, float _efficacyScaling=0.001) :
                 efficacyScaling(_efficacyScaling),
 				SynapticKernelHandler() {
 			

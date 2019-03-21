@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 20/11/2018
  *
- * Information: Add-on used to log the spikes from the output layer when the learning is off
+ * Information: Add-on used to log the spikes from the output layer when the learning is off. The logger is constrained to reduce file size
  */
 
 #pragma once
@@ -26,7 +26,9 @@ namespace hummus {
         
     public:
     	// ----- CONSTRUCTOR -----
-        ClassificationLogger(std::string filename) {
+        ClassificationLogger(std::string filename) :
+                previousTimestamp(0) {
+                    
             saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
@@ -38,12 +40,18 @@ namespace hummus {
 			// logging only after learning is stopped
 			if (!network->getLearningStatus()) {
 				// restrict only to the output layer
-				if (a->postNeuron->getLayerID() == network->getLayers().back().ID) {	
-					std::array<char, 12> bytes;
-					SpikeLogger::copy_to(bytes.data() + 0, timestamp);
-					SpikeLogger::copy_to(bytes.data() + 8, a->preNeuron ? a->preNeuron->getNeuronID() : -1);
-					SpikeLogger::copy_to(bytes.data() + 10, a->postNeuron->getNeuronID());
-					saveFile.write(bytes.data(), bytes.size());
+				if (a->postNeuron->getLayerID() == network->getLayers().back().ID) {
+                    
+                    // defining what to save and constraining it so that file size doesn't blow up
+					std::array<char, 4> bytes;
+					SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>((timestamp - previousTimestamp) * 100));
+					SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                    
+                    // saving to file
+                    saveFile.write(bytes.data(), bytes.size());
+                    
+                    // changing the previoud timestamp
+                    previousTimestamp = timestamp;
 				}
 			}
 		}
@@ -51,5 +59,6 @@ namespace hummus {
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream saveFile;
+        double        previousTimestamp;
 	};
 }
