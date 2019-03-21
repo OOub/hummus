@@ -876,23 +876,18 @@ namespace hummus {
 
         // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
         void injectPredictedSpike(spike s, spikeType stype) {
-            // if spike doesn't already exist insert it in the list. if it does, just update the timestamp
-            auto it = std::find_if(predictedSpikes.begin(), predictedSpikes.end(),[&](spike oldSpike) {
+            // remove old spike
+            std::remove_if(predictedSpikes.begin(), predictedSpikes.end(),[&](spike oldSpike) {
                 return oldSpike.propagationSynapse == s.propagationSynapse;
             });
             
-            if (it != predictedSpikes.end()) {
-                auto idx = std::distance(predictedSpikes.begin(), it);
-                predictedSpikes[idx].type = stype;
-                predictedSpikes[idx].timestamp = s.timestamp;
-            } else {
-                predictedSpikes.insert(it, s);
-            }
+            // change type of new spike
+            s.type = stype;
             
-            // sort timestamps
-            std::sort(predictedSpikes.begin(), predictedSpikes.end(), [](spike a, spike b) {
-                return a.timestamp < b.timestamp;
-            });
+            // insert the new spike in the correct place
+            predictedSpikes.insert(
+                std::upper_bound(predictedSpikes.begin(), predictedSpikes.end(), s, [](spike one, spike two){return one.timestamp < two.timestamp;}),
+                s);
         }
         
         // add spikes from file to the network
