@@ -44,6 +44,7 @@ solution 'hummus'
         		'source/neurons/**.hpp', 
         		'source/synapticKernels/**.hpp', 
         		'source/networkExtensions/**.hpp', 
+        		'source/randomDistributions/**.hpp', 
         		'applications/' .. name .. '.cpp'
         	}
 
