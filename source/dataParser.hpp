@@ -69,7 +69,7 @@ namespace hummus {
                 
 				while (std::getline(dataFile, line)) {
                 	std::vector<std::string> fields;
-                	split(fields, line, " ");
+                	split(fields, line, " ,");
                 	// 1D data
                 	if (fields.size() == 2) {
                 		dataType = 0;
@@ -150,6 +150,35 @@ namespace hummus {
             }
         }
 		
+        // read a weight matrix file delimited by a space or a comma, where the inputs are the columns and the outputs are the rows
+        std::vector<std::vector<double>> readWeightMatrix(std::string filename) {
+            dataFile.open(filename);
+            
+            if (dataFile.good()) {
+                std::string line;
+                std::vector<std::vector<double>> data;
+                
+                while (std::getline(dataFile, line)) {
+                    std::vector<std::string> fields;
+                    split(fields, line, " ,");
+                    
+                    std::vector<double> postSynapticWeights;
+                    
+                    // filling temporary vector by each field of the line read, then convert the field to double
+                    for (auto& f: fields) {
+                        postSynapticWeights.push_back(std::stod(f));
+                    }
+                    
+                    // filling vector of vectors to build 2D weight matrix
+                    data.push_back(postSynapticWeights);
+                }
+                dataFile.close();
+                return data;
+            } else {
+                throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName"));
+            }
+        }
+        
 		std::deque<label> readLabels(std::string labels = "") {
 			if (labels.empty()) {
 				throw std::logic_error("no files were passed to the readLabels() function. There is nothing to do.");
@@ -161,7 +190,7 @@ namespace hummus {
 					
 					while (std::getline(dataFile, line)) {
 						std::vector<std::string> fields;
-						split(fields, line, " ");
+						split(fields, line, " ,");
 						if (fields.size() == 2) {
 							dataLabels.push_back(label{fields[0], std::stod(fields[1])});
 						}
