@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
+#include "../source/dataParser.hpp"
 
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/randomDistributions/cauchy.hpp"
@@ -49,11 +50,13 @@ int main(int argc, char** argv) {
     hummus::Network network({&spikeLog, &classificationLog, &potentialLog}, &qtDisplay);
 
     //  ----- CREATING THE NETWORK -----
+    hummus::DataParser parser;
+    
     auto exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
     // creating layers of neurons
-    network.addLayer<hummus::Input>(1, {}, nullptr);
-    network.addLayer<hummus::LIF>(1, {}, &exponential, false, 20, 3, true);
+    network.addLayer<hummus::Input>(5, {}, nullptr);
+    network.addLayer<hummus::LIF>(3, {}, &exponential, false, 20, 3, true);
     
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
