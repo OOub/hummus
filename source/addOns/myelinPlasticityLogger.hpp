@@ -35,6 +35,7 @@ namespace hummus {
         }
 
 		// ----- PUBLIC LOGGER METHODS -----
+        
 		void myelinPlasticityEvent(double timestamp, Network* network, Neuron* postNeuron, const std::vector<double>& timeDifferences, const std::vector<std::vector<int>>& plasticNeurons) {
             
             // defining what to save and constraining it so that file size doesn't blow up
