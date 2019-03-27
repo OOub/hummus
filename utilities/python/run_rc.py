@@ -9,7 +9,7 @@ cmd_list=["../../build/release/run_rc",
           "potentialLog.bin", # name of output potential file
           "1", # Enable GUI (bool)
           "10", #timestep
-               # either leave this field blank -> potential logs all the reservoir, or, any number that goes after the timestep argument will be tracked. so you can add "0", "1", "2" to track the neurons with ID 0, 1 and 2
+          "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"  # either leave this field blank -> potential logs all the reservoir, or, any number that goes after the timestep argument will be tracked. so you can add "0", "1", "2" to track the neurons with ID 0, 1 and 2
         ]
 
 subprocess.call(cmd_list)

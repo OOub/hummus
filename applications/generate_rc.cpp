@@ -74,19 +74,19 @@ int main(int argc, char** argv) {
     std::cout << "Reset current duration " << std::setw(static_cast<int>(clean_cout-std::string("Reset current duration ").size())) << argv[11] << std::endl;
 	
     // time constant for membrane potential (decay)
-    float decayPotential = std::atof(argv[11]);
+    float decayPotential = std::atof(argv[12]);
     std::cout << "Potential decay time: " << std::setw(static_cast<int>(clean_cout-std::string("Potential decay time: ").size())) << argv[12] << std::endl;
     
     // neuron inactive for specified time after each spike
-    int refractoryPeriod = std::atoi(argv[12]);
+    int refractoryPeriod = std::atoi(argv[13]);
     std::cout << "Refractory Period: " << std::setw(static_cast<int>(clean_cout-std::string("Refractory Period: ").size())) << argv[13] << std::endl;
     
     // winner-takes-all algorithm
-    bool wta = std::atoi(argv[13]);
+    bool wta = std::atoi(argv[14]);
     std::cout << "Winner takes all: " << std::setw(static_cast<int>(clean_cout-std::string("Winner takes all: ").size())) << argv[14] << std::endl;
     
     // threshold adaptation to firing rate
-    bool homeostasis = std::atoi(argv[14]);
+    bool homeostasis = std::atoi(argv[15]);
     std::cout << "Threshold Adaptation to firing rate: " << std::setw(10) << argv[15] << std::endl;
 
     //  ----- CREATING THE NETWORK -----
