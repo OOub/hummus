@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 14/01/2019
+ * Last 9Version: 14/01/2019
  *
  * Information: Spiking neural network classifying the poker-DVS dataset
  */
@@ -13,31 +13,25 @@
 
 #include "../source/core.hpp"
 #include "../source/randomDistributions/normal.hpp"
-#include "../source/GUI/qt/qtDisplay.hpp"
 
-#include "../source/learningRules/stdp.hpp"
 #include "../source/learningRules/timeInvariantSTDP.hpp"
 
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/input.hpp"
-#include "../source/neurons/decisionMaking.hpp"
 
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/classificationLogger.hpp"
-#include "../source/synapticKernels/exponential.hpp"
+#include "../source/synapticKernels/step.hpp"
 
 int main(int argc, char** argv) {
     
-    bool networkType = 1; // choose between feedforward, deep spiking neural network or myelin plasticity network
+    int networkType = 1; // choose between feedforward, deep spiking neural network or myelin plasticity network
     
     //  ----- INITIALISING THE NETWORK -----
-//    hummus::QtDisplay qtDisplay;
-    
     hummus::PotentialLogger pLog("pLog.bin");
     hummus::ClassificationLogger cLog("cLog.bin");
     hummus::SpikeLogger spikeLog("pokerSpikeLog.bin");
-//    hummus::Network network({&spikeLog}, &qtDisplay);
     hummus::Network network({&pLog, &cLog, &spikeLog});
     
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
@@ -64,9 +58,6 @@ int main(int argc, char** argv) {
         
         /// connecting the layers
         network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1));
-        
-//        qtDisplay.trackLayer(5);
-        
     } else if (networkType == 0){
         // ----- SIMPLE FEEDFORWARD -----
         
@@ -83,27 +74,18 @@ int main(int argc, char** argv) {
         /// connecting the layers
         network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.8, 0.1));
         network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Normal(0.8, 0.1));
-        
-//        qtDisplay.trackLayer(2);
     }
     
 	//  ----- READING DATA FROM FILE -----
     hummus::DataParser dataParser;
     auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtraining.txt");
     auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
-
-	//  ----- DISPLAY SETTINGS -----
-//    qtDisplay.useHardwareAcceleration(true);
-//    qtDisplay.setTimeWindow(10000);
-//
-//    std::cout << "output neuron IDs " << network.getNeurons().back()->getNeuronID() - 1 << " " << network.getNeurons().back()->getNeuronID() << std::endl;
-//    qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
     
     pLog.neuronSelection(network.getLayers()[5]);
     
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0, &testData);
-
+//    network.run(&trainingData, 0, &testData);
+	network.run(&trainingData, 0.1);
     //  ----- EXITING APPLICATION -----
     return 0;
 }
