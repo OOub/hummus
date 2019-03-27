@@ -20,6 +20,7 @@
 #include "../source/randomDistributions/uniform.hpp"
 
 #include "../source/GUI/qt/qtDisplay.hpp"
+#include "../source/GUI/puffin/puffinDisplay.hpp"
 
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/decisionMaking.hpp"
@@ -42,43 +43,43 @@
 int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
-    hummus::QtDisplay qtDisplay;
+    hummus::QtDisplay display;
     hummus::SpikeLogger spikeLog("spikeLog.bin");
     hummus::ClassificationLogger classificationLog("classificationLog.bin");
     hummus::PotentialLogger potentialLog("potentialLog.bin");
-    
-    hummus::Network network({&spikeLog, &classificationLog, &potentialLog}, &qtDisplay);
+
+    hummus::Network network({&spikeLog, &classificationLog, &potentialLog}, &display);
 
     //  ----- CREATING THE NETWORK -----
     hummus::DataParser parser;
-    
+
     auto exponential = network.makeSynapticKernel<hummus::Exponential>();
-	
+
     // creating layers of neurons
-    network.addLayer<hummus::Input>(5, {}, nullptr);
-    network.addLayer<hummus::LIF>(3, {}, &exponential, false, 20, 3, true);
-    
+    network.addLayer<hummus::Input>(1, {}, nullptr);
+    network.addLayer<hummus::LIF>(1, {}, &exponential, false, 20, 3, true);
+
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
-	
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0, 0));
+
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
     network.injectSpike(0, 11);
     network.injectSpike(0, 30);
-	
+
     //  ----- DISPLAY SETTINGS -----
     qtDisplay.useHardwareAcceleration(true);
     qtDisplay.setTimeWindow(100);
     qtDisplay.trackNeuron(1);
-    
+
     //  ----- RUNNING THE NETWORK -----
     network.turnOffLearning(0);
     potentialLog.neuronSelection(1);
     network.run(100, 0.1);
-	
+
 	//  ----- SAVING THE NETWORK -----
     network.save("testSave");
-	
+
     //  ----- EXITING APPLICATION -----
     return 0;
 }
