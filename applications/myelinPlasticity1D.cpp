@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 	hummus::DataParser dataParser;
 	
 	auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", false, 0);
-	
+    
     //  ----- INITIALISING THE NETWORK -----
 	hummus::QtDisplay qtDisplay;
 	hummus::SpikeLogger spikeLog("10neurons_4patterns_unsupervised_spikeLog.bin");
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     int inputNeurons = 10;
     int layer1Neurons = 4;
 	
-	float eligibilityDecay = 30;
+	float eligibilityDecay = 20;
 	
 	bool wta = true;
 	bool burst = false;
@@ -56,14 +56,14 @@ int main(int argc, char** argv) {
     network.addLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.2, 0.01, 5, 3));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.2, 0.05, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
 	qtDisplay.useHardwareAcceleration(true);
 	qtDisplay.setTimeWindow(5000);
 	qtDisplay.trackNeuron(11);
 
-	network.turnOffLearning(80000);
+    network.turnOffLearning(80000);
 
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0.1);

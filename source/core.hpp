@@ -1061,7 +1061,7 @@ namespace hummus {
 
                 // importing training data and running the network through the data
                 train(_timestep, trainingData, shift);
-
+                
                 // importing test data and running the network through the data
                 if (testData) {
                     predict(_timestep, testData, shift);

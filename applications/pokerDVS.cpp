@@ -23,6 +23,7 @@
 #include "../source/neurons/decisionMaking.hpp"
 
 #include "../source/addOns/spikeLogger.hpp"
+#include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/classificationLogger.hpp"
 #include "../source/synapticKernels/exponential.hpp"
 
@@ -32,9 +33,12 @@ int main(int argc, char** argv) {
     
     //  ----- INITIALISING THE NETWORK -----
 //    hummus::QtDisplay qtDisplay;
+    
+    hummus::PotentialLogger pLog("pLog.bin");
+    hummus::ClassificationLogger cLog("cLog.bin");
     hummus::SpikeLogger spikeLog("pokerSpikeLog.bin");
 //    hummus::Network network({&spikeLog}, &qtDisplay);
-    hummus::Network network({&spikeLog});
+    hummus::Network network({&pLog, &cLog, &spikeLog});
     
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
     auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
@@ -94,6 +98,8 @@ int main(int argc, char** argv) {
 //
 //    std::cout << "output neuron IDs " << network.getNeurons().back()->getNeuronID() - 1 << " " << network.getNeurons().back()->getNeuronID() << std::endl;
 //    qtDisplay.trackNeuron(network.getNeurons().back()->getNeuronID());
+    
+    pLog.neuronSelection(network.getLayers()[5]);
     
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0, &testData);

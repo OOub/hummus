@@ -36,6 +36,7 @@ namespace hummus {
         }
 		
 		// ----- PUBLIC LOGGER METHODS -----
+        
 		void neuronFired(double timestamp, synapse* a, Network* network) override {
 			// logging only after learning is stopped
 			if (!network->getLearningStatus()) {
