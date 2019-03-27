@@ -68,9 +68,9 @@ int main(int argc, char** argv) {
     network.injectSpike(0, 30);
 
     //  ----- DISPLAY SETTINGS -----
-    qtDisplay.useHardwareAcceleration(true);
-    qtDisplay.setTimeWindow(100);
-    qtDisplay.trackNeuron(1);
+    display.useHardwareAcceleration(true);
+    display.setTimeWindow(100);
+    display.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
     network.turnOffLearning(0);

@@ -62,27 +62,29 @@ int main(int argc, char** argv) {
         float timestep = std::atof(argv[8]);
         std::cout << "Time step(0 for event based): " << argv[8] << std::endl;
         
-        // neuron IDs to log
-        std::vector<std::string> arguments;
-        std::vector<int> neuronIDs;
-        if (argc > 9) {
-            arguments.insert(arguments.end(), argv + 10, argv + argc);
-            for (auto& arg: arguments) {
-                neuronIDs.push_back(std::atoi(arg.c_str()));
-            }
-        }
-        
         // ----- IMPORTING DATA -----
         hummus::DataParser parser;
         auto data = parser.readData(dataPath, timeJitter, additiveNoise);
 
+
+		// neuron IDs to log
+        std::vector<int> neuronIDs;
+        if (argc > 9) {
+			std::vector<std::string> fields;
+			parser.split(fields, argv[9], " ,[]");
+			
+			for (auto f: fields) {
+				neuronIDs.push_back(std::atoi(f.c_str()));
+			}
+        }
+		
         //  ----- INITIALISING THE NETWORK -----
         hummus::SpikeLogger spikeLog(spikeLogName);
         hummus::PotentialLogger potentialLog(potentialLogName);
 
         hummus::Network network({&spikeLog, &potentialLog});
         hummus::Builder builder(&network);
-        
+
         hummus::QtDisplay qtDisplay;
         if (gui) {
             std::cout << "Starting GUI" << std::endl;
@@ -97,7 +99,7 @@ int main(int argc, char** argv) {
 
         // initialising the potentialLoggers
         network.turnOffLearning(0);
-        
+
         if (argc >= 9) {
             std::cout << "logging the potential of the selected neurons" << std::endl;
             potentialLog.neuronSelection(neuronIDs);
@@ -105,7 +107,7 @@ int main(int argc, char** argv) {
             std::cout << "logging the potential of all the reservoir" << std::endl;
             potentialLog.neuronSelection(network.getLayers()[1]);
         }
-        
+
         //  ----- RUNNING THE NETWORK ASYNCHRONOUSLY-----
         network.run(&data, timestep);
     }

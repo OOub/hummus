@@ -5,7 +5,7 @@ cmd_list=["../../build/release/generate_rc",
           "28", # pixel grid height (int)
           "0", # gaussian mean for input weights (float)
           "1", # gaussian standard deviation for input weights (float)
-          "1000", # number of neurons inside the reservoir (int) 
+          "50", # number of neurons inside the reservoir (int) 
           "0", # gaussian mean for weights (float)
           "1", # gaussian standard deviation for weights (float)
           "1", # percentage likelihood of feedforward connections (int)
