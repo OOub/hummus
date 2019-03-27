@@ -4,22 +4,36 @@
     <head>
         <title>hummus</title>
     </head>
-    
+
     <body>
         <script>
-            const socket = new WebSocket('ws://localhost:8080');
 
-            socket.addEventListener('open', event => {
-                console.log('open', event);
-            });
+            const new_spikes = [];
+            window.setInterval(() => {
+                for (const spike of new_spike) {
+                }
+                new_spikes.length = 0;
+            }, 50);
 
-            socket.addEventListener('close', event => {
-                console.log('close', event);
-            });
-            socket.addEventListener('error', event => {
-                console.error('error', event);
-            });
-            
+            const connect = () => {
+                const socket = new WebSocket('ws://localhost:8080');
+
+                socket.addEventListener('open', event => {
+                    console.log('open', event);
+                });
+                socket.addEventListener('message', event => {
+                    console.log(event.data);
+                    new_spikes.push(event.data);
+                });
+                socket.addEventListener('close', event => {
+                    console.log('close', event);
+                    window.setTimeout(connect, 1000);
+                });
+                socket.addEventListener('error', event => {
+                    console.error('error', event);
+                });
+            };
+            connect();
         </script>
     </body>
 </html>

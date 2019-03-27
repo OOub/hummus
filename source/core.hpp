@@ -798,7 +798,7 @@ namespace hummus {
                         for (auto& postNeuron: postSub.neurons) {
                             const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->getXYCoordinates().first, neurons[postNeuron]->getXYCoordinates().second, postSub.ID);
                             
-                            if (weightMatrix[preCounter][postCounter] > 0) {
+                            if (weightMatrix[preCounter][postCounter] != 0) {
                                 neurons[preNeuron].get()->addSynapse(neurons[postNeuron].get(), weightMatrix[preCounter][postCounter], weight_delay.second, 100, true);
                             }
                             

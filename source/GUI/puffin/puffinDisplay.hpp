@@ -18,44 +18,46 @@
 
 namespace hummus {
     class PuffinDisplay : public MainThreadAddOn {
-        
+
     public:
-        
+
         // ----- CONSTRUCTOR -----
         PuffinDisplay() = default;
-        
+
         // ----- PUBLIC DISPLAY METHODS -----
         void incomingSpike(double timestamp, synapse* a, Network* network) override {
+            // server->broadcast(puffin::string_to_message("s,0,0,2,3.2"));
         }
-        
+
         void neuronFired(double timestamp, synapse* a, Network* network) override {
+            // server->broadcast(puffin::string_to_message("neuronFired"));
         }
-        
+
         void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
+            // server->broadcast(puffin::string_to_message("timestep"));
         }
-        
+
         void statusUpdate(double timestamp, synapse* a, Network* network) override {
+            // server->broadcast(puffin::string_to_message("statusUpdate"));
         }
-        
+
         // Method to start the server
         void begin(Network* network, std::mutex* sync) override {
-            server = puffin::make_server(
-                8080,
-                [](std::size_t id, const std::string& url) {
-                    std::cout << id << " connected with url '" + url + "'" << std::endl;
-                    return puffin::string_to_message("welcome");
-                },
-                [](std::size_t id, const puffin::message& message) {},
-                [](std::size_t id) { std::cout << id << " disconnected" << std::endl; });
-            
+          server = puffin::make_server(
+              8080,
+              [network](std::size_t id, const std::string& url) {
+                  std::cout << id << " connected" << std::endl;
+                  return puffin::string_to_message("welcome");
+              },
+              [this](std::size_t id, const puffin::message& message) {},
+              [](std::size_t id) { std::cout << id << " disconnected" << std::endl; });
+
             sync->unlock();
         }
-        
+
     protected:
-        
+
         // ----- IMPLEMENTATION VARIABLES -----
         std::unique_ptr<puffin::server> server;
-    }
+    };
 }
-
-
