@@ -1184,8 +1184,7 @@ namespace hummus {
             if (timestep == 0) {
                 eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
             } else {
-//                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
-                clockRunHelper(100000, timestep, false);
+                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
             }
             
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
