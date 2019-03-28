@@ -983,7 +983,7 @@ namespace hummus {
                     std::cout << "Running the network synchronously" << std::endl;
                 }
             }
-
+			
             if (_timestep == 0) {
                 asynchronous = true;
             }
@@ -1158,7 +1158,7 @@ namespace hummus {
         int getVerbose() const {
             return verbose;
         }
-        
+		
         // verbose argument (0 for no couts at all, 1 for network-related print-outs and learning rule print-outs, 2 for network and neuron-related print-outs
         void setVerbose(int value) {
             if (value >= 0 && value <= 2) {
@@ -1203,7 +1203,11 @@ namespace hummus {
             }
 
             injectSpikeFromData(testData);
-            
+			
+            for (auto addon: addOns) {
+				addon->onPredict(this);
+			}
+			
             if (verbose != 0) {
                 std::cout << "Running classification based on a trained network..." << std::endl;
             }
