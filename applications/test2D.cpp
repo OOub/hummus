@@ -17,6 +17,7 @@
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/synapticKernels/step.hpp"
+#include "../source/addOns/weightMaps.hpp"
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/classificationLogger.hpp"
@@ -28,17 +29,17 @@ int main(int argc, char** argv) {
 	
     //  ----- INITIALISING THE NETWORK -----
 	hummus::QtDisplay qtDisplay;
-    
-    hummus::Network network(&qtDisplay);
+    hummus::WeightMaps map("weightMaps.bin", "../../data/2DtestLabels.txt");
+    hummus::Network network({&map}, &qtDisplay);
 	
 	//  ----- CREATING THE NETWORK -----
 	auto step = network.makeSynapticKernel<hummus::Step>();
 	
-    network.add2dLayer<hummus::Input>(12, 12, 2, {}, nullptr);
+    network.add2dLayer<hummus::Input>(12, 12, 1, {}, nullptr);
     network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 1, hummus::Normal(), 100, 1, {}, &step, false, 20, 3, true);
     network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, &step, false, 20, 3, true);
     network.addLayer<hummus::LIF>(1, {}, &step);
-    
+	
     network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Normal());
     
     //  ----- DISPLAY SETTINGS -----
@@ -47,8 +48,9 @@ int main(int argc, char** argv) {
     qtDisplay.trackInputSublayer(0);
     qtDisplay.trackLayer(1);
     qtDisplay.trackNeuron(100);
-    
+	
     //  ----- RUNNING THE NETWORK -----
+    map.neuronSelection(network.getLayers()[1]);
     network.run(&trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----

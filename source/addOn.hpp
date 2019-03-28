@@ -28,7 +28,10 @@ namespace hummus {
         
         // message that is actived before the network starts running
 		virtual void onStart(Network* network){}
-        
+		
+		// message that is actived before the network starts running on the test data
+		virtual void onPredict(Network* network){}
+		
         // message that is actived when the network finishes running
 		virtual void onCompleted(Network* network){}
         

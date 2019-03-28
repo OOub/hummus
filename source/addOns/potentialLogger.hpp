@@ -99,7 +99,7 @@ namespace hummus {
             if (initialisationTest) {
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {
-                    // restrict only to the output layer
+                    // restrict only to the chosen neurons
                     if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(a->postNeuron->getNeuronID())) != neuronIDs.end()) {
                         
                         // defining what to save and constraining it so that file size doesn't blow up
@@ -124,7 +124,7 @@ namespace hummus {
             if (initialisationTest) {
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {
-                    // restrict only to the output layer
+                    // restrict only to the chosen neurons
                     if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(postNeuron->getNeuronID())) != neuronIDs.end()) {
                         
                         // defining what to save and constraining it so that file size doesn't blow up
