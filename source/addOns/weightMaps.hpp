@@ -87,24 +87,22 @@ namespace hummus {
 				testLabels.pop_front(); // remove first element which point to the start of the first pattern
 				
 				for (auto& n: neuronIDs) {
-				const int16_t bitSize = 6+3*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
-				std::vector<char> bytes(bitSize);
+                    const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+                    std::vector<char> bytes(bitSize);
 	
-				SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
-				SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-				SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getLayerID()));
-				SpikeLogger::copy_to(bytes.data() + 5, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
-				int count = 6;
-				for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
-					SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
-					SpikeLogger::copy_to(bytes.data() + count+1, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().first));
-					SpikeLogger::copy_to(bytes.data() + count+2, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().second));
-					count += 3;
-				}
+                    SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
+                    SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
+                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                    
+                    int count = 5;
+                    for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
+                        SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
+                        count += 1;
+                    }
 				
-				// saving to file
-				saveFile.write(bytes.data(), bytes.size());
-			}
+                    // saving to file
+                    saveFile.write(bytes.data(), bytes.size());
+                }
 			
 			} else {
 				if (network->getVerbose() != 0) {
@@ -115,19 +113,17 @@ namespace hummus {
 		
 		void onCompleted(Network* network) override {
 			for (auto& n: neuronIDs) {
-				const int16_t bitSize = 6+3*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+				const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
 				std::vector<char> bytes(bitSize);
 	
 				SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
 				SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-				SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getLayerID()));
-				SpikeLogger::copy_to(bytes.data() + 5, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
-				int count = 6;
+				SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                
+				int count = 5;
 				for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
 					SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
-					SpikeLogger::copy_to(bytes.data() + count+1, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().first));
-					SpikeLogger::copy_to(bytes.data() + count+2, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().second));
-					count += 3;
+					count += 1;
 				}
 				
 				// saving to file
@@ -140,19 +136,17 @@ namespace hummus {
 				if (train) {
 					if (!trainingLabels.empty() && timestamp >= trainingLabels.front().onset) {
 						for (auto& n: neuronIDs) {
-							const int16_t bitSize = 6+3*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+							const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
 							std::vector<char> bytes(bitSize);
 							
 							SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
 							SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-							SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getLayerID()));
-							SpikeLogger::copy_to(bytes.data() + 5, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
-							int count = 6;
+							SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                            
+							int count = 5;
 							for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
 								SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
-								SpikeLogger::copy_to(bytes.data() + count+1, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().first));
-								SpikeLogger::copy_to(bytes.data() + count+2, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().second));
-								count += 3;
+								count += 1;
 							}
 							
 							// saving to file
@@ -163,19 +157,17 @@ namespace hummus {
 				} else {
 					if (!testLabels.empty() && timestamp >= testLabels.front().onset) {
 						for (auto& n: neuronIDs) {
-							const int16_t bitSize = 6+3*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+							const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
 							std::vector<char> bytes(bitSize);
 							
 							SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
 							SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-							SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getLayerID()));
-							SpikeLogger::copy_to(bytes.data() + 5, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
-							int count = 6;
+							SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                            
+							int count = 5;
 							for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
 								SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
-								SpikeLogger::copy_to(bytes.data() + count+1, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().first));
-								SpikeLogger::copy_to(bytes.data() + count+2, static_cast<int8_t>(preSynapses->preNeuron->getXYCoordinates().second));
-								count += 3;
+								count += 1;
 							}
 							
 							// saving to file
