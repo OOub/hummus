@@ -19,7 +19,7 @@
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/input.hpp"
 
-#include "../source/addOns/spikeLogger.hpp"
+#include "../source/addOns/weightMaps.hpp"
 #include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/classificationLogger.hpp"
 #include "../source/synapticKernels/step.hpp"
@@ -30,9 +30,14 @@ int main(int argc, char** argv) {
     
     //  ----- INITIALISING THE NETWORK -----
     hummus::PotentialLogger pLog("pLog.bin");
+	
     hummus::ClassificationLogger cLog("cLog.bin");
-    hummus::SpikeLogger spikeLog("pokerSpikeLog.bin");
-    hummus::Network network({&pLog, &cLog, &spikeLog});
+	
+    hummus::WeightMaps weightMap1("weightMapsCONV1.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
+	
+    hummus::WeightMaps weightMap2("weightMapsCONV2.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
+	
+    hummus::Network network({&pLog, &cLog, &weightMap1, &weightMap2});
     
     auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
     auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
@@ -82,10 +87,12 @@ int main(int argc, char** argv) {
     auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
     
     pLog.neuronSelection(network.getLayers()[5]);
+    weightMap1.neuronSelection(network.getLayers()[1]);
+    weightMap2.neuronSelection(network.getLayers()[3]);
     
     //  ----- RUNNING THE NETWORK -----
-//    network.run(&trainingData, 0, &testData);
-	network.run(&trainingData, 0.1);
+    network.run(&trainingData, 0, &testData);
+
     //  ----- EXITING APPLICATION -----
     return 0;
 }
