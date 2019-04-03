@@ -33,12 +33,11 @@ int main(int argc, char** argv) {
         //  ----- DEEP SPIKING NEURAL NETWORK -----
         
         /// Initialisation
-        hummus::SpikeLogger sLog("deepSLog.bin");
         hummus::PotentialLogger pLog("deepPLog.bin");
         hummus::ClassificationLogger cLog("deepCLog.bin");
         hummus::WeightMaps weightMap1("weightMapsCONV1.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
         hummus::WeightMaps weightMap2("weightMapsCONV2.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
-        hummus::Network network({&sLog, &pLog, &cLog, &weightMap1, &weightMap2});
+        hummus::Network network({&pLog, &cLog, &weightMap1, &weightMap2});
         
         auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
         auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
@@ -72,7 +71,7 @@ int main(int argc, char** argv) {
         auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
         
         /// Running the network
-        network.run(&testData, 0, &testData);
+        network.run(&trainingData, 0, &testData);
         
     } else if (networkType == 0){
         // ----- SIMPLE FEEDFORWARD -----
