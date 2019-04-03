@@ -77,24 +77,20 @@ solution 'hummus'
 	        configuration 'linux or macosx'
             	includedirs {'/usr/local/include'}
 	        	libdirs {'/usr/local/lib'}
-  				defines { "POSIX" }
+  				defines { "UNIX" }
   				if with_tbb then
   					linkoptions {'-ltbb'}
   				end
 
 	        -- Linux specific settings
 	        configuration 'linux'
-	        	links {'pthread'}
+	        	links {'pthread', 'sqlite3'}
 	            buildoptions {'-std=c++11'}
 	            linkoptions {'-std=c++11'}
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
+	        	links {'sqlite3'}
 	            buildoptions {'-std=c++11'}
                 linkoptions {'-std=c++11'}
-
-            -- Windows specific settings
-            configuration 'windows'
-            	files {'.clang-format'}
-            	defines { "WINDOWS" }
 end
