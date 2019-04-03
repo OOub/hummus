@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 06/02/2019
  *
- * Information: Add-on used to log the potential of specified neurons or layers of neurons at every timestep after learning is off. The logger is constrained to reduce file size
+ * Information: Add-on used to log the potential of specified neurons or layers of neurons at every timestep (or every spike in event-based mode) after learning is off. The logger is constrained to reduce file size
  */
 
 #pragma once
@@ -72,21 +72,27 @@ namespace hummus {
         
         void incomingSpike(double timestamp, synapse* a, Network* network) override {
             if (initialisationTest) {
+                
                 // logging only after learning is stopped
                 if (!network->getLearningStatus()) {
-                    // restrict only to the output layer
+                    // restrict only to the chosen neurons
                     if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(a->postNeuron->getNeuronID())) != neuronIDs.end()) {
                         
                         // defining what to save and constraining it so that file size doesn't blow up
-                        std::array<char, 6> bytes;
-                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>((timestamp - previousTimestamp) * 100));
-                        SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                        std::array<char, 8> bytes;
+                        
+                        if (static_cast<int32_t>((timestamp - previousTimestamp) < 0)) {
+                            std::cout << timestamp << " " << previousTimestamp << std::endl;
+                        }
+                                             
+                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+                        SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
                         
                         // saving to file
                         saveFile.write(bytes.data(), bytes.size());
                         
-                        // changing the previoud timestamp
+                        // changing the previous timestamp
                         previousTimestamp = timestamp;
                     }
                 }
@@ -103,15 +109,15 @@ namespace hummus {
                     if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(a->postNeuron->getNeuronID())) != neuronIDs.end()) {
                         
                         // defining what to save and constraining it so that file size doesn't blow up
-                        std::array<char, 6> bytes;
-                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>((timestamp - previousTimestamp) * 100));
-                        SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                        std::array<char, 8> bytes;
+                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+                        SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
                         
                         // saving to file
                         saveFile.write(bytes.data(), bytes.size());
                         
-                        // changing the previoud timestamp
+                        // changing the previous timestamp
                         previousTimestamp = timestamp;
                     }
                 }
@@ -128,15 +134,15 @@ namespace hummus {
                     if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(postNeuron->getNeuronID())) != neuronIDs.end()) {
                         
                         // defining what to save and constraining it so that file size doesn't blow up
-                        std::array<char, 6> bytes;
-                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>((timestamp - previousTimestamp) * 100));
-                        SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(postNeuron->getPotential() * 100));
-                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getNeuronID()));
+                        std::array<char, 8> bytes;
+                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getPotential() * 100));
+                        SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postNeuron->getNeuronID()));
                         
                         // saving to file
                         saveFile.write(bytes.data(), bytes.size());
                         
-                        // changing the previoud timestamp
+                        // changing the previous timestamp
                         previousTimestamp = timestamp;
                     }
                 }

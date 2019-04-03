@@ -19,6 +19,7 @@
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/input.hpp"
 
+#include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/weightMaps.hpp"
 #include "../source/addOns/potentialLogger.hpp"
 #include "../source/addOns/classificationLogger.hpp"
@@ -26,26 +27,23 @@
 
 int main(int argc, char** argv) {
     
-    int networkType = 1; // choose between feedforward, deep spiking neural network or myelin plasticity network
-    
-    //  ----- INITIALISING THE NETWORK -----
-    hummus::PotentialLogger pLog("pLog.bin");
-	
-    hummus::ClassificationLogger cLog("cLog.bin");
-	
-    hummus::WeightMaps weightMap1("weightMapsCONV1.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
-	
-    hummus::WeightMaps weightMap2("weightMapsCONV2.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
-	
-    hummus::Network network({&pLog, &cLog, &weightMap1, &weightMap2});
-    
-    auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
-    auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
-    
-    network.setVerbose(0);
+    bool networkType = 1; // choose between feedforward or deep spiking neural network
     
     if (networkType == 1) {
         //  ----- DEEP SPIKING NEURAL NETWORK -----
+        
+        /// Initialisation
+        hummus::SpikeLogger sLog("deepSLog.bin");
+        hummus::PotentialLogger pLog("deepPLog.bin");
+        hummus::ClassificationLogger cLog("deepCLog.bin");
+        hummus::WeightMaps weightMap1("weightMapsCONV1.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
+        hummus::WeightMaps weightMap2("weightMapsCONV2.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
+        hummus::Network network({&sLog, &pLog, &cLog, &weightMap1, &weightMap2});
+        
+        auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
+        auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
+        
+        network.setVerbose(0);
         
         /// parameters
         bool burst = true;
@@ -63,8 +61,29 @@ int main(int argc, char** argv) {
         
         /// connecting the layers
         network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1));
+        
+        pLog.neuronSelection(network.getLayers()[5]);
+        weightMap1.neuronSelection(network.getLayers()[1]);
+        weightMap2.neuronSelection(network.getLayers()[3]);
+        
+        /// Reading data
+        hummus::DataParser dataParser;
+        auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtraining.txt");
+        auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
+        
+        /// Running the network
+        network.run(&testData, 0, &testData);
+        
     } else if (networkType == 0){
         // ----- SIMPLE FEEDFORWARD -----
+        
+        /// Initialisation
+        hummus::PotentialLogger pLog("simplePLog.bin");
+        hummus::ClassificationLogger cLog("simpleCLog.bin");
+        hummus::Network network({&pLog, &cLog});
+        
+        auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
+        auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
         
         /// parameters
         bool homeostasis = true;
@@ -73,25 +92,23 @@ int main(int argc, char** argv) {
         
         /// creating the layers
         network.add2dLayer<hummus::Input>(34, 34, 1, {}, nullptr); // input layer
-        network.addLayer<hummus::LIF>(100, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // hidden layer with STDP
+        network.addLayer<hummus::LIF>(5000, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // hidden layer with STDP
         network.addLayer<hummus::LIF>(2, {&ti_stdp}, &step, homeostasis, 500, 10, wta, burst, 20, 0, 40, 1, -60, -70, 100); // output layer with 2 neurons
-        
+
         /// connecting the layers
         network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.8, 0.1));
         network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Normal(0.8, 0.1));
+        
+        pLog.neuronSelection(network.getLayers()[2]);
+        
+        /// Reading data
+        hummus::DataParser dataParser;
+        auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtraining.txt");
+        auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
+        
+        /// Running the network
+        network.run(&trainingData, 0, &testData);
     }
-    
-	//  ----- READING DATA FROM FILE -----
-    hummus::DataParser dataParser;
-    auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtraining.txt");
-    auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
-    
-    pLog.neuronSelection(network.getLayers()[5]);
-    weightMap1.neuronSelection(network.getLayers()[1]);
-    weightMap2.neuronSelection(network.getLayers()[3]);
-    
-    //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0, &testData);
 
     //  ----- EXITING APPLICATION -----
     return 0;

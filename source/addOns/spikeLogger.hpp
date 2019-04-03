@@ -44,17 +44,17 @@ namespace hummus {
 		void incomingSpike(double timestamp, synapse* a, Network* network) override {
             
             // defining what to save and constraining it so that file size doesn't blow up
-            std::array<char, 14> bytes;
-            copy_to(bytes.data() + 0,  static_cast<int16_t>((timestamp - previousTimestamp) * 100));
-            copy_to(bytes.data() + 2,  static_cast<int16_t>(a->delay*100));
-            copy_to(bytes.data() + 4,  static_cast<int8_t>(a->weight*100));
-            copy_to(bytes.data() + 5,  static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-            copy_to(bytes.data() + 7,  static_cast<int16_t>(a->postNeuron->getNeuronID()));
-            copy_to(bytes.data() + 9,  static_cast<int8_t>(a->postNeuron->getLayerID()));
-            copy_to(bytes.data() + 10, static_cast<int8_t>(a->postNeuron->getRfCoordinates().first));
-            copy_to(bytes.data() + 11, static_cast<int8_t>(a->postNeuron->getRfCoordinates().second));
-            copy_to(bytes.data() + 12, static_cast<int8_t>(a->postNeuron->getXYCoordinates().first));
-            copy_to(bytes.data() + 13, static_cast<int8_t>(a->postNeuron->getXYCoordinates().second));
+            std::array<char, 16> bytes;
+            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+            copy_to(bytes.data() + 4,  static_cast<int16_t>(a->delay*100));
+            copy_to(bytes.data() + 6,  static_cast<int8_t>(a->weight*100));
+            copy_to(bytes.data() + 7,  static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+            copy_to(bytes.data() + 9,  static_cast<int16_t>(a->postNeuron->getNeuronID()));
+            copy_to(bytes.data() + 11,  static_cast<int8_t>(a->postNeuron->getLayerID()));
+            copy_to(bytes.data() + 12, static_cast<int8_t>(a->postNeuron->getRfCoordinates().first));
+            copy_to(bytes.data() + 13, static_cast<int8_t>(a->postNeuron->getRfCoordinates().second));
+            copy_to(bytes.data() + 14, static_cast<int8_t>(a->postNeuron->getXYCoordinates().first));
+            copy_to(bytes.data() + 15, static_cast<int8_t>(a->postNeuron->getXYCoordinates().second));
             
             // saving to file
 			saveFile.write(bytes.data(), bytes.size());
@@ -63,19 +63,24 @@ namespace hummus {
             previousTimestamp = timestamp;
         }
 		
+        void onPredict(Network* network) override {
+            previousTimestamp = 0;
+        }
+        
 		void neuronFired(double timestamp, synapse* a, Network* network) override {
+            
             // defining what to save and constraining it so that file size doesn't blow up
-            std::array<char, 14> bytes;
-            copy_to(bytes.data() + 0,  static_cast<int16_t>((timestamp - previousTimestamp) * 100));
-            copy_to(bytes.data() + 2,  static_cast<int16_t>(a->delay*100));
-            copy_to(bytes.data() + 4,  static_cast<int8_t>(a->weight*100));
-            copy_to(bytes.data() + 5,  static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-            copy_to(bytes.data() + 7,  static_cast<int16_t>(a->postNeuron->getNeuronID()));
-            copy_to(bytes.data() + 9,  static_cast<int8_t>(a->postNeuron->getLayerID()));
-            copy_to(bytes.data() + 10, static_cast<int8_t>(a->postNeuron->getRfCoordinates().first));
-            copy_to(bytes.data() + 11, static_cast<int8_t>(a->postNeuron->getRfCoordinates().second));
-            copy_to(bytes.data() + 12, static_cast<int8_t>(a->postNeuron->getXYCoordinates().first));
-            copy_to(bytes.data() + 13, static_cast<int8_t>(a->postNeuron->getXYCoordinates().second));
+            std::array<char, 16> bytes;
+            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+            copy_to(bytes.data() + 4,  static_cast<int16_t>(a->delay*100));
+            copy_to(bytes.data() + 6,  static_cast<int8_t>(a->weight*100));
+            copy_to(bytes.data() + 7,  static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+            copy_to(bytes.data() + 9,  static_cast<int16_t>(a->postNeuron->getNeuronID()));
+            copy_to(bytes.data() + 11,  static_cast<int8_t>(a->postNeuron->getLayerID()));
+            copy_to(bytes.data() + 12, static_cast<int8_t>(a->postNeuron->getRfCoordinates().first));
+            copy_to(bytes.data() + 13, static_cast<int8_t>(a->postNeuron->getRfCoordinates().second));
+            copy_to(bytes.data() + 14, static_cast<int8_t>(a->postNeuron->getXYCoordinates().first));
+            copy_to(bytes.data() + 15, static_cast<int8_t>(a->postNeuron->getXYCoordinates().second));
             
             // saving to file
             saveFile.write(bytes.data(), bytes.size());
