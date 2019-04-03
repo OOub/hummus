@@ -44,9 +44,9 @@ namespace hummus {
 				if (a->postNeuron->getLayerID() == network->getLayers().back().ID) {
                     
                     // defining what to save and constraining it so that file size doesn't blow up
-					std::array<char, 4> bytes;
-					SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>((timestamp - previousTimestamp) * 100));
-					SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+					std::array<char, 6> bytes;
+					SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+					SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getNeuronID()));
                     
                     // saving to file
                     saveFile.write(bytes.data(), bytes.size());
