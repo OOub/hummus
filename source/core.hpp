@@ -27,9 +27,8 @@
 #include <mutex>
 #include <deque>
 
-#ifdef TBB
+// intel parallel computing library
 #include "tbb/tbb.h"
-#endif
 
 #include "randomDistributions/normal.hpp"
 #include "randomDistributions/cauchy.hpp"

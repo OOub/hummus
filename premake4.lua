@@ -14,24 +14,14 @@ solution 'hummus'
 
         	-- Build Options
         	newoption {
-   				trigger     = 'without-qt',
+   				trigger     = 'no-qt',
    				description = 'Compiles without Qt'
 			}
 
-			newoption {
-   				trigger     = 'tbb',
-   				description = 'Compiles with Intel TBB'
-			}
-
-			if _OPTIONS['without-qt'] then
+			if _OPTIONS['no-qt'] then
    				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
    			else
    				with_qt = true
-			end
-
-			if _OPTIONS['tbb'] then
-				with_tbb = true;
-				defines {'TBB'}
 			end
 
 			-- All files in source
@@ -39,7 +29,7 @@ solution 'hummus'
         		'source/addOns/**.hpp', 
         		'source/dependencies/**.hpp', 
         		'source/GUI/qt/**.hpp',
-        		'source/GUI/puffin/**.hpp', 
+        		'sourbrewce/GUI/puffin/**.hpp', 
         		'source/learningRules/**.hpp', 
         		'source/neurons/**.hpp', 
         		'source/synapticKernels/**.hpp', 
@@ -78,19 +68,16 @@ solution 'hummus'
             	includedirs {'/usr/local/include'}
 	        	libdirs {'/usr/local/lib'}
   				defines { "UNIX" }
-  				if with_tbb then
-  					linkoptions {'-ltbb'}
-  				end
 
 	        -- Linux specific settings
 	        configuration 'linux'
-	        	links {'pthread', 'sqlite3'}
+	        	links {'pthread', 'sqlite3', 'tbb'}
 	            buildoptions {'-std=c++11'}
 	            linkoptions {'-std=c++11'}
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
-	        	links {'sqlite3'}
+	        	links {'sqlite3', 'tbb'}
 	            buildoptions {'-std=c++11'}
                 linkoptions {'-std=c++11'}
 end
