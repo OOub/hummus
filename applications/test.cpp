@@ -57,10 +57,10 @@ int main(int argc, char** argv) {
 
     // creating layers of neurons
     network.addLayer<hummus::Input>(1, {}, nullptr);
-    network.addLayer<hummus::LIF>(1, {}, &exponential, false, 20, 3, true);
+    network.addLayer<hummus::LIF>(2, {}, &exponential, false, 20, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0, 0));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
 
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
     display.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
+//    network.setVerbose(1);
     network.turnOffLearning(0);
     potentialLog.neuronSelection(1);
     network.run(100, 0.1);
