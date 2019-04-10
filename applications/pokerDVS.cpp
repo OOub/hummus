@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
         auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
         
         /// Running the network
-        network.run(&trainingData, 0, &testData);
+        network.run(&testData, 0, &testData);
         
     } else if (networkType == 0){
         // ----- SIMPLE FEEDFORWARD -----
