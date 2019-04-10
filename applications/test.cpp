@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
-
+	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
     network.injectSpike(0, 11);

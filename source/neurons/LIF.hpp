@@ -169,6 +169,7 @@ namespace hummus {
                 for (auto addon: network->getAddOns()) {
                     addon->neuronFired(timestamp, a, network);
                 }
+                
                 if (network->getMainThreadAddOn()) {
                     network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
                 }

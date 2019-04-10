@@ -422,9 +422,11 @@ namespace hummus {
             // find the layer ID
             int layerID = 0;
             if (!layers.empty()) {
+				
                 for (auto& l: layers) {
                     shift += l.neurons.size();
                 }
+				
                 layerID = layers.back().ID+1;
             }
 
@@ -994,7 +996,7 @@ namespace hummus {
             for (auto addon: addOns) {
                 addon->onStart(this);
             }
-
+			
             std::mutex sync;
             if (thAddOn) {
                 sync.lock();
@@ -1019,9 +1021,11 @@ namespace hummus {
                     std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
                 }
                     
+                // serial implementation
                 for (auto addon: addOns) {
                     addon->onCompleted(this);
                 }
+				
             });
 
             if (thAddOn) {
@@ -1036,19 +1040,19 @@ namespace hummus {
             if (_timestep == 0) {
                 asynchronous = true;
             }
-            
+			
             for (auto& n: neurons) {
                 n->initialisation(this);
             }
-            
+			
             if (learningOffSignal == -1) {
                 learningOffSignal = trainingData->back().timestamp+maxDelay+shift;
             }
-            
+			
             for (auto addon: addOns) {
                 addon->onStart(this);
             }
-            
+
             std::mutex sync;
             if (thAddOn) {
                 sync.lock();
@@ -1069,6 +1073,7 @@ namespace hummus {
                 for (auto addon: addOns) {
                     addon->onCompleted(this);
                 }
+			
             });
 
             if (thAddOn) {
