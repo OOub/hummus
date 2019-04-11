@@ -21,8 +21,8 @@ namespace hummus {
 	class DecisionMaking : public LIF {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=1000, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100, std::string _classLabel="") :
-                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _externalCurrent),
+		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100, std::string _classLabel="") :
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, _wta, _burstingActivity, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _externalCurrent),
                     classLabel(_classLabel) {
                 // DecisionMaking neuron type = 2 for JSON save
                 neuronType = 3;
@@ -153,6 +153,7 @@ namespace hummus {
                 for (auto addon: network->getAddOns()) {
                     addon->neuronFired(timestamp, a, network);
                 }
+                
                 if (network->getMainThreadAddOn()) {
                     network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
                 }
@@ -165,7 +166,9 @@ namespace hummus {
                 
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
-                current = 0;
+                if (!burstingActivity) {
+                    current = 0;
+                }
                 active = false;
                 
                 if (network->getMainThreadAddOn()) {
@@ -223,8 +226,9 @@ namespace hummus {
                         threshold += homeostasisBeta/decayHomeostasis;
                     }
                     
-                    // synaptic integration
+                    // integrating spike
 					current = synapticKernel->integrateSpike(current, externalCurrent, a->weight);
+                    
                     activeSynapse = a;
                     
                     // updating the timestamp when a synapse was propagating a spike
@@ -378,18 +382,6 @@ namespace hummus {
 		}
         
     protected:
-        
-        // loops through any learning rules and activates them
-        virtual void requestLearning(double timestamp, synapse* a, Network* network) override {
-            if (network->getLearningStatus()) {
-                if (!learningRules.empty()) {
-                    for (auto& rule: learningRules) {
-                        rule->learn(timestamp, a, network);
-                    }
-                }
-            }
-            WTA(timestamp, network);
-        }
     
 		// ----- DECISION-MAKING NEURON PARAMETERS -----
         std::string        classLabel;

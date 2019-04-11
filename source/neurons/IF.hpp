@@ -152,7 +152,9 @@ namespace hummus {
                 
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
-                current = 0;
+                if (!burstingActivity) {
+                    current = 0;
+                }
                 active = false;
                 
                 if (network->getMainThreadAddOn()) {
