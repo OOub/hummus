@@ -688,7 +688,7 @@ namespace hummus {
         
         // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
-        void addDecisionMakingLayer(std::string trainingLabelFilename, SynapticKernelHandler* _synapticKernel, bool _preTrainingLabelAssignment=true, std::vector<LearningRuleHandler*> _learningRules={}, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) {
+        void addDecisionMakingLayer(std::string trainingLabelFilename, SynapticKernelHandler* _synapticKernel, bool _preTrainingLabelAssignment=true, std::vector<LearningRuleHandler*> _learningRules={}, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             preTrainingLabelAssignment = _preTrainingLabelAssignment;

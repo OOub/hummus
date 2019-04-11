@@ -54,9 +54,11 @@ int main(int argc, char** argv) {
         network.add2dLayer<hummus::Input>(40, 40, 1, {}, nullptr); // input layer
         network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.6, 0.1), 100, 4, {&ti_stdp}, &step, homeostasis, 20, 10, conv_wta, burst); // first convolution
         network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // first pooling
-        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.6, 0.1), 100, 8, {&ti_stdp}, &step, homeostasis, 100, 10, conv_wta, burst); // second convolution
-        network.addPoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // second pooling
+        network.addConvolutionalLayer<hummus::LIF>(network.getLayers()[2], 5, 1, hummus::Normal(0.6, 0.1), 100, 8, {&ti_stdp}, &step, homeostasis, 100, 10, conv_wta, burst); // second convolution
+        network.addPoolingLayer<hummus::LIF>(network.getLayers()[3], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // second pooling
         network.addLayer<hummus::LIF>(2, {&ti_stdp}, &step, homeostasis, 200, 10, conv_wta, burst, 20, 0, 20, 0.1, -50, -70, 100); // output layer with 2 neurons
+        
+        std::cout << network.getLayers()[0].height << " " << network.getLayers()[1].height << " " << network.getLayers()[2].height << " " << network.getLayers()[3].height << " " << network.getLayers()[4].height << std::endl;
         
         /// connecting the layers
         network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1));
