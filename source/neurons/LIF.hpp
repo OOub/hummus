@@ -182,7 +182,9 @@ namespace hummus {
                 
                 previousSpikeTime = timestamp;
                 potential = restingPotential;
-                current = 0;
+                if (!burstingActivity) {
+                    current = 0;
+                }
                 active = false;
                 
                 if (network->getMainThreadAddOn()) {
@@ -311,6 +313,7 @@ namespace hummus {
 		}
 		
         virtual void resetNeuron(Network* network) override {
+            // resetting parameters
             previousInputTime = 0;
             previousSpikeTime = 0;
             current = 0;
