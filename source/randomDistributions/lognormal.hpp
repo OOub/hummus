@@ -20,13 +20,13 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LogNormal(float weightMean=1, float weightStdDev=0, float delayMean=0, float delayStdDev=0) {
+        LogNormal(float weightMu=1, float weightSigma=0, float delayMu=0, float delaySigma=0) {
 
             // randomising weights and delays
             std::random_device device;
             randomEngine = std::mt19937(device());
-            delayRandom = std::lognormal_distribution<>(delayMean, delayStdDev);
-            weightRandom = std::lognormal_distribution<>(weightMean, weightStdDev);
+            delayRandom = std::lognormal_distribution<>(delayMu, delaySigma);
+            weightRandom = std::lognormal_distribution<>(weightMu, weightSigma);
         }
 		
         std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
@@ -39,7 +39,6 @@ namespace hummus {
         std::mt19937                  randomEngine;
         std::lognormal_distribution<> delayRandom;
         std::lognormal_distribution<> weightRandom;
-        bool                          weightSameSign;
 	};
 }
 

@@ -88,7 +88,7 @@ namespace hummus {
                                 std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         }
-                        n->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+                        n->setSynapticEfficacy(-std::exp(- timeDifferences.back() * timeDifferences.back())+1);
 
                         // myelin plasticity rule sends a feedback to upstream neurons
                         for (auto& n: network->getNeurons())
@@ -96,7 +96,7 @@ namespace hummus {
                             //reducing their ability to learn as the current neurons learn
                             if (n->getLayerID() < a->postNeuron->getLayerID())
                             {
-                                n->setSynapticEfficacy(-std::exp(-std::pow(timeDifferences.back(),2))+1);
+                                n->setSynapticEfficacy(-std::exp(-timeDifferences.back() * timeDifferences.back())+1);
                             }
                         }
 
@@ -115,7 +115,7 @@ namespace hummus {
                     int ID = a->postNeuron->getPreSynapses()[i]->preNeuron->getNeuronID();
                     if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
                         float weightDifference = desiredWeight - a->postNeuron->getPreSynapses()[i]->weight;
-                        float change = - std::exp(- std::pow(weight_alpha*weightDifference,2)) + 1;
+                        float change = - std::exp(- (weight_alpha*weightDifference) * (weight_alpha*weightDifference)) + 1;
                         if (weightDifference >= 0) {
                             a->postNeuron->getPreSynapses()[i]->weight += weight_lambda*change * (1 - a->weight);
                         } else {

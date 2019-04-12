@@ -20,35 +20,50 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Normal(float weightMean=1, float weightStdDev=0, float delayMean=0, float delayStdDev=0, bool _weightSameSign=true) :
-        		weightSameSign(_weightSameSign) {
-
+        Normal(float _weightMu=1, float _weightSigma=0, float _delayMu=0, float _delaySigma=0, float _weightLowerLimit=-INFINITY, float _weightUpperLimit=INFINITY, float _delayLowerLimit=-INFINITY, float _delayUpperLimit=INFINITY) :
+                weightMu(_weightMu),
+                weightSigma(_weightSigma),
+                weightLowerLimit(_weightLowerLimit),
+                weightUpperLimit(_weightUpperLimit),
+                delayMu(_delayMu),
+                delaySigma(_delaySigma),
+                delayLowerLimit(_delayLowerLimit),
+                delayUpperLimit(_delayUpperLimit) {
             // randomising weights and delays
             std::random_device device;
             randomEngine = std::mt19937(device());
-            delayRandom = std::normal_distribution<>(delayMean, delayStdDev);
-            weightRandom = std::normal_distribution<>(weightMean, weightStdDev);
-
-            // all weights positive if mean weight is positive and vice-versa
-            sign = weightMean<0?-1:weightMean>=0;
+            delayRandom = std::normal_distribution<>(delayMu, delaySigma);
+            weightRandom = std::normal_distribution<>(weightMu, weightSigma);
         }
 		
         std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
-        	if (weightSameSign) {
-            	return std::make_pair(sign*std::abs(weightRandom(randomEngine)), std::abs(delayRandom(randomEngine)));
-			} else {
-				return std::make_pair(weightRandom(randomEngine), std::abs(delayRandom(randomEngine)));
-			}
+            return std::make_pair(truncate(weightRandom(randomEngine), weightLowerLimit, weightUpperLimit), std::abs(truncate(delayRandom(randomEngine), delayLowerLimit, delayUpperLimit)));
         }
-        
+		
+        // truncated normal distribution
+        double truncate(double x, double a, double b) {
+            if (x >= a && x <= b) {
+                return x;
+            } else {
+                return 0;
+            }
+        }
+		
+		
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        int                        sign;
         std::mt19937               randomEngine;
         std::normal_distribution<> delayRandom;
         std::normal_distribution<> weightRandom;
-        bool                       weightSameSign;
+        double                     weightMu;
+        double                     weightSigma;
+        double                     weightLowerLimit;
+        double                     weightUpperLimit;
+        double                     delayMu;
+        double                     delaySigma;
+        double                     delayLowerLimit;
+        double                     delayUpperLimit;
 	};
 }
 

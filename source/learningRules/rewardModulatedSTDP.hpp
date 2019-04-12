@@ -31,11 +31,16 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		RewardModulatedSTDP(float _Ar_plus=1, float _Ar_minus=-1, float _Ap_plus=1, float _Ap_minus=-1) :
+		RewardModulatedSTDP(float _Ar_plus=1, float _Ar_minus=-1, float _Ap_plus=1, float _Ap_minus=-1, float _leak_time_constant=0.1, float _leak_scaling_factor=1, float _leak_lower_bound = 0.1, float _leak_upper_bound = 2) :
                 Ar_plus(_Ar_plus),
                 Ar_minus(_Ar_minus),
                 Ap_plus(_Ap_plus),
-                Ap_minus(_Ap_minus) {
+                Ap_minus(_Ap_minus),
+                leak_scaling_factor(_leak_scaling_factor),
+                leak_time_constant(_leak_time_constant),
+                leak_lower_bound(_leak_lower_bound),
+                leak_upper_bound(_leak_upper_bound) {
+					
 			if (Ar_plus <= 0 || Ap_plus <= 0) {
 				throw std::logic_error("Ar_plus and Ap_plus need to be positive");
 			}
@@ -47,6 +52,7 @@ namespace hummus {
 		
 		// ----- PUBLIC METHODS -----
 		virtual void onStart(Network* network) override {
+		
             for (auto& l: network->getLayers()) {
                 for (auto& rule: network->getNeurons()[l.neurons[0]]->getLearningRules()) {
                     if (rule == this) {
@@ -72,13 +78,20 @@ namespace hummus {
 			// add rstdp to decision-making layer which is on the last layer
             for (auto& n: network->getLayers().back().neurons) {
                 if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())) {
-                    dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())->addLearningRule(this);
+					auto it = std::find(network->getNeurons()[n].get()->getLearningRules().begin(), network->getNeurons()[n].get()->getLearningRules().end(), this);
+					if (it == network->getNeurons()[n].get()->getLearningRules().end()) {
+                    	dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())->addLearningRule(this);
+					}
+                } else {
+                	throw std::logic_error("the last layer needs to be a decision-making layer with this learning rule");
                 }
             }
 		}
 		
 		virtual void learn(double timestamp, synapse* a, Network* network) override {
+		
             if (DecisionMaking* n = dynamic_cast<DecisionMaking*>(a->postNeuron)) {
+            	
 				// reward and punishement signal from the decision-making layer
 				int alpha = 0;
 				int beta = 0;
@@ -95,14 +108,42 @@ namespace hummus {
                         if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
                             for (auto& postSynapse: network->getNeurons()[n]->getPostSynapses()) {
                                 // ignoring inhibitory synapses
-                                if (postSynapse->weight >= 0 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
+                                if (postSynapse->weight >= 0 && postSynapse->weight <= 1 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_minus+beta*Ap_plus;
                                     
                                     if (network->getVerbose() >= 1) {
-                                        std::cout << "LTD weight change " << delta * postSynapse->weight * (1 - postSynapse->weight) << std::endl;
+                                        std::cout << "weight change " << delta * postSynapse->weight * (1 - postSynapse->weight) << std::endl;
                                     }
                                     
                                     postSynapse->weight += delta * postSynapse->weight * (1 - postSynapse->weight);
+									
+                                    // calculating leak adaptation
+									float previousLeak = a->postNeuron->getAdaptation();
+									float leakAdaptation = previousLeak;
+									if (delta < 0) {
+										leakAdaptation = previousLeak - (- leak_scaling_factor * std::exp( - leak_time_constant * (delta * delta)) + leak_scaling_factor);
+									} else if (delta > 0) {
+										leakAdaptation = previousLeak + (- leak_scaling_factor * std::exp( - leak_time_constant * (delta * delta)) + leak_scaling_factor);
+									}
+										
+									
+									// adding hard constrains
+									if (leakAdaptation < leak_lower_bound) {
+										leakAdaptation = leak_lower_bound;
+									}
+									if (leakAdaptation > leak_upper_bound) {
+										leakAdaptation = leak_upper_bound;
+									}
+									
+									a->postNeuron->setAdaptation(leakAdaptation);
+									if (network->getVerbose() >= 1) {
+										std::cout << "leak adaptation " << previousLeak << " " << leakAdaptation << std::endl;
+									}
+						
+                                } else if (postSynapse->weight > 1) {
+                                    if (network->getVerbose() >= 1) {
+                                        std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
+                                    }
                                 }
                             }
                         }
@@ -113,14 +154,41 @@ namespace hummus {
                         if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
                             for (auto& preSynapse: network->getNeurons()[n]->getPreSynapses()) {
                                 // ignoring inhibitory synapses
-                                if (preSynapse->weight >= 0 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
+                                if (preSynapse->weight >= 0 && preSynapse->weight <= 1 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
                                     double delta = alpha*Ar_plus+beta*Ap_minus;
                                     
                                     if (network->getVerbose() >= 1) {
-                                        std::cout << "LTP weight change " << delta * preSynapse->weight * (1 - preSynapse->weight) << std::endl;
+                                        std::cout << "weight change " << delta * preSynapse->weight * (1 - preSynapse->weight) << std::endl;
                                     }
                                     
                                     preSynapse->weight += delta * preSynapse->weight * (1 - preSynapse->weight);
+
+									// calculating leak adaptation
+									float previousLeak = a->postNeuron->getAdaptation();
+									float leakAdaptation = 0;
+									if (delta < 0) {
+										leakAdaptation = previousLeak - (- leak_scaling_factor * std::exp( - leak_time_constant * (delta * delta)) + leak_scaling_factor);
+									} else if (delta > 0) {
+										leakAdaptation = previousLeak + (- leak_scaling_factor * std::exp( - leak_time_constant * (delta * delta)) + leak_scaling_factor);
+									}
+									
+									// adding hard constrains
+									if (leakAdaptation < leak_lower_bound) {
+										leakAdaptation = leak_lower_bound;
+									}
+									if (leakAdaptation > leak_upper_bound) {
+										leakAdaptation = leak_upper_bound;
+									}
+									
+									a->postNeuron->setAdaptation(leakAdaptation);
+									if (network->getVerbose() >= 1) {
+										std::cout << "leak adaptation " << previousLeak << " " << leakAdaptation << std::endl;
+									}
+									
+                                } else if (preSynapse->weight > 1) {
+                                    if (network->getVerbose() >= 1) {
+                                        std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
+                                    }
                                 }
                             }
                         }
@@ -137,5 +205,9 @@ namespace hummus {
 		float                            Ar_minus;
 		float                            Ap_plus;
 		float                            Ap_minus;
+        float                            leak_scaling_factor;
+        float                            leak_time_constant;
+        float                            leak_lower_bound;
+		float                            leak_upper_bound;
 	};
 }

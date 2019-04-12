@@ -25,11 +25,11 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Uniform(float weight_lowerLimit=0, float weight_higherLimit=1, float delay_lowerLimit=0, float delay_higherLimit=0, uniformType _int_or_real=uniformType::integerType) :
+        Uniform(float weightLowerLimit=0, float weightUpperLimit=1, float delayLowerLimit=0, float delayUpperLimit=0, uniformType _int_or_real=uniformType::integerType) :
         		int_or_real(_int_or_real) {
 			
 			// error handling
-			if (delay_lowerLimit < 0 || delay_higherLimit < 0) {
+			if (delayLowerLimit < 0 || delayUpperLimit < 0) {
 				throw std::logic_error("the delays cannot be in a negative range");
 			}
 
@@ -38,11 +38,11 @@ namespace hummus {
             randomEngine = std::mt19937(device());
 			
 			if (_int_or_real == uniformType::integerType) {
-            	int_delayRandom = std::uniform_int_distribution<>(static_cast<int>(delay_lowerLimit), static_cast<int>(delay_higherLimit));
-            	int_weightRandom = std::uniform_int_distribution<>(static_cast<int>(weight_lowerLimit), static_cast<int>(weight_higherLimit));
+            	int_delayRandom = std::uniform_int_distribution<>(static_cast<int>(delayLowerLimit), static_cast<int>(delayUpperLimit));
+            	int_weightRandom = std::uniform_int_distribution<>(static_cast<int>(weightLowerLimit), static_cast<int>(weightUpperLimit));
 			} else {
-				real_delayRandom = std::uniform_real_distribution<>(delay_lowerLimit, delay_higherLimit);
-				real_weightRandom = std::uniform_real_distribution<>(weight_lowerLimit, weight_higherLimit);
+				real_delayRandom = std::uniform_real_distribution<>(delayLowerLimit, delayUpperLimit);
+				real_weightRandom = std::uniform_real_distribution<>(weightLowerLimit, weightUpperLimit);
 			}
         }
 		
