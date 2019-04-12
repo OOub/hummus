@@ -529,7 +529,7 @@ namespace hummus {
             }
             
             // number of neurons surrounding the center
-            int mooreNeighbors = std::pow((2*range + 1),2);
+            int mooreNeighbors = (2*range + 1) * (2*range + 1);
             
             // looping through the newly created layer to connect them to the correct receptive fields
             for (auto& convSub: layers.back().sublayers) {
@@ -628,7 +628,7 @@ namespace hummus {
             }
             
             // number of neurons surrounding the center
-            int mooreNeighbors = std::pow((2*range + 1),2);
+            int mooreNeighbors = (2*range + 1) * (2*range + 1);
             
             for (auto& poolSub: layers.back().sublayers) {
                 int sublayershift = 0;
@@ -1186,9 +1186,9 @@ namespace hummus {
             }
             
             if (timestep == 0) {
-                eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
+                eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, true);
             } else {
-                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
+                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, true);
             }
             
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
@@ -1217,9 +1217,9 @@ namespace hummus {
             }
             
             if (timestep == 0) {
-                eventRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
+                eventRunHelper(testData->back().timestamp+maxDelay+shift, timestep, false);
             } else {
-                clockRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
+                clockRunHelper(testData->back().timestamp+maxDelay+shift, timestep, false);
             }
             
             if (verbose != 0) {
@@ -1252,7 +1252,7 @@ namespace hummus {
                         requestUpdate(latestSpike[idx].first, classification);
                         generatedSpikes.pop_front();
                     } else if (latestSpike[idx].second == 2) {
-                        requestUpdate(latestSpike[idx].first, classification, true);
+                        requestUpdate(latestSpike[idx].first, classification);
                         predictedSpikes.pop_front();
                     } else {
                         requestUpdate(latestSpike[idx].first, classification);
@@ -1269,7 +1269,7 @@ namespace hummus {
             if (!neurons.empty()) {
                 for (double i=0; i<runtime; i+=timestep) {
                     
-                    if (!classification) {
+                    if (classification) {
                         if (!trainingLabels.empty()) {
                             if (trainingLabels.front().onset <= i) {
                                 currentLabel = trainingLabels.front().name;
@@ -1353,8 +1353,8 @@ namespace hummus {
         }
         
         // update neuron status asynchronously
-        void requestUpdate(spike s, bool classification=false, bool prediction=false) {
-            if (!classification) {
+        void requestUpdate(spike s, bool classification=false) {
+			if (classification) {
                 if (!trainingLabels.empty()) {
                     if (trainingLabels.front().onset <= s.timestamp) {
                         currentLabel = trainingLabels.front().name;
