@@ -73,11 +73,11 @@ solution 'hummus'
 	        configuration 'linux'
 	        	links {'pthread', 'sqlite3', 'tbb'}
 	            buildoptions {'-std=c++11'}
-	            linkoptions {'-std=c++11'}
+	           	linkoptions {'-std=c++11'}
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
 	        	links {'sqlite3', 'tbb'}
 	            buildoptions {'-std=c++11'}
-                linkoptions {'-std=c++11'}
+	           	linkoptions {'-std=c++11'}
 end

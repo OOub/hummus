@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/GUI/qt/qtDisplay.hpp"
 
 #include "../source/randomDistributions/normal.hpp"
 
@@ -23,6 +22,7 @@
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/input.hpp"
+#include "../source/neurons/spikeCounter.hpp"
 
 #include "../source/addOns/spikeLogger.hpp"
 #include "../source/addOns/weightMaps.hpp"
@@ -38,20 +38,19 @@ int main(int argc, char** argv) {
         //  ----- DEEP SPIKING NEURAL NETWORK -----
         
         /// Initialisation
-        hummus::SpikeLogger sLog("deepSLog.bin");
         hummus::PotentialLogger pLog("deepPLog.bin");
         hummus::ClassificationLogger cLog("deepCLog.bin");
         hummus::WeightMaps weightMap1("weightMapsCONV1.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
         hummus::WeightMaps weightMap2("weightMapsCONV2.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
-        hummus::Network network({&sLog, &pLog, &cLog, &weightMap1, &weightMap2});
+        hummus::Network network({&pLog, &cLog, &weightMap1, &weightMap2});
         
         auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
         auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
         
-        network.setVerbose(1);
+        network.setVerbose(0);
         
         /// parameters
-        bool burst = true;
+        bool burst = false;
         bool homeostasis = true;
         bool conv_wta = true;
         bool pool_wta = false;
@@ -84,17 +83,15 @@ int main(int argc, char** argv) {
         // ----- SIMPLE FEEDFORWARD -----
         
         /// Initialisation
-        hummus::QtDisplay display;
-        hummus::SpikeLogger sLog("simpleSLog.bin");
         hummus::PotentialLogger pLog("simplePLog.bin");
         hummus::ClassificationLogger cLog("simpleCLog.bin");
-        hummus::Network network({&sLog, &pLog, &cLog}, &display);
+        hummus::Network network({&pLog, &cLog});
         
         auto ti_stdp = network.makeLearningRule<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
         auto r_stdp = network.makeLearningRule<hummus::RewardModulatedSTDP>(); // reward-modulated STDP learning rule
         auto step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
         
-        network.setVerbose(1);
+        network.setVerbose(0);
         
         /// parameters
         bool homeostasis = true;
