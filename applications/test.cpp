@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     display.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
-//    network.setVerbose(1);
+    network.setVerbose(1);
     network.turnOffLearning(0);
     potentialLog.neuronSelection(1);
     network.run(100, 0.1);

@@ -50,7 +50,7 @@ namespace hummus {
             copy_to(bytes.data() + 6,  static_cast<int8_t>(a->weight*100));
             copy_to(bytes.data() + 7,  static_cast<int16_t>(a->postNeuron->getPotential() * 100));
             copy_to(bytes.data() + 9,  static_cast<int16_t>(a->postNeuron->getNeuronID()));
-            copy_to(bytes.data() + 11,  static_cast<int8_t>(a->postNeuron->getLayerID()));
+            copy_to(bytes.data() + 11, static_cast<int8_t>(a->postNeuron->getLayerID()));
             copy_to(bytes.data() + 12, static_cast<int8_t>(a->postNeuron->getRfCoordinates().first));
             copy_to(bytes.data() + 13, static_cast<int8_t>(a->postNeuron->getRfCoordinates().second));
             copy_to(bytes.data() + 14, static_cast<int8_t>(a->postNeuron->getXYCoordinates().first));
@@ -76,7 +76,7 @@ namespace hummus {
             copy_to(bytes.data() + 6,  static_cast<int8_t>(a->weight*100));
             copy_to(bytes.data() + 7,  static_cast<int16_t>(a->postNeuron->getPotential() * 100));
             copy_to(bytes.data() + 9,  static_cast<int16_t>(a->postNeuron->getNeuronID()));
-            copy_to(bytes.data() + 11,  static_cast<int8_t>(a->postNeuron->getLayerID()));
+            copy_to(bytes.data() + 11, static_cast<int8_t>(a->postNeuron->getLayerID()));
             copy_to(bytes.data() + 12, static_cast<int8_t>(a->postNeuron->getRfCoordinates().first));
             copy_to(bytes.data() + 13, static_cast<int8_t>(a->postNeuron->getRfCoordinates().second));
             copy_to(bytes.data() + 14, static_cast<int8_t>(a->postNeuron->getXYCoordinates().first));
