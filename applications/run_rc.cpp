@@ -23,55 +23,58 @@
 #include "../source/GUI/qt/qtDisplay.hpp"
 
 int main(int argc, char** argv) {
-    if (argc < 9) {
+    if (argc < 10) {
         
         std::cout << "The application received " << argc << " arguments" << std::endl;
-        throw std::runtime_error(std::to_string(argc).append("received. Expecting at least 9 arguments."));
+        throw std::runtime_error(std::to_string(argc).append("received. Expecting at least 10 arguments."));
         
     } else {
 
         // ----- APPLICATION PARAMETERS -----
         // path to JSON network file
         std::string networkPath = argv[1];
-        std::cout << "JSON path: " << argv[1] << std::endl;
+		
+        // verbose 0, 1 or 2
+        int verbose = std::atoi(argv[9]);
+        if (verbose!=0) std::cout<< "Verbosity level " << verbose << std::endl;
+        if (verbose!=0) std::cout << "JSON path: " << argv[1] << std::endl;
         
         // path to data file
         std::string dataPath = argv[2];
-        std::cout << "Data path: " << argv[2] << std::endl;
+        if (verbose!=0) std::cout << "Data path: " << argv[2] << std::endl;
         
         // gaussian noise on timestamps of the data mean of 0 standard deviation of 1.0
         bool timeJitter = std::atoi(argv[3]);
-        std::cout << "Additive Gaussian noise: " << argv[3] << std::endl;
+        if (verbose!=0) std::cout << "Additive Gaussian noise: " << argv[3] << std::endl;
         
         // percentage of additive noise
         int additiveNoise = std::atoi(argv[4]);
-        std::cout << "Percentage of additive noise: " << argv[4] << std::endl;
+        if (verbose!=0) std::cout << "Percentage of additive noise: " << argv[4] << std::endl;
         
         // name of output spike file
         std::string spikeLogName = argv[5];
-        std::cout << "Data Log: " << argv[5] << std::endl;
+        if (verbose!=0) std::cout << "Data Log: " << argv[5] << std::endl;
         
         // name of output potential file
         std::string potentialLogName = argv[6];
-        std::cout << "Potential Log " << argv[6] << std::endl;
+        if (verbose!=0) std::cout << "Potential Log " << argv[6] << std::endl;
     
         // 0 to run without gui. 1 to run with gui
         bool gui = std::atoi(argv[7]);
         
         // 0 for event-based, > 0 for clock-based
         float timestep = std::atof(argv[8]);
-        std::cout << "Time step(0 for event based): " << argv[8] << std::endl;
-        
-        // ----- IMPORTING DATA -----
+        if (verbose!=0) std::cout << "Time step(0 for event based): " << argv[8] << std::endl;
+		
+		// ----- IMPORTING DATA -----
         hummus::DataParser parser;
         auto data = parser.readData(dataPath, timeJitter, additiveNoise);
-
-
-		// neuron IDs to log
+        
+        // neuron IDs to log
         std::vector<int> neuronIDs;
-        if (argc > 9) {
-			std::vector<std::string> fields;
-			parser.split(fields, argv[9], " ,[]");
+        if (argc > 10) {
+            std::vector<std::string> fields;
+			parser.split(fields, argv[10], " ,[]");
 			
 			for (auto f: fields) {
 				neuronIDs.push_back(std::atoi(f.c_str()));
@@ -84,9 +87,13 @@ int main(int argc, char** argv) {
 
         hummus::Network network({&spikeLog, &potentialLog});
         hummus::Builder builder(&network);
-
+        
+        network.setVerbose(verbose);
+        
+        std::cout<<gui<<std::endl;
         hummus::QtDisplay qtDisplay;
         if (gui) {
+            std::cout<<"I am here"<<std::endl;
             std::cout << "Starting GUI" << std::endl;
             network.setMainThreadAddOn(&qtDisplay);
             qtDisplay.useHardwareAcceleration(true);
@@ -94,20 +101,20 @@ int main(int argc, char** argv) {
         }
 
         //  ----- CREATING THE NETWORK -----
-        std::cout << "importing network from JSON file..." << std::endl;
+        if (verbose!=0) std::cout << "importing network from JSON file..." << std::endl;
         builder.import(networkPath);
 
         // initialising the potentialLoggers
         network.turnOffLearning(0);
-
-        if (argc >= 9) {
-            std::cout << "logging the potential of the selected neurons" << std::endl;
+		
+        if (argc > 10) {
+            if (verbose!=0) std::cout << "logging the potential of the selected neurons" << std::endl;
             potentialLog.neuronSelection(neuronIDs);
         } else {
-            std::cout << "logging the potential of all the reservoir" << std::endl;
+            if (verbose!=0) std::cout << "logging the potential of all the reservoir" << std::endl;
             potentialLog.neuronSelection(network.getLayers()[1]);
         }
-
+		
         //  ----- RUNNING THE NETWORK ASYNCHRONOUSLY-----
         network.run(&data, timestep);
     }

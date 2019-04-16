@@ -14,6 +14,7 @@
 #include <iomanip>
 
 #include "../source/core.hpp"
+#include "../source/dataParser.hpp"
 #include "../source/synapticKernels/step.hpp"
 #include "../source/randomDistributions/cauchy.hpp"
 #include "../source/randomDistributions/normal.hpp"
@@ -21,9 +22,9 @@
 #include "../source/neurons/LIF.hpp"
 
 int main(int argc, char** argv) {
-    if (argc < 16) {
+    if (argc < 19) {
         std::cout << "The application received " << argc << " arguments" << std::endl;
-        throw std::runtime_error(std::to_string(argc).append("received. Expecting 16 arguments"));
+        throw std::runtime_error(std::to_string(argc).append(" received. Expecting 19 arguments"));
     }
 
     // ----- RESERVOIR PARAMETERS -----
@@ -49,14 +50,14 @@ int main(int argc, char** argv) {
     int numberOfNeurons = std::atoi(argv[5]);
     std::cout << "Reservoir Neurons: " << std::setw(static_cast<int>(clean_cout-std::string("Reservoir Neurons: ").size())) << argv[5] << std::endl;
     
-    // cauchy location for weights
-    float weightLocation = std::atof(argv[6]);
-    std::cout << "Weight location: " << std::setw(static_cast<int>(clean_cout-std::string("Weight location: ").size())) << argv[6] << std::endl;
+    // gaussian mean for weights
+    float weightMean = std::atof(argv[6]);
+    std::cout << "Weight mean: " << std::setw(static_cast<int>(clean_cout-std::string("Weight mean: ").size())) << argv[6] << std::endl;
     
-    // cauchy scalefor weights
-    float weightScale = std::atof(argv[7]);
-    std::cout << "Weight scale: " << std::setw(static_cast<int>(clean_cout-std::string("Weight scale: ").size())) << argv[7] << std::endl;
-    
+    // gaussian standard deviation for weights
+    float weightStdDev = std::atof(argv[7]);
+    std::cout << "Weight std: " << std::setw(static_cast<int>(clean_cout-std::string("Weight std: ").size())) << argv[7] << std::endl;
+
     // percentage likelihood of feedforward connections
     int feedforwardProbability = std::atoi(argv[8]);
     std::cout << "Forward connection probability: " << std::setw(static_cast<int>(clean_cout-std::string("Forward connection probability: ").size())) << argv[8] << std::endl;
@@ -88,7 +89,24 @@ int main(int argc, char** argv) {
     // threshold adaptation to firing rate
     bool homeostasis = std::atoi(argv[15]);
     std::cout << "Threshold Adaptation to firing rate: " << std::setw(10) << argv[15] << std::endl;
-
+    
+    // use weight matrix to build instead of a reservoir with probabilities
+    bool useMatrix = std::atoi(argv[16]);
+    std::cout << "use weight matrix: " << std::setw(static_cast<int>(clean_cout-std::string("use weight matrix: ").size())) << argv[16] << std::endl;
+    
+    // input weight matrix filename
+    std::string inputWeightFile = argv[17];
+    std::cout << "input weights file: " << std::setw(static_cast<int>(clean_cout-std::string("input weights file: ").size())) << argv[17] << std::endl;
+    
+    // reservoir weight matrix filename
+    std::string reservoirWeightFile = argv[18];
+    std::cout << "reservoir weights file: " << std::setw(static_cast<int>(clean_cout-std::string("reservoir weights file: ").size())) << argv[18] << std::endl;
+    
+    //  ----- READING WEIGHT MATRIX FOMR .TXT FILE -----
+    hummus::DataParser parser;
+    auto inputWeightMatrix = parser.readWeightMatrix(inputWeightFile);
+    auto reservoirWeightMatrix = parser.readWeightMatrix(reservoirWeightFile);
+    
     //  ----- CREATING THE NETWORK -----
     
     std::cout << "\nbuilding network..." << std::endl;
@@ -96,16 +114,30 @@ int main(int argc, char** argv) {
     // network initialisation
     hummus::Network network;
     
-    // pixel grid layer
-    network.add2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {}, nullptr);
-
-    // reservoir layer
+    // initialise synaptic kernel
     auto step = network.makeSynapticKernel<hummus::Step>(resetCurrent);
     
-    network.addReservoir<hummus::LIF>(numberOfNeurons, hummus::Cauchy(weightLocation, weightScale), feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
-
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(inputWeightMean, inputWeightStdDev));
-
+    // pixel grid layer
+    network.add2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {}, nullptr);
+    
+    if (useMatrix) {
+        // create reservoir layer
+        network.addLayer<hummus::LIF>(numberOfNeurons, {}, &step, homeostasis, decayPotential, refractoryPeriod, wta);
+        
+        // connecting input according to weight matrix
+        network.weightMatrix(network.getLayers()[0], network.getLayers()[1], inputWeightMatrix, hummus::Normal(0, 0, 0, 0));
+        
+        // connecting reservoir according to weight matrix
+        network.weightMatrix(network.getLayers()[1], network.getLayers()[1], reservoirWeightMatrix, hummus::Normal(0, 0, 0, 0));
+        
+    } else {
+        // reservoir layer
+        network.addReservoir<hummus::LIF>(numberOfNeurons, hummus::Normal(weightMean, weightStdDev), feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
+        
+        // connect pixel grid to the reservoir in an all to all fashion
+        network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0));
+    }
+    
     std::cout << "\nsaving network into rcNetwork.json file..." << std::endl;
     
     network.save("rcNetwork");
