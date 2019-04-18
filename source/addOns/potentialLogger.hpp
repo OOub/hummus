@@ -23,139 +23,91 @@
 #include "../dataParser.hpp"
 
 namespace hummus {
-    class PotentialLogger : public AddOn {
+    class PotentialLogger : public Addon {
         
     public:
-    	// ----- CONSTRUCTOR -----
+    	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         // constructor to log all neurons of a layer
         PotentialLogger(std::string filename) :
-                previousTimestamp(0),
-                initialisationTest(false) {
-            saveFile.open(filename, std::ios::out | std::ios::binary);
+                saveFile(filename, std::ios::out | std::ios::binary),
+                previousTimestamp(0) {
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
         
+        virtual ~PotentialLogger(){}
+        
 		// ----- PUBLIC LOGGER METHODS -----
         // select one neuron to track by its index
-        void neuronSelection(int _neuronID) {
-            // error handling
-            if (_neuronID < 0) {
-                throw std::logic_error("the neuron IDs cannot be less than 0");
-            } else {
-                neuronIDs.push_back(static_cast<size_t>(_neuronID));
-            }
-            
-            initialisationTest = true;
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
         }
         
         // select multiple neurons to track by passing a vector of indices
-        void neuronSelection(std::vector<int> _neuronIDs) {
-            // error handling
-            for (auto nID: _neuronIDs) {
-                if (nID < 0) {
-                    throw std::logic_error("the neuron IDs cannot be less than 0");
-                } else {
-                    neuronIDs.push_back(static_cast<size_t>(nID));
-                }
-            }
-            
-            initialisationTest = true;
-        }
-        
-        // select a whole layer to track
-        void neuronSelection(layer _layer) {
-            initialisationTest = true;
-            neuronIDs = _layer.neurons;
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
         void incomingSpike(double timestamp, synapse* a, Network* network) override {
-            if (initialisationTest) {
+            // logging only after learning is stopped
+            if (!network->getLearningStatus()) {
+                // defining what to save and constraining it so that file size doesn't blow up
+                std::array<char, 8> bytes;
                 
-                // logging only after learning is stopped
-                if (!network->getLearningStatus()) {
-                    // restrict only to the chosen neurons
-                    if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(a->postNeuron->getNeuronID())) != neuronIDs.end()) {
-                        
-                        // defining what to save and constraining it so that file size doesn't blow up
-                        std::array<char, 8> bytes;
-                        
-                        if (static_cast<int32_t>((timestamp - previousTimestamp) < 0)) {
-                            std::cout << timestamp << " " << previousTimestamp << std::endl;
-                        }
-                                             
-                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                        SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
-                        
-                        // saving to file
-                        saveFile.write(bytes.data(), bytes.size());
-                        
-                        // changing the previous timestamp
-                        previousTimestamp = timestamp;
-                    }
+                if (static_cast<int32_t>((timestamp - previousTimestamp) < 0)) {
+                    std::cout << timestamp << " " << previousTimestamp << std::endl;
                 }
-            } else {
-                throw std::logic_error("the method needs to be called after building all the layers of the network and before running it.");
+                
+                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                
+                // saving to file
+                saveFile.write(bytes.data(), bytes.size());
+                
+                // changing the previous timestamp
+                previousTimestamp = timestamp;
             }
         }
         
         void neuronFired(double timestamp, synapse* a, Network* network) override {
-            if (initialisationTest) {
-                // logging only after learning is stopped
-                if (!network->getLearningStatus()) {
-                    // restrict only to the chosen neurons
-                    if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(a->postNeuron->getNeuronID())) != neuronIDs.end()) {
-                        
-                        // defining what to save and constraining it so that file size doesn't blow up
-                        std::array<char, 8> bytes;
-                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                        SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
-                        
-                        // saving to file
-                        saveFile.write(bytes.data(), bytes.size());
-                        
-                        // changing the previous timestamp
-                        previousTimestamp = timestamp;
-                    }
-                }
-            } else {
-                throw std::logic_error("the method needs to be called after building all the layers of the network and before running it.");
+            // logging only after learning is stopped
+            if (!network->getLearningStatus()) {
+                // defining what to save and constraining it so that file size doesn't blow up
+                std::array<char, 8> bytes;
+                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                
+                // saving to file
+                saveFile.write(bytes.data(), bytes.size());
+                
+                // changing the previous timestamp
+                previousTimestamp = timestamp;
             }
         }
         
         void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
-            if (initialisationTest) {
-                // logging only after learning is stopped
-                if (!network->getLearningStatus()) {
-                    // restrict only to the chosen neurons
-                    if (std::find(neuronIDs.begin(), neuronIDs.end(), static_cast<size_t>(postNeuron->getNeuronID())) != neuronIDs.end()) {
-                        
-                        // defining what to save and constraining it so that file size doesn't blow up
-                        std::array<char, 8> bytes;
-                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getPotential() * 100));
-                        SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postNeuron->getNeuronID()));
-                        
-                        // saving to file
-                        saveFile.write(bytes.data(), bytes.size());
-                        
-                        // changing the previous timestamp
-                        previousTimestamp = timestamp;
-                    }
-                }
-            } else {
-                throw std::logic_error("the method needs to be called after building all the layers of the network and before running it.");
+            // logging only after learning is stopped
+            if (!network->getLearningStatus()) {
+                // defining what to save and constraining it so that file size doesn't blow up
+                std::array<char, 8> bytes;
+                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getPotential() * 100));
+                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postNeuron->getNeuronID()));
+                
+                // saving to file
+                saveFile.write(bytes.data(), bytes.size());
+                
+                // changing the previous timestamp
+                previousTimestamp = timestamp;
             }
         }
 
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream        saveFile;
-        std::vector<size_t>  neuronIDs;
-        bool                 initialisationTest;
         double               previousTimestamp;
 	};
 }

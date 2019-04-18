@@ -18,8 +18,8 @@
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/IF.hpp"
-#include "../source/addOns/spikeLogger.hpp"
-#include "../source/addOns/potentialLogger.hpp"
+#include "../source/addons/spikeLogger.hpp"
+#include "../source/addons/potentialLogger.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"
 
 int main(int argc, char** argv) {
@@ -71,32 +71,31 @@ int main(int argc, char** argv) {
         auto data = parser.readData(dataPath, timeJitter, additiveNoise);
         
         // neuron IDs to log
-        std::vector<int> neuronIDs;
+        std::vector<size_t> neuronIDs;
         if (argc > 10) {
             std::vector<std::string> fields;
 			parser.split(fields, argv[10], " ,[]");
 			
 			for (auto f: fields) {
-				neuronIDs.push_back(std::atoi(f.c_str()));
+				neuronIDs.push_back(static_cast<size_t>(std::atoi(f.c_str())));
 			}
         }
 		
         //  ----- INITIALISING THE NETWORK -----
-        hummus::SpikeLogger spikeLog(spikeLogName);
-        hummus::PotentialLogger potentialLog(potentialLogName);
-
-        hummus::Network network({&spikeLog, &potentialLog});
+        hummus::Network network;
+        network.makeAddon<hummus::SpikeLogger>(spikeLogName);
+        auto& potentialLog = network.makeAddon<hummus::PotentialLogger>(potentialLogName);
+        
         hummus::Builder builder(&network);
         
-        network.setVerbose(verbose);
+        network.verbosity(verbose);
         
         std::cout<<gui<<std::endl;
         hummus::QtDisplay qtDisplay;
         if (gui) {
             std::cout<<"I am here"<<std::endl;
             std::cout << "Starting GUI" << std::endl;
-            network.setMainThreadAddOn(&qtDisplay);
-            qtDisplay.useHardwareAcceleration(true);
+            network.setMainThreadAddon(&qtDisplay);
             qtDisplay.setTimeWindow(10000);
         }
 
@@ -109,10 +108,10 @@ int main(int argc, char** argv) {
 		
         if (argc > 10) {
             if (verbose!=0) std::cout << "logging the potential of the selected neurons" << std::endl;
-            potentialLog.neuronSelection(neuronIDs);
+            potentialLog.activate_for(neuronIDs);
         } else {
             if (verbose!=0) std::cout << "logging the potential of all the reservoir" << std::endl;
-            potentialLog.neuronSelection(network.getLayers()[1]);
+            potentialLog.activate_for(network.getLayers()[1].neurons);
         }
 		
         //  ----- RUNNING THE NETWORK ASYNCHRONOUSLY-----

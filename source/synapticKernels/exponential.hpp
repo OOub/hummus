@@ -24,8 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(float _decayCurrent=10, float gaussianStandardDeviation=0, float _efficacyScaling=0.001) :
-                efficacyScaling(_efficacyScaling),
+		Exponential(float _decayCurrent=10, float gaussianStandardDeviation=0) :
 				SynapticKernelHandler() {
 				
 			synapseTimeConstant = _decayCurrent;
@@ -54,16 +53,14 @@ namespace hummus {
                 
 			// clock-based
 			} else {
-				current = neuronCurrent * std::exp(-timestep*efficacy/synapseTimeConstant);
+				current = neuronCurrent * std::exp(-timestep/synapseTimeConstant);
 			}
             
             return current;
 		}
 		
 		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-            efficacy = std::exp(- efficacyScaling * neuronCurrent);
-            
-            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine) * efficacy) * synapseWeight;
+            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight;
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {
@@ -76,7 +73,6 @@ namespace hummus {
 		}
 		
 	protected:
-        float                      efficacyScaling;
 		std::mt19937               randomEngine;
 		std::normal_distribution<> normalDistribution;
 	};

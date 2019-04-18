@@ -24,8 +24,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _scalingfactor=50, float gaussianStandardDeviation=0) :
-			scalingFactor(_scalingfactor),
+		Dirac(int _amplitudeScaling=50, float gaussianStandardDeviation=0) :
+			amplitudeScaling(_amplitudeScaling),
 			SynapticKernelHandler() {
 		
 			gaussianStdDev = gaussianStandardDeviation;
@@ -44,20 +44,20 @@ namespace hummus {
 		}
 		
 		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-            return scalingFactor * (neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight);
+            return amplitudeScaling * (neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight);
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {
 			// general synaptic kernel parameters
             output.push_back({
             	{"type", type},
-            	{"scalingFactor", scalingFactor},
+            	{"amplitudeScaling", amplitudeScaling},
 				{"gaussianStdDev", gaussianStdDev},
             });
 		}
 		
 	protected:
-		int                        scalingFactor;
+		int                        amplitudeScaling;
 		std::mt19937               randomEngine;
 		std::normal_distribution<> normalDistribution;
 	};

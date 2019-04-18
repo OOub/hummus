@@ -22,44 +22,51 @@
 #include "../dataParser.hpp"
 
 namespace hummus {
-    class ClassificationLogger : public AddOn {
+    class ClassificationLogger : public Addon {
         
     public:
-    	// ----- CONSTRUCTOR -----
+    	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         ClassificationLogger(std::string filename) :
+                saveFile(filename, std::ios::out | std::ios::binary),
                 previousTimestamp(0) {
                     
-            saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
 		
+        virtual ~ClassificationLogger(){}
+        
 		// ----- PUBLIC LOGGER METHODS -----
+        // select one neuron to track by its index
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+        }
+        
+        // select multiple neurons to track by passing a vector of indices
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
+        }
         
 		void neuronFired(double timestamp, synapse* a, Network* network) override {
 			// logging only after learning is stopped
 			if (!network->getLearningStatus()) {
-				// restrict only to the output layer
-				if (a->postNeuron->getLayerID() == network->getLayers().back().ID) {
-                    
-                    // defining what to save and constraining it so that file size doesn't blow up
-					std::array<char, 6> bytes;
-					SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-					SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getNeuronID()));
-                    
-                    // saving to file
-                    saveFile.write(bytes.data(), bytes.size());
-                    
-                    // changing the previoud timestamp
-                    previousTimestamp = timestamp;
-				}
+                // defining what to save and constraining it so that file size doesn't blow up
+                std::array<char, 6> bytes;
+                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                
+                // saving to file
+                saveFile.write(bytes.data(), bytes.size());
+                
+                // changing the previoud timestamp
+                previousTimestamp = timestamp;
 			}
 		}
 
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
-        std::ofstream saveFile;
-        double        previousTimestamp;
+        std::ofstream        saveFile;
+        double               previousTimestamp;
 	};
 }

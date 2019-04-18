@@ -18,11 +18,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        ComputerVisionExtention(std::vector<AddOn*> _addOns = {}, MainThreadAddOn* _thAddOn = nullptr) :
-                Network(_addOns, _thAddOn) {}
-        
-        ComputerVisionExtention(MainThreadAddOn* _thAddOn) :
-                Network({}, _thAddOn) {}
+        ComputerVisionExtention() = default;
         
 		virtual ~ComputerVisionExtention(){}
         

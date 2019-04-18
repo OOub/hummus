@@ -23,20 +23,19 @@
 #include "../dataParser.hpp"
 
 namespace hummus {
-    class WeightMaps : public AddOn {
+    class WeightMaps : public Addon {
         
     public:
-    	// ----- CONSTRUCTOR -----
+    	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         // constructor to log all neurons of a layer
         WeightMaps(std::string filename, std::string _trainingLabels, std::string _testLabels="") :
+                saveFile(filename, std::ios::out | std::ios::binary),
         		trainingLabels({}),
         		testString(_testLabels),
         		testLabels({}),
-        		train(true),
-                initialisationTest(false) {
+        		train(true) {
 					
 			// opening a new binary file to save data in
-            saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
@@ -46,38 +45,17 @@ namespace hummus {
 			trainingLabels.pop_front(); // remove first element which point to the start of the first pattern
         }
         
+        virtual ~WeightMaps(){}
+        
 		// ----- PUBLIC LOGGER METHODS -----
-		
         // select one neuron to track by its index
-        void neuronSelection(int _neuronID) {
-            // error handling
-            if (_neuronID < 0) {
-                throw std::logic_error("the neuron IDs cannot be less than 0");
-            } else {
-                neuronIDs.push_back(static_cast<size_t>(_neuronID));
-            }
-            
-            initialisationTest = true;
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
         }
         
         // select multiple neurons to track by passing a vector of indices
-        void neuronSelection(std::vector<int> _neuronIDs) {
-            // error handling
-            for (auto nID: _neuronIDs) {
-                if (nID < 0) {
-                    throw std::logic_error("the neuron IDs cannot be less than 0");
-                } else {
-                    neuronIDs.push_back(static_cast<size_t>(nID));
-                }
-            }
-            
-            initialisationTest = true;
-        }
-        
-        // select a whole layer to track
-        void neuronSelection(layer _layer) {
-            initialisationTest = true;
-            neuronIDs = _layer.neurons;
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
 		
 		void onPredict(Network* network) override {
@@ -86,7 +64,7 @@ namespace hummus {
 				testLabels = parser.readLabels(testString);
 				testLabels.pop_front(); // remove first element which point to the start of the first pattern
 				
-				for (auto& n: neuronIDs) {
+				for (auto& n: neuron_mask) {
                     const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
                     std::vector<char> bytes(bitSize);
 	
@@ -112,7 +90,7 @@ namespace hummus {
 		}
 		
 		void onCompleted(Network* network) override {
-			for (auto& n: neuronIDs) {
+			for (auto& n: neuron_mask) {
 				const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
 				std::vector<char> bytes(bitSize);
 	
@@ -132,60 +110,54 @@ namespace hummus {
 		}
 		
         void incomingSpike(double timestamp, synapse* a, Network* network) override {
-        	if (initialisationTest) {
-				if (train) {
-					if (!trainingLabels.empty() && timestamp >= trainingLabels.front().onset) {
-						for (auto& n: neuronIDs) {
-							const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
-							std::vector<char> bytes(bitSize);
-							
-							SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
-							SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-							SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
-                            
-							int count = 5;
-							for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
-								SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
-								count += 1;
-							}
-							
-							// saving to file
-							saveFile.write(bytes.data(), bytes.size());
-						}
-						trainingLabels.pop_front();
-					}
-				} else {
-					if (!testLabels.empty() && timestamp >= testLabels.front().onset) {
-						for (auto& n: neuronIDs) {
-							const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
-							std::vector<char> bytes(bitSize);
-							
-							SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
-							SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-							SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
-                            
-							int count = 5;
-							for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
-								SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
-								count += 1;
-							}
-							
-							// saving to file
-							saveFile.write(bytes.data(), bytes.size());
-						}
-						testLabels.pop_front();
-					}
-				}
-        	} else {
-                throw std::logic_error("the method needs to be called after building all the layers of the network and before running it.");
+            if (train) {
+                if (!trainingLabels.empty() && timestamp >= trainingLabels.front().onset) {
+                    for (auto& n: neuron_mask) {
+                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+                        std::vector<char> bytes(bitSize);
+                        
+                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
+                        SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
+                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                        
+                        int count = 5;
+                        for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
+                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
+                            count += 1;
+                        }
+                        
+                        // saving to file
+                        saveFile.write(bytes.data(), bytes.size());
+                    }
+                    trainingLabels.pop_front();
+                }
+            } else {
+                if (!testLabels.empty() && timestamp >= testLabels.front().onset) {
+                    for (auto& n: neuron_mask) {
+                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+                        std::vector<char> bytes(bitSize);
+                        
+                        SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
+                        SpikeLogger::copy_to(bytes.data() + 2, static_cast<int16_t>(n));
+                        SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                        
+                        int count = 5;
+                        for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
+                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
+                            count += 1;
+                        }
+                        
+                        // saving to file
+                        saveFile.write(bytes.data(), bytes.size());
+                    }
+                    testLabels.pop_front();
+                }
             }
         }
 		
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
 		std::ofstream        saveFile;
-		std::vector<size_t>  neuronIDs;
-        bool                 initialisationTest;
         std::deque<label>    trainingLabels;
         std::deque<label>    testLabels;
         std::string          testString;

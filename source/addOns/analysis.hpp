@@ -18,10 +18,10 @@
 #include "../dataParser.hpp"
 
 namespace hummus {
-	class Analysis : public AddOn {
+	class Analysis : public Addon {
         
 	public:
-		// ----- CONSTRUCTOR -----
+		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		Analysis(std::string testLabels) {
 			DataParser parser;
 			labels = parser.readLabels(testLabels);
@@ -30,6 +30,8 @@ namespace hummus {
 			}
 		}
 		
+        virtual ~Analysis(){}
+        
 		// ----- PUBLIC METHODS -----
 		void accuracy() {
 			if (!classifiedLabels.empty() && classifiedLabels.size() == actualLabels.size()) {

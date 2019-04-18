@@ -21,10 +21,10 @@
 #include "../core.hpp"
 
 namespace hummus {
-    class SqlSpikeLogger : public AddOn {
+    class SqlSpikeLogger : public Addon {
         
     public:
-    	// ----- CONSTRUCTOR -----
+    	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         SqlSpikeLogger(const std::string& filename) :
             sqlite3_config(SQLITE_CONFIG_SERIALIZED);
             if (sqlite3_open_v2(filename.c_str(), &spikeLog, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr)
@@ -35,11 +35,6 @@ namespace hummus {
                 throw std::runtime_error("error enabling extended result codes");
             }
         }
-		
-        SqlSpikeLogger(const SqlSpikeLogger&) = delete;
-        SqlSpikeLogger(SqlSpikeLogger&&) = default;
-        SqlSpikeLogger& operator=(const SqlSpikeLogger&) = delete;
-        SqlSpikeLogger& operator=(SqlSpikeLogger&&) = default;
         
         virtual ~SqlSpikeLogger() {}
     

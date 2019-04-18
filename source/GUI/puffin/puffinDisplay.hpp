@@ -17,7 +17,7 @@
 #include "../../dependencies/json.hpp"
 
 namespace hummus {
-    class PuffinDisplay : public MainThreadAddOn {
+    class PuffinDisplay : public MainThreadAddon {
 
     public:
 

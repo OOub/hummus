@@ -1,28 +1,29 @@
 /*
- * addOn.hpp
+ * addon.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 24/01/2019
  *
- * Information: The addOn class is polymorphic class to handle add-ons. It contains a series of methods acting as messages that can be used throughout the network for different purposes
+ * Information: The addon class is polymorphic class to handle add-ons. It contains a series of methods acting as messages that can be used throughout the network for different purposes
  */
 
 #pragma once
 
 namespace hummus {
+    struct synapse;
+    
     class Neuron;
     class Network;
-	struct synapse;
-	
-	// polymorphic class for add-ons
-	class AddOn {
+    
+	// polymorphic class for addons
+	class Addon {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		AddOn() = default;
-		virtual ~AddOn(){}
+		Addon() = default;
+		virtual ~Addon(){}
 		
 		// ----- PUBLIC METHODS -----
         
@@ -43,5 +44,22 @@ namespace hummus {
         
         // message that is activated on every timestep on the synchronous network only. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
 		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}
+        
+        // message that is activated whenever a neuron wants to learn
+        virtual void learn(double timestamp, synapse* a, Network* network){};
+        
+        // select which neurons the addon is active on
+        virtual void activate_for(size_t neuronIdx){};
+        
+        // select which neurons the addon is active on
+        virtual void activate_for(std::vector<size_t> neuronIdx){};
+        
+        // ----- SETTERS AND GETTERS -----
+        const std::vector<size_t>& getNeuronMask() {
+            return neuron_mask;
+        }
+        
+    protected:
+        std::vector<size_t> neuron_mask;
 	};
 }

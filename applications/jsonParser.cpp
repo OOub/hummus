@@ -22,11 +22,11 @@
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/IF.hpp"
 
-#include "../source/addOns/spikeLogger.hpp"
-#include "../source/addOns/potentialLogger.hpp"
-#include "../source/addOns/classificationLogger.hpp"
-#include "../source/addOns/myelinPlasticityLogger.hpp"
-#include "../source/addOns/analysis.hpp"
+#include "../source/addons/spikeLogger.hpp"
+#include "../source/addons/potentialLogger.hpp"
+#include "../source/addons/classificationLogger.hpp"
+#include "../source/addons/myelinPlasticityLogger.hpp"
+#include "../source/addons/analysis.hpp"
 
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
@@ -39,10 +39,9 @@
 #include "../source/dependencies/json.hpp"
 
 int main(int argc, char** argv) {
-    hummus::QtDisplay qtDisplay;
+    hummus::Network network;
+    auto& display = network.makeGUI<hummus::QtDisplay>();
     
-    hummus::Network network(&qtDisplay);;
-
     hummus::Builder bob(&network);
     bob.import("../../data/testSave.json");
     
@@ -52,9 +51,8 @@ int main(int argc, char** argv) {
     network.injectSpike(0, 30);
     
     //  ----- DISPLAY SETTINGS -----
-    qtDisplay.useHardwareAcceleration(true);
-    qtDisplay.setTimeWindow(100);
-    qtDisplay.trackNeuron(1);
+    display.setTimeWindow(100);
+    display.trackNeuron(1);
     
     network.run(100, 0.1);
     

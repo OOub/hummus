@@ -32,9 +32,9 @@ int main(int argc, char** argv) {
 	auto trainingData = dataParser.readData("../../data/stdpTest.txt");
 	
     //  ----- INITIALISING THE NETWORK -----
-	hummus::QtDisplay qtDisplay;
-	hummus::Network network(&qtDisplay);
-
+    hummus::Network network;
+    auto& display = network.makeGUI<hummus::QtDisplay>();
+    
     //  ----- NETWORK PARAMETERS -----
 	float potentialDecay = 20;
 	float refractoryPeriod = 30;
@@ -45,22 +45,21 @@ int main(int argc, char** argv) {
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-    auto stdp = network.makeLearningRule<hummus::STDP>();
+    auto& stdp = network.makeAddon<hummus::STDP>();
 	
 	//  ----- CREATING THE NETWORK -----
-	auto exponential = network.makeSynapticKernel<hummus::Exponential>();
+	auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
-    network.addLayer<hummus::Input>(inputNeurons, {}, nullptr);
-    network.addLayer<hummus::LIF>(layer1Neurons, {&stdp}, &exponential, false, potentialDecay, refractoryPeriod);
+    network.makeLayer<hummus::Input>(inputNeurons, {}, nullptr);
+    network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, &exponential, false, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(weight, 0, 1, 0));
 	
     //  ----- DISPLAY SETTINGS -----
-  	qtDisplay.useHardwareAcceleration(true);
-  	qtDisplay.setTimeWindow(100);
-  	qtDisplay.trackNeuron(10);
-  	qtDisplay.trackLayer(1);
+  	display.setTimeWindow(100);
+  	display.trackNeuron(10);
+  	display.trackLayer(1);
 	
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0.1);

@@ -17,7 +17,7 @@
 #include <algorithm>
 
 #include "../neurons/decisionMaking.hpp"
-#include "../globalLearningRuleHandler.hpp"
+#include "../addon.hpp"
 
 namespace hummus {
 	struct reinforcementLayers {
@@ -27,7 +27,7 @@ namespace hummus {
 	
 	class Neuron;
 	
-	class RewardModulatedSTDP : public GlobalLearningRuleHandler {
+	class RewardModulatedSTDP : public Addon {
         
 	public:
 		// ----- CONSTRUCTOR -----
@@ -36,8 +36,8 @@ namespace hummus {
                 Ar_minus(_Ar_minus),
                 Ap_plus(_Ap_plus),
                 Ap_minus(_Ap_minus),
-                leak_scaling_factor(_leak_scaling_factor),
                 leak_time_constant(_leak_time_constant),
+                leak_scaling_factor(_leak_scaling_factor),
                 leak_lower_bound(_leak_lower_bound),
                 leak_upper_bound(_leak_upper_bound) {
 					
@@ -51,12 +51,21 @@ namespace hummus {
 		}
 		
 		// ----- PUBLIC METHODS -----
+        // select one neuron to track by its index
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+        }
+        
+        // select multiple neurons to track by passing a vector of indices
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
+        }
+        
 		virtual void onStart(Network* network) override {
-		
             for (auto& l: network->getLayers()) {
-                for (auto& rule: network->getNeurons()[l.neurons[0]]->getLearningRules()) {
-                    if (rule == this) {
-                        network->getNeurons()[l.neurons[0]]->addLearningInfo(std::pair<int, std::vector<float>>(3, {Ar_plus, Ar_minus, Ap_plus, Ap_minus}));
+                for (auto& addon: network->getNeurons()[l.neurons[0]]->getRelevantAddons()) {
+                    if (addon == this) {
+                        network->getNeurons()[l.neurons[0]]->addLearningInfo(std::pair<int, std::vector<float>>(3, {Ar_plus, Ar_minus, Ap_plus, Ap_minus, leak_time_constant, leak_scaling_factor, leak_lower_bound, leak_upper_bound}));
                         int presynapticLayer = -1;
                         // making sure we don't add learning on a parallel layer
                         for (auto& preSynapse: network->getNeurons()[l.neurons[0]]->getPreSynapses()) {
@@ -73,17 +82,15 @@ namespace hummus {
                         }
                     }
                 }
-            }
-			
-			// add rstdp to decision-making layer which is on the last layer
-            for (auto& n: network->getLayers().back().neurons) {
-                if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())) {
-					auto it = std::find(network->getNeurons()[n].get()->getLearningRules().begin(), network->getNeurons()[n].get()->getLearningRules().end(), this);
-					if (it == network->getNeurons()[n].get()->getLearningRules().end()) {
-                    	dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())->addLearningRule(this);
-					}
-                } else {
-                	throw std::logic_error("the last layer needs to be a decision-making layer with this learning rule");
+                
+                // add rstdp to the decision-making layer
+                if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(network->getNeurons()[l.neurons[0]].get())) {
+                    for (auto& n: l.neurons) {
+                        auto it = std::find(network->getNeurons()[n].get()->getRelevantAddons().begin(), network->getNeurons()[n].get()->getRelevantAddons().end(), this);
+                        if (it == network->getNeurons()[n].get()->getRelevantAddons().end()) {
+                            dynamic_cast<DecisionMaking*>(network->getNeurons()[n].get())->addRelevantAddon(this);
+                        }
+                    }
                 }
             }
 		}
