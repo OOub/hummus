@@ -28,11 +28,11 @@
 #include "potentialViewer.hpp"
 
 namespace hummus {
-    class QtDisplay : public MainThreadAddOn {
+    class QtDisplay : public MainThreadAddon {
         
     public:
 
-    	// ----- CONSTRUCTOR -----
+    	// ----- CONSTRUCTOR AND DESTRUCTOR-----
         QtDisplay() :
                 neuronToTrack(-1),
                 inputSublayerToTrack(0),
@@ -71,7 +71,9 @@ namespace hummus {
             outputviewer = window->findChild<OutputViewer*>("outputViewer");
             potentialviewer = window->findChild<PotentialViewer*>("potentialViewer");
         }
-
+        
+        virtual ~QtDisplay(){}
+        
     	// ----- PUBLIC DISPLAY METHODS -----
 		void incomingSpike(double timestamp, synapse* a, Network* network) override {
 			potentialviewer->handleData(timestamp, a, network);

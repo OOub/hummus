@@ -25,8 +25,7 @@ namespace hummus {
 				gaussianStdDev(0),
 				type(0),
 				kernelID(0),
-				synapseTimeConstant(0),
-                efficacy(1) {}
+				synapseTimeConstant(0) {}
 		
 		virtual ~SynapticKernelHandler(){}
 		
@@ -42,24 +41,15 @@ namespace hummus {
         virtual void toJson(nlohmann::json& output) {}
 		
 		// ----- SETTERS AND GETTERS -----
-		float getSynapseTimeConstant() const {
-			return synapseTimeConstant;
-		}
-        
-		int getKernelID() const {
-			return kernelID;
-		}
-		
-		void setKernelID(int ID) {
-			kernelID = ID;
-		}
+        float getSynapseTimeConstant() const {
+            return synapseTimeConstant;
+        }
 		
 	protected:
 		int    kernelID;
 		float  gaussianStdDev;
 		int    type;
 		float  synapseTimeConstant;
-        float  efficacy;
 	};
 }
 

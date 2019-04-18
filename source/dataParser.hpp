@@ -20,16 +20,6 @@
 #include <algorithm>
 #include <deque>
 
-#ifdef POSIX
-#include <sys/types.h>
-#include <dirent.h>
-#endif
-
-#ifdef WINDOWS
-#include <windows.h>
-#endif
-
-
 namespace hummus {
     
 	struct label {

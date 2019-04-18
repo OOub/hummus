@@ -16,13 +16,13 @@
 #include <stdexcept>
 
 #include "../neurons/LIF.hpp"
-#include "../addOns/myelinPlasticityLogger.hpp"
-#include "../globalLearningRuleHandler.hpp"
+#include "../addons/myelinPlasticityLogger.hpp"
+#include "../addon.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class MyelinPlasticity : public GlobalLearningRuleHandler {
+	class MyelinPlasticity : public Addon {
         
 	public:
 		// ----- CONSTRUCTOR -----
@@ -33,10 +33,20 @@ namespace hummus {
                 weight_lambda(_weight_lambda) {}
 		
 		// ----- PUBLIC METHODS -----
+        // select one neuron to track by its index
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+        }
+        
+        // select multiple neurons to track by passing a vector of indices
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
+        }
+        
         virtual void onStart(Network* network) override {
             for (auto& n: network->getNeurons()) {
-                for (auto& rule: n->getLearningRules()) {
-                    if (rule == this) {
+                for (auto& addon: n->getRelevantAddons()) {
+                    if (addon == this) {
                         if (LIF* typeCheck = dynamic_cast<LIF*>(n.get())) {
                             n->addLearningInfo(std::pair<int, std::vector<float>>(0, {delay_alpha, delay_lambda, weight_alpha, weight_lambda}));
                         } else {
@@ -127,9 +137,9 @@ namespace hummus {
                 }
             }
 
-            for (auto addon: network->getAddOns()) {
-                if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
-                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, network, a->postNeuron, timeDifferences, plasticCoordinates);
+            for (auto& addon: network->getAddons()) {
+                if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon.get())) {
+                    dynamic_cast<MyelinPlasticityLogger*>(addon.get())->myelinPlasticityEvent(timestamp, network, a->postNeuron, timeDifferences, plasticCoordinates);
                 }
             }
         }
@@ -137,9 +147,9 @@ namespace hummus {
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-        float delay_alpha;
-        float delay_lambda;
-        float weight_alpha;
-        float weight_lambda;
+        float                delay_alpha;
+        float                delay_lambda;
+        float                weight_alpha;
+        float                weight_lambda;
 	};
 }

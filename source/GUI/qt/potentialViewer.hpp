@@ -40,7 +40,7 @@ namespace hummus {
         PotentialViewer(QObject *parent = 0) :
                 QObject(parent),
                 timeWindow(100),
-                openGL(false),
+                openGL(true),
                 isClosed(false),
                 maxX(0),
                 minY(20),

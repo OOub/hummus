@@ -21,19 +21,31 @@
 #include "../core.hpp"
 
 namespace hummus {
-    class SpikeLogger : public AddOn {
+    class SpikeLogger : public Addon {
         
     public:
-    	// ----- CONSTRUCTOR -----
+    	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         SpikeLogger(std::string filename) :
+                saveFile(filename, std::ios::out | std::ios::binary),
                 previousTimestamp(0) {
-            saveFile.open(filename, std::ios::out | std::ios::binary);
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
-		
+        
+        virtual ~SpikeLogger(){}
+        
 		// ----- PUBLIC SPIKE LOGGER METHODS -----
+        // select one neuron to track by its index
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+        }
+        
+        // select multiple neurons to track by passing a vector of indices
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
+        }
+        
         void onStart(Network* network) override {
             // learning off time header
             std::array<char, 8> bytes;
@@ -96,7 +108,7 @@ namespace hummus {
 		
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----
-        std::ofstream saveFile;
-        double        previousTimestamp;
+        std::ofstream        saveFile;
+        double               previousTimestamp;
     };
 }

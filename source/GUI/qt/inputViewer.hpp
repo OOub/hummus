@@ -43,7 +43,7 @@ namespace hummus {
         InputViewer(QObject *parent = 0) :
                 QObject(parent),
                 timeWindow(100),
-                openGL(false),
+                openGL(true),
                 isClosed(false),
                 maxX(1),
                 minY(0),

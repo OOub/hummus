@@ -15,9 +15,9 @@
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"
-#include "../source/addOns/spikeLogger.hpp"
-#include "../source/addOns/potentialLogger.hpp"
-#include "../source/addOns/myelinPlasticityLogger.hpp"
+#include "../source/addons/spikeLogger.hpp"
+#include "../source/addons/potentialLogger.hpp"
+#include "../source/addons/myelinPlasticityLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
@@ -30,10 +30,11 @@ int main(int argc, char** argv) {
 	auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", false, 0);
     
     //  ----- INITIALISING THE NETWORK -----
-	hummus::QtDisplay qtDisplay;
-	hummus::SpikeLogger spikeLog("10neurons_4patterns_unsupervised_spikeLog.bin");
-	hummus::MyelinPlasticityLogger myelinPlasticityLog("10neurons_4patterns_unsupervised_learningLog.bin");
-    hummus::Network network({&spikeLog, &myelinPlasticityLog}, &qtDisplay);
+    hummus::Network network;
+    
+    auto& display = network.makeGUI<hummus::QtDisplay>();
+    network.makeAddon<hummus::SpikeLogger>("10neurons_4patterns_unsupervised_spikeLog.bin");
+    network.makeAddon<hummus::MyelinPlasticityLogger>("10neurons_4patterns_unsupervised_learningLog.bin");
     
     //  ----- NETWORK PARAMETERS -----
 	float potentialDecay = 30;
@@ -47,21 +48,20 @@ int main(int argc, char** argv) {
 	bool homeostasis = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto mp = network.makeLearningRule<hummus::MyelinPlasticity>(1, 1, 0.1, 1);
+	auto& mp = network.makeAddon<hummus::MyelinPlasticity>(1, 1, 0.1, 1);
     
     //  ----- CREATING THE NETWORK -----
-    auto exponential = network.makeSynapticKernel<hummus::Exponential>();
+    auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
-    network.addLayer<hummus::Input>(inputNeurons, {}, nullptr);
-    network.addLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
+    network.makeLayer<hummus::Input>(inputNeurons, {}, nullptr);
+    network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.2, 0.05, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
-	qtDisplay.useHardwareAcceleration(true);
-	qtDisplay.setTimeWindow(5000);
-	qtDisplay.trackNeuron(11);
+	display.setTimeWindow(5000);
+	display.trackNeuron(11);
 
     network.turnOffLearning(80000);
 

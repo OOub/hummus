@@ -22,8 +22,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		IF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::vector<LearningRuleHandler*> _learningRules, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, int _potentialRisingTime=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) :
-                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _learningRules, _synapticKernel, _homeostasis, _potentialRisingTime, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _externalCurrent) {
+		IF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, int _potentialRisingTime=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) :
+                    LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _synapticKernel, _homeostasis, _potentialRisingTime, _refractoryPeriod, true, false, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _externalCurrent) {
                 // IF neuron type = 2 for JSON save
                 neuronType = 2;
             }
@@ -39,12 +39,15 @@ namespace hummus {
                 	throw std::logic_error("the event-based LIF neuron does not work with the Exponential kernel, as the biexponential model it is based on, does not have an analytical solution");
 				}
             }
-			
-            // checking if any children of the globalLearningRuleHandler class were initialised and adding them to the Addons vector
-            for (auto& rule: learningRules) {
-                if (AddOn *globalRule = dynamic_cast<AddOn*>(rule)) {
-                    if (std::find(network->getAddOns().begin(), network->getAddOns().end(), dynamic_cast<AddOn*>(rule)) == network->getAddOns().end()) {
-                        network->getAddOns().emplace_back(dynamic_cast<AddOn*>(rule));
+            
+            // searching for addons that are relevant to this neuron. if addons do not have a mask they are automatically relevant / not filtered out
+            for (auto& addon: network->getAddons()) {
+                if (addon->getNeuronMask().empty()) {
+                    addRelevantAddon(addon.get());
+                } else {
+                    auto it = std::find(addon->getNeuronMask().begin(), addon->getNeuronMask().end(), static_cast<size_t>(neuronID));
+                    if (it != addon->getNeuronMask().end()) {
+                        addRelevantAddon(addon.get());
                     }
                 }
             }
@@ -94,13 +97,13 @@ namespace hummus {
                         std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
                     }
                     
-                    for (auto addon: network->getAddOns()) {
+                    for (auto& addon: relevantAddons) {
                         if (potential < threshold) {
                             addon->incomingSpike(timestamp, a, network);
                         }
                     }
-                    if (network->getMainThreadAddOn()) {
-                        network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+                    if (network->getMainThreadAddon()) {
+                        network->getMainThreadAddon()->incomingSpike(timestamp, a, network);
                     }
                     
                     if (a->weight >= 0) {
@@ -126,8 +129,8 @@ namespace hummus {
                 }
             }
             
-            if (network->getMainThreadAddOn()) {
-                network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+            if (network->getMainThreadAddon()) {
+                network->getMainThreadAddon()->statusUpdate(timestamp, a, network);
             }
             
             if (potential >= threshold) {
@@ -137,11 +140,11 @@ namespace hummus {
                     std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
                 }
                 
-                for (auto addon: network->getAddOns()) {
+                for (auto& addon: relevantAddons) {
                     addon->neuronFired(timestamp, a, network);
                 }
-                if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->neuronFired(timestamp, a, network);
+                if (network->getMainThreadAddon()) {
+                    network->getMainThreadAddon()->neuronFired(timestamp, a, network);
                 }
                 
                 for (auto& p : postSynapses) {
@@ -157,8 +160,8 @@ namespace hummus {
                 }
                 active = false;
                 
-                if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+                if (network->getMainThreadAddon()) {
+                    network->getMainThreadAddon()->statusUpdate(timestamp, a, network);
                 }
             }
             
@@ -219,13 +222,13 @@ namespace hummus {
                         std::cout << "t=" << timestamp << " " << (a->preNeuron ? a->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << a->weight << " d=" << a->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
                     }
                     
-                    for (auto addon: network->getAddOns()) {
+                    for (auto& addon: relevantAddons) {
                         if (potential < threshold) {
                             addon->incomingSpike(timestamp, a, network);
                         }
                     }
-                    if (network->getMainThreadAddOn()) {
-                        network->getMainThreadAddOn()->incomingSpike(timestamp, a, network);
+                    if (network->getMainThreadAddon()) {
+                        network->getMainThreadAddon()->incomingSpike(timestamp, a, network);
                     }
                 }
 				
@@ -233,16 +236,16 @@ namespace hummus {
             }
             
             if (a) {
-                if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->statusUpdate(timestamp, a, network);
+                if (network->getMainThreadAddon()) {
+                    network->getMainThreadAddon()->statusUpdate(timestamp, a, network);
                 }
             } else {
                 if (timestep > 0) {
-                    for (auto addon: network->getAddOns()) {
+                    for (auto& addon: relevantAddons) {
                         addon->timestep(timestamp, network, this);
                     }
-                    if (network->getMainThreadAddOn()) {
-                        network->getMainThreadAddOn()->timestep(timestamp, network, this);
+                    if (network->getMainThreadAddon()) {
+                        network->getMainThreadAddon()->timestep(timestamp, network, this);
                     }
                 }
             }
@@ -254,11 +257,11 @@ namespace hummus {
                     std::cout << "t=" << timestamp << " " << (activeSynapse->preNeuron ? activeSynapse->preNeuron->getNeuronID() : -1) << "->" << neuronID << " w=" << activeSynapse->weight << " d=" << activeSynapse->delay <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
                 }
                 
-                for (auto addon: network->getAddOns()) {
+                for (auto& addon: relevantAddons) {
                     addon->neuronFired(timestamp, activeSynapse, network);
                 }
-                if (network->getMainThreadAddOn()) {
-                    network->getMainThreadAddOn()->neuronFired(timestamp, activeSynapse, network);
+                if (network->getMainThreadAddon()) {
+                    network->getMainThreadAddon()->neuronFired(timestamp, activeSynapse, network);
                 }
                 
                 for (auto& p : postSynapses) {

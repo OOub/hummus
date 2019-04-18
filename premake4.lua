@@ -26,7 +26,7 @@ solution 'hummus'
 
 			-- All files in source
         	files {'source/**.hpp',
-        		'source/addOns/**.hpp', 
+        		'source/addons/**.hpp', 
         		'source/dependencies/**.hpp', 
         		'source/GUI/qt/**.hpp',
         		'sourbrewce/GUI/puffin/**.hpp', 

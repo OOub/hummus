@@ -27,11 +27,11 @@
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/IF.hpp"
 
-#include "../source/addOns/spikeLogger.hpp"
-#include "../source/addOns/potentialLogger.hpp"
-#include "../source/addOns/classificationLogger.hpp"
-#include "../source/addOns/myelinPlasticityLogger.hpp"
-#include "../source/addOns/analysis.hpp"
+#include "../source/addons/spikeLogger.hpp"
+#include "../source/addons/potentialLogger.hpp"
+#include "../source/addons/classificationLogger.hpp"
+#include "../source/addons/myelinPlasticityLogger.hpp"
+#include "../source/addons/analysis.hpp"
 
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
@@ -43,21 +43,23 @@
 int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
-    hummus::QtDisplay display;
-    hummus::SpikeLogger spikeLog("spikeLog.bin");
-    hummus::ClassificationLogger classificationLog("classificationLog.bin");
-    hummus::PotentialLogger potentialLog("potentialLog.bin");
-
-    hummus::Network network({&spikeLog, &classificationLog, &potentialLog}, &display);
-
+    hummus::Network network;
+    
+    //  ----- INITIALISING ADD-ONS -----
+    network.makeAddon<hummus::SpikeLogger>("spikeLog.bin");
+    
+    // ----- INITIALISING GUI -----
+    auto& display = network.makeGUI<hummus::QtDisplay>();
+    
     //  ----- CREATING THE NETWORK -----
     hummus::DataParser parser;
 
-    auto exponential = network.makeSynapticKernel<hummus::Exponential>();
+    // creating a synaptic kernel
+    auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
 
     // creating layers of neurons
-    network.addLayer<hummus::Input>(1, {}, nullptr);
-    network.addLayer<hummus::LIF>(2, {}, &exponential, false, 20, 3, true);
+    network.makeLayer<hummus::Input>(1, {});
+    network.makeLayer<hummus::LIF>(2, {}, &exponential, false, 20, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
@@ -68,14 +70,11 @@ int main(int argc, char** argv) {
     network.injectSpike(0, 30);
 
     //  ----- DISPLAY SETTINGS -----
-    display.useHardwareAcceleration(true);
     display.setTimeWindow(100);
     display.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
-    network.setVerbose(1);
-    network.turnOffLearning(0);
-    potentialLog.neuronSelection(1);
+    network.verbosity(1);
     network.run(100, 0.1);
 
 	//  ----- SAVING THE NETWORK -----

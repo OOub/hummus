@@ -14,14 +14,14 @@
 
 #pragma once
 
-#include "../globalLearningRuleHandler.hpp"
+#include "../addon.hpp"
 #include "../neurons/input.hpp"
 #include "../neurons/LIF.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class TimeInvariantSTDP : public GlobalLearningRuleHandler {
+	class TimeInvariantSTDP : public Addon {
         
 	public:
 		// ----- CONSTRUCTOR -----
@@ -30,18 +30,28 @@ namespace hummus {
                 alpha_minus(_alpha_minus),
                 beta_plus(_beta_plus),
                 beta_minus(_beta_minus),
-                leak_scaling_factor(_leak_scaling_factor),
                 leak_time_constant(_leak_time_constant),
+                leak_scaling_factor(_leak_scaling_factor),
                 leak_lower_bound(_leak_lower_bound),
                 leak_upper_bound(_leak_upper_bound) {}
         
 		// ----- PUBLIC METHODS -----
+        // select one neuron to track by its index
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+        }
+        
+        // select multiple neurons to track by passing a vector of indices
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
+        }
+        
         virtual void onStart(Network* network) override{
             // error handling
             for (auto& n: network->getNeurons()) {
-                for (auto& rule: n->getLearningRules()) {
-                    if (rule == this) {
-                        n->addLearningInfo(std::pair<int, std::vector<float>>(2, {alpha_plus, alpha_minus, beta_plus, beta_minus}));
+                for (auto& addon: n->getRelevantAddons()) {
+                    if (addon == this) {
+                        n->addLearningInfo(std::pair<int, std::vector<float>>(2, {alpha_plus, alpha_minus, beta_plus, beta_minus, leak_time_constant, leak_scaling_factor, leak_lower_bound, leak_upper_bound}));
                         if (n->getLayerID() == 0) {
                             throw std::logic_error("the STDP learning rule has to be on a postsynaptic layer");
                         }
@@ -122,13 +132,13 @@ namespace hummus {
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-        float alpha_plus;
-        float alpha_minus;
-        float beta_plus;
-        float beta_minus;
-        float leak_scaling_factor;
-        float leak_time_constant;
-        float leak_lower_bound;
-		float leak_upper_bound;
+        float                alpha_plus;
+        float                alpha_minus;
+        float                beta_plus;
+        float                beta_minus;
+        float                leak_scaling_factor;
+        float                leak_time_constant;
+        float                leak_lower_bound;
+		float                leak_upper_bound;
 	};
 }

@@ -204,7 +204,7 @@ namespace hummus {
                     }
                     
                     if (axonalSynapse[i]["postNeuronID"].is_number()) {
-                        n->addSynapse(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<size_t>()].get(), weight, delay, 100, true);
+                        n->makeSynapse(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<size_t>()].get(), weight, delay, 100, true);
                     } else {
                         throw std::logic_error("postNeuronID incorrectly formatted");
                     }
@@ -215,9 +215,9 @@ namespace hummus {
         // builds a layer according to the parameter in the JSON network save file
         template<typename T>
         void layerHelper(nlohmann::json& input) {
-            // vector of learning rules for a layer
-            std::vector<hummus::LearningRuleHandler*> learningRules;
-			
+            // vector of learning rule addons for a layer
+            std::vector<Addon*> learningRules;
+            
             if (input["neuronNumber"].is_number() & input["sublayerNumber"].is_number()) {
                 // getting number of neurons
                 int neuronNumber = input["neuronNumber"].get<int>();
@@ -243,53 +243,65 @@ namespace hummus {
                                     throw std::logic_error("incorrect format: Parameters should be an array with 4 fields");
                                 }
             
-                                auto myelinPlasticity = network->makeLearningRule<MyelinPlasticity>(delay_alpha, delay_lambda, weight_alpha, weight_lambda);
-                                learningRules.push_back(&myelinPlasticity);
+                                auto& myelinPlasticity = network->makeAddon<MyelinPlasticity>(delay_alpha, delay_lambda, weight_alpha, weight_lambda);
+                                learningRules.emplace_back(&myelinPlasticity);
                                 
                             // stdp
                             } else if (rule[i]["ID"].get<int>() == 1){
-                                float A_plus=1; float A_minus=1; float tau_plus=20; float tau_minus=20;
-                                if (rule[i]["Parameters"].is_array() && rule[i]["Parameters"].size() == 4) {
+                                float A_plus=1; float A_minus=1; float tau_plus=20; float tau_minus=20; float leak_time_constant=0.1; float leak_scaling_factor=1; float leak_lower_bound = 0.1; float leak_upper_bound = 2;
+                                if (rule[i]["Parameters"].is_array() && rule[i]["Parameters"].size() == 8) {
                                     A_plus = rule[i]["Parameters"][0];
                                     A_minus = rule[i]["Parameters"][1];
                                     tau_plus = rule[i]["Parameters"][2];
                                     tau_minus = rule[i]["Parameters"][3];
+                                    leak_time_constant = rule[i]["Parameters"][4];
+                                    leak_scaling_factor = rule[i]["Parameters"][5];
+                                    leak_lower_bound = rule[i]["Parameters"][6];
+                                    leak_upper_bound = rule[i]["Parameters"][7];
                                 } else {
                                     throw std::logic_error("incorrect format: Parameters should be an array with 4 fields");
                                 }
                                 
-                                auto stdp = network->makeLearningRule<STDP>(A_plus, A_minus, tau_plus, tau_minus);
-                                learningRules.push_back(&stdp);
+                                auto& stdp = network->makeAddon<STDP>(A_plus, A_minus, tau_plus, tau_minus, leak_time_constant, leak_scaling_factor, leak_lower_bound, leak_upper_bound);
+                                learningRules.emplace_back(&stdp);
                                 
                             // time-invariant stdp
                             } else if (rule[i]["ID"].get<int>() == 2){
-                                float alpha_plus=1; float alpha_minus=-8; float beta_plus=3; float beta_minus=0;
-                                if (rule[i]["Parameters"].is_array() && rule[i]["Parameters"].size() == 4) {
+                                float alpha_plus=1; float alpha_minus=-8; float beta_plus=3; float beta_minus=0; float leak_time_constant=0.1; float leak_scaling_factor=1; float leak_lower_bound = 0.1; float leak_upper_bound = 2;
+                                if (rule[i]["Parameters"].is_array() && rule[i]["Parameters"].size() == 8) {
                                     alpha_plus = rule[i]["Parameters"][0];
                                     alpha_minus = rule[i]["Parameters"][1];
                                     beta_plus = rule[i]["Parameters"][2];
                                     beta_minus = rule[i]["Parameters"][3];
+                                    leak_time_constant = rule[i]["Parameters"][4];
+                                    leak_scaling_factor = rule[i]["Parameters"][5];
+                                    leak_lower_bound = rule[i]["Parameters"][6];
+                                    leak_upper_bound = rule[i]["Parameters"][7];
                                 } else {
                                     throw std::logic_error("incorrect format: Parameters should be an array with 4 fields");
                                 }
                                 
-                                auto timeInvariantStdp = network->makeLearningRule<TimeInvariantSTDP>(alpha_plus, alpha_minus, beta_plus, beta_minus);
-                                learningRules.push_back(&timeInvariantStdp);
-                            
+                                auto& ti_stdp = network->makeAddon<TimeInvariantSTDP>(alpha_plus, alpha_minus, beta_plus, beta_minus, leak_time_constant, leak_scaling_factor, leak_lower_bound, leak_upper_bound);
+                                learningRules.emplace_back(&ti_stdp);
+                                
                             // reward-modulated stdp
                             } else if (rule[i]["ID"].get<int>() == 3){
-                                float Ar_plus=1; float Ar_minus=-1; float Ap_plus=1; float Ap_minus=-1;
-                                if (rule[i]["Parameters"].is_array() && rule[i]["Parameters"].size() == 4) {
+                                float Ar_plus=1; float Ar_minus=-1; float Ap_plus=1; float Ap_minus=-1; float leak_time_constant=0.1; float leak_scaling_factor=1; float leak_lower_bound = 0.1; float leak_upper_bound = 2;
+                                if (rule[i]["Parameters"].is_array() && rule[i]["Parameters"].size() == 8) {
                                     Ar_plus = rule[i]["Parameters"][0];
                                     Ar_minus = rule[i]["Parameters"][1];
                                     Ap_plus = rule[i]["Parameters"][2];
                                     Ap_minus = rule[i]["Parameters"][3];
+                                    leak_time_constant = rule[i]["Parameters"][4];
+                                    leak_scaling_factor = rule[i]["Parameters"][5];
+                                    leak_lower_bound = rule[i]["Parameters"][6];
+                                    leak_upper_bound = rule[i]["Parameters"][7];
                                 } else {
                                     throw std::logic_error("incorrect format: Parameters should be an array with 4 fields");
                                 }
                                 
-                                auto RewardModulatedStdp = network->makeLearningRule<RewardModulatedSTDP>(Ar_plus, Ar_minus, Ap_plus, Ap_minus);
-                                learningRules.push_back(&RewardModulatedStdp);
+                                auto& r_stdp = network->makeAddon<RewardModulatedSTDP>(Ar_plus, Ar_minus, Ap_plus, Ap_minus, leak_time_constant, leak_scaling_factor, leak_lower_bound, leak_upper_bound);
+                                learningRules.emplace_back(&r_stdp);
                             }
                         } else {
                             throw std::logic_error("incorrect format: ruleID should be a number. 0 for MyelinPlasticity, 1 for STDP, 2 for TimeInvariantSTDP, 3 for RewardModulatedSTDP");
@@ -320,16 +332,16 @@ namespace hummus {
 						
 						// checking if 1D or 2D layer
 						if (width == -1 && height == -1) {
-							network->addLayer<T>(neuronNumber, learningRules, network->getSynapticKernels().back().get());
+							network->makeLayer<T>(neuronNumber, learningRules, network->getSynapticKernels().back().get());
 						} else {
-							network->add2dLayer<T>(width, height, sublayerNumber, learningRules, network->getSynapticKernels().back().get());
+							network->make2dLayer<T>(width, height, sublayerNumber, learningRules, network->getSynapticKernels().back().get());
 						}
 					} else {
 						// checking if 1D or 2D layer
 						if (width == -1 && height == -1) {
-							network->addLayer<T>(neuronNumber, learningRules, nullptr);
+							network->makeLayer<T>(neuronNumber, learningRules, nullptr);
 						} else {
-							network->add2dLayer<T>(width, height, sublayerNumber, learningRules, nullptr);
+							network->make2dLayer<T>(width, height, sublayerNumber, learningRules, nullptr);
 						}
 					}
 

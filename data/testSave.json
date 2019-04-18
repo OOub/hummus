@@ -13,7 +13,7 @@
             {
                 "height": -1,
                 "learningRules": [],
-                "neuronNumber": 1,
+                "neuronNumber": 2,
                 "neuronType": 1,
                 "sublayerNumber": 1,
                 "synapticKernels": [
@@ -37,7 +37,12 @@
                     {
                         "delay": 0.0,
                         "postNeuronID": 1,
-                        "weight": 9.999999960041972e-12
+                        "weight": 0.5
+                    },
+                    {
+                        "delay": 0.0,
+                        "postNeuronID": 2,
+                        "weight": 0.5
                     }
                 ],
                 "dendriticSynapses": [],
@@ -48,7 +53,6 @@
                     0
                 ],
                 "refractoryPeriod": 0.0,
-                "resistance": 49999998976.0,
                 "restingPotential": -70.0,
                 "sublayerID": 0,
                 "threshold": -50.0
@@ -61,26 +65,58 @@
                 ],
                 "axonalSynapses": [],
                 "burstingActivity": false,
-                "decayHomeostasis": 10.0,
+                "decayHomeostasis": 20.0,
                 "decayPotential": 20.0,
                 "decayWeight": 0.0,
                 "dendriticSynapses": [
                     {
                         "delay": 0.0,
-                        "weight": 9.999999960041972e-12
+                        "weight": 0.5
                     }
                 ],
                 "eligibilityDecay": 20.0,
                 "externalCurrent": 100.0,
                 "homeostasis": false,
-                "homeostasisBeta": 1.0,
+                "homeostasisBeta": 0.10000000149011612,
                 "layerID": 1,
                 "receptiveFieldCoordinates": [
                     0,
                     0
                 ],
                 "refractoryPeriod": 3.0,
-                "resistance": 49999998976.0,
+                "restingPotential": -70.0,
+                "restingThreshold": -50.0,
+                "sublayerID": 0,
+                "threshold": -50.0,
+                "wta": true
+            },
+            {
+                "Type": 1,
+                "XYCoordinates": [
+                    -1,
+                    -1
+                ],
+                "axonalSynapses": [],
+                "burstingActivity": false,
+                "decayHomeostasis": 20.0,
+                "decayPotential": 20.0,
+                "decayWeight": 0.0,
+                "dendriticSynapses": [
+                    {
+                        "delay": 0.0,
+                        "weight": 0.5
+                    }
+                ],
+                "eligibilityDecay": 20.0,
+                "externalCurrent": 100.0,
+                "homeostasis": false,
+                "homeostasisBeta": 0.10000000149011612,
+                "layerID": 1,
+                "receptiveFieldCoordinates": [
+                    0,
+                    0
+                ],
+                "refractoryPeriod": 3.0,
                 "restingPotential": -70.0,
                 "restingThreshold": -50.0,
                 "sublayerID": 0,
