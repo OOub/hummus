@@ -31,7 +31,7 @@ namespace hummus {
 		
 		virtual ~IF() {}
 		
-		// ----- PUBLIC INPUT NEURON METHODS -----
+		// ----- PUBLIC INPUT NEURON METHODS -----        
 		void initialisation(Network* network) override {
 			// checking which synaptic kernel was chosen in the asynchronous network
             if (network->getNetworkType() == true) {

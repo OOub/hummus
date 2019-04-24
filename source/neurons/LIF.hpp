@@ -57,7 +57,7 @@ namespace hummus {
 		
 		virtual ~LIF(){}
 		
-		// ----- PUBLIC LIF METHODS -----
+		// ----- PUBLIC LIF METHODS -----        
 		virtual void initialisation(Network* network) override {
             // checking which synaptic kernel was chosen in the asynchronous network 
             if (network->getNetworkType() == true) {
@@ -315,7 +315,7 @@ namespace hummus {
 			}
 		}
 		
-        virtual void resetNeuron(Network* network) override {
+        virtual void resetNeuron(Network* network, bool clearAddons=true) override {
             // resetting parameters
             previousInputTime = 0;
             previousSpikeTime = 0;
@@ -325,6 +325,9 @@ namespace hummus {
             inhibited = false;
             active = true;
             threshold = restingThreshold;
+            if (clearAddons) {
+                relevantAddons.clear();
+            }
         }
         
         // write neuron parameters in a JSON format

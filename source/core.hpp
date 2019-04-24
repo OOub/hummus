@@ -114,7 +114,6 @@ namespace hummus {
 		virtual ~Neuron(){}
 		
 		// ----- PUBLIC METHODS -----
-		
 		// ability to do things inside a neuron, outside the constructor before the network actually runs
 		virtual void initialisation(Network* network) {}
 		
@@ -127,11 +126,14 @@ namespace hummus {
 		}
         
         // reset a neuron to its initial status
-        virtual void resetNeuron(Network* network) {
+        virtual void resetNeuron(Network* network, bool clearAddons=true) {
             previousInputTime = 0;
             previousSpikeTime = 0;
             potential = restingPotential;
             eligibilityTrace = 0;
+            if (clearAddons) {
+                relevantAddons.clear();
+            }
         }
         
         // write neuron parameters in a JSON format
@@ -1003,7 +1005,7 @@ namespace hummus {
                     std::cout << "Running the network synchronously" << std::endl;
                 }
             }
-			
+            
             if (_timestep == 0) {
                 asynchronous = true;
             }
@@ -1052,10 +1054,14 @@ namespace hummus {
             }
 
             spikeManager.join();
+            
+            // resetting network and clearing addons initialised for this particular run
+            reset();
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
         void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr, int shift=20) {
+            
             if (_timestep == 0) {
                 asynchronous = true;
             }
@@ -1099,6 +1105,9 @@ namespace hummus {
                 thAddon->begin(this, &sync);
             }
             spikeManager.join();
+            
+            // resetting network and clearing addons initialised for this particular run
+            reset();
         }
 
         // reset the network back to the initial conditions without changing the network build
@@ -1108,6 +1117,10 @@ namespace hummus {
             learningStatus = true;
             learningOffSignal = -1;
             addons.clear();
+            
+            for (auto& n: neurons) {
+                n->resetNeuron(this);
+            }
         }
         
         // initialises an addon and adds it to the addons vector
@@ -1229,7 +1242,7 @@ namespace hummus {
             initialSpikes.clear();
             generatedSpikes.clear();
             for (auto& n: neurons) {
-                n->resetNeuron(this);
+                n->resetNeuron(this, false);
             }
 
             injectSpikeFromData(testData);
