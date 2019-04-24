@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
         network.verbosity(0);
         
         /// parameters
-        bool burst = true;
+        bool burst = false;
         bool homeostasis = true;
         bool conv_wta = true;
         bool pool_wta = false;
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
         /// parameters
         bool homeostasis = true;
         bool wta = true;
-        bool burst = true;
+        bool burst = false;
         
         /// creating the layers
         network.make2dLayer<hummus::Input>(32, 32, 1, {}, nullptr); // input layer
