@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     network.makeAddon<hummus::MyelinPlasticityLogger>("10neurons_4patterns_unsupervised_learningLog.bin");
     
     //  ----- NETWORK PARAMETERS -----
-	float potentialDecay = 30;
+	float potentialDecay = 20;
     int inputNeurons = 10;
     int layer1Neurons = 4;
 	
@@ -48,16 +48,16 @@ int main(int argc, char** argv) {
 	bool homeostasis = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto& mp = network.makeAddon<hummus::MyelinPlasticity>(1, 1, 0.1, 1);
+	auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
     
     //  ----- CREATING THE NETWORK -----
     auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
-    network.makeLayer<hummus::Input>(inputNeurons, {}, nullptr);
+    network.makeLayer<hummus::Input>(inputNeurons, {});
     network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.2, 0.05, 5, 3));
+    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.1, 0, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
 	display.setTimeWindow(5000);

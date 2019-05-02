@@ -13,6 +13,8 @@
 
 #pragma once
 
+#define _USE_MATH_DEFINES
+
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
@@ -92,7 +94,7 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, SynapticKernelHandler* _synapticKernel, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
+        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, SynapticKernelHandler* _synapticKernel, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
                 neuronID(_neuronID),
                 layerID(_layerID),
                 sublayerID(_sublayerID),
@@ -200,11 +202,11 @@ namespace hummus {
             rfCoordinates.second = col;
         }
         
-        std::pair<int, int> getXYCoordinates() const {
+        std::pair<float, float> getXYCoordinates() const {
             return xyCoordinates;
         }
         
-        void setXYCoordinates(int X, int Y) {
+        void setXYCoordinates(float X, float Y) {
             xyCoordinates.first = X;
             xyCoordinates.second = Y;
         }
@@ -321,7 +323,7 @@ namespace hummus {
         int                                              layerID;
         int                                              sublayerID;
         std::pair<int, int>                              rfCoordinates;
-        std::pair<int, int>                              xyCoordinates;
+        std::pair<float, float>                          xyCoordinates;
 		std::vector<synapse*>                            preSynapses;
         std::vector<std::unique_ptr<synapse>>            postSynapses;
         synapse                                          initialSynapse;
@@ -407,7 +409,7 @@ namespace hummus {
 		
         // adds one dimensional neurons
         template <typename T, typename... Args>
-        void makeLayer(int _numberOfNeurons, std::vector<Addon*> _addons, Args&&... args) {
+        layer makeLayer(int _numberOfNeurons, std::vector<Addon*> _addons, Args&&... args) {
             
             if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
@@ -440,11 +442,60 @@ namespace hummus {
             
             // building layer structure
             layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
+            return layers.back();
         }
-		
+        
+        // adds neurons arranged in circles of various radii
+        template <typename T, typename... Args>
+        layer makeCircularLayer(int _numberOfNeurons, std::vector<float> _radii, std::vector<Addon*> _addons, Args&&... args) {
+            
+            unsigned long shift = 0;
+            
+            // find the layer ID
+            int layerID = 0;
+            if (!layers.empty()) {
+                for (auto& l: layers) {
+                    shift += l.neurons.size();
+                }
+                layerID = layers.back().ID+1;
+            }
+            
+            float rad_increment = 2*M_PI / (_numberOfNeurons-1);
+            
+            // building a layer of two dimensional sublayers
+            int counter = 0;
+            float alpha = 0;
+            std::vector<sublayer> sublayers;
+            std::vector<std::size_t> neuronsInLayer;
+            for (int i=0; i<_radii.size(); i++) {
+                std::vector<std::size_t> neuronsInSublayer;
+                for (auto k=0+shift; k<_numberOfNeurons+shift; k++) {
+                    float u = _radii[i] * std::cos(alpha);
+                    float v = _radii[i] * std::sin(alpha);
+                    neurons.emplace_back(std::unique_ptr<T>(new T(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<float, float>(u, v), std::forward<Args>(args)...)));
+                    neuronsInSublayer.emplace_back(neurons.size()-1);
+                    neuronsInLayer.emplace_back(neurons.size()-1);
+                    alpha += rad_increment;
+                }
+                sublayers.emplace_back(sublayer{neuronsInSublayer, i});
+                
+                // to shift the neuron IDs with the sublayers
+                counter += _numberOfNeurons;
+            }
+            
+            // looping through addons and adding the layer to the neuron mask
+            for (auto& addon: _addons) {
+                addon->activate_for(neuronsInLayer);
+            }
+            
+            // building layer structure
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, -1, -1});
+            return layers.back();
+        }
+        
         // adds a 2 dimensional grid of neurons
         template <typename T, typename... Args>
-        void make2dLayer(int gridW, int gridH, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
+        layer make2dLayer(int gridW, int gridH, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
             
             // find number of neurons to build
             int numberOfNeurons = gridW * gridH;
@@ -491,11 +542,12 @@ namespace hummus {
             
             // building layer structure
             layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH});
+            return layers.back();
         }
 		
         // creates a layer that is a convolution of the previous layer, depending on the kernel size and the stride. First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron. We can even add more sublayers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void makeConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
+        layer makeConvolutionalLayer(layer presynapticLayer, int kernelSize, int stride, F&& lambdaFunction, int probability, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
             
             // find how many neurons have previously spiked
             int layershift = 0;
@@ -526,7 +578,7 @@ namespace hummus {
             }
             
             // creating the new layer of neurons
-            make2dLayer<T>(newWidth, newHeight, _sublayerNumber, _addons, std::forward<Args>(args)...);
+            auto convolutionLayer = make2dLayer<T>(newWidth, newHeight, _sublayerNumber, _addons, std::forward<Args>(args)...);
 
             // finding range to calculate a moore neighborhood
             float range;
@@ -590,11 +642,12 @@ namespace hummus {
                     sublayershift += preSub.neurons.size();
                 }
             }
+            return convolutionLayer;
         }
         
         // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields). First set of paramaters are to characterize the synapses. Second set of parameters are parameters for the neuron. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void makePoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<Addon*> _addons, Args&&... args) {
+        layer makePoolingLayer(layer presynapticLayer, F&& lambdaFunction, int probability, std::vector<Addon*> _addons, Args&&... args) {
             
             // find how many neurons have previously spiked
             int layershift = 0;
@@ -624,7 +677,7 @@ namespace hummus {
             }
             
         	// create pooling layer of neurons with correct dimensions
-            make2dLayer<T>(presynapticLayer.width/lcd, presynapticLayer.height/lcd, static_cast<int>(presynapticLayer.sublayers.size()), _addons, std::forward<Args>(args)...);
+            auto poolingLayer = make2dLayer<T>(presynapticLayer.width/lcd, presynapticLayer.height/lcd, static_cast<int>(presynapticLayer.sublayers.size()), _addons, std::forward<Args>(args)...);
 			
             float range;
             // if size of kernel is an even number
@@ -691,13 +744,12 @@ namespace hummus {
                     sublayershift += preSub.neurons.size();
                 }
             }
-			
-            
+            return poolingLayer;
         }
         
         // add a one dimensional layer of decision-making neurons that are labelled according to the provided labels - must be on the last layer
         template <typename T>
-        void makeDecisionMakingLayer(std::string trainingLabelFilename, std::vector<Addon*> _addons, SynapticKernelHandler* _synapticKernel, bool _preTrainingLabelAssignment=true, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) {
+        layer makeDecisionMakingLayer(std::string trainingLabelFilename, std::vector<Addon*> _addons, SynapticKernelHandler* _synapticKernel, bool _preTrainingLabelAssignment=true, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             preTrainingLabelAssignment = _preTrainingLabelAssignment;
@@ -743,11 +795,12 @@ namespace hummus {
             
             // building layer structure
             layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
+            return layers.back();
         }
         
         // add a one-dimensional reservoir of randomly interconnected neurons without any learning rule (feedforward, feedback and self-excitation) with randomised weights and no delays. lambdaFunction: Takes in one of the classes inside the randomDistributions folder to define a distribution for the weights.
         template <typename T, typename F, typename... Args>
-        void makeReservoir(int _numberOfNeurons, F&& lambdaFunction, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
+        layer makeReservoir(int _numberOfNeurons, F&& lambdaFunction, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
             
             if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
@@ -790,6 +843,7 @@ namespace hummus {
                     }
                 }
             }
+            return layers.back();
         }
         
 		// ----- LAYER CONNECTION METHODS -----

@@ -44,7 +44,7 @@ namespace hummus {
             randomEngine = std::mt19937(device());
             gaussian = std::normal_distribution<>(0.0, 1.0);
         };
-		
+        
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity used as the sublayerID (timestamp, X, Y, P)
         std::vector<input> readData(std::string filename, bool timeJitter=false, int additiveNoise=0) {
             dataFile.open(filename);

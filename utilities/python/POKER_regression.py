@@ -84,7 +84,7 @@ if load_data:
     np.save(naming+'_test_x',test_x)
     np.save(naming+'_test_y',test_y)
 
-    print('finished saving files training data')
+    print('finished saving files')
 
 else:
     training_x=np.load(naming+'_training_x'+'.npy').squeeze()
