@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last 9Version: 14/01/2019
+ * Last Version: 14/01/2019
  *
  * Information: Spiking neural network classifying the poker-DVS dataset
  */
@@ -31,7 +31,7 @@
 
 int main(int argc, char** argv) {
     
-    bool deepNetwork = false; // choose between feedforward or deep spiking neural network
+    bool deepNetwork = true; // choose between feedforward or deep spiking neural network
     
     if (deepNetwork) {
         //  ----- DEEP SPIKING NEURAL NETWORK -----
@@ -49,18 +49,18 @@ int main(int argc, char** argv) {
         network.verbosity(0);
         
         /// parameters
-        bool burst = true;
+        bool burst = false;
         bool homeostasis = true;
         bool conv_wta = true;
         bool pool_wta = false;
 
         /// creating the layers
-        network.make2dLayer<hummus::Input>(40, 40, 1, {}, nullptr); // input layer
+        network.make2dLayer<hummus::Input>(32, 32, 1, {}, nullptr); // input layer
         network.makeConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100, 4, {&ti_stdp}, &step, homeostasis, 20, 10, conv_wta, burst); // first convolution
         network.makePoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // first pooling
         network.makeConvolutionalLayer<hummus::LIF>(network.getLayers()[2], 5, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100, 8, {&ti_stdp}, &step, homeostasis, 100, 10, conv_wta, burst); // second convolution
         network.makePoolingLayer<hummus::LIF>(network.getLayers()[3], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // second pooling
-        network.makeLayer<hummus::LIF>(2, {&ti_stdp}, &step, homeostasis, 200, 10, conv_wta, burst, 20, 0, 20, 0.1, -50, -70, 100); // output layer with 2 neurons
+//        network.makeLayer<hummus::LIF>(<#int _numberOfNeurons#>, <#std::vector<Addon *> _addons#>, <#Args &&args...#>)
         
         /// connecting the layers
         network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1, 0, 0, 0, 1));
@@ -82,8 +82,6 @@ int main(int argc, char** argv) {
         // ----- SIMPLE FEEDFORWARD -----
         
         /// Initialisation
-        hummus::PotentialLogger pLog("simplePLog.bin");
-        hummus::ClassificationLogger cLog("simpleCLog.bin");
         hummus::Network network;
         
         auto& ti_stdp = network.makeAddon<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
@@ -94,26 +92,39 @@ int main(int argc, char** argv) {
         /// parameters
         bool homeostasis = true;
         bool wta = true;
-        bool burst = true;
+        bool burst = false;
         
         /// creating the layers
-        network.make2dLayer<hummus::Input>(34, 34, 1, {}, nullptr); // input layer
-        network.makeLayer<hummus::LIF>(1000, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // hidden layer with STDP
-        network.makeDecisionMakingLayer<hummus::DecisionMaking>("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", {}, &step, true, homeostasis, 100, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100);
+        network.make2dLayer<hummus::Input>(32, 32, 1, {}, nullptr); // input layer
+        network.makeLayer<hummus::LIF>(100, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // hidden layer with STDP
 
         /// connecting the layers
         network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.6, 0.1, 0, 0, 0, 1));
-        network.allToAll(network.getLayers()[1], network.getLayers()[2], hummus::Normal(0.6, 0.1, 0, 0, 0, 1));
-        
-        pLog.activate_for(network.getLayers()[2].neurons);
         
         /// Reading data
         hummus::DataParser dataParser;
         auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtraining.txt");
         auto testData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtest.txt");
         
-        /// Running the network
+        /// Running the network - Learning Phase
         network.run(&trainingData, 0);
+        
+        /// Re-Running the network - Training Data Collection
+        network.turnOffLearning();
+
+        auto& simpleTrainingPLog = network.makeAddon<hummus::PotentialLogger>("simpleTrainingPLog.bin");
+        simpleTrainingPLog.activate_for(network.getLayers()[1].neurons);
+
+        network.run(&trainingData, 0);
+        
+        /// Re-Running the network - Test Phase
+        network.turnOffLearning();
+
+        auto& simpleTestPLog = network.makeAddon<hummus::PotentialLogger>("simpleTestPLog.bin");
+        simpleTestPLog.activate_for(network.getLayers()[1].neurons);
+
+        network.run(&testData, 0);
+        
     }
 
     //  ----- EXITING APPLICATION -----

@@ -28,8 +28,9 @@ namespace hummus {
     public:
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         // constructor to log all neurons of a layer
-        PotentialLogger(std::string filename) :
+        PotentialLogger(std::string filename, bool logLearning=true) :
                 saveFile(filename, std::ios::out | std::ios::binary),
+                logEverything(logLearning),
                 previousTimestamp(0) {
             if (!saveFile.good()) {
                 throw std::runtime_error("the file could not be opened");
@@ -50,15 +51,9 @@ namespace hummus {
         }
         
         void incomingSpike(double timestamp, synapse* a, Network* network) override {
-            // logging only after learning is stopped
-            if (!network->getLearningStatus()) {
+            if (logEverything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
-                
-                if (static_cast<int32_t>((timestamp - previousTimestamp) < 0)) {
-                    std::cout << timestamp << " " << previousTimestamp << std::endl;
-                }
-                
                 SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
                 SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
                 SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
@@ -68,12 +63,26 @@ namespace hummus {
                 
                 // changing the previous timestamp
                 previousTimestamp = timestamp;
+            } else {
+                // logging only after learning is stopped
+                if (!network->getLearningStatus()) {
+                    // defining what to save and constraining it so that file size doesn't blow up
+                    std::array<char, 8> bytes;
+                    SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                    
+                    // saving to file
+                    saveFile.write(bytes.data(), bytes.size());
+                    
+                    // changing the previous timestamp
+                    previousTimestamp = timestamp;
+                }
             }
         }
         
         void neuronFired(double timestamp, synapse* a, Network* network) override {
-            // logging only after learning is stopped
-            if (!network->getLearningStatus()) {
+            if (logEverything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
                 SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
@@ -85,12 +94,26 @@ namespace hummus {
                 
                 // changing the previous timestamp
                 previousTimestamp = timestamp;
+            } else {
+                // logging only after learning is stopped
+                if (!network->getLearningStatus()) {
+                    // defining what to save and constraining it so that file size doesn't blow up
+                    std::array<char, 8> bytes;
+                    SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
+                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                    
+                    // saving to file
+                    saveFile.write(bytes.data(), bytes.size());
+                    
+                    // changing the previous timestamp
+                    previousTimestamp = timestamp;
+                }
             }
         }
         
         void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
-            // logging only after learning is stopped
-            if (!network->getLearningStatus()) {
+            if (logEverything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
                 SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
@@ -102,12 +125,28 @@ namespace hummus {
                 
                 // changing the previous timestamp
                 previousTimestamp = timestamp;
+            } else {
+                // logging only after learning is stopped
+                if (!network->getLearningStatus()) {
+                    // defining what to save and constraining it so that file size doesn't blow up
+                    std::array<char, 8> bytes;
+                    SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getPotential() * 100));
+                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postNeuron->getNeuronID()));
+                    
+                    // saving to file
+                    saveFile.write(bytes.data(), bytes.size());
+                    
+                    // changing the previous timestamp
+                    previousTimestamp = timestamp;
+                }
             }
         }
 
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
         std::ofstream        saveFile;
+        bool                 logEverything;
         double               previousTimestamp;
 	};
 }

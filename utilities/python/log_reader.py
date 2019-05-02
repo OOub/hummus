@@ -1,7 +1,7 @@
 import numpy as np
 import struct
 
-def spikeReader(log):
+def spike_reader(log):
     """
     Reads files in with a format:
         SpikeLogger Binary File Specs |
@@ -28,7 +28,22 @@ def spikeReader(log):
             i+=1
     return l
 
-def potentialReader(log):
+def regression_spike_parser(logname, p=28, layer=-1, N=-1):
+    log=np.array(spike_reader(logname))
+    tstmps = sorted(list(set(log[:,0])))
+    
+    t2i = { t:i for i,t in enumerate(tstmps)}
+    T=len(tstmps)
+
+    Sp = np.zeros((T,N),dtype=np.int8)
+
+    for i,n in enumerate(log[:,0]):
+        if log[i,5]<(p**2):
+            continue
+        Sp[t2i[n], int(log[i,5])-(p**2)]=1
+    return Sp
+
+def potential_reader(log):
     """
     Reads files in with a fromat:
         PotentialLogger Binary File Specs |
@@ -47,3 +62,21 @@ def potentialReader(log):
             l.append(list(struct.unpack('i2h',d[i*chunk_size+offset:(i+1)*chunk_size+offset])))
             i+=1
     return l
+
+def regression_potential_parser(logname, p=28,layer=-1,N=-1,ds=0):
+    log=np.array(potential_reader(logname))
+    log[:,0]=np.cumsum(log[:,0])//100
+    if ds>0:
+        log[:,0]=log[:,0]//ds
+    tstmps = np.arange(np.min(log[:,0]),np.max(log[:,0])+1)
+    t2i = { t:i for i,t in enumerate(tstmps)}
+    
+    T=len(tstmps)
+
+    minID = p**2
+    Sp = np.zeros((T,N))
+    for i,n in enumerate(log[:,0]):
+        tindex= t2i[n]
+        nindex= log[i,2]-minID
+        Sp[tindex, nindex]+=log[i,1]
+    return Sp

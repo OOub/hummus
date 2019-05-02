@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) :
+		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _synapticKernel, _eligibilityDecay, _threshold, _restingPotential),
                 refractoryPeriod(_refractoryPeriod),
                 decayPotential(_decayPotential),
@@ -57,7 +57,7 @@ namespace hummus {
 		
 		virtual ~LIF(){}
 		
-		// ----- PUBLIC LIF METHODS -----
+		// ----- PUBLIC LIF METHODS -----        
 		virtual void initialisation(Network* network) override {
             // checking which synaptic kernel was chosen in the asynchronous network 
             if (network->getNetworkType() == true) {
@@ -315,7 +315,7 @@ namespace hummus {
 			}
 		}
 		
-        virtual void resetNeuron(Network* network) override {
+        virtual void resetNeuron(Network* network, bool clearAddons=true) override {
             // resetting parameters
             previousInputTime = 0;
             previousSpikeTime = 0;
@@ -325,6 +325,9 @@ namespace hummus {
             inhibited = false;
             active = true;
             threshold = restingThreshold;
+            if (clearAddons) {
+                relevantAddons.clear();
+            }
         }
         
         // write neuron parameters in a JSON format

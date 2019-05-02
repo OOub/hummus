@@ -21,7 +21,7 @@ namespace hummus {
 	class DecisionMaking : public LIF {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100, std::string _classLabel="") :
+		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, SynapticKernelHandler* _synapticKernel, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayWeight=0, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, float _externalCurrent=100, std::string _classLabel="") :
                     LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _synapticKernel, _homeostasis, _decayPotential, _refractoryPeriod, _wta, _burstingActivity, _eligibilityDecay, _decayWeight ,_decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential, _externalCurrent),
                     classLabel(_classLabel) {
                 // DecisionMaking neuron type = 2 for JSON save
@@ -39,10 +39,12 @@ namespace hummus {
 				}
             }
             
-            // initialising the label tracker according to the number of unique labels
-            for (auto label: network->getUniqueLabels())
-            {
-                labelTracker.push_back(0);
+            // initialising the label tracker according to the number of unique labels (if the labelTracker was not already initialised in a previous run instance
+            if (labelTracker.empty()) {
+                for (auto label: network->getUniqueLabels())
+                {
+                    labelTracker.push_back(0);
+                }
             }
             
             // searching for addons that are relevant to this neuron. if addons do not have a mask they are automatically relevant / not filtered out
@@ -304,7 +306,7 @@ namespace hummus {
             }
         }
         
-        virtual void resetNeuron(Network* network) override {
+        virtual void resetNeuron(Network* network, bool clearAddons=true) override {
             // resetting parameters
             previousInputTime = 0;
             previousSpikeTime = 0;
@@ -315,7 +317,12 @@ namespace hummus {
             active = true;
             threshold = restingThreshold;
             
-            if (!network->getPreTrainingLabelAssignment()) {
+            if (clearAddons) {
+                relevantAddons.clear();
+            }
+            
+            // making sure in a new run the classLabel isn't overwritten
+            if (!network->getPreTrainingLabelAssignment() && classLabel == "") {
                 // associating the appropriate label to the decision-making neuron
                 auto it = std::max_element(labelTracker.begin(), labelTracker.end());
                 auto idx = std::distance(labelTracker.begin(), it);
@@ -325,7 +332,6 @@ namespace hummus {
                     std::cout << neuronID << " specialised to the " << classLabel << " label" << std::endl;
                 }
             }
-            
         }
         
         // write neuron parameters in a JSON format
