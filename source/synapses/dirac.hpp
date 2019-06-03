@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 23/01/2019
+ * Last Version: 02/06/2019
  *
  * Information: instantly increase the current
  * kernel type 0
@@ -14,19 +14,19 @@
 
 #include <random>
 
+#include "../synapse.hpp"
 #include "../dependencies/json.hpp"
-#include "../synapticKernelHandler.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class Dirac : public SynapticKernelHandler {
+	class Dirac : public Synapse {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _amplitudeScaling=50, float gaussianStandardDeviation=0) :
-			amplitudeScaling(_amplitudeScaling),
-			SynapticKernelHandler() {
+		Dirac(Synapse* _target_neuron, Synapse* _parent_neuron, float _weight=1, float _delay=0, int _amplitudeScaling=50, float gaussianStandardDeviation=0) :
+                Synapse(_target_neuron, _parent_neuron, _weight, _delay),
+                amplitudeScaling(_amplitudeScaling) {
 		
 			gaussianStdDev = gaussianStandardDeviation;
 			
@@ -39,16 +39,16 @@ namespace hummus {
 		virtual ~Dirac(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double updateCurrent(double timestamp, double timestep, double previousInputTime, float neuronCurrent) override {
+		virtual double update(double timestamp, double timestep, float neuronCurrent) override {
 			return 0;
 		}
 		
-		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
+		virtual float receiveSpike(float neuronCurrent, float externalCurrent, float synapseWeight) override {
             return amplitudeScaling * (neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight);
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {
-			// general synaptic kernel parameters
+			// general synapse parameters
             output.push_back({
             	{"type", type},
             	{"amplitudeScaling", amplitudeScaling},

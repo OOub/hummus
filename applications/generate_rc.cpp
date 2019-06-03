@@ -118,24 +118,24 @@ int main(int argc, char** argv) {
     auto& step = network.makeSynapticKernel<hummus::Step>(resetCurrent);
     
     // pixel grid layer
-    network.make2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {}, nullptr);
+    auto pixel_grid = network.make2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {});
     
     if (useMatrix) {
         // create reservoir layer
-        network.makeLayer<hummus::LIF>(numberOfNeurons, {}, &step, homeostasis, decayPotential, refractoryPeriod, wta);
+        auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, &step, homeostasis, decayPotential, refractoryPeriod, wta);
         
         // connecting input according to weight matrix
-        network.weightMatrix(network.getLayers()[0], network.getLayers()[1], inputWeightMatrix, hummus::Normal(0, 0, 0, 0));
+        network.weightMatrix(pixel_grid, reservoir, inputWeightMatrix, hummus::Normal(0, 0, 0, 0));
         
         // connecting reservoir according to weight matrix
-        network.weightMatrix(network.getLayers()[1], network.getLayers()[1], reservoirWeightMatrix, hummus::Normal(0, 0, 0, 0));
+        network.weightMatrix(reservoir, reservoir, reservoirWeightMatrix, hummus::Normal(0, 0, 0, 0));
         
     } else {
         // reservoir layer
-        network.makeReservoir<hummus::LIF>(numberOfNeurons, hummus::Normal(weightMean, weightStdDev), feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
+        auto reservoir = network.makeReservoir<hummus::LIF>(numberOfNeurons, hummus::Normal(weightMean, weightStdDev), feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
         
         // connect pixel grid to the reservoir in an all to all fashion
-        network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0));
+        network.allToAll(pixel_grid, reservoir, hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0));
     }
     
     std::cout << "\nsaving network into rcNetwork.json file..." << std::endl;

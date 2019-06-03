@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 01/05/2019
+ * Last Version: 03/05/2019
  *
  * Information: Network for wave triangulation from an array of 8 piezoelectric sensors using delay learning
  * grid of 2D neurons, each associated with a specific temporal pattern. the final output neuron give us the position of the touch
@@ -15,58 +15,85 @@
 
 #include "../source/core.hpp"
 #include "../source/dataParser.hpp"
+#include "../source/neurons/IF.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"
 #include "../source/synapticKernels/step.hpp"
+#include "../source/addons/potentialLogger.hpp"
 #include "../source/randomDistributions/normal.hpp"
+#include "../source/addons/myelinPlasticityLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 
 int main(int argc, char** argv) {
     
-    // semi-supervised - choose coordinates according to which neuron responds first - organising the network geometry knowing the expected coordinates.
+    /// ----- PARAMETERS -----
+    float direction_potentialDecay   = 20;
+    float direction_eligibilityDecay = 20;
+    bool  direction_wta              = true;
+    bool  direction_burst            = false;
+    bool  direction_homeostasis      = true;
+    
+    /// ----- INITIALISATION -----
     
     // initialising the network
     hummus::Network network;
     
-    // initialise GUI
-    auto& display = network.makeGUI<hummus::QtDisplay>();
+    // initialising the loggers
+    auto& mp_log = network.makeAddon<hummus::MyelinPlasticityLogger>("localisation_learning.bin");
+    auto& potential_log = network.makeAddon<hummus::PotentialLogger>("localisation_potential.bin");
     
-    // event-based synaptic kernel
-    auto& kernel = network.makeSynapticKernel<hummus::Exponential>();
-
-    // learning rule - needs to be modified to adapt to the relative timing between the first two sensors
-    auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
+    // synaptic kernels
+    auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
+    auto& dirac = network.makeSynapticKernel<hummus::Dirac>();
+    
+    // delay learning rule
+    auto& mp = network.makeAddon<hummus::MyelinPlasticity>(1, 1, 1, 0.1);
 
     // input layer with 8 channels for each sensor
-    auto input = network.makeLayer<hummus::Input>(8, {});
-
-    float potentialDecay = 20;
-    float eligibilityDecay = 20;
-    bool wta = true;
-    bool burst = false;
-    bool homeostasis = false;
+    auto input = network.makeCircularLayer<hummus::Input>(8, {0.3}, {});
     
-    // myelin plasticity layer that learns the delays
-    auto hidden = network.makeLayer<hummus::LIF>(16, {&mp}, &kernel, homeostasis, potentialDecay, 0, wta, burst, eligibilityDecay);
+    /// ----- DIRECTION LAYER -----
     
-    // connecting input layer with the myelin plasticity neurons
-    network.allToAll(input, hidden, hummus::Normal(1./8, 0, 3, 1, 0, 1, 0, INFINITY));
+    // layer that learns the delays
+    auto direction = network.makeLayer<hummus::LIF>(50, {&mp}, &exponential, direction_homeostasis, direction_potentialDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
     
-    // reading the data
-    hummus::DataParser parser;
+    // connecting input layer with the direction neurons
+    network.allToAll(input, direction, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY)); // fixed weight on [0,1], random delays on [0, inf]
+    
+    // neuron mask for loggers
+    mp_log.activate_for(direction.neurons[0]);
+    potential_log.activate_for(direction.neurons[0]);
+    
+    /// ----- DISTANCE LAYER -----
+    
+    // distance neuron
+    auto distance = network.makeCircularLayer<hummus::IF>(8, {0.3}, {}, &dirac);
+    
+    // connecting input layer with the distance neurons
 
-    auto calibration = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/calibration_direction_only_100.txt");
-
-    // display settings
+    /// ----- USER INTERFACE SETTINGS -----
+    
+    // initialising the GUI
+    auto& display = network.makeGUI<hummus::QtDisplay>();
+    
+    // settings
     display.setTimeWindow(10000);
+    display.trackNeuron(direction.neurons[0]);
     
-    // run calibration process
+    /// ----- RUNNING CALIBRATION -----
+    
+    // reading the training data
+    hummus::DataParser parser;
+    auto calibration = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/calibration_direction_only_100.txt", false);
+    
+    // run calibration
+    network.verbosity(1);
     network.run(&calibration, 0.1);
+
+    // assigning labels to direction neurons
     
-    // assign a 2D structure to the network according to which neurons learned the different calibration positions
-    
-    // run test process
+//    // run test
 //    auto test = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
 //    network.turnOffLearning();
 //    network.run(&test, 0.1);

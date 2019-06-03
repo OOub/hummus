@@ -36,17 +36,7 @@ namespace hummus {
                 leak_upper_bound(_leak_upper_bound) {}
         
 		// ----- PUBLIC METHODS -----
-        // select one neuron to track by its index
-        void activate_for(size_t neuronIdx) override {
-            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
-        }
-        
-        // select multiple neurons to track by passing a vector of indices
-        void activate_for(std::vector<size_t> neuronIdx) override {
-            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
-        }
-        
-        virtual void onStart(Network* network) override{
+        virtual void initialise(Network* network) override{
             // error handling
             for (auto& n: network->getNeurons()) {
                 for (auto& addon: n->getRelevantAddons()) {

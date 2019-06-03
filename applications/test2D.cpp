@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
 	//  ----- CREATING THE NETWORK -----
 	auto& step = network.makeSynapticKernel<hummus::Step>();
 	
-    network.make2dLayer<hummus::Input>(12, 12, 1, {}, nullptr);
-    network.makeConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 1, hummus::Normal(), 100, 1, {}, &step, false, 20, 3, true);
-    network.makePoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, &step, false, 20, 3, true);
-    network.makeLayer<hummus::LIF>(1, {}, &step);
+    auto pixel_grid = network.make2dLayer<hummus::Input>(12, 12, 1, {}, nullptr);
+    auto convolution = network.makeConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 1, hummus::Normal(), 100, 1, {}, &step, false, 20, 3, true);
+    auto pooling = network.makePoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, &step, false, 20, 3, true);
+    auto output = network.makeLayer<hummus::LIF>(1, {}, &step);
 	
-    network.allToAll(network.getLayers()[2], network.getLayers()[3], hummus::Normal());
+    network.allToAll(pooling, output, hummus::Normal());
     
     //  ----- DISPLAY SETTINGS -----
     display.setTimeWindow(100);
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     display.trackNeuron(100);
 	
     //  ----- RUNNING THE NETWORK -----
-    map.activate_for(network.getLayers()[1].neurons);
+    map.activate_for(convolution.neurons);
     network.run(&trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----

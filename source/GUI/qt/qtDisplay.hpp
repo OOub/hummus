@@ -160,7 +160,7 @@ namespace hummus {
 			outputSublayerToTrack = sublayerToTrack;
 		}
 		
-        void trackNeuron(int _neuronToTrack) {
+        void trackNeuron(size_t _neuronToTrack) {
         	neuronToTrack = _neuronToTrack;
         }
 
@@ -178,7 +178,7 @@ namespace hummus {
         InputViewer*                           inputviewer;
         OutputViewer*                          outputviewer;
         PotentialViewer*                       potentialviewer;
-        int                                    neuronToTrack;
+        size_t                                 neuronToTrack;
         int                                    inputSublayerToTrack;
         int                                    outputLayerToTrack;
         int                                    outputSublayerToTrack;

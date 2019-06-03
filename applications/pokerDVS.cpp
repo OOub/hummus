@@ -95,11 +95,11 @@ int main(int argc, char** argv) {
         bool burst = false;
         
         /// creating the layers
-        network.make2dLayer<hummus::Input>(32, 32, 1, {}, nullptr); // input layer
-        network.makeLayer<hummus::LIF>(100, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // hidden layer with STDP
+        auto pixel_grid = network.make2dLayer<hummus::Input>(32, 32, 1, {}); // input layer
+        auto output = network.makeLayer<hummus::LIF>(100, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // output layer with STDP
 
         /// connecting the layers
-        network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.6, 0.1, 0, 0, 0, 1));
+        network.allToAll(pixel_grid, output, hummus::Normal(0.6, 0.1, 0, 0, 0, 1));
         
         /// Reading data
         hummus::DataParser dataParser;
@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
         network.turnOffLearning();
 
         auto& simpleTrainingPLog = network.makeAddon<hummus::PotentialLogger>("simpleTrainingPLog.bin");
-        simpleTrainingPLog.activate_for(network.getLayers()[1].neurons);
+        simpleTrainingPLog.activate_for(output.neurons);
 
         network.run(&trainingData, 0);
         
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
         network.turnOffLearning();
 
         auto& simpleTestPLog = network.makeAddon<hummus::PotentialLogger>("simpleTestPLog.bin");
-        simpleTestPLog.activate_for(network.getLayers()[1].neurons);
+        simpleTestPLog.activate_for(output.neurons);
 
         network.run(&testData, 0);
         

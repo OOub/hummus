@@ -99,7 +99,7 @@ namespace hummus {
             openGL = accelerate;
         }
 		
-        void trackNeuron(int neuronToTrack) {
+        void trackNeuron(size_t neuronToTrack) {
             neuronTracker = neuronToTrack;
         }
 		
@@ -107,7 +107,7 @@ namespace hummus {
     public slots:
 		
         // ----- QT-RELATED METHODS -----
-        void changeTrackedNeuron(int newNeuron) {
+        void changeTrackedNeuron(size_t newNeuron) {
             if (neuronTracker != newNeuron) {
                 neuronTracker = newNeuron;
                 minY = 20;
@@ -171,6 +171,6 @@ namespace hummus {
         std::atomic_flag      atomicGuard;
         float                 potential;
         float                 threshold;
-        int                   neuronTracker;
+        size_t                neuronTracker;
     };
 }

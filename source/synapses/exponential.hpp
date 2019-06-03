@@ -14,18 +14,18 @@
 
 #include <random>
 
+#include "../synapse.hpp"
 #include "../dependencies/json.hpp"
-#include "../synapticKernelHandler.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class Exponential : public SynapticKernelHandler {
+	class Exponential : public Synapse {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(float _decayCurrent=10, float gaussianStandardDeviation=0) :
-				SynapticKernelHandler() {
+		Exponential(Synapse* _target_neuron, Synapse* _parent_neuron, float _weight=1, float _delay=0, float _decayCurrent=10, float gaussianStandardDeviation=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay) {
 				
 			synapseTimeConstant = _decayCurrent;
 			gaussianStdDev = gaussianStandardDeviation;
@@ -45,7 +45,7 @@ namespace hummus {
 		virtual ~Exponential(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double updateCurrent(double timestamp, double timestep, double previousInputTime, float neuronCurrent) override {
+		virtual double update(double timestamp, double timestep, float neuronCurrent) override {
             double current;
 			// event-based
 			if (timestep == 0) {
@@ -59,12 +59,12 @@ namespace hummus {
             return current;
 		}
 		
-		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
+		virtual float receiveSpike(float neuronCurrent, float externalCurrent, float synapseWeight) override {
             return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight;
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {
-			// general synaptic kernel parameters
+			// general synapse parameters
             output.push_back({
             	{"type", type},
 				{"gaussianStdDev", gaussianStdDev},

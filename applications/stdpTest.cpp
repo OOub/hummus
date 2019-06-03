@@ -6,9 +6,9 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 14/01/2019
  *
- * Information: Example of stdp working. 10 neurons are connected to an output neuron. In the beginning, all 10 neurons are needed to fire (disable the learning rule to see that). With
- * STDP, postsynaptic firing slowly shifts and the neurons that fire after the output neuron get depressed (use the debug option to see the weight progression as the network is
- * running)
+ * Information: Example of stdp working. 10 neurons are connected to an output neuron. In the beginning, all 10 neurons are needed
+ * to fire (disable the learning rule to see that). With STDP, postsynaptic firing slowly shifts and the neurons that fire after the
+ * output neuron get depressed (use the debug option to see the weight progression as the network is running)
  */
 
 #include <iostream>
@@ -38,10 +38,8 @@ int main(int argc, char** argv) {
     //  ----- NETWORK PARAMETERS -----
 	float potentialDecay = 20;
 	float refractoryPeriod = 30;
-	
     int inputNeurons = 10;
     int layer1Neurons = 1;
-	
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
@@ -50,11 +48,11 @@ int main(int argc, char** argv) {
 	//  ----- CREATING THE NETWORK -----
 	auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
-    network.makeLayer<hummus::Input>(inputNeurons, {}, nullptr);
-    network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, &exponential, false, potentialDecay, refractoryPeriod);
+    auto input = network.makeLayer<hummus::Input>(inputNeurons, {});
+    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, &exponential, false, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(weight, 0, 1, 0));
+    network.allToAll(input, output, hummus::Normal(weight, 0, 1, 0));
 	
     //  ----- DISPLAY SETTINGS -----
   	display.setTimeWindow(100);

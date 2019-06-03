@@ -58,11 +58,11 @@ int main(int argc, char** argv) {
     auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
 
     // creating layers of neurons
-    network.makeLayer<hummus::Input>(1, {});
-    network.makeLayer<hummus::LIF>(2, {}, &exponential, false, 20, 3, true);
+    auto input = network.makeLayer<hummus::Input>(1, {});
+    auto output = network.makeLayer<hummus::LIF>(2, {}, &exponential, false, 20, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
+    network.allToAll(input, output, hummus::Normal(1./2, 0));
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);

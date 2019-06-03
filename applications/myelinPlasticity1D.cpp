@@ -53,11 +53,11 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
 	
-    network.makeLayer<hummus::Input>(inputNeurons, {});
-    network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
+    auto input = network.makeLayer<hummus::Input>(inputNeurons, {});
+    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.1, 0, 5, 3));
+    network.allToAll(input, output, hummus::Normal(0.1, 0, 5, 3));
     
     //  ----- DISPLAY SETTINGS -----
 	display.setTimeWindow(5000);

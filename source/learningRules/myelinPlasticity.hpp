@@ -15,14 +15,14 @@
 
 #include <stdexcept>
 
+#include "../learningRule.hpp"
 #include "../neurons/LIF.hpp"
 #include "../addons/myelinPlasticityLogger.hpp"
-#include "../addon.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class MyelinPlasticity : public Addon {
+	class MyelinPlasticity : public LearningRule {
         
 	public:
 		// ----- CONSTRUCTOR -----
@@ -33,17 +33,7 @@ namespace hummus {
                 weight_lambda(_weight_lambda) {}
 		
 		// ----- PUBLIC METHODS -----
-        // select one neuron to track by its index
-        void activate_for(size_t neuronIdx) override {
-            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
-        }
-        
-        // select multiple neurons to track by passing a vector of indices
-        void activate_for(std::vector<size_t> neuronIdx) override {
-            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
-        }
-        
-        virtual void onStart(Network* network) override {
+        virtual void initialise(Network* network) override {
             for (auto& n: network->getNeurons()) {
                 for (auto& addon: n->getRelevantAddons()) {
                     if (addon == this) {
@@ -58,9 +48,6 @@ namespace hummus {
         }
         
         virtual void learn(double timestamp, synapse* a, Network* network) override {
-            // forcing the neuron to be a LIF
-            LIF* n = dynamic_cast<LIF*>(a->postNeuron);
-
             std::vector<double> timeDifferences;
             std::vector<int> plasticID;
             std::vector<std::vector<int>> plasticCoordinates(4);
@@ -85,33 +72,20 @@ namespace hummus {
 
                         if (timeDifferences.back() > 0) {
                             delta_delay = delay_lambda*(1/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()))*n->getSynapticEfficacy();
-
+                            
                             inputSynapse->delay += delta_delay;
                             if (network->getVerbose() >= 1) {
                                 std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         } else if (timeDifferences.back() < 0) {
                             delta_delay = -delay_lambda*((1/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())))*n->getSynapticEfficacy();
-
+                            
                             inputSynapse->delay += delta_delay;
                             if (network->getVerbose() >= 1) {
                                 std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         }
                         n->setSynapticEfficacy(-std::exp(- timeDifferences.back() * timeDifferences.back())+1);
-
-                        // myelin plasticity rule sends a feedback to upstream neurons
-                        for (auto& n: network->getNeurons())
-                        {
-                            //reducing their ability to learn as the current neurons learn
-                            if (n->getLayerID() < a->postNeuron->getLayerID())
-                            {
-                                n->setSynapticEfficacy(-std::exp(-timeDifferences.back() * timeDifferences.back())+1);
-                            }
-                        }
-
-                        // resetting eligibility trace in plastic input neurons
-                        inputSynapse->preNeuron->setEligibilityTrace(0);
                     }
                 }
             }

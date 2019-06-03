@@ -42,7 +42,7 @@ namespace hummus {
             neuron_mask.push_back(static_cast<size_t>(neuronIdx));
         }
         
-        // select multiple neurons to track by passing a vector of indices
+        // 0select multiple neurons to track by passing a vector of indices
         void activate_for(std::vector<size_t> neuronIdx) override {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
