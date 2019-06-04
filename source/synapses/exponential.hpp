@@ -24,8 +24,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(Synapse* _target_neuron, Synapse* _parent_neuron, float _weight=1, float _delay=0, float _decayCurrent=10, float gaussianStandardDeviation=0) :
-				Synapse(_target_neuron, _parent_neuron, _weight, _delay) {
+		Exponential(size_t _target_neuron, size_t _parent_neuron, float _weight, float _delay, float _externalCurrent=100, float _decayCurrent=10, float gaussianStandardDeviation=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 				
 			synapseTimeConstant = _decayCurrent;
 			gaussianStdDev = gaussianStandardDeviation;
@@ -45,22 +45,12 @@ namespace hummus {
 		virtual ~Exponential(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double update(double timestamp, double timestep, float neuronCurrent) override {
-            double current;
-			// event-based
-			if (timestep == 0) {
-				current = neuronCurrent * std::exp(-(timestamp-previousInputTime)/synapseTimeConstant);
-                
-			// clock-based
-			} else {
-				current = neuronCurrent * std::exp(-timestep/synapseTimeConstant);
-			}
-            
-            return current;
+		virtual double update(double timestamp, double previousTime, float neuronCurrent) override {
+            return neuronCurrent * std::exp(-(timestamp-previousTime)/synapseTimeConstant);
 		}
 		
-		virtual float receiveSpike(float neuronCurrent, float externalCurrent, float synapseWeight) override {
-            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight;
+		virtual float receiveSpike(float neuronCurrent) override {
+            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * weight;
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {

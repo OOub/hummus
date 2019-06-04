@@ -50,13 +50,13 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-        void incomingSpike(double timestamp, synapse* a, Network* network) override {
+        void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (logEverything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
                 SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
+                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
                 
                 // saving to file
                 saveFile.write(bytes.data(), bytes.size());
@@ -69,8 +69,8 @@ namespace hummus {
                     // defining what to save and constraining it so that file size doesn't blow up
                     std::array<char, 8> bytes;
                     SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(network->getNeurons()[s->getPostsynapticNeuronID()]->getPotential() * 100));
+                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(s->getPostsynapticNeuronID()));
                     
                     // saving to file
                     saveFile.write(bytes.data(), bytes.size());
@@ -81,13 +81,13 @@ namespace hummus {
             }
         }
         
-        void neuronFired(double timestamp, synapse* a, Network* network) override {
+        void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (logEverything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
                 SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
+                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
                 
                 // saving to file
                 saveFile.write(bytes.data(), bytes.size());
@@ -100,8 +100,8 @@ namespace hummus {
                     // defining what to save and constraining it so that file size doesn't blow up
                     std::array<char, 8> bytes;
                     SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(a->postNeuron->getPotential() * 100));
-                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(a->postNeuron->getNeuronID()));
+                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
+                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
                     
                     // saving to file
                     saveFile.write(bytes.data(), bytes.size());
@@ -112,13 +112,13 @@ namespace hummus {
             }
         }
         
-        void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
+        void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
             if (logEverything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
                 SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getPotential() * 100));
-                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postNeuron->getNeuronID()));
+                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
+                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
                 
                 // saving to file
                 saveFile.write(bytes.data(), bytes.size());
@@ -131,8 +131,8 @@ namespace hummus {
                     // defining what to save and constraining it so that file size doesn't blow up
                     std::array<char, 8> bytes;
                     SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postNeuron->getPotential() * 100));
-                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postNeuron->getNeuronID()));
+                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
+                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
                     
                     // saving to file
                     saveFile.write(bytes.data(), bytes.size());

@@ -25,13 +25,13 @@ namespace hummus {
         
     public:
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        SqlSpikeLogger(const std::string& filename) :
+        SqlSpikeLogger(const std::string& filename) {
             sqlite3_config(SQLITE_CONFIG_SERIALIZED);
             if (sqlite3_open_v2(filename.c_str(), &spikeLog, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr)
             != SQLITE_OK) {
                 throw std::runtime_error("error opening the spike log");
             }
-            if (sqlite3_extended_result_codes(_database, 1) != SQLITE_OK) {
+            if (sqlite3_extended_result_codes(spikeLog, 1) != SQLITE_OK) {
                 throw std::runtime_error("error enabling extended result codes");
             }
         }
@@ -42,10 +42,10 @@ namespace hummus {
         void onStart(Network* network) override {
         }
         
-		void incomingSpike(double timestamp, synapse* a, Network* network) override {
+		void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
         }
         
-		void neuronFired(double timestamp, synapse* a, Network* network) override {
+		void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
         }
 		
         /// check_sqlite_status throws an error if the given sqlite functions returns an error code.

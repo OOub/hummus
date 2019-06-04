@@ -49,12 +49,12 @@ namespace hummus {
 			}
 		}
 		
-		void neuronFired(double timestamp, synapse* a, Network* network) override {
+		void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
 			// logging only after learning is stopped
 			if (!network->getLearningStatus()) {
 				// restrict only to the decision-making layer
-                if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(a->postNeuron)) {
-                    classifiedSpikes.emplace_back(spike{timestamp, a});
+                if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(postsynapticNeuron)) {
+                    classifiedSpikes.emplace_back(spike{timestamp, s});
 				}
 			}
 		}
@@ -66,7 +66,7 @@ namespace hummus {
 				auto it = std::find_if(classifiedSpikes.begin(), classifiedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
 				if (it != classifiedSpikes.end()) {
 					auto idx = std::distance(classifiedSpikes.begin(), it);
-					classifiedLabels.emplace_back(dynamic_cast<DecisionMaking*>(classifiedSpikes[idx].propagationSynapse->postNeuron)->getClassLabel());
+					classifiedLabels.emplace_back(dynamic_cast<DecisionMaking*>(network->getNeurons()[classifiedSpikes[idx].propagationSynapse->getPostsynapticNeuronID()].get())->getClassLabel());
 				} else {
 					classifiedLabels.emplace_back("NaN");
 				}

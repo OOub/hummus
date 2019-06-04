@@ -21,8 +21,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Input(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, SynapticKernelHandler* _synapticKernel=nullptr, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _synapticKernel, _eligibilityDecay, _threshold, _restingPotential),
+		Input(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
                 active(true),
                 refractoryPeriod(_refractoryPeriod) {}
 		
@@ -43,7 +43,7 @@ namespace hummus {
             }
         }
         
-		virtual void update(double timestamp, synapse* a, Network* network, spikeType type) override {
+		virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
             
             // checking if the neuron is in a refractory period
             if (timestamp - previousSpikeTime >= refractoryPeriod) {
@@ -55,42 +55,42 @@ namespace hummus {
             
             // instantly making the input neuron fire at every input spike
             if (active) {
-                a->previousInputTime = timestamp;
                 potential = threshold;
                 eligibilityTrace = 1;
                 
                 if (network->getVerbose() == 2) {
-                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
+                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
                 }
                 
                 if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->incomingSpike(timestamp, a, network);
+                    network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
                 }
                 
                 for (auto& addon: relevantAddons) {
-                    addon->neuronFired(timestamp, a, network);
+                    addon->neuronFired(timestamp, s, this, network);
                 }
                 
                 if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->neuronFired(timestamp, a, network);
+                    network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                for (auto& p : postSynapses) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
+                for (auto& axonTerminal : axonTerminals) {
+                    network->injectGeneratedSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
                 }
                 
-                requestLearning(timestamp, a, network);
+                requestLearning(timestamp, s, this, network);
                 previousSpikeTime = timestamp;
+                s->setPreviousInputTime(timestamp);
                 potential = restingPotential;
                 active = false;
                 
                 if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->statusUpdate(timestamp, a, network);
+                    network->getMainThreadAddon()->statusUpdate(timestamp, s, this, network);
                 }
             }
 		}
         
-        virtual void updateSync(double timestamp, synapse* a, Network* network, double timestep) override {
+        virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep) override {
             
             if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
                 timestep = 0;
@@ -104,42 +104,42 @@ namespace hummus {
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
             
-            if (a && active) {
-                a->previousInputTime = timestamp;
+            if (s && active) {
                 potential = threshold;
                 eligibilityTrace = 1;
                 
                 if (network->getVerbose() == 2) {
-                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << a->weight << " d=" << a->delay << " --> INPUT" << std::endl;
+                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
                 }
                 
                 if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->incomingSpike(timestamp, a, network);
+                    network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
                 }
                 
                 for (auto& addon: relevantAddons) {
-                    addon->neuronFired(timestamp, a, network);
+                    addon->neuronFired(timestamp, s, this, network);
                 }
                 
                 if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->neuronFired(timestamp, a, network);
+                    network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                for (auto& p : postSynapses) {
-                    network->injectGeneratedSpike(spike{timestamp + p->delay, p.get(), spikeType::normal});
+                for (auto& axonTerminal : axonTerminals) {
+                    network->injectGeneratedSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
                 }
                 
-                requestLearning(timestamp, a, network);
+                requestLearning(timestamp, s, this, network);
                 previousSpikeTime = timestamp;
+                s->setPreviousInputTime(timestamp);
                 potential = restingPotential;
                 active = false;
             } else {
                 if (timestep > 0) {
                     for (auto& addon: relevantAddons) {
-                        addon->timestep(timestamp, network, this);
+                        addon->timestep(timestamp, this, network);
                     }
                     if (network->getMainThreadAddon()) {
-                        network->getMainThreadAddon()->timestep(timestamp, network, this);
+                        network->getMainThreadAddon()->timestep(timestamp, this, network);
                     }
                 }
             }
@@ -164,20 +164,20 @@ namespace hummus {
             
             // dendritic synapses (preSynapse)
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
-            for (auto& preS: preSynapses) {
+            for (auto& dendrite: dendriticTree) {
                 dendriticSynapses.push_back({
-                    {"weight", preS->weight},
-                    {"delay", preS->delay},
+                    {"weight", dendrite->getWeight()},
+                    {"delay", dendrite->getDelay()},
                 });
             }
             
             // axonal synapses (postSynapse)
             auto& axonalSynapses = output.back()["axonalSynapses"];
-            for (auto& postS: postSynapses) {
+            for (auto& axonTerminal: axonTerminals) {
                 axonalSynapses.push_back({
-                    {"postNeuronID", postS->postNeuron->getNeuronID()},
-                    {"weight", postS->weight},
-                    {"delay", postS->delay},
+                    {"postNeuronID", axonTerminal->getPostsynapticNeuronID()},
+                    {"weight", axonTerminal->getWeight()},
+                    {"delay", axonTerminal->getDelay()},
                 });
             }
         }
@@ -190,10 +190,10 @@ namespace hummus {
     protected:
         
         // loops through any learning rules and activates them
-        virtual void requestLearning(double timestamp, synapse* a, Network* network) override {
+        virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (network->getLearningStatus()) {
                 for (auto& addon: relevantAddons) {
-                    addon->learn(timestamp, a, network);
+                    addon->learn(timestamp, s, postsynapticNeuron, network);
                 }
             }
         }

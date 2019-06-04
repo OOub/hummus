@@ -54,12 +54,12 @@ namespace hummus {
         virtual ~PotentialViewer(){}
 		
     	// ----- PUBLIC POTENTIALVIEWER METHODS -----
-		void handleData(double timestamp, synapse* a, Network* network) {
-			if (a->postNeuron->getNeuronID() == neuronTracker) {
+		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
+			if (postsynapticNeuron->getNeuronID() == neuronTracker) {
                 while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed) {
-					potential = a->postNeuron->getPotential();
-					threshold = a->postNeuron->getThreshold();
+					potential = postsynapticNeuron->getPotential();
+					threshold = postsynapticNeuron->getThreshold();
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));
 					minY = std::min(minY, static_cast<float>(potential));
@@ -72,11 +72,11 @@ namespace hummus {
 			}
 		}
 		
-		void handleTimestep(double timestamp, Network* network, Neuron* postNeuron) {
-			if (postNeuron->getNeuronID() == neuronTracker) {
+		void handleTimestep(double timestamp, Neuron* postsynapticNeuron, Network* network) {
+			if (postsynapticNeuron->getNeuronID() == neuronTracker) {
 				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed) {
-					potential = postNeuron->getPotential();
+					potential = postsynapticNeuron->getPotential();
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));
 					minY = std::min(minY, static_cast<float>(potential));

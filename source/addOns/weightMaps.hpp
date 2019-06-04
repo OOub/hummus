@@ -65,7 +65,7 @@ namespace hummus {
 				testLabels.pop_front(); // remove first element which point to the start of the first pattern
 				
 				for (auto& n: neuron_mask) {
-                    const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+                    const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
                     std::vector<char> bytes(bitSize);
 	
                     SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
@@ -73,8 +73,8 @@ namespace hummus {
                     SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
                     
                     int count = 5;
-                    for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
-                        SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
+                    for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
+                        SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
                         count += 1;
                     }
 				
@@ -91,7 +91,7 @@ namespace hummus {
 		
 		void onCompleted(Network* network) override {
 			for (auto& n: neuron_mask) {
-				const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+				const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
 				std::vector<char> bytes(bitSize);
 	
 				SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
@@ -99,8 +99,8 @@ namespace hummus {
 				SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
                 
 				int count = 5;
-				for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
-					SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
+				for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
+					SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
 					count += 1;
 				}
 				
@@ -109,11 +109,11 @@ namespace hummus {
 			}
 		}
 		
-        void incomingSpike(double timestamp, synapse* a, Network* network) override {
+        void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (train) {
                 if (!trainingLabels.empty() && timestamp >= trainingLabels.front().onset) {
                     for (auto& n: neuron_mask) {
-                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
                         std::vector<char> bytes(bitSize);
                         
                         SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
@@ -121,8 +121,8 @@ namespace hummus {
                         SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
                         
                         int count = 5;
-                        for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
-                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
+                        for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
+                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
                             count += 1;
                         }
                         
@@ -134,7 +134,7 @@ namespace hummus {
             } else {
                 if (!testLabels.empty() && timestamp >= testLabels.front().onset) {
                     for (auto& n: neuron_mask) {
-                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getPreSynapses().size());
+                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
                         std::vector<char> bytes(bitSize);
                         
                         SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
@@ -142,8 +142,8 @@ namespace hummus {
                         SpikeLogger::copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
                         
                         int count = 5;
-                        for (auto& preSynapses: network->getNeurons()[n]->getPreSynapses()) {
-                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(preSynapses->weight*100));
+                        for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
+                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
                             count += 1;
                         }
                         

@@ -11,7 +11,6 @@
 
 #pragma once
 
-#include "learningRule.hpp"
 #include "dependencies/json.hpp"
 
 namespace hummus {
@@ -19,11 +18,12 @@ namespace hummus {
     public:
         
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Synapse(Synapse* _target_neuron, Synapse* _parent_neuron, float _weight, float _delay) :
-                parent_neuron(_parent_neuron),
-                target_neuron(_target_neuron),
+        Synapse(size_t _postsynaptic_neuron, size_t _presynaptic_neuron, float _weight, float _delay, float _externalCurrent=100) :
+                presynaptic_neuron(_presynaptic_neuron),
+                postsynaptic_neuron(_postsynaptic_neuron),
                 weight(_weight),
                 delay(_delay),
+                externalCurrent(_externalCurrent),
                 previousInputTime(0),
                 gaussianStdDev(0),
                 type(0),
@@ -34,34 +34,67 @@ namespace hummus {
         
         // ----- PUBLIC SYNAPSE METHODS -----
         
-        // initialises a learning rule
-        template <typename T, typename... Args>
-        T& makeLearningRule(Args&&... args) {
-            rule.reset(new T(std::forward<Args>(args)...));
-            return static_cast<T&>(*rule);
-        }
-        
         // pure virtual method that updates the status of current before integrating a spike
-        virtual double update(double timestamp, double timestep, float neuronCurrent) = 0;
+        virtual double update(double timestamp, double previousTime, float neuronCurrent) = 0;
         
         // pure virtual method that outputs an updated current value
-        virtual float receiveSpike(float neuronCurrent, float externalCurrent, float synapseWeight) = 0;
+        virtual float receiveSpike(float neuronCurrent) = 0;
         
         // write synapse parameters in a JSON format
         virtual void toJson(nlohmann::json& output) {}
         
         // ----- SETTERS AND GETTERS -----
+        double getPreviousInputTime() const {
+            return previousInputTime;
+        }
+        
+        void setPreviousInputTime(double newTime) {
+            previousInputTime = newTime;
+        }
+        
         float getSynapseTimeConstant() const {
             return synapseTimeConstant;
         }
         
+        size_t getPresynapticNeuronID() const {
+            return presynaptic_neuron;
+        }
+        
+        size_t getPostsynapticNeuronID() const {
+            return postsynaptic_neuron;
+        }
+        
+        float getWeight() const {
+            return weight;
+        }
+        
+        void setWeight(float newWeight, bool increment=true) {
+            if (increment) {
+                weight += newWeight;
+            } else {
+                weight = newWeight;
+            }
+        }
+        
+        float getDelay() const {
+            return delay;
+        }
+        
+        void setDelay(float newDelay, bool increment=true) {
+            if (increment) {
+                delay += newDelay;
+            } else {
+                delay = newDelay;
+            }
+        }
+        
     protected:
-        Synapse*                      parent_neuron;
-        Synapse*                      target_neuron;
+        size_t                        presynaptic_neuron;
+        size_t                        postsynaptic_neuron;
         float                         weight;
         float                         delay;
+        float                         externalCurrent;
         double                        previousInputTime;
-        std::unique_ptr<LearningRule> rule;
         int                           kernelID;
         float                         gaussianStdDev;
         int                           type;

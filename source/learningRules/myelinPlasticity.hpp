@@ -15,14 +15,14 @@
 
 #include <stdexcept>
 
-#include "../learningRule.hpp"
+#include "../addon.hpp"
 #include "../neurons/LIF.hpp"
 #include "../addons/myelinPlasticityLogger.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class MyelinPlasticity : public LearningRule {
+	class MyelinPlasticity : public Addon {
         
 	public:
 		// ----- CONSTRUCTOR -----
@@ -33,21 +33,20 @@ namespace hummus {
                 weight_lambda(_weight_lambda) {}
 		
 		// ----- PUBLIC METHODS -----
-        virtual void initialise(Network* network) override {
-            for (auto& n: network->getNeurons()) {
-                for (auto& addon: n->getRelevantAddons()) {
-                    if (addon == this) {
-                        if (LIF* typeCheck = dynamic_cast<LIF*>(n.get())) {
-                            n->addLearningInfo(std::pair<int, std::vector<float>>(0, {delay_alpha, delay_lambda, weight_alpha, weight_lambda}));
-                        } else {
-                            throw std::logic_error("The myelin plasticity learning rule is only compatible with Leaky Integrate-and-Fire (LIF) neurons");
-                        }
-                    }
-                }
-            }
+        // select one neuron to track by its index
+        void activate_for(size_t neuronIdx) override {
+            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
         }
         
-        virtual void learn(double timestamp, synapse* a, Network* network) override {
+        // select multiple neurons to track by passing a vector of indices
+        void activate_for(std::vector<size_t> neuronIdx) override {
+            neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
+        }
+        
+        virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            // forcing the neuron to be a LIF
+            LIF* n = dynamic_cast<LIF*>(postsynapticNeuron);
+            
             std::vector<double> timeDifferences;
             std::vector<int> plasticID;
             std::vector<std::vector<int>> plasticCoordinates(4);
@@ -55,37 +54,39 @@ namespace hummus {
                 std::cout << "New learning epoch at t=" << timestamp << std::endl;
             }
 
-            for (auto& inputSynapse: n->getPreSynapses()) {
+            for (auto& inputSynapse: n->getDendriticTree()) {
                 // discarding inhibitory synapses
-                if (inputSynapse->weight >= 0) {
+                if (inputSynapse->getWeight() >= 0) {
+                    auto& presynapticNeuron = network->getNeurons()[inputSynapse->getPresynapticNeuronID()];
 
-                    if (inputSynapse->preNeuron->getEligibilityTrace() > 0.1) {
+                    if (presynapticNeuron->getEligibilityTrace() > 0.1) {
                         // saving relevant information in vectors for potential logging
-                        plasticID.push_back(inputSynapse->preNeuron->getNeuronID());
-                        plasticCoordinates[0].push_back(inputSynapse->preNeuron->getXYCoordinates().first);
-                        plasticCoordinates[1].push_back(inputSynapse->preNeuron->getXYCoordinates().second);
-                        plasticCoordinates[2].push_back(inputSynapse->preNeuron->getRfCoordinates().first);
-                        plasticCoordinates[3].push_back(inputSynapse->preNeuron->getRfCoordinates().second);
-                        timeDifferences.push_back(timestamp - inputSynapse->previousInputTime - inputSynapse->delay);
+                        plasticID.push_back(presynapticNeuron->getNeuronID());
+                        plasticCoordinates[0].push_back(presynapticNeuron->getXYCoordinates().first);
+                        plasticCoordinates[1].push_back(presynapticNeuron->getXYCoordinates().second);
+                        plasticCoordinates[2].push_back(presynapticNeuron->getRfCoordinates().first);
+                        plasticCoordinates[3].push_back(presynapticNeuron->getRfCoordinates().second);
+                        timeDifferences.push_back(timestamp - inputSynapse->getPreviousInputTime() - inputSynapse->getDelay());
 
                         float delta_delay = 0;
 
                         if (timeDifferences.back() > 0) {
-                            delta_delay = delay_lambda*(1/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()))*n->getSynapticEfficacy();
+                            delta_delay = delay_lambda*(1/(s->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/s->getSynapseTimeConstant()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()));
                             
-                            inputSynapse->delay += delta_delay;
+                            inputSynapse->setDelay(delta_delay);
+                            
                             if (network->getVerbose() >= 1) {
-                                std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
+                                std::cout << timestamp << " " << presynapticNeuron->getNeuronID() << " " << n->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         } else if (timeDifferences.back() < 0) {
-                            delta_delay = -delay_lambda*((1/(n->getSynapticKernel()->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getSynapticKernel()->getSynapseTimeConstant()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())))*n->getSynapticEfficacy();
+                            delta_delay = -delay_lambda*((1/(s->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/s->getSynapseTimeConstant()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())));
                             
-                            inputSynapse->delay += delta_delay;
+                            inputSynapse->setDelay(delta_delay);
+                            
                             if (network->getVerbose() >= 1) {
-                                std::cout << timestamp << " " << inputSynapse->preNeuron->getNeuronID() << " " << inputSynapse->postNeuron->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
+                                std::cout << timestamp << " " << presynapticNeuron->getNeuronID() << " " << n->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         }
-                        n->setSynapticEfficacy(-std::exp(- timeDifferences.back() * timeDifferences.back())+1);
                     }
                 }
             }
@@ -93,27 +94,28 @@ namespace hummus {
             // shifting weights to be equal to the number of plastic neurons
             float desiredWeight = 1./plasticID.size();
 
-            for (auto i=0; i<a->postNeuron->getPreSynapses().size(); i++) {
+            for (auto i=0; i<postsynapticNeuron->getDendriticTree().size(); i++) {
+                auto& dendrite = postsynapticNeuron->getDendriticTree()[i];
                 // discarding inhibitory synapses
-                if (a->postNeuron->getPreSynapses()[i]->weight >= 0) {
-                    int ID = a->postNeuron->getPreSynapses()[i]->preNeuron->getNeuronID();
+                if (dendrite->getWeight() >= 0) {
+                    int ID = network->getNeurons()[dendrite->getPresynapticNeuronID()]->getNeuronID();
                     if (std::find(plasticID.begin(), plasticID.end(), ID) != plasticID.end()) {
-                        float weightDifference = desiredWeight - a->postNeuron->getPreSynapses()[i]->weight;
+                        float weightDifference = desiredWeight - dendrite->getWeight();
                         float change = - std::exp(- (weight_alpha*weightDifference) * (weight_alpha*weightDifference)) + 1;
                         if (weightDifference >= 0) {
-                            a->postNeuron->getPreSynapses()[i]->weight += weight_lambda*change * (1 - a->weight);
+                            dendrite->setWeight(weight_lambda*change * (1 - dendrite->getWeight()));
                         } else {
-                            a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda*change * (1 - a->weight);
+                            dendrite->setWeight(-weight_lambda*change * (1 - dendrite->getWeight()));
                         }
                     } else {
-                        a->postNeuron->getPreSynapses()[i]->weight -= weight_lambda * (1 - a->weight);
+                        dendrite->setWeight(-weight_lambda * (1 - dendrite->getWeight()));
                     }
                 }
             }
 
             for (auto& addon: network->getAddons()) {
                 if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon.get())) {
-                    dynamic_cast<MyelinPlasticityLogger*>(addon.get())->myelinPlasticityEvent(timestamp, network, a->postNeuron, timeDifferences, plasticCoordinates);
+                    dynamic_cast<MyelinPlasticityLogger*>(addon.get())->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, timeDifferences, plasticCoordinates);
                 }
             }
         }

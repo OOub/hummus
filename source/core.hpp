@@ -46,9 +46,6 @@
 #include "addon.hpp"
 #include "mainThreadAddon.hpp"
 
-// learning rules
-#include "learningRule.hpp"
-
 // synapse models
 #include "synapse.hpp"
 #include "synapses/exponential.hpp"
@@ -60,7 +57,7 @@ namespace hummus {
     template <typename T, typename... Args>
     inline std::unique_ptr<T> make_unique(Args&&... args) {
         return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-    }
+    };
     
     // synapse models enum for readability
     enum class synapseModel {
@@ -122,6 +119,7 @@ namespace hummus {
                 eligibilityTrace(0),
                 eligibilityDecay(_eligibilityDecay),
                 previousSpikeTime(0),
+                previousInputTime(0),
                 neuronType(0) {}
     	
 		virtual ~Neuron(){}
@@ -131,11 +129,11 @@ namespace hummus {
 		virtual void initialisation(Network* network) {}
 		
 		// asynchronous update method
-		virtual void update(double timestamp, synapse* a, Network* network, spikeType type) = 0;
+		virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) = 0;
         
 		// synchronous update method
-		virtual void updateSync(double timestamp, synapse* a, Network* network, double timestep) {
-			update(timestamp, a, network, spikeType::none);
+		virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep) {
+			update(timestamp, s, network, spikeType::none);
 		}
         
         // reset a neuron to its initial status
@@ -153,10 +151,10 @@ namespace hummus {
         
         // adds a synapse that connects two Neurons together
         template <typename T, typename... Args>
-        Synapse* makeSynapse(Neuron* postNeuron, float weight, float delay, int probability, Args&&... args) {
+        Synapse* makeSynapse(Neuron* postNeuron, int probability, float weight, float delay, Args&&... args) {
             if (postNeuron) {
                 if (connectionProbability(probability)) {
-                    axonTerminals.emplace_back(new T{postNeuron, this, weight, delay, std::forward<Args>(args)...});
+                    axonTerminals.emplace_back(new T{static_cast<size_t>(postNeuron->neuronID), static_cast<size_t>(neuronID), weight, delay, std::forward<Args>(args)...});
                     postNeuron->getDendriticTree().emplace_back(axonTerminals.back().get());
                 }
             } else {
@@ -286,7 +284,7 @@ namespace hummus {
         virtual void WTA(double timestamp, Network* network) {}
         
         // loops through any learning rules and activates them
-        virtual void requestLearning(double timestamp, synapse* a, Network* network){}
+        virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
 		// ----- NEURON PARAMETERS -----
         int                                        neuronID;
@@ -304,6 +302,7 @@ namespace hummus {
         float                                      eligibilityTrace;
         float                                      eligibilityDecay;
         double                                     previousSpikeTime;
+        double                                     previousInputTime;
         int                                        neuronType;
     };
 	
@@ -358,7 +357,7 @@ namespace hummus {
 		
         // adds one dimensional neurons
         template <typename T, typename... Args>
-        layer makeLayer(int _numberOfNeurons, Args&&... args) {
+        layer makeLayer(int _numberOfNeurons, std::vector<Addon*> _addons, Args&&... args) {
             
             if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
@@ -384,6 +383,11 @@ namespace hummus {
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             
+            // looping through addons and adding the layer to the neuron mask
+            for (auto& addon: _addons) {
+                addon->activate_for(neuronsInLayer);
+            }
+            
             // building layer structure
             layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1});
             return layers.back();
@@ -391,7 +395,7 @@ namespace hummus {
         
         // overloading the makeLayer method specifically to handle decisionMaking neurons
         template <typename T, typename... Args>
-        layer makeLayer( std::string trainingLabelFilename, bool _preTrainingLabelAssignment, Args&&... args) {
+        layer makeLayer( std::string trainingLabelFilename, bool _preTrainingLabelAssignment, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             preTrainingLabelAssignment = _preTrainingLabelAssignment;
@@ -430,14 +434,19 @@ namespace hummus {
                 }
             }
             
+            // looping through addons and adding the layer to the neuron mask
+            for (auto& addon: _addons) {
+                addon->activate_for(neuronsInLayer);
+            }
+            
             // building layer structure
-            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1});
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1});
             return layers.back();
         }
         
         // adds neurons arranged in circles of various radii
         template <typename T, typename... Args>
-        layer makeCircle(int _numberOfNeurons, std::vector<float> _radii, Args&&... args) {
+        layer makeCircle(int _numberOfNeurons, std::vector<float> _radii, std::vector<Addon*> _addons, Args&&... args) {
             
             unsigned long shift = 0;
             
@@ -469,6 +478,11 @@ namespace hummus {
                 counter += _numberOfNeurons;
             }
             
+            // looping through addons and adding the layer to the neuron mask
+            for (auto& addon: _addons) {
+                addon->activate_for(neuronsInLayer);
+            }
+            
             // building layer structure
             layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, -1, -1, -1, -1});
             return layers.back();
@@ -476,7 +490,7 @@ namespace hummus {
         
         // adds a 2 dimensional grid of neurons
         template <typename T, typename... Args>
-        layer makeGrid(int gridW, int gridH, int _sublayerNumber, Args&&... args) {
+        layer makeGrid(int gridW, int gridH, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
             
             // find number of neurons to build
             int numberOfNeurons = gridW * gridH;
@@ -516,14 +530,19 @@ namespace hummus {
                 counter += numberOfNeurons;
             }
             
+            // looping through addons and adding the layer to the neuron mask
+            for (auto& addon: _addons) {
+                addon->activate_for(neuronsInLayer);
+            }
+            
             // building layer structure
             layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH, -1, -1});
             return layers.back();
         }
         
-        // overloading the makeGridLayer function to automatically generate a 2D layer according to the previous layer size
+        // overloading the makeGrid function to automatically generate a 2D layer according to the previous layer size
         template <typename T, typename... Args>
-        layer makeGrid(layer presynapticLayer, int _sublayerNumber, int _kernelSize, int _stride, Args&&... args) {
+        layer makeGrid(layer presynapticLayer, int _sublayerNumber, int _kernelSize, int _stride, std::vector<Addon*> _addons, Args&&... args) {
             // finding the number of receptive fields
             int newWidth = std::ceil((presynapticLayer.width - _kernelSize + 1) / static_cast<float>(_stride));
             int newHeight = std::ceil((presynapticLayer.height - _kernelSize + 1) / static_cast<float>(_stride));
@@ -580,6 +599,11 @@ namespace hummus {
                 counter += numberOfNeurons;
             }
             
+            // looping through addons and adding the layer to the neuron mask
+            for (auto& addon: _addons) {
+                addon->activate_for(neuronsInLayer);
+            }
+            
             // building layer structure
             layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, newWidth, newHeight, _kernelSize, _stride});
             return layers.back();
@@ -587,7 +611,7 @@ namespace hummus {
         
         // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields)
         template <typename T, typename... Args>
-        layer makeSubsampledGrid(layer presynapticLayer, int _sublayerNumber, Args&&... args) {
+        layer makeSubsampledGrid(layer presynapticLayer, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
             // find lowest common divisor
             int lcd = 1;
             for (auto i = 2; i <= presynapticLayer.width && i <= presynapticLayer.height; i++) {
@@ -605,7 +629,7 @@ namespace hummus {
                 std::cout << "subsampling by a factor of " << lcd << std::endl;
             }
             
-            return makeGrid<T>(presynapticLayer.width/lcd, presynapticLayer.height/lcd, static_cast<int>(presynapticLayer.sublayers.size()), std::forward<Args>(args)...);
+            return makeGrid<T>(presynapticLayer.width/lcd, presynapticLayer.height/lcd, static_cast<int>(presynapticLayer.sublayers.size()), _addons, std::forward<Args>(args)...);
         }
         
 		// ----- LAYER CONNECTION METHODS -----
@@ -669,7 +693,7 @@ namespace hummus {
                             neurons[idx].get()->setRfCoordinates(row, col);
                             
                             // connecting neurons from the presynaptic layer to the convolutional one
-                            neurons[idx].get()->makeSynapse<T>(neurons[n].get(), weight_delay.first, weight_delay.second, probability, std::forward<Args>(args)...);
+                            neurons[idx].get()->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
                             
                             // to shift the network runtime by the maximum delay in the clock mode
                             maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -755,7 +779,7 @@ namespace hummus {
                                 neurons[idx].get()->setRfCoordinates(row, col);
                                 
                                 // connecting neurons from the presynaptic layer to the convolutional one
-                                neurons[idx].get()->makeSynapse<T>(neurons[n].get(), weight_delay.first, weight_delay.second, probability, std::forward<Args>(args)...);
+                                neurons[idx].get()->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
                                 
                                 // to shift the network runtime by the maximum delay in the clock mode
                                 maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -792,13 +816,13 @@ namespace hummus {
                 for (auto post: reservoirLayer.neurons) {
                     // self-excitation probability
                     if (pre == post) {
-                        neurons[pre].get()->makeSynapse<T>(neurons[post].get(), weight_delay.first, weight_delay.first, selfExcitationProbability, std::forward<Args>(args)...);
+                        neurons[pre].get()->makeSynapse<T>(neurons[post].get(), selfExcitationProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
                     } else {
                         // feedforward probability
-                        neurons[pre].get()->makeSynapse<T>(neurons[post].get(), weight_delay.first, weight_delay.first, feedforwardProbability, std::forward<Args>(args)...);
+                        neurons[pre].get()->makeSynapse<T>(neurons[post].get(), feedforwardProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
                         
                         // feedback probability
-                        neurons[post].get()->makeSynapse<T>(neurons[pre].get(), weight_delay.first, weight_delay.first, feedbackProbability, std::forward<Args>(args)...);
+                        neurons[post].get()->makeSynapse<T>(neurons[pre].get(), feedbackProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
                     }
                 }
             }
@@ -829,7 +853,7 @@ namespace hummus {
                         for (auto& postNeuron: postSub.neurons) {
                             
                             if (weights[preCounter][postCounter] != 0) {
-                                neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), weights[preCounter][postCounter], delays[preCounter][postCounter], 100, std::forward<Args>(args)...);
+                                neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), 100, weights[preCounter][postCounter], delays[preCounter][postCounter], std::forward<Args>(args)...);
                             }
                             
                             // to shift the network runtime by the maximum delay in the clock mode
@@ -859,7 +883,7 @@ namespace hummus {
                         for (auto postNeuronIdx=0; postNeuronIdx<postsynapticLayer.sublayers[postSubIdx].neurons.size(); postNeuronIdx++) {
                             if (preNeuronIdx == postNeuronIdx) {
                                 const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().second, postsynapticLayer.sublayers[postSubIdx].ID);
-                                neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]].get()->makeSynapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), weight_delay.first, weight_delay.second, probability, std::forward<Args>(args)...);
+                                neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]].get()->makeSynapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
 
                                 // to shift the network runtime by the maximum delay in the clock mode
                                 maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -878,7 +902,7 @@ namespace hummus {
                     for (auto& postSub: postsynapticLayer.sublayers) {
                         for (auto& postNeuron: postSub.neurons) {
                             const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->getXYCoordinates().first, neurons[postNeuron]->getXYCoordinates().second, postSub.ID);
-                            neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), weight_delay.first, weight_delay.second, probability, std::forward<Args>(args)...);
+                            neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
                             
                             // to shift the network runtime by the maximum delay in the clock mode
                             maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
@@ -904,7 +928,7 @@ namespace hummus {
                     for (auto& preNeurons: sub.neurons) {
                         for (auto& postNeurons: sub.neurons) {
                             if (preNeurons != postNeurons) {
-                                neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, std::forward<Args>(args)...);
+                                neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), probability, std::forward<Args>(args)...);
                             }
                         }
                     }
@@ -915,7 +939,7 @@ namespace hummus {
                             for (auto& preNeurons: sub.neurons) {
                                 for (auto& postNeurons: subToInhibit.neurons) {
                                     if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
-                                        neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), -1*std::abs(weightRandom(randomEngine)), 0, probability, std::forward<Args>(args)...);
+                                        neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), 0, std::forward<Args>(args)...);
                                     }
                                 }
                             }
@@ -932,7 +956,7 @@ namespace hummus {
         
         // add spike to the network
         void injectSpike(int neuronIndex, double timestamp) {
-            initialSpikes.push_back(neurons[neuronIndex].get()->receiveExternalInput<Dirac>(timestamp, neurons[neuronIndex].get(), nullptr));
+            initialSpikes.push_back(neurons[neuronIndex].get()->receiveExternalInput<Dirac>(timestamp, neuronIndex, -1, 1, 0));
         }
         
         // adding spikes generated by the network
@@ -1357,7 +1381,7 @@ namespace hummus {
                         std::vector<spike> local_currentSpikes(currentSpikes.size());
                         const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
                             if (s.propagationSynapse) {
-                                return s.propagationSynapse->postNeuron->getNeuronID() == n->getNeuronID();
+                                return neurons[s.propagationSynapse->getPostsynapticNeuronID()]->getNeuronID() == n->getNeuronID();
                             }
                             else {
                                 return false;
@@ -1385,7 +1409,7 @@ namespace hummus {
                     }
                     
                     for (auto& spike: newSpikes) {
-                        spike.propagationSynapse->postNeuron->updateSync(i, spike.propagationSynapse, this, timestep);
+                        neurons[spike.propagationSynapse->getPostsynapticNeuronID()]->updateSync(i, spike.propagationSynapse, this, timestep);
                     }
                 }
             } else {
@@ -1412,7 +1436,7 @@ namespace hummus {
                     }
                 }
             }
-            s.propagationSynapse->postNeuron->update(s.timestamp, s.propagationSynapse, this, s.type);
+            neurons[s.propagationSynapse->getPostsynapticNeuronID()]->update(s.timestamp, s.propagationSynapse, this, s.type);
         }
 		
 		// ----- IMPLEMENTATION VARIABLES -----

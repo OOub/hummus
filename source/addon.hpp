@@ -12,8 +12,7 @@
 #pragma once
 
 namespace hummus {
-    struct synapse;
-    
+    class Synapse;
     class Neuron;
     class Network;
     
@@ -37,16 +36,16 @@ namespace hummus {
 		virtual void onCompleted(Network* network){}
         
         // message that is activated whenever a neuron receives a spike
-		virtual void incomingSpike(double timestamp, synapse* a, Network* network){}
+		virtual void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
         // message that is activated whenever a neuron emits a spike
-		virtual void neuronFired(double timestamp, synapse* a, Network* network){}
+		virtual void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
         // message that is activated on every timestep on the synchronous network only. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
-		virtual void timestep(double timestamp, Network* network, Neuron* postNeuron){}
+		virtual void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network){}
         
         // message that is activated whenever a neuron wants to learn
-        virtual void learn(double timestamp, synapse* a, Network* network){};
+        virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){};
         
         // select which neurons the addon is active on
         virtual void activate_for(size_t neuronIdx){};

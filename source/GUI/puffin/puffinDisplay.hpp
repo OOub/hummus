@@ -25,19 +25,19 @@ namespace hummus {
         PuffinDisplay() = default;
 
         // ----- PUBLIC DISPLAY METHODS -----
-        void incomingSpike(double timestamp, synapse* a, Network* network) override {
+        void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             // server->broadcast(puffin::string_to_message("s,0,0,2,3.2"));
         }
 
-        void neuronFired(double timestamp, synapse* a, Network* network) override {
+        void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             // server->broadcast(puffin::string_to_message("neuronFired"));
         }
 
-        void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
+        void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
             // server->broadcast(puffin::string_to_message("timestep"));
         }
 
-        void statusUpdate(double timestamp, synapse* a, Network* network) override {
+        void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             // server->broadcast(puffin::string_to_message("statusUpdate"));
         }
 
