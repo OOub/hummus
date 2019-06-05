@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(size_t _target_neuron, size_t _parent_neuron, float _weight, float _delay, float _externalCurrent=100, int _amplitudeScaling=50, float gaussianStandardDeviation=0) :
+		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _externalCurrent=100, int _amplitudeScaling=50, float gaussianStandardDeviation=0) :
                 Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent),
                 amplitudeScaling(_amplitudeScaling) {
 		
@@ -39,12 +39,11 @@ namespace hummus {
 		virtual ~Dirac(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double update(double timestamp, double previousTime, float neuronCurrent) override {
-			return 0;
-		}
-		
-		virtual float receiveSpike(float neuronCurrent) override {
-            return amplitudeScaling * (neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * weight);
+		virtual float receiveSpike(double timestamp) override {
+            // saving timestamp
+            previousInputTime = timestamp;
+            
+            return amplitudeScaling * weight * (externalCurrent+normalDistribution(randomEngine));
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {

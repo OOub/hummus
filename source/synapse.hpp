@@ -18,12 +18,13 @@ namespace hummus {
     public:
         
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Synapse(size_t _postsynaptic_neuron, size_t _presynaptic_neuron, float _weight, float _delay, float _externalCurrent=100) :
+        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, float _externalCurrent=100) :
                 presynaptic_neuron(_presynaptic_neuron),
                 postsynaptic_neuron(_postsynaptic_neuron),
                 weight(_weight),
                 delay(_delay),
                 externalCurrent(_externalCurrent),
+                synapticCurrent(0),
                 previousInputTime(0),
                 gaussianStdDev(0),
                 type(0),
@@ -34,33 +35,30 @@ namespace hummus {
         
         // ----- PUBLIC SYNAPSE METHODS -----
         
-        // pure virtual method that updates the status of current before integrating a spike
-        virtual double update(double timestamp, double previousTime, float neuronCurrent) = 0;
-        
         // pure virtual method that outputs an updated current value
-        virtual float receiveSpike(float neuronCurrent) = 0;
+        virtual float receiveSpike(double timestamp) = 0;
         
         // write synapse parameters in a JSON format
         virtual void toJson(nlohmann::json& output) {}
         
         // ----- SETTERS AND GETTERS -----
+        float getSynapticCurrent() const {
+            return synapticCurrent;
+        }
+        
         double getPreviousInputTime() const {
             return previousInputTime;
         }
-        
-        void setPreviousInputTime(double newTime) {
-            previousInputTime = newTime;
-        }
-        
+
         float getSynapseTimeConstant() const {
             return synapseTimeConstant;
         }
         
-        size_t getPresynapticNeuronID() const {
+        int getPresynapticNeuronID() const {
             return presynaptic_neuron;
         }
         
-        size_t getPostsynapticNeuronID() const {
+        int getPostsynapticNeuronID() const {
             return postsynaptic_neuron;
         }
         
@@ -89,15 +87,16 @@ namespace hummus {
         }
         
     protected:
-        size_t                        presynaptic_neuron;
-        size_t                        postsynaptic_neuron;
-        float                         weight;
-        float                         delay;
-        float                         externalCurrent;
-        double                        previousInputTime;
-        int                           kernelID;
-        float                         gaussianStdDev;
-        int                           type;
-        float                         synapseTimeConstant;
+        int                        presynaptic_neuron;
+        int                        postsynaptic_neuron;
+        float                      weight;
+        float                      delay;
+        float                      externalCurrent;
+        float                      synapticCurrent;
+        double                     previousInputTime;
+        int                        kernelID;
+        float                      gaussianStdDev;
+        int                        type;
+        float                      synapseTimeConstant;
     };
 }

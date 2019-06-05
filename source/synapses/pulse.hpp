@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Pulse(size_t _target_neuron, size_t _parent_neuron, float _weight, float _delay, float _externalCurrent=100, float _resetCurrent=5, float gaussianStandardDeviation=0) :
+		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _externalCurrent=100, float _resetCurrent=5, float gaussianStandardDeviation=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 			
 			synapseTimeConstant = _resetCurrent;
@@ -44,16 +44,17 @@ namespace hummus {
 		virtual ~Pulse(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double update(double timestamp, double previousTime, float neuronCurrent) override {
-			if (timestamp - previousTime > synapseTimeConstant) {
-				return 0;
-			} else {
-				return neuronCurrent;
-			}
-		}
-		
-		virtual float receiveSpike(float neuronCurrent) override {
-            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * weight;
+		virtual float receiveSpike(double timestamp) override {
+            // updating step function
+            if (timestamp - previousInputTime > synapseTimeConstant) {
+                synapticCurrent = 0;
+            }
+            
+            // saving timestamp
+            previousInputTime = timestamp;
+            
+            synapticCurrent += weight * (externalCurrent+normalDistribution(randomEngine));
+            return synapticCurrent;
 		}
 		
 		virtual void toJson(nlohmann::json& output) override {

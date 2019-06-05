@@ -25,11 +25,12 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _decayPotential=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _decayPotential=20, float _decayCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
                 refractoryPeriod(_refractoryPeriod),
                 decayPotential(_decayPotential),
                 current(0),
+                decayCurrent(_decayCurrent),
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -79,7 +80,7 @@ namespace hummus {
                 }
 				
 				// updating the current
-                current = s->update(timestamp, previousInputTime, current);
+                current *= std::exp(-(timestamp-previousInputTime)/decayCurrent);
 				
                 // eligibility trace decay
                 eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
@@ -102,7 +103,7 @@ namespace hummus {
                     }
 					
                     // synaptic integration
-					current = s->receiveSpike(current);
+					current += s->receiveSpike(timestamp);
 
                     if (network->getVerbose() == 2) {
                         std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
@@ -179,7 +180,6 @@ namespace hummus {
             
             // updating the timestamp when a synapse was propagating a spike
             previousInputTime = timestamp;
-            s->setPreviousInputTime(timestamp);
 		}
 		
 		virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep) override {
@@ -198,10 +198,7 @@ namespace hummus {
                 active = true;
             }
 			
-			// updating the current
-//            if (activeSynapse) {
-//                current = activeSynapse->update(timestamp, previousInputTime, current);
-//            }
+            current *= std::exp(-timestep/decayCurrent);
             
             // eligibility trace decay
             eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
@@ -223,13 +220,12 @@ namespace hummus {
 					}
                     
                     // integrating spike
-                    current = s->receiveSpike(current);
+                    current += s->receiveSpike(timestamp);
 
 					activeSynapse = s;
                     
                     // updating the timestamp when a synapse was propagating a spike
                     previousInputTime = timestamp;
-					s->setPreviousInputTime(timestamp);
                     
                     if (network->getVerbose() == 2) {
                         std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
@@ -368,6 +364,10 @@ namespace hummus {
         	return current;
 		}
 		
+        float getDecayCurrent() const {
+            return decayCurrent;
+        }
+        
 		void setCurrent(float newCurrent) {
 			current = newCurrent;
 		}
@@ -454,6 +454,7 @@ namespace hummus {
         
 		// ----- LIF PARAMETERS -----
 		float                                    decayPotential;
+        float                                    decayCurrent;
         float                                    current;
 		bool                                     active;
 		bool                                     inhibited;

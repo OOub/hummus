@@ -16,7 +16,6 @@
 #include "../source/GUI/qt/qtDisplay.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/synapticKernels/step.hpp"
 #include "../source/addons/weightMaps.hpp"
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/addons/potentialLogger.hpp"
@@ -33,15 +32,16 @@ int main(int argc, char** argv) {
     auto& map = network.makeAddon<hummus::WeightMaps>("weightMaps.bin", "../../data/2DtestLabels.txt");
     auto& display = network.makeGUI<hummus::QtDisplay>();
     
-	//  ----- CREATING THE NETWORK -----
-	auto& step = network.makeSynapticKernel<hummus::Step>();
+	//  ----- CREATING THE NEURONS -----
+    auto pixel_grid = network.makeGrid<hummus::Input>(12, 12, 1, {});
+    auto convolution = network.makeGrid<hummus::LIF>(pixel_grid, 1, 3, 1, {}, false, 20, 10, 3, true);
+    auto pooling = network.makeSubsampledGrid<hummus::LIF>(convolution, {}, false, 20, 10, 3, true);
+    auto output = network.makeLayer<hummus::LIF>(1, {});
 	
-    auto pixel_grid = network.make2dLayer<hummus::Input>(12, 12, 1, {}, nullptr);
-    auto convolution = network.makeConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 3, 1, hummus::Normal(), 100, 1, {}, &step, false, 20, 3, true);
-    auto pooling = network.makePoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(), 100, {}, &step, false, 20, 3, true);
-    auto output = network.makeLayer<hummus::LIF>(1, {}, &step);
-	
-    network.allToAll(pooling, output, hummus::Normal());
+    //  ----- CONNECTING THE NEURONS -----
+    network.convolution<hummus::Exponential>(pixel_grid, convolution, hummus::Normal(), 100);
+    network.pooling<hummus::Exponential>(convolution, pooling, hummus::Normal(), 100);
+    network.allToAll<hummus::Exponential>(pooling, output, hummus::Normal(), 100);
     
     //  ----- DISPLAY SETTINGS -----
     display.setTimeWindow(100);

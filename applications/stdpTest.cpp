@@ -23,7 +23,7 @@
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/decisionMaking.hpp"
-#include "../source/synapticKernels/exponential.hpp"
+#include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
@@ -37,22 +37,21 @@ int main(int argc, char** argv) {
     
     //  ----- NETWORK PARAMETERS -----
 	float potentialDecay = 20;
+    float currentDecay = 20;
 	float refractoryPeriod = 30;
     int inputNeurons = 10;
-    int layer1Neurons = 1;
+    int layer1Neurons = 1; 
     float weight = 1./10;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
     auto& stdp = network.makeAddon<hummus::STDP>();
 	
 	//  ----- CREATING THE NETWORK -----
-	auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
-	
     auto input = network.makeLayer<hummus::Input>(inputNeurons, {});
-    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, &exponential, false, potentialDecay, refractoryPeriod);
+    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, false, potentialDecay, currentDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(input, output, hummus::Normal(weight, 0, 1, 0));
+    network.allToAll<hummus::Exponential>(input, output, hummus::Normal(weight, 0, 1, 0), 100);
 	
     //  ----- DISPLAY SETTINGS -----
   	display.setTimeWindow(100);

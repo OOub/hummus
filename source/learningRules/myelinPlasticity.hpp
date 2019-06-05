@@ -71,7 +71,7 @@ namespace hummus {
                         float delta_delay = 0;
 
                         if (timeDifferences.back() > 0) {
-                            delta_delay = delay_lambda*(1/(s->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/s->getSynapseTimeConstant()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()));
+                            delta_delay = delay_lambda*(1/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-delay_alpha*timeDifferences.back()/n->getDecayCurrent()) - std::exp(-delay_alpha*timeDifferences.back()/n->getDecayPotential()));
                             
                             inputSynapse->setDelay(delta_delay);
                             
@@ -79,7 +79,7 @@ namespace hummus {
                                 std::cout << timestamp << " " << presynapticNeuron->getNeuronID() << " " << n->getNeuronID() << " time difference: " << timeDifferences.back() << " delay change: " << delta_delay << std::endl;
                             }
                         } else if (timeDifferences.back() < 0) {
-                            delta_delay = -delay_lambda*((1/(s->getSynapseTimeConstant()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/s->getSynapseTimeConstant()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())));
+                            delta_delay = -delay_lambda*((1/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(delay_alpha*timeDifferences.back()/n->getDecayCurrent()) - std::exp(delay_alpha*timeDifferences.back()/n->getDecayPotential())));
                             
                             inputSynapse->setDelay(delta_delay);
                             

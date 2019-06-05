@@ -80,7 +80,6 @@ namespace hummus {
                 
                 requestLearning(timestamp, s, this, network);
                 previousSpikeTime = timestamp;
-                s->setPreviousInputTime(timestamp);
                 potential = restingPotential;
                 active = false;
                 
@@ -130,7 +129,6 @@ namespace hummus {
                 
                 requestLearning(timestamp, s, this, network);
                 previousSpikeTime = timestamp;
-                s->setPreviousInputTime(timestamp);
                 potential = restingPotential;
                 active = false;
             } else {

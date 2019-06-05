@@ -25,7 +25,6 @@
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/IF.hpp"
 
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/addons/potentialLogger.hpp"
@@ -60,7 +59,7 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     auto input = network.makeLayer<hummus::Input>(1, {});
-    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 3, true);
+    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll<hummus::Exponential>(input, output, hummus::Normal(1./2, 0), 100);
@@ -76,7 +75,7 @@ int main(int argc, char** argv) {
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);
-    network.run(100, 0);
+    network.run(100, 0.1);
 
 	//  ----- SAVING THE NETWORK -----
     network.save("testSave");

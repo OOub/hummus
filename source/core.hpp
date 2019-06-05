@@ -154,13 +154,12 @@ namespace hummus {
         Synapse* makeSynapse(Neuron* postNeuron, int probability, float weight, float delay, Args&&... args) {
             if (postNeuron) {
                 if (connectionProbability(probability)) {
-                    axonTerminals.emplace_back(new T{static_cast<size_t>(postNeuron->neuronID), static_cast<size_t>(neuronID), weight, delay, std::forward<Args>(args)...});
+                    axonTerminals.emplace_back(new T{postNeuron->neuronID, neuronID, weight, delay, std::forward<Args>(args)...});
                     postNeuron->getDendriticTree().emplace_back(axonTerminals.back().get());
                 }
             } else {
                 throw std::logic_error("Neuron does not exist");
             }
-            
             return axonTerminals.back().get();
         }
 		
@@ -611,7 +610,7 @@ namespace hummus {
         
         // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields)
         template <typename T, typename... Args>
-        layer makeSubsampledGrid(layer presynapticLayer, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
+        layer makeSubsampledGrid(layer presynapticLayer, std::vector<Addon*> _addons, Args&&... args) {
             // find lowest common divisor
             int lcd = 1;
             for (auto i = 2; i <= presynapticLayer.width && i <= presynapticLayer.height; i++) {
@@ -645,10 +644,8 @@ namespace hummus {
             // find how many neurons there are before the pre and postsynaptic layers
             int layershift = 0;
             if (!layers.empty()) {
-                for (auto i=0; i<layers.size()-2; i++) {
-                    if (layers[i].ID != postsynapticLayer.ID) {
-                        layershift += layers[i].neurons.size();
-                    }
+                for (auto i=0; i<presynapticLayer.ID; i++) {
+                    layershift += layers[i].neurons.size();
                 }
             }
             
@@ -729,10 +726,8 @@ namespace hummus {
             // find how many neurons there are before the pre and postsynaptic layers
             int layershift = 0;
             if (!layers.empty()) {
-                    for (auto i=0; i<layers.size()-2; i++) {
-                    if (layers[i].ID != postsynapticLayer.ID) {
-                        layershift += layers[i].neurons.size();
-                    }
+                for (auto i=0; i<presynapticLayer.ID; i++) {
+                    layershift += layers[i].neurons.size();
                 }
             }
             
@@ -1381,7 +1376,8 @@ namespace hummus {
                         std::vector<spike> local_currentSpikes(currentSpikes.size());
                         const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
                             if (s.propagationSynapse) {
-                                return neurons[s.propagationSynapse->getPostsynapticNeuronID()]->getNeuronID() == n->getNeuronID();
+                                std::cout << s.propagationSynapse->getPresynapticNeuronID() << " " << s.propagationSynapse->getPostsynapticNeuronID() << std::endl;
+                                return s.propagationSynapse->getPostsynapticNeuronID() == n->getNeuronID();
                             }
                             else {
                                 return false;
