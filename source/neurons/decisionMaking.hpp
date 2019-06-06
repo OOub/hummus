@@ -8,7 +8,7 @@
  *
  * Information: Decision-making neurons inherit from LIF neurons with the addition of a label for classification purposes. They should always be on the last layer of a network.
  *
- * NEURON TYPE 3 (in JSON SAVE FILE)
+ * NEURON TYPE 2 (in JSON SAVE FILE)
  */
 
 #pragma once
@@ -21,11 +21,11 @@ namespace hummus {
 	class DecisionMaking : public LIF {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		DecisionMaking(std::string _classLabel, int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _decayPotential=20, float _decayCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", bool _homeostasis=false, float _decayPotential=20, float _decayCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
                 LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _homeostasis, _decayPotential, _decayCurrent, _refractoryPeriod, _wta, _burstingActivity, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential),
                 classLabel(_classLabel) {
             // DecisionMaking neuron type = 2 for JSON save
-            neuronType = 3;
+            neuronType = 2;
         }
 		
 		virtual ~DecisionMaking(){}
@@ -327,6 +327,7 @@ namespace hummus {
                 {"restingPotential", restingPotential},
                 {"refractoryPeriod", refractoryPeriod},
                 {"decayPotential", decayPotential},
+                {"decayCurrent", decayCurrent},
                 {"burstingActivity", burstingActivity},
                 {"homeostasis", homeostasis},
                 {"restingThreshold", restingThreshold},
@@ -342,6 +343,7 @@ namespace hummus {
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
             for (auto& dendrite: dendriticTree) {
                 dendriticSynapses.push_back({
+                    {"type", dendrite->getType()},
                     {"weight", dendrite->getWeight()},
                     {"delay", dendrite->getDelay()},
                 });
@@ -351,6 +353,7 @@ namespace hummus {
             auto& axonalSynapses = output.back()["axonalSynapses"];
             for (auto& axonTerminal: axonTerminals) {
                 axonalSynapses.push_back({
+                    {"type", axonTerminal->getType()},
                     {"postNeuronID", axonTerminal->getPostsynapticNeuronID()},
                     {"weight", axonTerminal->getWeight()},
                     {"delay", axonTerminal->getDelay()},

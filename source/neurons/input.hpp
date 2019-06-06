@@ -164,6 +164,7 @@ namespace hummus {
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
             for (auto& dendrite: dendriticTree) {
                 dendriticSynapses.push_back({
+                    {"type", dendrite->getType()},
                     {"weight", dendrite->getWeight()},
                     {"delay", dendrite->getDelay()},
                 });
@@ -173,6 +174,7 @@ namespace hummus {
             auto& axonalSynapses = output.back()["axonalSynapses"];
             for (auto& axonTerminal: axonTerminals) {
                 axonalSynapses.push_back({
+                    {"type", axonTerminal->getType()},
                     {"postNeuronID", axonTerminal->getPostsynapticNeuronID()},
                     {"weight", axonTerminal->getWeight()},
                     {"delay", axonTerminal->getDelay()},

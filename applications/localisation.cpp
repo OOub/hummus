@@ -15,11 +15,10 @@
 
 #include "../source/core.hpp"
 #include "../source/dataParser.hpp"
-#include "../source/neurons/IF.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"
-#include "../source/synapticKernels/step.hpp"
+#include "../source/synapses/pulse.hpp"
 #include "../source/addons/potentialLogger.hpp"
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/addons/myelinPlasticityLogger.hpp"
@@ -29,6 +28,7 @@ int main(int argc, char** argv) {
     
     /// ----- PARAMETERS -----
     float direction_potentialDecay   = 20;
+    float direction_currentDecay     = 10;
     float direction_eligibilityDecay = 20;
     bool  direction_wta              = true;
     bool  direction_burst            = false;
@@ -43,23 +43,19 @@ int main(int argc, char** argv) {
     auto& mp_log = network.makeAddon<hummus::MyelinPlasticityLogger>("localisation_learning.bin");
     auto& potential_log = network.makeAddon<hummus::PotentialLogger>("localisation_potential.bin");
     
-    // synaptic kernels
-    auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
-    auto& dirac = network.makeSynapticKernel<hummus::Dirac>();
-    
     // delay learning rule
     auto& mp = network.makeAddon<hummus::MyelinPlasticity>(1, 1, 1, 0.1);
 
     // input layer with 8 channels for each sensor
-    auto input = network.makeCircularLayer<hummus::Input>(8, {0.3}, {});
+    auto input = network.makeCircle<hummus::Input>(8, {0.3}, {});
     
     /// ----- DIRECTION LAYER -----
     
     // layer that learns the delays
-    auto direction = network.makeLayer<hummus::LIF>(50, {&mp}, &exponential, direction_homeostasis, direction_potentialDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
+    auto direction = network.makeLayer<hummus::LIF>(50, {&mp}, direction_homeostasis, direction_potentialDecay, direction_currentDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
     
     // connecting input layer with the direction neurons
-    network.allToAll(input, direction, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY)); // fixed weight on [0,1], random delays on [0, inf]
+    network.allToAll<hummus::Exponential>(input, direction, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
     
     // neuron mask for loggers
     mp_log.activate_for(direction.neurons[0]);
@@ -68,10 +64,10 @@ int main(int argc, char** argv) {
     /// ----- DISTANCE LAYER -----
     
     // distance neuron
-    auto distance = network.makeCircularLayer<hummus::IF>(8, {0.3}, {}, &dirac);
+    auto distance = network.makeCircle<hummus::LIF>(8, {0.3}, {});
     
     // connecting input layer with the distance neurons
-
+    
     /// ----- USER INTERFACE SETTINGS -----
     
     // initialising the GUI
@@ -93,10 +89,10 @@ int main(int argc, char** argv) {
 
     // assigning labels to direction neurons
     
-//    // run test
-//    auto test = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
-//    network.turnOffLearning();
-//    network.run(&test, 0.1);
+    // run test
+    auto test = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
+    network.turnOffLearning();
+    network.run(&test, 0.1);
     
     return 0;
 }

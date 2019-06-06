@@ -166,7 +166,9 @@ namespace hummus {
         // initialise the initial synapse when a neuron receives an input event
         template <typename T, typename... Args>
         spike receiveExternalInput(double timestamp, Args&&... args) {
-            initialSynapse.reset(new T(std::forward<Args>(args)...));
+            if (!initialSynapse) {
+                initialSynapse.reset(new T(std::forward<Args>(args)...));
+            }
             return spike{timestamp, initialSynapse.get(), spikeType::normal};
         }
 		
@@ -342,7 +344,6 @@ namespace hummus {
                 });
             }
 			
-			
             // saving the important information needed from the neurons
             for (auto& n: neurons) {
                 n->toJson(jsonNetwork["neurons"]);
@@ -421,13 +422,13 @@ namespace hummus {
             std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
                 for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(make_unique<T>(uniqueLabels[k-shift], static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), std::forward<Args>(args)...));
+                    neurons.emplace_back(make_unique<T>(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), uniqueLabels[k-shift], std::forward<Args>(args)...));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
             } else {
                 for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(make_unique<T>("", static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), std::forward<Args>(args)...));
+                    neurons.emplace_back(make_unique<T>(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), "", std::forward<Args>(args)...));
                     
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
@@ -1376,7 +1377,6 @@ namespace hummus {
                         std::vector<spike> local_currentSpikes(currentSpikes.size());
                         const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
                             if (s.propagationSynapse) {
-                                std::cout << s.propagationSynapse->getPresynapticNeuronID() << " " << s.propagationSynapse->getPostsynapticNeuronID() << std::endl;
                                 return s.propagationSynapse->getPostsynapticNeuronID() == n->getNeuronID();
                             }
                             else {

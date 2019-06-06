@@ -17,7 +17,6 @@
 #include "../source/dataParser.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/IF.hpp"
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/addons/potentialLogger.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"

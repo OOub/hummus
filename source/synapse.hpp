@@ -42,6 +42,10 @@ namespace hummus {
         virtual void toJson(nlohmann::json& output) {}
         
         // ----- SETTERS AND GETTERS -----
+        int getType() const {
+            return type;
+        }
+        
         float getSynapticCurrent() const {
             return synapticCurrent;
         }
