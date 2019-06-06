@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, false, potentialDecay, currentDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, hummus::Normal(weight, 0, 1, 0), 100);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 1, 0), 100);
 	
     //  ----- DISPLAY SETTINGS -----
   	display.setTimeWindow(100);

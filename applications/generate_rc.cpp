@@ -134,17 +134,17 @@ int main(int argc, char** argv) {
         auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, decayCurrent, refractoryPeriod, wta);
         
         // connecting input according to weight matrix
-        network.connectivityMatrix<hummus::Pulse>(pixel_grid, reservoir, inputWeightMatrix, inputDelayMatrix);
+        network.connectivityMatrix<hummus::Pulse>(pixel_grid, reservoir, 1, inputWeightMatrix, inputDelayMatrix);
         
         // connecting reservoir according to weight matrix
-        network.connectivityMatrix<hummus::Pulse>(reservoir, reservoir, reservoirWeightMatrix, reservoirDelayMatrix);
+        network.connectivityMatrix<hummus::Pulse>(reservoir, reservoir, 1, reservoirWeightMatrix, reservoirDelayMatrix);
         
     } else {
         // reservoir layer
         auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, decayCurrent, refractoryPeriod, wta);
         
         // connect pixel grid to the reservoir in an all to all fashion
-        network.reservoir<hummus::Pulse>(reservoir, hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0), feedforwardProbability, feedbackProbability, selfExcitationProbability);
+        network.reservoir<hummus::Pulse>(reservoir, 1, hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0), feedforwardProbability, feedbackProbability, selfExcitationProbability);
     }
     
     std::cout << "\nsaving network into rcNetwork.json file..." << std::endl;

@@ -29,6 +29,7 @@ namespace hummus {
                 gaussianStdDev(0),
                 type(0),
                 kernelID(0),
+                synapticEfficacy(1),
                 synapseTimeConstant(0) {}
         
         virtual ~Synapse(){}
@@ -90,6 +91,18 @@ namespace hummus {
             }
         }
         
+        float getSynapticEfficacy() const {
+            return synapticEfficacy;
+        }
+        
+        void setSynapticEfficacy(float newEfficacy, bool increment=true) {
+            if (increment) {
+                synapticEfficacy += newEfficacy;
+            } else{
+                synapticEfficacy = newEfficacy;
+            }
+        }
+        
     protected:
         int                        presynaptic_neuron;
         int                        postsynaptic_neuron;
@@ -102,5 +115,6 @@ namespace hummus {
         float                      gaussianStdDev;
         int                        type;
         float                      synapseTimeConstant;
+        float                      synapticEfficacy;
     };
 }

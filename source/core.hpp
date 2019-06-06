@@ -634,9 +634,9 @@ namespace hummus {
         
 		// ----- LAYER CONNECTION METHODS -----
         
-        // connecting a layer that is a convolution of the previous layer, depending on the layer kernel size and the stride. Last set of paramaters are to characterize the synapses. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
+        // connecting a layer that is a convolution of the previous layer, depending on the layer kernel size and the stride. Last set of paramaters are to characterize the synapses. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays. Furthermore, you can select the number of synapses per pair of presynaptic and postsynaptic neurons (the arborescence)
         template <typename T, typename F, typename... Args>
-        void convolution(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability, Args&&... args){
+        void convolution(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             // error handling
             if (postsynapticLayer.kernelSize == -1 || postsynapticLayer.stride == -1) {
                 throw std::logic_error("cannot connect the layers in a convolutional manner as the layers were not built with that in mind (no kernel or stride in the grid layer to define receptive fields");
@@ -684,17 +684,20 @@ namespace hummus {
                             // 2D to 1D mapping to get the index from x y coordinates
                             int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
                             
-                            // calculating weights and delays according to the provided distribution
-                            const std::pair<float, float> weight_delay = lambdaFunction(x, y, convSub.ID);
-                            
                             // changing the neuron's receptive field coordinates from the default
                             neurons[idx].get()->setRfCoordinates(row, col);
                             
-                            // connecting neurons from the presynaptic layer to the convolutional one
-                            neurons[idx].get()->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
-                            
-                            // to shift the network runtime by the maximum delay in the clock mode
-                            maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                            // connecting neurons from the presynaptic layer to the convolutional one, depedning on the number of synapses
+                            for (auto i=0; i<number_of_synapses; i++) {
+                                // calculating weights and delays according to the provided distribution
+                                const std::pair<float, float> weight_delay = lambdaFunction(x, y, convSub.ID);
+                                
+                                // creatign a synapse between the neurons
+                                neurons[idx].get()->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
+                                
+                                // to shift the network runtime by the maximum delay in the clock mode
+                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                            }
                         }
                         
                         // finding the coordinates for the center of each receptive field
@@ -718,7 +721,7 @@ namespace hummus {
         
         // connecting a subsampled layer to its previous layer. Last set of paramaters are to characterize the synapses. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void pooling(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability, Args&&... args) {
+        void pooling(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             // error handling
             if (postsynapticLayer.ID - presynapticLayer.ID > 1) {
                 throw std::logic_error("the layers aren't immediately following each other");
@@ -768,17 +771,19 @@ namespace hummus {
                                 // 2D to 1D mapping to get the index from x y coordinates
                                 int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
                                 
-                                // calculating weights and delays according to the provided distribution
-                                const std::pair<float, float> weight_delay = lambdaFunction(x, y, poolSub.ID);
-                                
                                 // changing the neuron's receptive field coordinates from the default
                                 neurons[idx].get()->setRfCoordinates(row, col);
                                 
-                                // connecting neurons from the presynaptic layer to the convolutional one
-                                neurons[idx].get()->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
-                                
-                                // to shift the network runtime by the maximum delay in the clock mode
-                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                for (auto i=0; i<number_of_synapses; i++) {
+                                    // calculating weights and delays according to the provided distribution
+                                    const std::pair<float, float> weight_delay = lambdaFunction(x, y, poolSub.ID);
+                                    
+                                    // connecting neurons from the presynaptic layer to the convolutional one
+                                    neurons[idx].get()->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
+                                    
+                                    // to shift the network runtime by the maximum delay in the clock mode
+                                    maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                }
                             }
                             
                             // finding the coordinates for the center of each receptive field
@@ -803,22 +808,24 @@ namespace hummus {
         
         // interconnecting a layer (feedforward, feedback and self-excitation) with randomised weights and delays. lambdaFunction: Takes in one of the classes inside the randomDistributions folder to define a distribution for the weights.
         template <typename T, typename F, typename... Args>
-        void reservoir(layer reservoirLayer, F&& lambdaFunction, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
-            // calculating weights and delays according to the provided distribution
-            const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
-            
+        void reservoir(layer reservoirLayer, int number_of_synapses, F&& lambdaFunction, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
             // connecting the reservoir
             for (auto pre: reservoirLayer.neurons) {
                 for (auto post: reservoirLayer.neurons) {
-                    // self-excitation probability
-                    if (pre == post) {
-                        neurons[pre].get()->makeSynapse<T>(neurons[post].get(), selfExcitationProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
-                    } else {
-                        // feedforward probability
-                        neurons[pre].get()->makeSynapse<T>(neurons[post].get(), feedforwardProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
+                    for (auto i=0; i<number_of_synapses; i++) {
+                        // calculating weights and delays according to the provided distribution
+                        const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
                         
-                        // feedback probability
-                        neurons[post].get()->makeSynapse<T>(neurons[pre].get(), feedbackProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
+                        // self-excitation probability
+                        if (pre == post) {
+                            neurons[pre].get()->makeSynapse<T>(neurons[post].get(), selfExcitationProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
+                        } else {
+                            // feedforward probability
+                            neurons[pre].get()->makeSynapse<T>(neurons[post].get(), feedforwardProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
+                            
+                            // feedback probability
+                            neurons[post].get()->makeSynapse<T>(neurons[pre].get(), feedbackProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
+                        }
                     }
                 }
             }
@@ -826,7 +833,7 @@ namespace hummus {
         
 		// connecting two layers according to a weight matrix vector of vectors and a delays matrix vector of vectors (columns for input and rows for output)
         template <typename T, typename... Args>
-        void connectivityMatrix(layer presynapticLayer, layer postsynapticLayer, std::vector<std::vector<float>> weights, std::vector<std::vector<float>> delays, Args&&... args) {
+        void connectivityMatrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<float>> weights, std::vector<std::vector<float>> delays, Args&&... args) {
             
             // error handling
             if (weights.size() != delays.size() && weights[0].size() != delays[0].size()) {
@@ -849,7 +856,9 @@ namespace hummus {
                         for (auto& postNeuron: postSub.neurons) {
                             
                             if (weights[preCounter][postCounter] != 0) {
-                                neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), 100, weights[preCounter][postCounter], delays[preCounter][postCounter], std::forward<Args>(args)...);
+                                for (auto i=0; i<number_of_synapses; i++) {
+                                    neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), 100, weights[preCounter][postCounter], delays[preCounter][postCounter], std::forward<Args>(args)...);
+                                }
                             }
                             
                             // to shift the network runtime by the maximum delay in the clock mode
@@ -867,7 +876,7 @@ namespace hummus {
         
         // one to one connections between layers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void oneToOne(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability, Args&&... args) {
+        void oneToOne(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             // error handling
             if (presynapticLayer.neurons.size() != postsynapticLayer.neurons.size() && presynapticLayer.width == postsynapticLayer.width && presynapticLayer.height == postsynapticLayer.height) {
                 throw std::logic_error("The presynaptic and postsynaptic layers do not have the same number of neurons. Cannot do a one-to-one connection");
@@ -878,11 +887,13 @@ namespace hummus {
                     for (auto postSubIdx=0; postSubIdx<postsynapticLayer.sublayers.size(); postSubIdx++) {
                         for (auto postNeuronIdx=0; postNeuronIdx<postsynapticLayer.sublayers[postSubIdx].neurons.size(); postNeuronIdx++) {
                             if (preNeuronIdx == postNeuronIdx) {
-                                const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().second, postsynapticLayer.sublayers[postSubIdx].ID);
-                                neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]].get()->makeSynapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
+                                for (auto i=0; i<number_of_synapses; i++) {
+                                    const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().second, postsynapticLayer.sublayers[postSubIdx].ID);
+                                    neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]].get()->makeSynapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
 
-                                // to shift the network runtime by the maximum delay in the clock mode
-                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                    // to shift the network runtime by the maximum delay in the clock mode
+                                    maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                }
                             }
                         }
                     }
@@ -892,16 +903,18 @@ namespace hummus {
         
         // all to all connection between layers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void allToAll(layer presynapticLayer, layer postsynapticLayer, F&& lambdaFunction, int probability, Args&&... args) {
+        void allToAll(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             for (auto& preSub: presynapticLayer.sublayers) {
                 for (auto& preNeuron: preSub.neurons) {
                     for (auto& postSub: postsynapticLayer.sublayers) {
                         for (auto& postNeuron: postSub.neurons) {
-                            const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->getXYCoordinates().first, neurons[postNeuron]->getXYCoordinates().second, postSub.ID);
-                            neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
-                            
-                            // to shift the network runtime by the maximum delay in the clock mode
-                            maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                            for (auto i=0; i<number_of_synapses; i++) {
+                                const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->getXYCoordinates().first, neurons[postNeuron]->getXYCoordinates().second, postSub.ID);
+                                neurons[preNeuron].get()->makeSynapse<T>(neurons[postNeuron].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
+                                
+                                // to shift the network runtime by the maximum delay in the clock mode
+                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                            }
                         }
                     }
                 }
@@ -910,7 +923,7 @@ namespace hummus {
         
         // interconnecting a layer with soft winner-takes-all synapses, using negative weights
         template <typename T, typename... Args>
-        void lateralInhibition(layer l, float _weightMean, float _weightstdev, int probability, Args&&... args) {
+        void lateralInhibition(layer l, int number_of_synapses, float _weightMean, float _weightstdev, int probability, Args&&... args) {
             if (_weightMean != 0) {
                 if (_weightMean > 0 && verbose != 0) {
                     std::cout << "lateral inhibition synapses must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
@@ -924,7 +937,9 @@ namespace hummus {
                     for (auto& preNeurons: sub.neurons) {
                         for (auto& postNeurons: sub.neurons) {
                             if (preNeurons != postNeurons) {
-                                neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), probability, std::forward<Args>(args)...);
+                                for (auto i=0; i<number_of_synapses; i++) {
+                                    neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), probability, std::forward<Args>(args)...);
+                                }
                             }
                         }
                     }
@@ -935,7 +950,9 @@ namespace hummus {
                             for (auto& preNeurons: sub.neurons) {
                                 for (auto& postNeurons: subToInhibit.neurons) {
                                     if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
-                                        neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), 0, std::forward<Args>(args)...);
+                                        for (auto i=0; i<number_of_synapses; i++) {
+                                            neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), 0, std::forward<Args>(args)...);
+                                        }
                                     }
                                 }
                             }

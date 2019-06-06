@@ -61,6 +61,10 @@ int main(int argc, char** argv) {
         auto pool_two = network.makeSubsampledGrid<hummus::LIF>(conv_two, {}, false, 20, 10, 10, pool_wta, false); // second pooling
         
         /// connecting the layers
+        network.convolution<hummus::Exponential>(pixel_grid, conv_one, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100);
+        network.pooling<hummus::Exponential>(conv_one, pool_one, 1, hummus::Normal(1, 0), 100);
+        network.convolution<hummus::Exponential>(pool_one, conv_two, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100);
+        network.pooling<hummus::Exponential>(conv_two, pool_two, 1, hummus::Normal(1, 0), 100);
         
         pLog.activate_for(network.getLayers()[5].neurons);
         weightMap1.activate_for(network.getLayers()[1].neurons);
@@ -93,11 +97,9 @@ int main(int argc, char** argv) {
         /// creating the layers
         auto pixel_grid = network.makeGrid<hummus::Input>(32, 32, 1, {}); // input layer
         auto output = network.makeLayer<hummus::LIF>(100, {&ti_stdp}, homeostasis, 20, 10, 10, wta, burst); // output layer with STDP
-
-        //float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70
         
         /// connecting the layers
-        network.allToAll<hummus::Pulse>(pixel_grid, output, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100);
+        network.allToAll<hummus::Pulse>(pixel_grid, output, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100);
         
         /// Reading data
         hummus::DataParser dataParser;
