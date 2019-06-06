@@ -75,24 +75,24 @@ namespace hummus {
         virtual ~QtDisplay(){}
         
     	// ----- PUBLIC DISPLAY METHODS -----
-		void incomingSpike(double timestamp, synapse* a, Network* network) override {
-			potentialviewer->handleData(timestamp, a, network);
+		void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+			potentialviewer->handleData(timestamp, s, postsynapticNeuron, network);
 		}
 
-        void neuronFired(double timestamp, synapse* a, Network* network) override {
-			inputviewer->handleData(timestamp, a, network);
-			outputviewer->handleData(timestamp, a, network);
-			potentialviewer->handleData(timestamp, a, network);
+        void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+			inputviewer->handleData(timestamp, s, postsynapticNeuron, network);
+			outputviewer->handleData(timestamp, s, postsynapticNeuron, network);
+			potentialviewer->handleData(timestamp, s, postsynapticNeuron, network);
 		}
 
-		void timestep(double timestamp, Network* network, Neuron* postNeuron) override {
+		void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
 			inputviewer->handleTimestep(timestamp);
 			outputviewer->handleTimestep(timestamp);
-			potentialviewer->handleTimestep(timestamp, network, postNeuron);
+			potentialviewer->handleTimestep(timestamp, postsynapticNeuron, network);
 		}
 
-        void statusUpdate(double timestamp, synapse* a, Network* network) override {
-            potentialviewer->handleData(timestamp, a, network);
+        void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            potentialviewer->handleData(timestamp, s, postsynapticNeuron, network);
         }
         
 		void begin(Network* network, std::mutex* sync) override {
@@ -160,7 +160,7 @@ namespace hummus {
 			outputSublayerToTrack = sublayerToTrack;
 		}
 		
-        void trackNeuron(int _neuronToTrack) {
+        void trackNeuron(size_t _neuronToTrack) {
         	neuronToTrack = _neuronToTrack;
         }
 
@@ -178,7 +178,7 @@ namespace hummus {
         InputViewer*                           inputviewer;
         OutputViewer*                          outputviewer;
         PotentialViewer*                       potentialviewer;
-        int                                    neuronToTrack;
+        size_t                                 neuronToTrack;
         int                                    inputSublayerToTrack;
         int                                    outputLayerToTrack;
         int                                    outputSublayerToTrack;

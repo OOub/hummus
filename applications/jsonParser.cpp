@@ -20,7 +20,6 @@
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/IF.hpp"
 
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/addons/potentialLogger.hpp"
@@ -32,9 +31,9 @@
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
-#include "../source/synapticKernels/exponential.hpp"
-#include "../source/synapticKernels/dirac.hpp"
-#include "../source/synapticKernels/step.hpp"
+#include "../source/synapses/exponential.hpp"
+#include "../source/synapses/dirac.hpp"
+#include "../source/synapses/pulse.hpp"
 
 #include "../source/dependencies/json.hpp"
 

@@ -1,12 +1,12 @@
 /*
- * step.hpp
+ * pulse.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 23/01/2019
  *
- * Information: a synaptic kernel updating the current according to a step function; the current stays constant for a period of time then resets
+ * Information: a synaptic kernel updating the current according to a square pulse function; the current stays constant for a period of time then resets
  * kernel type 2
  */
 
@@ -14,18 +14,18 @@
 
 #include <random>
 
+#include "../synapse.hpp"
 #include "../dependencies/json.hpp"
-#include "../synapticKernelHandler.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class Step : public SynapticKernelHandler {
+	class Pulse : public Synapse {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Step(float _resetCurrent=5, float gaussianStandardDeviation=0) :
-				SynapticKernelHandler() {
+		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _externalCurrent=100, float _resetCurrent=5, float gaussianStandardDeviation=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 			
 			synapseTimeConstant = _resetCurrent;
 			gaussianStdDev = gaussianStandardDeviation;
@@ -41,24 +41,24 @@ namespace hummus {
             randomEngine = std::mt19937(device());
             normalDistribution = std::normal_distribution<>(0, gaussianStandardDeviation);
 		}
-		virtual ~Step(){}
+		virtual ~Pulse(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual double updateCurrent(double timestamp, double timestep, double previousInputTime, float neuronCurrent) override {
+		virtual float receiveSpike(double timestamp) override {
+            // updating step function
+            if (timestamp - previousInputTime > synapseTimeConstant) {
+                synapticCurrent = 0;
+            }
             
-			if (timestamp - previousInputTime > synapseTimeConstant) {
-				return 0;
-			} else {
-				return neuronCurrent;
-			}
-		}
-		
-		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight;
+            // saving timestamp
+            previousInputTime = timestamp;
+            
+            synapticCurrent += weight * (externalCurrent+normalDistribution(randomEngine));
+            return synapticCurrent;
 		}
 		
 		virtual void toJson(nlohmann::json& output) override {
-			// general synaptic kernel parameters
+			// general synapse sparameters
             output.push_back({
             	{"type", type},
 				{"gaussianStdDev", gaussianStdDev},

@@ -14,18 +14,18 @@
 
 #include <random>
 
+#include "../synapse.hpp"
 #include "../dependencies/json.hpp"
-#include "../synapticKernelHandler.hpp"
 
 namespace hummus {
 	class Neuron;
 	
-	class Exponential : public SynapticKernelHandler {
+	class Exponential : public Synapse {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(float _decayCurrent=10, float gaussianStandardDeviation=0) :
-				SynapticKernelHandler() {
+		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _externalCurrent=100, float _decayCurrent=10, float gaussianStandardDeviation=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 				
 			synapseTimeConstant = _decayCurrent;
 			gaussianStdDev = gaussianStandardDeviation;
@@ -44,27 +44,21 @@ namespace hummus {
 		
 		virtual ~Exponential(){}
 		
-		// ----- PUBLIC METHODS -----
-		virtual double updateCurrent(double timestamp, double timestep, double previousInputTime, float neuronCurrent) override {
-            double current;
-			// event-based
-			if (timestep == 0) {
-				current = neuronCurrent * std::exp(-(timestamp-previousInputTime)/synapseTimeConstant);
-                
-			// clock-based
-			} else {
-				current = neuronCurrent * std::exp(-timestep/synapseTimeConstant);
-			}
+		// ----- PUBLIC METHODS -----        
+		virtual float receiveSpike(double timestamp) override {
+            // exponentially decay the current
+            synapticCurrent = synapticCurrent * std::exp(-(timestamp - previousInputTime)/synapseTimeConstant);
             
-            return current;
-		}
-		
-		virtual float integrateSpike(float neuronCurrent, float externalCurrent, double synapseWeight) override {
-            return neuronCurrent + (externalCurrent+normalDistribution(randomEngine)) * synapseWeight;
+            // saving timestamp
+            previousInputTime = timestamp;
+            
+            // increase the synaptic current in response to an incoming spike
+            synapticCurrent += weight * (externalCurrent+normalDistribution(randomEngine));
+            return synapticCurrent;
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {
-			// general synaptic kernel parameters
+			// general synapse parameters
             output.push_back({
             	{"type", type},
 				{"gaussianStdDev", gaussianStdDev},

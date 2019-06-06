@@ -27,11 +27,11 @@
 #include "../source/addons/weightMaps.hpp"
 #include "../source/addons/potentialLogger.hpp"
 #include "../source/addons/classificationLogger.hpp"
-#include "../source/synapticKernels/step.hpp"
+#include "../source/synapses/pulse.hpp"
 
 int main(int argc, char** argv) {
     
-    bool deepNetwork = true; // choose between feedforward or deep spiking neural network
+    bool deepNetwork = false; // choose between feedforward or deep spiking neural network
     
     if (deepNetwork) {
         //  ----- DEEP SPIKING NEURAL NETWORK -----
@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
         auto& weightMap2 = network.makeAddon<hummus::WeightMaps>("weightMapsCONV2.bin", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtrainingLabel.txt", "/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/poker-DVS/DHtestLabel.txt");
         
         auto& ti_stdp = network.makeAddon<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
-        auto& step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
         
         network.verbosity(0);
         
@@ -55,15 +54,13 @@ int main(int argc, char** argv) {
         bool pool_wta = false;
 
         /// creating the layers
-        network.make2dLayer<hummus::Input>(32, 32, 1, {}, nullptr); // input layer
-        network.makeConvolutionalLayer<hummus::LIF>(network.getLayers()[0], 5, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100, 4, {&ti_stdp}, &step, homeostasis, 20, 10, conv_wta, burst); // first convolution
-        network.makePoolingLayer<hummus::LIF>(network.getLayers()[1], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // first pooling
-        network.makeConvolutionalLayer<hummus::LIF>(network.getLayers()[2], 5, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100, 8, {&ti_stdp}, &step, homeostasis, 100, 10, conv_wta, burst); // second convolution
-        network.makePoolingLayer<hummus::LIF>(network.getLayers()[3], hummus::Normal(1, 0), 100, {}, &step, false, 20, 10, pool_wta, false); // second pooling
-//        network.makeLayer<hummus::LIF>(<#int _numberOfNeurons#>, <#std::vector<Addon *> _addons#>, <#Args &&args...#>)
+        auto pixel_grid = network.makeGrid<hummus::Input>(32, 32, 1, {}); // input layer
+        auto conv_one = network.makeGrid<hummus::LIF>(pixel_grid, 4, 5, 1, {&ti_stdp}, homeostasis, 20, 10, 10, conv_wta, burst); // first convolution
+        auto pool_one = network.makeSubsampledGrid<hummus::LIF>(conv_one, {}, false, 20, 10, 10, pool_wta, false); // first pooling
+        auto conv_two = network.makeGrid<hummus::LIF>(pool_one, 8, 5, 1, {&ti_stdp}, homeostasis, 100, 50, 10, conv_wta, burst); // second convolution
+        auto pool_two = network.makeSubsampledGrid<hummus::LIF>(conv_two, {}, false, 20, 10, 10, pool_wta, false); // second pooling
         
         /// connecting the layers
-        network.allToAll(network.getLayers()[4], network.getLayers()[5], hummus::Normal(0.6, 0.1, 0, 0, 0, 1));
         
         pLog.activate_for(network.getLayers()[5].neurons);
         weightMap1.activate_for(network.getLayers()[1].neurons);
@@ -85,7 +82,6 @@ int main(int argc, char** argv) {
         hummus::Network network;
         
         auto& ti_stdp = network.makeAddon<hummus::TimeInvariantSTDP>(); // time-invariant STDP learning rule
-        auto& step = network.makeSynapticKernel<hummus::Step>(5); // step synaptic kernel
         
         network.verbosity(0);
         
@@ -95,11 +91,13 @@ int main(int argc, char** argv) {
         bool burst = false;
         
         /// creating the layers
-        network.make2dLayer<hummus::Input>(32, 32, 1, {}, nullptr); // input layer
-        network.makeLayer<hummus::LIF>(100, {&ti_stdp}, &step, homeostasis, 20, 10, wta, burst, 20, 0, 40, 1, -50, -70, 100); // hidden layer with STDP
+        auto pixel_grid = network.makeGrid<hummus::Input>(32, 32, 1, {}); // input layer
+        auto output = network.makeLayer<hummus::LIF>(100, {&ti_stdp}, homeostasis, 20, 10, 10, wta, burst); // output layer with STDP
 
+        //float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70
+        
         /// connecting the layers
-        network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.6, 0.1, 0, 0, 0, 1));
+        network.allToAll<hummus::Pulse>(pixel_grid, output, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100);
         
         /// Reading data
         hummus::DataParser dataParser;
@@ -113,7 +111,7 @@ int main(int argc, char** argv) {
         network.turnOffLearning();
 
         auto& simpleTrainingPLog = network.makeAddon<hummus::PotentialLogger>("simpleTrainingPLog.bin");
-        simpleTrainingPLog.activate_for(network.getLayers()[1].neurons);
+        simpleTrainingPLog.activate_for(output.neurons);
 
         network.run(&trainingData, 0);
         
@@ -121,7 +119,7 @@ int main(int argc, char** argv) {
         network.turnOffLearning();
 
         auto& simpleTestPLog = network.makeAddon<hummus::PotentialLogger>("simpleTestPLog.bin");
-        simpleTestPLog.activate_for(network.getLayers()[1].neurons);
+        simpleTestPLog.activate_for(output.neurons);
 
         network.run(&testData, 0);
         

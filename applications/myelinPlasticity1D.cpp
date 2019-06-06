@@ -21,7 +21,7 @@
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/synapticKernels/exponential.hpp"
+#include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
     
     //  ----- NETWORK PARAMETERS -----
 	float potentialDecay = 20;
+    float currentDecay = 10;
     int inputNeurons = 10;
     int layer1Neurons = 4;
 	
@@ -51,13 +52,11 @@ int main(int argc, char** argv) {
 	auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
     
     //  ----- CREATING THE NETWORK -----
-    auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
-	
-    network.makeLayer<hummus::Input>(inputNeurons, {});
-    network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, &exponential, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
+    auto input = network.makeLayer<hummus::Input>(inputNeurons, {});
+    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, homeostasis, potentialDecay, currentDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(0.1, 0, 5, 3));
+    network.allToAll<hummus::Exponential>(input, output, hummus::Normal(0.1, 0, 5, 3), 100);
     
     //  ----- DISPLAY SETTINGS -----
 	display.setTimeWindow(5000);

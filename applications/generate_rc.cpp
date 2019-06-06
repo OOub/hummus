@@ -15,16 +15,16 @@
 
 #include "../source/core.hpp"
 #include "../source/dataParser.hpp"
-#include "../source/synapticKernels/step.hpp"
+#include "../source/synapses/pulse.hpp"
 #include "../source/randomDistributions/cauchy.hpp"
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
 
 int main(int argc, char** argv) {
-    if (argc < 19) {
+    if (argc < 21) {
         std::cout << "The application received " << argc << " arguments" << std::endl;
-        throw std::runtime_error(std::to_string(argc).append(" received. Expecting 19 arguments"));
+        throw std::runtime_error(std::to_string(argc).append(" received. Expecting 21 arguments"));
     }
 
     // ----- RESERVOIR PARAMETERS -----
@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
     std::cout << "Stay connection probability: " << std::setw(static_cast<int>(clean_cout-std::string("Stay connection probability: ").size())) << argv[10] << std::endl;
 	
     // current step function reset value (integration time)
-    float resetCurrent = std::atof(argv[11]);
-    std::cout << "Reset current duration " << std::setw(static_cast<int>(clean_cout-std::string("Reset current duration ").size())) << argv[11] << std::endl;
+    float decayCurrent = std::atof(argv[11]);
+    std::cout << "Current decay time " << std::setw(static_cast<int>(clean_cout-std::string("Current decay time ").size())) << argv[11] << std::endl;
 	
     // time constant for membrane potential (decay)
     float decayPotential = std::atof(argv[12]);
@@ -102,10 +102,22 @@ int main(int argc, char** argv) {
     std::string reservoirWeightFile = argv[18];
     std::cout << "reservoir weights file: " << std::setw(static_cast<int>(clean_cout-std::string("reservoir weights file: ").size())) << argv[18] << std::endl;
     
+    // input weight matrix filename
+    std::string inputDelayFile = argv[19];
+    std::cout << "input delay file: " << std::setw(static_cast<int>(clean_cout-std::string("input delay file: ").size())) << argv[17] << std::endl;
+    
+    // reservoir weight matrix filename
+    std::string reservoirDelayFile = argv[20];
+    std::cout << "reservoir delay file: " << std::setw(static_cast<int>(clean_cout-std::string("reservoir delay file: ").size())) << argv[18] << std::endl;
+    
+    
     //  ----- READING WEIGHT MATRIX FOMR .TXT FILE -----
     hummus::DataParser parser;
-    auto inputWeightMatrix = parser.readWeightMatrix(inputWeightFile);
-    auto reservoirWeightMatrix = parser.readWeightMatrix(reservoirWeightFile);
+    auto inputWeightMatrix = parser.readConnectivityMatrix(inputWeightFile);
+    auto reservoirWeightMatrix = parser.readConnectivityMatrix(reservoirWeightFile);
+    
+    auto inputDelayMatrix = parser.readConnectivityMatrix(inputDelayFile);
+    auto reservoirDelayMatrix = parser.readConnectivityMatrix(reservoirDelayFile);
     
     //  ----- CREATING THE NETWORK -----
     
@@ -114,28 +126,25 @@ int main(int argc, char** argv) {
     // network initialisation
     hummus::Network network;
     
-    // initialise synaptic kernel
-    auto& step = network.makeSynapticKernel<hummus::Step>(resetCurrent);
-    
     // pixel grid layer
-    network.make2dLayer<hummus::Input>(gridWidth, gridHeight, 1, {}, nullptr);
+    auto pixel_grid = network.makeGrid<hummus::Input>(gridWidth, gridHeight, 1, {});
     
     if (useMatrix) {
         // create reservoir layer
-        network.makeLayer<hummus::LIF>(numberOfNeurons, {}, &step, homeostasis, decayPotential, refractoryPeriod, wta);
+        auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, decayCurrent, refractoryPeriod, wta);
         
         // connecting input according to weight matrix
-        network.weightMatrix(network.getLayers()[0], network.getLayers()[1], inputWeightMatrix, hummus::Normal(0, 0, 0, 0));
+        network.connectivityMatrix<hummus::Pulse>(pixel_grid, reservoir, inputWeightMatrix, inputDelayMatrix);
         
         // connecting reservoir according to weight matrix
-        network.weightMatrix(network.getLayers()[1], network.getLayers()[1], reservoirWeightMatrix, hummus::Normal(0, 0, 0, 0));
+        network.connectivityMatrix<hummus::Pulse>(reservoir, reservoir, reservoirWeightMatrix, reservoirDelayMatrix);
         
     } else {
         // reservoir layer
-        network.makeReservoir<hummus::LIF>(numberOfNeurons, hummus::Normal(weightMean, weightStdDev), feedforwardProbability, feedbackProbability, selfExcitationProbability, &step, homeostasis, decayPotential, refractoryPeriod, wta);
+        auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, decayCurrent, refractoryPeriod, wta);
         
         // connect pixel grid to the reservoir in an all to all fashion
-        network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0));
+        network.reservoir<hummus::Pulse>(reservoir, hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0), feedforwardProbability, feedbackProbability, selfExcitationProbability);
     }
     
     std::cout << "\nsaving network into rcNetwork.json file..." << std::endl;

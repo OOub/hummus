@@ -25,12 +25,13 @@
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/IF.hpp"
 
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/addons/potentialLogger.hpp"
 #include "../source/addons/classificationLogger.hpp"
 #include "../source/addons/myelinPlasticityLogger.hpp"
+#include "../source/addons/weightMaps.hpp"
+#include "../source/addons/sql_example.hpp"
 #include "../source/addons/analysis.hpp"
 
 #include "../source/learningRules/myelinPlasticity.hpp"
@@ -38,7 +39,9 @@
 #include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/stdp.hpp"
 
-#include "../source/synapticKernels/exponential.hpp"
+#include "../source/synapses/dirac.hpp"
+#include "../source/synapses/pulse.hpp"
+#include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {
 
@@ -53,16 +56,13 @@ int main(int argc, char** argv) {
     
     //  ----- CREATING THE NETWORK -----
     hummus::DataParser parser;
-
-    // creating a synaptic kernel
-    auto& exponential = network.makeSynapticKernel<hummus::Exponential>();
-
+    
     // creating layers of neurons
-    network.makeLayer<hummus::Input>(1, {});
-    network.makeLayer<hummus::LIF>(2, {}, &exponential, false, 20, 3, true);
+    auto input = network.makeLayer<hummus::Input>(1, {});
+    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll(network.getLayers()[0], network.getLayers()[1], hummus::Normal(1./2, 0));
+    network.allToAll<hummus::Exponential>(input, output, hummus::Normal(1./2, 0), 100);
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);

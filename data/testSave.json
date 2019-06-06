@@ -3,26 +3,16 @@
         "layers": [
             {
                 "height": -1,
-                "learningRules": [],
                 "neuronNumber": 1,
                 "neuronType": 0,
                 "sublayerNumber": 1,
-                "synapticKernels": [],
                 "width": -1
             },
             {
                 "height": -1,
-                "learningRules": [],
                 "neuronNumber": 2,
                 "neuronType": 1,
                 "sublayerNumber": 1,
-                "synapticKernels": [
-                    {
-                        "decayCurrent": 10.0,
-                        "gaussianStdDev": 0.0,
-                        "type": 1
-                    }
-                ],
                 "width": -1
             }
         ],
@@ -30,18 +20,20 @@
             {
                 "Type": 0,
                 "XYCoordinates": [
-                    -1,
-                    -1
+                    -1.0,
+                    -1.0
                 ],
                 "axonalSynapses": [
                     {
                         "delay": 0.0,
                         "postNeuronID": 1,
+                        "type": 1,
                         "weight": 0.5
                     },
                     {
                         "delay": 0.0,
                         "postNeuronID": 2,
+                        "type": 1,
                         "weight": 0.5
                     }
                 ],
@@ -60,22 +52,22 @@
             {
                 "Type": 1,
                 "XYCoordinates": [
-                    -1,
-                    -1
+                    -1.0,
+                    -1.0
                 ],
                 "axonalSynapses": [],
                 "burstingActivity": false,
+                "decayCurrent": 10.0,
                 "decayHomeostasis": 20.0,
                 "decayPotential": 20.0,
-                "decayWeight": 0.0,
                 "dendriticSynapses": [
                     {
                         "delay": 0.0,
+                        "type": 1,
                         "weight": 0.5
                     }
                 ],
                 "eligibilityDecay": 20.0,
-                "externalCurrent": 100.0,
                 "homeostasis": false,
                 "homeostasisBeta": 0.10000000149011612,
                 "layerID": 1,
@@ -93,22 +85,22 @@
             {
                 "Type": 1,
                 "XYCoordinates": [
-                    -1,
-                    -1
+                    -1.0,
+                    -1.0
                 ],
                 "axonalSynapses": [],
                 "burstingActivity": false,
+                "decayCurrent": 10.0,
                 "decayHomeostasis": 20.0,
                 "decayPotential": 20.0,
-                "decayWeight": 0.0,
                 "dendriticSynapses": [
                     {
                         "delay": 0.0,
+                        "type": 1,
                         "weight": 0.5
                     }
                 ],
                 "eligibilityDecay": 20.0,
-                "externalCurrent": 100.0,
                 "homeostasis": false,
                 "homeostasisBeta": 0.10000000149011612,
                 "layerID": 1,

@@ -25,16 +25,12 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		STDP(float _A_plus=1, float _A_minus=0.4, float _tau_plus=20, float _tau_minus=40, float _leak_time_constant=1, float _leak_scaling_factor=1, float _leak_lower_bound = 0.1, float _leak_upper_bound = 2) :
+		STDP(float _A_plus=1, float _A_minus=0.4, float _tau_plus=20, float _tau_minus=40) :
                 A_plus(_A_plus),
                 A_minus(_A_minus),
                 tau_plus(_tau_plus),
                 preLayer(-1),
-                tau_minus(_tau_minus),
-                leak_time_constant(_leak_time_constant),
-                leak_scaling_factor(_leak_scaling_factor),
-                leak_lower_bound(_leak_lower_bound),
-                leak_upper_bound(_leak_upper_bound) {}
+                tau_minus(_tau_minus) {}
 		
 		// ----- PUBLIC METHODS -----
         // select one neuron to track by its index
@@ -47,19 +43,19 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-		virtual void onStart(Network* network) override  {
+		virtual void onStart(Network* network) override {
 			for (auto& n: network->getNeurons()) {
 				for (auto& addon: n->getRelevantAddons()) {
 					if (addon == this) {
-                        n->addLearningInfo(std::pair<int, std::vector<float>>(1, {A_plus, A_minus, tau_plus, tau_minus, leak_time_constant, leak_scaling_factor, leak_lower_bound, leak_upper_bound}));
 						if (n->getLayerID() > 0) {
                             postLayer = n->getLayerID();
-                            
                             // making sure we don't add learning on a parallel layer
-                            for (auto& preSynapse: n->getPreSynapses()) {
-                                if (preSynapse->preNeuron->getLayerID() < preSynapse->postNeuron->getLayerID()) {
+                            for (auto& dendrite: n->getDendriticTree()) {
+                                auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
+                                auto& d_postsynapticNeuron = network->getNeurons()[dendrite->getPostsynapticNeuronID()];
+                                if (d_presynapticNeuron->getLayerID() < d_postsynapticNeuron->getLayerID()) {
                                     // finding the closest presynaptic layer without overly relying on layerIDs
-                                    preLayer = std::max(preSynapse->preNeuron->getLayerID(), preLayer);
+                                    preLayer = std::max(d_presynapticNeuron->getLayerID(), preLayer);
                                 }
                             }
 						} else {
@@ -74,39 +70,24 @@ namespace hummus {
 			}
 		}
 		
-		virtual void learn(double timestamp, synapse* a, Network* network) override {
+		virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             // LTD whenever a neuron from the presynaptic layer spikes
-            if (a->postNeuron->getLayerID() == preLayer) {
-                for (auto& postSynapse: a->postNeuron->getPostSynapses()) {
-                    // if a postNeuron fired, the deltaT (preTime - postTime) should be positive
+            if (postsynapticNeuron->getLayerID() == preLayer) {
+                for (auto& axonTerminal: postsynapticNeuron->getAxonTerminals()) {
+                    auto& at_postsynapticNeuron = network->getNeurons()[axonTerminal->getPostsynapticNeuronID()];
+                    
+                    // if a postsynapticNeuron fired, the deltaT (presynaptic time - postsynaptic time) should be positive
                     // ignoring inhibitory synapses
-                    if (postSynapse->weight >=0 && postSynapse->weight <= 1 && postSynapse->postNeuron->getEligibilityTrace() > 0.1) {
-                        float postTrace = (- A_minus * std::exp(-(timestamp - postSynapse->postNeuron->getPreviousSpikeTime())/tau_minus)) * postSynapse->weight * (1 - postSynapse->weight);
+                    if (axonTerminal->getWeight() >=0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getEligibilityTrace() > 0.1) {
+                        float postTrace = (- A_minus * std::exp(-(timestamp - at_postsynapticNeuron->getPreviousSpikeTime())/tau_minus)) * axonTerminal->getWeight() * (1 - axonTerminal->getWeight());
                         
-                        postSynapse->weight += postTrace;
+                        axonTerminal->setWeight(postTrace);
                         
                         if (network->getVerbose() >= 1) {
                             std::cout << "LTD weight change " << postTrace << std::endl;
                         }
 						
-                        // calculating leak adaptation
-                        float previousLeak = a->postNeuron->getAdaptation();
-						float leakAdaptation = previousLeak - (- leak_scaling_factor * std::exp( - leak_time_constant * (postTrace * postTrace)) + leak_scaling_factor);
-						
-						// adding hard constrains
-						if (leakAdaptation < leak_lower_bound) {
-							leakAdaptation = leak_lower_bound;
-						}
-						if (leakAdaptation > leak_upper_bound) {
-							leakAdaptation = leak_upper_bound;
-						}
-						
-						a->postNeuron->setAdaptation(leakAdaptation);
-						if (network->getVerbose() >= 1) {
-							std::cout << "LTD leak adaptation " << previousLeak << " " << leakAdaptation << std::endl;
-						}
-						
-                    } else if (postSynapse->weight > 1) {
+                    } else if (axonTerminal->getWeight() > 1) {
                         if (network->getVerbose() >= 1) {
                             std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
                         }
@@ -115,36 +96,20 @@ namespace hummus {
             }
 			
 			// LTP whenever a neuron from the postsynaptic layer spikes
-			else if (a->postNeuron->getLayerID() == postLayer) {
-				for (auto& preSynapse: a->postNeuron->getPreSynapses()) {
-					// if a preNeuron already fired, the deltaT (preTime - postTime) should be negative
+			else if (postsynapticNeuron->getLayerID() == postLayer) {
+				for (auto& dendrite: postsynapticNeuron->getDendriticTree()) {
+                    auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
+					// if a presynapticNeuron already fired, the deltaT (presynaptic time - postsynaptic time) should be negative
                     // ignoring inhibitory synapses
-					if (preSynapse->weight >= 0 && preSynapse->weight <= 1 && preSynapse->preNeuron->getEligibilityTrace() > 0.1) {
-						float preTrace = (A_plus * std::exp((preSynapse->preNeuron->getPreviousSpikeTime() - timestamp)/tau_plus)) * preSynapse->weight * (1 - preSynapse->weight);
-                        preSynapse->weight += preTrace;
+					if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getEligibilityTrace() > 0.1) {
+						float preTrace = (A_plus * std::exp((d_presynapticNeuron->getPreviousSpikeTime() - timestamp)/tau_plus)) * dendrite->getWeight() * (1 - dendrite->getWeight());
+                        dendrite->setWeight(preTrace);
                         
                         if (network->getVerbose() >= 1) {
                             std::cout << "LTP weight change " << preTrace << std::endl;
                         }
 						
-                        // calculating leak adaptation
-                        float previousLeak = a->postNeuron->getAdaptation();
-						float leakAdaptation = previousLeak + (- leak_scaling_factor * std::exp( - leak_time_constant * (preTrace * preTrace)) + leak_scaling_factor);
-						
-						// adding hard constrains
-						if (leakAdaptation < leak_lower_bound) {
-							leakAdaptation = leak_lower_bound;
-						}
-						if (leakAdaptation > leak_upper_bound) {
-							leakAdaptation = leak_upper_bound;
-						}
-						
-						a->postNeuron->setAdaptation(leakAdaptation);
-						if (network->getVerbose() >= 1) {
-							std::cout << "LTP leak adaptation " << previousLeak << " " << leakAdaptation << std::endl;
-						}
-						
-                    } else if (preSynapse->weight > 1) {
+                    } else if (dendrite->getWeight() > 1) {
                         if (network->getVerbose() >= 1) {
                             std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
                         }
@@ -162,9 +127,5 @@ namespace hummus {
 		float                A_minus;
 		float                tau_plus;
 		float                tau_minus;
-        float                leak_scaling_factor;
-        float                leak_time_constant;
-        float                leak_lower_bound;
-		float                leak_upper_bound;
 	};
 }

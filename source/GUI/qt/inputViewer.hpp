@@ -57,15 +57,15 @@ namespace hummus {
         virtual ~InputViewer(){}
 		
     	// ----- PUBLIC INPUTVIEWER METHODS -----
-		void handleData(double timestamp, synapse* a, Network* network) {
+		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
             maxX = timestamp;
-            if (a->postNeuron->getInitialSynapse().postNeuron) {
-                if (a->postNeuron->getInitialSynapse().postNeuron->getSublayerID() == sublayerTracker) {
+            if (s->getPresynapticNeuronID() == -1) {
+                if (postsynapticNeuron->getSublayerID() == sublayerTracker) {
     
                     while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
                     if (!isClosed) {
-                        points.append(QPointF(timestamp, a->postNeuron->getNeuronID()));
-                        maxY = std::max(static_cast<float>(maxY), static_cast<float>(a->postNeuron->getNeuronID()));
+                        points.append(QPointF(timestamp, postsynapticNeuron->getNeuronID()));
+                        maxY = std::max(static_cast<float>(maxY), static_cast<float>(postsynapticNeuron->getNeuronID()));
                     } else {
                         points.clear();
                     }
