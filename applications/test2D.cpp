@@ -39,9 +39,9 @@ int main(int argc, char** argv) {
     auto output = network.makeLayer<hummus::LIF>(1, {});
 	
     //  ----- CONNECTING THE NEURONS -----
-    network.convolution<hummus::Exponential>(pixel_grid, convolution, hummus::Normal(), 100);
-    network.pooling<hummus::Exponential>(convolution, pooling, hummus::Normal(), 100);
-    network.allToAll<hummus::Exponential>(pooling, output, hummus::Normal(), 100);
+    network.convolution<hummus::Exponential>(pixel_grid, convolution, 1, hummus::Normal(), 100);
+    network.pooling<hummus::Exponential>(convolution, pooling, 1, hummus::Normal(), 100);
+    network.allToAll<hummus::Exponential>(pooling, output, 1, hummus::Normal(), 100);
     
     //  ----- DISPLAY SETTINGS -----
     display.setTimeWindow(100);

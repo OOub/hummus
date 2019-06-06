@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     auto direction = network.makeLayer<hummus::LIF>(50, {&mp}, direction_homeostasis, direction_potentialDecay, direction_currentDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
     
     // connecting input layer with the direction neurons
-    network.allToAll<hummus::Exponential>(input, direction, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
+    network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
     
     // neuron mask for loggers
     mp_log.activate_for(direction.neurons[0]);
