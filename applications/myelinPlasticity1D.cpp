@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
 
     network.turnOffLearning(80000);
     network.verbosity(1);
+    
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0.1);
 	

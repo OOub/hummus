@@ -58,42 +58,38 @@ namespace hummus {
                 auto& presynapticNeuron = network->getNeurons()[input->getPresynapticNeuronID()];
                 
                 // ignoring inhibitory and dead synapses, also making sure to only take the recently active synapses
-                if (input->getWeight() > 0 && presynapticNeuron->getEligibilityTrace() > 0.1) {
-                    input_times.emplace_back(input->getPreviousInputTime());
+                if (input->getWeight() >= 0 && presynapticNeuron->getEligibilityTrace() > 0.1) {
+                    input_times.emplace_back(input->getPreviousInputTime() + input->getDelay());
                     input_synapses.emplace_back(input);
                 }
             }
-            
-            // calculating the optimal time for fast convergence
-            auto t_desired = compute_median(input_times);
             
             for (auto i=0; i<input_synapses.size(); i++) {
                 auto& presynapticNeuron = network->getNeurons()[input_synapses[i]->getPresynapticNeuronID()];
                 
                 // compute time differences
-                double time_difference = timestamp - input_times[i] - input_synapses[i]->getDelay();
+                double time_difference = timestamp - input_times[i];
                 
                 // change delays according to the time differences
                 float delta_delay = 0;
                 if (time_difference > 0) {
-                    std::cout << n->getCurrent() << std::endl;
                     delta_delay = learning_rate* (1/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-time_difference/n->getDecayCurrent()) - std::exp(-time_difference/n->getDecayPotential()));
                     input_synapses[i]->setDelay(delta_delay);
                     
                     if (network->getVerbose() >= 1) {
-                        std::cout << timestamp << " " << presynapticNeuron->getNeuronID() << " " << n->getNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << std::endl;
+                        std::cout << timestamp << " " << presynapticNeuron->getNeuronID() << " " << n->getNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input_synapses[i]->getDelay() << "synaptic efficacy: " << input_synapses[i]->getSynapticEfficacy() << std::endl;
                     }
                 } else if (time_difference < 0) {
                     delta_delay = - learning_rate * (1/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(time_difference/n->getDecayCurrent()) - std::exp(time_difference/n->getDecayPotential()));
                     input_synapses[i]->setDelay(delta_delay);
 
                     if (network->getVerbose() >= 1) {
-                        std::cout << timestamp << " " << presynapticNeuron->getNeuronID() << " " << n->getNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << std::endl;
+                        std::cout << timestamp << " " << presynapticNeuron->getNeuronID() << " " << n->getNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input_synapses[i]->getDelay() << "synaptic efficacy: " << input_synapses[i]->getSynapticEfficacy() << std::endl;
                     }
                 }
                 
-                // change learning rate depending on the convergence
-//                input_synapses[i]->setSynapticEfficacy(-std::exp(-time_difference * time_difference) + 1);
+                // decreasing synaptic efficacy depending on the convergence - synapse becomes less efficient at learning
+                input_synapses[i]->setSynapticEfficacy(-std::exp(-time_difference * time_difference)+1, false);
                 
                 // modify the weights and normalise according to the gaussian
             }
@@ -169,26 +165,6 @@ namespace hummus {
 //                    dynamic_cast<MyelinPlasticityLogger*>(addon.get())->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, timeDifferences, plasticCoordinates);
 //                }
 //            }
-        }
-		
-        double compute_median(std::vector<double> input_times) {
-            if (input_times.size() % 2 == 0) {
-                const auto median_it1 = input_times.begin() + input_times.size() / 2 - 1;
-                const auto median_it2 = input_times.begin() + input_times.size() / 2;
-                
-                std::nth_element(input_times.begin(), median_it1 , input_times.end());
-                const auto e1 = *median_it1;
-                
-                std::nth_element(input_times.begin(), median_it2 , input_times.end());
-                const auto e2 = *median_it2;
-                
-                return (e1 + e2) / 2;
-                
-            } else {
-                const auto median_it = input_times.begin() + input_times.size() / 2;
-                std::nth_element(input_times.begin(), median_it , input_times.end());
-                return *median_it;
-            }
         }
         
         inline float gaussian_distribution(float x, float mu, float sigma) {
