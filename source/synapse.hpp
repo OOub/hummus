@@ -85,7 +85,7 @@ namespace hummus {
         
         void setDelay(float newDelay, bool increment=true) {
             if (increment) {
-                delay += newDelay;
+                delay += synapticEfficacy * newDelay;
             } else {
                 delay = newDelay;
             }
@@ -97,7 +97,7 @@ namespace hummus {
         
         void setSynapticEfficacy(float newEfficacy, bool increment=true) {
             if (increment) {
-                synapticEfficacy += newEfficacy;
+                synapticEfficacy += synapticEfficacy * newEfficacy;
             } else{
                 synapticEfficacy = newEfficacy;
             }

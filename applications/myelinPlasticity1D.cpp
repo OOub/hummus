@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	bool homeostasis = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
+	auto& mp = network.makeAddon<hummus::MyelinPlasticity>(5);
     
     //  ----- CREATING THE NETWORK -----
     auto input = network.makeLayer<hummus::Input>(inputNeurons, {});
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 	display.trackNeuron(11);
 
     network.turnOffLearning(80000);
-
+    network.verbosity(1);
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0.1);
 	
