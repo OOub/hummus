@@ -21,6 +21,7 @@
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/input.hpp"
 #include "../source/neurons/LIF.hpp"
+#include "../source/neurons/decisionMaking.hpp"
 #include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {

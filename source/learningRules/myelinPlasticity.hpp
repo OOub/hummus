@@ -105,12 +105,11 @@ namespace hummus {
             for (auto& input: n->getDendriticTree()) {
                 if (input->getWeight() > 0) {
                     input->setWeight(input->getWeight() / weight_normaliser, false);
-                    std::cout << input->getPresynapticNeuronID() << "->" << input->getPostsynapticNeuronID() << " weight: " << input->getWeight() << std::endl;
+                    if (network->getVerbose() >= 1) {
+                        std::cout << input->getPresynapticNeuronID() << "->" << input->getPostsynapticNeuronID() << " weight: " << input->getWeight() << std::endl;
+                    }
                 }
             }
-            
-            /// DEPRESSION ON THE LOSER NEURONS TO FURTHER SPECIALISE THE PATTERN
-            
         }
         
         inline float gaussian_distribution(float x, float mu, float sigma) {

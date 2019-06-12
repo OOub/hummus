@@ -304,10 +304,20 @@ namespace hummus {
             
             // making sure in a new run the classLabel isn't overwritten
             if (!network->getPreTrainingLabelAssignment() && classLabel == "") {
-                // associating the appropriate label to the decision-making neuron
-                auto it = std::max_element(labelTracker.begin(), labelTracker.end());
-                auto idx = std::distance(labelTracker.begin(), it);
-                classLabel = network->getUniqueLabels()[idx];
+                std::vector<int> tracker_sum(network->getUniqueLabels().size(), 0);
+                for (auto decision_neurons: network->getLayers()[layerID].sublayers[sublayerID].neurons) {
+                    auto tracker = dynamic_cast<DecisionMaking*>(network->getNeurons()[decision_neurons].get())->getLabelTracker();
+                    std::transform(tracker_sum.begin(), tracker_sum.end(), tracker.begin(), tracker_sum.begin(), std::plus<int>());
+                }
+                
+                // getting population average for labelTracker results, in order to assign a class
+                auto it = std::max_element(tracker_sum.begin(), tracker_sum.end());
+                auto idx = std::distance(tracker_sum.begin(), it);
+                
+                // first neuron in the loop will change the label for all neurons in the same sublayer as the current one
+                for (auto decision_neurons: network->getLayers()[layerID].sublayers[sublayerID].neurons) {
+                    dynamic_cast<DecisionMaking*>(network->getNeurons()[decision_neurons].get())->setClassLabel(network->getUniqueLabels()[idx]);
+                }
                 
                 if (network->getVerbose() == 2) {
                     std::cout << neuronID << " specialised to the " << classLabel << " label" << std::endl;
@@ -371,6 +381,10 @@ namespace hummus {
 		void setClassLabel(std::string newLabel) {
 			classLabel = newLabel;
 		}
+        
+        std::vector<int> getLabelTracker() const {
+            return labelTracker;
+        }
         
     protected:
     
