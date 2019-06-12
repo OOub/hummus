@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 	
-	auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", false, 0);
+	auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", true, 10);
     
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
@@ -56,11 +56,11 @@ int main(int argc, char** argv) {
     auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, homeostasis, potentialDecay, currentDecay, 3, wta, burst, eligibilityDecay);
 	
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0.02, 5, 3), 100);
     
     //  ----- DISPLAY SETTINGS -----
 	display.setTimeWindow(5000);
-	display.trackNeuron(11);
+	display.trackNeuron(10);
 
     network.turnOffLearning(80000);
     network.verbosity(1);

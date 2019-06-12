@@ -54,7 +54,11 @@ namespace hummus {
         double getPreviousInputTime() const {
             return previousInputTime;
         }
-
+        
+        void setPreviousInputTime(double newTime) {
+            previousInputTime = newTime;
+        }
+        
         float getSynapseTimeConstant() const {
             return synapseTimeConstant;
         }
@@ -73,7 +77,7 @@ namespace hummus {
         
         void setWeight(float newWeight, bool increment=true) {
             if (increment) {
-                weight += synapticEfficacy * newWeight;
+                weight += newWeight;
             } else {
                 weight = newWeight;
             }
