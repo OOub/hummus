@@ -16,7 +16,7 @@
 #include "../source/core.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"
 #include "../source/synapses/pulse.hpp"
 #include "../source/addons/potentialLogger.hpp"
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     auto& mp = network.makeAddon<hummus::MyelinPlasticity>(10, 0.1);
 
     // input layer with 8 channels for each sensor
-    auto input = network.makeCircle<hummus::Input>(8, {0.3}, {});
+    auto input = network.makeCircle<hummus::Parrot>(8, {0.3}, {});
     
     /// ----- DIRECTION LAYER -----
     

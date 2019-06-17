@@ -30,7 +30,6 @@
 #include "../source/addons/potentialLogger.hpp"
 #include "../source/addons/classificationLogger.hpp"
 #include "../source/addons/weightMaps.hpp"
-#include "../source/addons/sql_example.hpp"
 #include "../source/addons/analysis.hpp"
 
 #include "../source/learningRules/myelinPlasticity.hpp"

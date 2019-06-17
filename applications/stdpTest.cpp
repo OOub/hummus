@@ -20,7 +20,7 @@
 #include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/synapses/exponential.hpp"
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     auto& stdp = network.makeAddon<hummus::STDP>();
 	
 	//  ----- CREATING THE NETWORK -----
-    auto input = network.makeLayer<hummus::Input>(inputNeurons, {});
+    auto input = network.makeLayer<hummus::Parrot>(inputNeurons, {});
     auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, false, potentialDecay, currentDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----

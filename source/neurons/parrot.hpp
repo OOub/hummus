@@ -62,10 +62,6 @@ namespace hummus {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
                 }
                 
-                if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
-                }
-                
                 for (auto& addon: relevantAddons) {
                     addon->neuronFired(timestamp, s, this, network);
                 }
@@ -109,10 +105,6 @@ namespace hummus {
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
-                }
-                
-                if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
                 }
                 
                 for (auto& addon: relevantAddons) {

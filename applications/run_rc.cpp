@@ -15,7 +15,7 @@
 #include "../source/core.hpp"
 #include "../source/builder.hpp"
 #include "../source/dataParser.hpp"
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/addons/potentialLogger.hpp"

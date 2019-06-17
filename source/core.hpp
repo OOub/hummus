@@ -30,7 +30,10 @@
 #include <deque>
 
 // external Dependencies
+#ifdef TBB
 #include "tbb/tbb.h"
+#endif
+
 #include "dependencies/json.hpp"
 
 // random distributions
@@ -934,50 +937,6 @@ namespace hummus {
                         }
                     }
                 }
-            }
-        }
-        
-        // interconnecting a layer with soft winner-takes-all synapses, using negative weights
-        template <typename T, typename... Args>
-        void lateralInhibition(layer l, int number_of_synapses, float _weightMean, float _weightstdev, int probability, Args&&... args) {
-            if (_weightMean != 0) {
-                if (_weightMean > 0 && verbose != 0) {
-                    std::cout << "lateral inhibition synapses must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
-                }
-                
-                // generating normal distribution
-                std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                
-                for (auto& sub: l.sublayers) {
-                    // intra-sublayer soft WTA
-                    for (auto& preNeurons: sub.neurons) {
-                        for (auto& postNeurons: sub.neurons) {
-                            if (preNeurons != postNeurons) {
-                                for (auto i=0; i<number_of_synapses; i++) {
-                                    neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), probability, std::forward<Args>(args)...);
-                                }
-                            }
-                        }
-                    }
-                    
-                    // inter-sublayer soft WTA
-                    for (auto& subToInhibit: l.sublayers) {
-                        if (sub.ID != subToInhibit.ID) {
-                            for (auto& preNeurons: sub.neurons) {
-                                for (auto& postNeurons: subToInhibit.neurons) {
-                                    if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
-                                        for (auto i=0; i<number_of_synapses; i++) {
-                                            neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), 0, std::forward<Args>(args)...);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-            } else {
-                throw std::logic_error("lateral inhibition synapses cannot have a null weight");
             }
         }
 

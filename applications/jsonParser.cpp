@@ -17,7 +17,7 @@
 #include "../source/randomDistributions/normal.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"
 
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/LIF.hpp"
 

@@ -18,7 +18,7 @@
 #include "../source/synapses/pulse.hpp"
 #include "../source/randomDistributions/cauchy.hpp"
 #include "../source/randomDistributions/normal.hpp"
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/neurons/LIF.hpp"
 
 int main(int argc, char** argv) {
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     hummus::Network network;
     
     // pixel grid layer
-    auto pixel_grid = network.makeGrid<hummus::Input>(gridWidth, gridHeight, 1, {});
+    auto pixel_grid = network.makeGrid<hummus::Parrot>(gridWidth, gridHeight, 1, {});
     
     if (useMatrix) {
         // create reservoir layer
