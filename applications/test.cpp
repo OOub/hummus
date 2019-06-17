@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 10, hummus::Normal(1./2, 0), 100);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0), 100);
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 
     //  ----- DISPLAY SETTINGS -----
     display.setTimeWindow(100);
-    display.trackNeuron(2);
+    display.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);

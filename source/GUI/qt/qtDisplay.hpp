@@ -92,6 +92,8 @@ namespace hummus {
 		}
 
         void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            inputviewer->handleTimestep(timestamp);
+            outputviewer->handleTimestep(timestamp);
             potentialviewer->handleData(timestamp, s, postsynapticNeuron, network);
         }
         
