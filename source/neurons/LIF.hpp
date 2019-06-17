@@ -114,6 +114,7 @@ namespace hummus {
                             addon->incomingSpike(timestamp, s, this, network);
                         }
                     }
+                    
                     if (network->getMainThreadAddon()) {
                         network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
                     }
@@ -180,6 +181,7 @@ namespace hummus {
             
             // updating the timestamp when a synapse was propagating a spike
             previousInputTime = timestamp;
+            s->setPreviousInputTime(timestamp);
 		}
 		
 		virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep) override {
@@ -226,6 +228,7 @@ namespace hummus {
                     
                     // updating the timestamp when a synapse was propagating a spike
                     previousInputTime = timestamp;
+                    s->setPreviousInputTime(timestamp);
                     
                     if (network->getVerbose() == 2) {
                         std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;

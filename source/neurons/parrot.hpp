@@ -1,12 +1,12 @@
 /*
- * input.hpp
+ * parrot.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 24/01/2019
  *
- * Information: input neurons take in spikes or events and instantly propagate them in the network. The potential does not decay.
+ * Information: Parrot neurons take in spikes or events and instantly propagate them in the network. The potential does not decay.
  *
  * NEURON TYPE 0 (in JSON SAVE FILE)
  */
@@ -17,16 +17,16 @@
 #include "../dependencies/json.hpp"
 
 namespace hummus {
-	class Input : public Neuron {
+	class Parrot : public Neuron {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Input(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
+		Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
                 active(true),
                 refractoryPeriod(_refractoryPeriod) {}
 		
-		virtual ~Input(){}
+		virtual ~Parrot(){}
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
         virtual void initialisation(Network* network) override {
@@ -201,6 +201,5 @@ namespace hummus {
         // ----- INPUT NEURON PARAMETERS -----
         float refractoryPeriod;
         bool  active;
-        
 	};
 }

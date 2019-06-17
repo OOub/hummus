@@ -395,7 +395,7 @@ namespace hummus {
         
         // overloading the makeLayer method specifically to handle decisionMaking neurons
         template <typename T, typename... Args>
-        layer makeLayer( std::string trainingLabelFilename, bool _preTrainingLabelAssignment, std::vector<Addon*> _addons, Args&&... args) {
+        layer makeLayer( std::string trainingLabelFilename, int neurons_per_population, bool _preTrainingLabelAssignment, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
             preTrainingLabelAssignment = _preTrainingLabelAssignment;
@@ -419,18 +419,34 @@ namespace hummus {
             }
             
             // add decision-making neurons
+            int counter = 0;
+            std::vector<sublayer> sublayers;
             std::vector<std::size_t> neuronsInLayer;
             if (preTrainingLabelAssignment) {
-                for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(make_unique<T>(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), uniqueLabels[k-shift], std::forward<Args>(args)...));
+                for (auto i=0; i<static_cast<int>(uniqueLabels.size()); i++) {
+                    std::vector<std::size_t> neuronsInSublayer;
+                    for (auto k=0+shift; k<neurons_per_population+shift; k++) {
+                        neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), uniqueLabels[i], std::forward<Args>(args)...));
+                        neuronsInSublayer.emplace_back(neurons.size()-1);
+                        neuronsInLayer.emplace_back(neurons.size()-1);
+                    }
+                    sublayers.emplace_back(sublayer{neuronsInSublayer, i});
                     
-                    neuronsInLayer.emplace_back(neurons.size()-1);
+                    // to shift the neuron IDs with the sublayers
+                    counter += neurons_per_population;
                 }
             } else {
-                for (auto k=0+shift; k<static_cast<int>(uniqueLabels.size())+shift; k++) {
-                    neurons.emplace_back(make_unique<T>(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), "", std::forward<Args>(args)...));
+                for (auto i=0; i<static_cast<int>(uniqueLabels.size()); i++) {
+                    std::vector<std::size_t> neuronsInSublayer;
+                    for (auto k=0+shift; k<neurons_per_population+shift; k++) {
+                        neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), "", std::forward<Args>(args)...));
+                        neuronsInSublayer.emplace_back(neurons.size()-1);
+                        neuronsInLayer.emplace_back(neurons.size()-1);
+                    }
+                    sublayers.emplace_back(sublayer{neuronsInSublayer, i});
                     
-                    neuronsInLayer.emplace_back(neurons.size()-1);
+                    // to shift the neuron IDs with the sublayers
+                    counter += neurons_per_population;
                 }
             }
             
@@ -440,7 +456,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, -1, -1, -1, -1});
             return layers.back();
         }
         

@@ -108,7 +108,7 @@ namespace hummus {
                         std::uniform_int_distribution<> uniformID(0, maxID);
                         
                         for (auto i=0; i<additiveSpikes; i++) {
-                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), static_cast<double>(uniformID(randomEngine)), -1, -1});
+                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), static_cast<double>(uniformID(randomEngine)), -1, -1, -1});
                         }
                     // two-dimensional data
                     } else if (dataType == 1){

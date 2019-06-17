@@ -54,7 +54,11 @@ namespace hummus {
         double getPreviousInputTime() const {
             return previousInputTime;
         }
-
+        
+        void setPreviousInputTime(double newTime) {
+            previousInputTime = newTime;
+        }
+        
         float getSynapseTimeConstant() const {
             return synapseTimeConstant;
         }
@@ -85,7 +89,7 @@ namespace hummus {
         
         void setDelay(float newDelay, bool increment=true) {
             if (increment) {
-                delay += newDelay;
+                delay += synapticEfficacy * newDelay;
             } else {
                 delay = newDelay;
             }

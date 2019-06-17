@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     auto& potential_log = network.makeAddon<hummus::PotentialLogger>("localisation_potential.bin");
     
     // delay learning rule
-    auto& mp = network.makeAddon<hummus::MyelinPlasticity>(1, 1, 1, 0.1);
+    auto& mp = network.makeAddon<hummus::MyelinPlasticity>(10, 0.1);
 
     // input layer with 8 channels for each sensor
     auto input = network.makeCircle<hummus::Input>(8, {0.3}, {});
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     /// ----- DIRECTION LAYER -----
     
     // layer that learns the delays
-    auto direction = network.makeLayer<hummus::LIF>(50, {&mp}, direction_homeostasis, direction_potentialDecay, direction_currentDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
+    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, direction_homeostasis, direction_potentialDecay, direction_currentDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
     
     // connecting input layer with the direction neurons
     network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     /// ----- DISTANCE LAYER -----
     
     // distance neuron
-    auto distance = network.makeCircle<hummus::LIF>(8, {0.3}, {});
+//    auto distance = network.makeCircle<hummus::LIF>(8, {0.3}, {});
     
     // connecting input layer with the distance neurons
     
@@ -79,20 +79,20 @@ int main(int argc, char** argv) {
     
     /// ----- RUNNING CALIBRATION -----
     
-    // reading the training data
+    // reading the calibration data
     hummus::DataParser parser;
     auto calibration = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/calibration_direction_only_100.txt", false);
     
     // run calibration
-    network.verbosity(1);
+    network.verbosity(0);
     network.run(&calibration, 0.1);
 
     // assigning labels to direction neurons
-    
-    // run test
-    auto test = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
-    network.turnOffLearning();
-    network.run(&test, 0.1);
+//    
+//    // run test
+//    auto test = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
+//    network.turnOffLearning();
+//    network.run(&test, 0.1);
     
     return 0;
 }

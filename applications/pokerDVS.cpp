@@ -124,7 +124,6 @@ int main(int argc, char** argv) {
         simpleTestPLog.activate_for(output.neurons);
 
         network.run(&testData, 0);
-        
     }
 
     //  ----- EXITING APPLICATION -----
