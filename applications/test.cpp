@@ -22,14 +22,13 @@
 #include "../source/GUI/qt/qtDisplay.hpp"
 #include "../source/GUI/puffin/puffinDisplay.hpp"
 
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/LIF.hpp"
 
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/addons/potentialLogger.hpp"
 #include "../source/addons/classificationLogger.hpp"
-#include "../source/addons/myelinPlasticityLogger.hpp"
 #include "../source/addons/weightMaps.hpp"
 #include "../source/addons/sql_example.hpp"
 #include "../source/addons/analysis.hpp"
@@ -58,7 +57,7 @@ int main(int argc, char** argv) {
     hummus::DataParser parser;
     
     // creating layers of neurons
-    auto input = network.makeLayer<hummus::Input>(1, {});
+    auto input = network.makeLayer<hummus::Parrot>(1, {});
     auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
@@ -71,7 +70,7 @@ int main(int argc, char** argv) {
 
     //  ----- DISPLAY SETTINGS -----
     display.setTimeWindow(100);
-    display.trackNeuron(1);
+    display.trackNeuron(2);
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);

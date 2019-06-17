@@ -18,7 +18,6 @@
 
 #include "../addon.hpp"
 #include "../neurons/LIF.hpp"
-#include "../addons/myelinPlasticityLogger.hpp"
 
 namespace hummus {
     class Synapse;
@@ -49,7 +48,7 @@ namespace hummus {
             }
             
             std::vector<double> input_times;
-            std::vector<Synapse*> input_synapses;
+            std::vector<int> plastic_neuron_ids;
             
             // forcing the neuron to be a LIF
             LIF* n = dynamic_cast<LIF*>(postsynapticNeuron);
@@ -57,7 +56,7 @@ namespace hummus {
             // weight normaliser
             float weight_normaliser = 0;
             
-            /// POTENTIATION ON THE WINNER NEURON
+            /// CONDUCTION DELAY CONVERGENCE ON THE WINNER NEURON
             
             // saving relevant synapses and their spike times
             for (auto& input: n->getDendriticTree()) {
@@ -69,7 +68,7 @@ namespace hummus {
                     // taking the synapses that were active before the current timestamp within a specific learning window
                     if (input->getPreviousInputTime() <= timestamp && gaussian_window >= 0.01) {
                         input_times.push_back(input_time);
-                        input_synapses.push_back(input);
+                        plastic_neuron_ids.push_back(input->getPresynapticNeuronID());
                         
                         // calculating the time difference
                         double time_difference = timestamp - input_time;

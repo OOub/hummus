@@ -114,6 +114,7 @@ namespace hummus {
                             addon->incomingSpike(timestamp, s, this, network);
                         }
                     }
+                    
                     if (network->getMainThreadAddon()) {
                         network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
                     }

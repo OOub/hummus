@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 	display.trackNeuron(10);
 
     network.turnOffLearning(80000);
-    network.verbosity(1);
+    network.verbosity(0);
     
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0.1);

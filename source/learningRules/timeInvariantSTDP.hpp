@@ -15,8 +15,6 @@
 #pragma once
 
 #include "../addon.hpp"
-#include "../neurons/input.hpp"
-#include "../neurons/LIF.hpp"
 
 namespace hummus {
 	class Neuron;
