@@ -290,13 +290,13 @@ namespace hummus {
         // loops through any learning rules and activates them
         virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
-		// ----- NEURON PARAMETERS -----
+        // ----- NEURON PARAMETERS -----
         int                                        neuronID;
         int                                        layerID;
         int                                        sublayerID;
         std::pair<int, int>                        rfCoordinates;
         std::pair<float, float>                    xyCoordinates;
-		std::vector<Synapse*>                      dendriticTree;
+        std::vector<Synapse*>                      dendriticTree;
         std::vector<std::unique_ptr<Synapse>>      axonTerminals;
         std::unique_ptr<Synapse>                   initialSynapse;
         float                                      threshold;
@@ -308,6 +308,37 @@ namespace hummus {
         double                                     previousSpikeTime;
         double                                     previousInputTime;
         int                                        neuronType;
+        
+//        // ----- NEURON SPATIAL PARAMETERS -----
+//        int                                        neuron_id;
+//        int                                        layer_id;
+//        int                                        sublayer_id;
+//        std::pair<int, int>                        rf_coordinates;
+//        std::pair<float, float>                    xy_coordinates;
+//
+//        // ----- SYNAPSES OF THE NEURON -----
+//        std::unique_ptr<Synapse>                   initial_synapse;
+//        std::vector<Synapse*>                      dendritic_tree;
+//        std::vector<std::unique_ptr<Synapse>>      axon_terminals;
+//
+//        // ----- DYNAMIC VARIABLES -----
+//        float                                      membrane_potential;
+//        float                                      injected_current;
+//        float                                      trace;
+//
+//        // ----- FIXED PARAMETERS -----
+//        float                                      membrane_threshold;
+//        float                                      membrane_resting_potential;
+//        float                                      trace_time_constant;
+//        float                                      membrane_conductance;
+//        float                                      membrane_leak_conductance;
+//        float                                      membrane_time_constant;
+//
+//        // ----- IMPLEMENTATION PARAMETERS -----
+//        std::vector<Addon*>                        relevant_addons;
+//        int                                        neuron_type;
+//        double                                     previous_spike_time;
+//        double                                     previous_input_time;
     };
 	
     class Network {
@@ -940,9 +971,53 @@ namespace hummus {
             }
         }
 
+        // interconnecting a layer with soft winner-takes-all synapses, using negative weights
+        template <typename T, typename... Args>
+        void lateralInhibition(layer l, int number_of_synapses, float _weightMean, float _weightstdev, int probability, Args&&... args) {
+            if (_weightMean != 0) {
+                if (_weightMean > 0 && verbose != 0) {
+                    std::cout << "lateral inhibition synapses must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
+                }
+                
+                // generating normal distribution
+                std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
+                
+                for (auto& sub: l.sublayers) {
+                    // intra-sublayer soft WTA
+                    for (auto& preNeurons: sub.neurons) {
+                        for (auto& postNeurons: sub.neurons) {
+                            if (preNeurons != postNeurons) {
+                                for (auto i=0; i<number_of_synapses; i++) {
+                                    neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), probability, std::forward<Args>(args)...);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // inter-sublayer soft WTA
+                    for (auto& subToInhibit: l.sublayers) {
+                        if (sub.ID != subToInhibit.ID) {
+                            for (auto& preNeurons: sub.neurons) {
+                                for (auto& postNeurons: subToInhibit.neurons) {
+                                    if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
+                                        for (auto i=0; i<number_of_synapses; i++) {
+                                            neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), 0, std::forward<Args>(args)...);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            } else {
+                throw std::logic_error("lateral inhibition synapses cannot have a null weight");
+            }
+        }
+        
         // ----- PUBLIC NETWORK METHODS -----
         
-        // add spike to the network
+        // add spike to the initial spike vector
         void injectSpike(int neuronIndex, double timestamp) {
             initialSpikes.push_back(neurons[neuronIndex].get()->receiveExternalInput<Dirac>(timestamp, neuronIndex, -1, 1, 0));
         }
@@ -954,6 +1029,11 @@ namespace hummus {
                 s);
         }
 
+//        // returns a vector representing a spike train
+//        void poissonGenerator(float rate, float timestep, float duration, double timestamp) {
+//            int number_of_spikes = duration / timestep;
+//        }
+        
         // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
         void injectPredictedSpike(spike s, spikeType stype) {
             // remove old spike

@@ -77,7 +77,7 @@ namespace hummus {
         
         void setWeight(float newWeight, bool increment=true) {
             if (increment) {
-                weight += newWeight;
+                weight += synapticEfficacy * newWeight;
             } else {
                 weight = newWeight;
             }

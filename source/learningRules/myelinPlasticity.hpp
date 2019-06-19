@@ -18,6 +18,7 @@
 
 #include "../addon.hpp"
 #include "../neurons/LIF.hpp"
+#include "../addons/myelinPlasticityLogger.hpp"
 
 namespace hummus {
     class Synapse;
@@ -27,8 +28,9 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        MyelinPlasticity(float _learning_window_sigma=10, float _learning_rate=1) :
-                learning_window_sigma(_learning_window_sigma),
+        MyelinPlasticity(int _delay_learning_window_sigma=20, int _weight_learning_window_sigma=10, float _learning_rate=1) :
+                delay_learning_window_sigma(_delay_learning_window_sigma),
+                weight_learning_window_sigma(_weight_learning_window_sigma),
                 learning_rate(_learning_rate) {}
 		
 		// ----- PUBLIC METHODS -----
@@ -47,8 +49,8 @@ namespace hummus {
                 std::cout << "New learning epoch at t=" << timestamp << std::endl;
             }
             
-            std::vector<double> input_times;
-            std::vector<int> plastic_neuron_ids;
+            std::vector<double> time_differences;
+            std::vector<std::vector<int>> plastic_coordinates(4);
             
             // forcing the neuron to be a LIF
             LIF* n = dynamic_cast<LIF*>(postsynapticNeuron);
@@ -60,21 +62,28 @@ namespace hummus {
             
             // saving relevant synapses and their spike times
             for (auto& input: n->getDendriticTree()) {
-                double input_time = input->getPreviousInputTime() + input->getDelay();
-                float gaussian_window = gaussian_distribution(input_time, timestamp, learning_window_sigma);
-                
-                // ignoring inhibitory synapses
                 if (input->getWeight() > 0) {
-                    // taking the synapses that were active before the current timestamp within a specific learning window
-                    if (input->getPreviousInputTime() <= timestamp && gaussian_window >= 0.01) {
-                        input_times.push_back(input_time);
-                        plastic_neuron_ids.push_back(input->getPresynapticNeuronID());
+                    double spike_arrival_time = input->getPreviousInputTime();
+                    
+                    // learning window
+                    float gaussian_window = gaussian_distribution(spike_arrival_time, timestamp, delay_learning_window_sigma);
+                    
+                    // taking the neurons that were active within a gaussian learning window
+                    if (gaussian_window >= 0.01) {
+                        auto& presynaptic_neuron = network->getNeurons()[input->getPresynapticNeuronID()];
                         
                         // calculating the time difference
-                        double time_difference = timestamp - input_time;
-                        float delta_delay = 0;
+                        double time_difference = timestamp - spike_arrival_time;
+                        
+                        // saving information for the corresponding logger
+                        time_differences.push_back(time_difference);
+                        plastic_coordinates[0].push_back(presynaptic_neuron->getXYCoordinates().first);
+                        plastic_coordinates[1].push_back(presynaptic_neuron->getXYCoordinates().second);
+                        plastic_coordinates[2].push_back(presynaptic_neuron->getRfCoordinates().first);
+                        plastic_coordinates[3].push_back(presynaptic_neuron->getRfCoordinates().second);
                         
                         // change delay according to the time difference
+                        float delta_delay = 0;
                         if (time_difference > 0) {
                             delta_delay = learning_rate * (1/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-time_difference/n->getDecayCurrent()) - std::exp(-time_difference/n->getDecayPotential()));
                             input->setDelay(delta_delay);
@@ -83,16 +92,16 @@ namespace hummus {
                             input->setDelay(delta_delay);
                         }
                         
+                        // decrease the synaptic efficacy as the delays converge
+                        input->setSynapticEfficacy(-std::exp(-time_difference * time_difference)+1, false);
+                        
                         // increasing weights depending on activity, according to a gaussian on the time difference
-                        float delta_weight = learning_rate * gaussian_distribution(time_difference - delta_delay, 0, learning_window_sigma);
+                        float delta_weight = learning_rate * gaussian_distribution(time_difference, 0, weight_learning_window_sigma);
                         input->setWeight(delta_weight);
                         
                         if (network->getVerbose() >= 1) {
                             std::cout << timestamp << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->getDelay() << " synaptic efficacy: " << input->getSynapticEfficacy() << std::endl;
                         }
-                        
-                        // decrease the synaptic efficacy as the delays converge
-                        input->setSynapticEfficacy(-std::exp(-time_difference * time_difference)+1, false);
                     }
                     
                     // calculating weight normaliser
@@ -109,16 +118,24 @@ namespace hummus {
                     }
                 }
             }
+            
+            // saving into the neuron's logger if the logger exists
+            for (auto& addon: postsynapticNeuron->getRelevantAddons()) {
+                if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
+                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, time_differences, plastic_coordinates);
+                }
+            }
         }
         
         inline float gaussian_distribution(float x, float mu, float sigma) {
-            return 12.533 * std::exp(- 0.5 * std::pow((x - mu)/sigma, 2)) / (sigma * std::sqrt(2 * M_PI));
+            return 12.533 * sigma / 5 * std::exp(- 0.5 * std::pow((x - mu)/sigma, 2)) / (sigma * std::sqrt(2 * M_PI));
         }
         
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-        float            learning_window_sigma;
+        int              delay_learning_window_sigma;
+        int              weight_learning_window_sigma;
         float            learning_rate;
 	};
 }
