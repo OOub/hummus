@@ -25,7 +25,7 @@
 #include "../../core.hpp"
 #include "inputViewer.hpp"
 #include "outputViewer.hpp"
-#include "potentialViewer.hpp"
+#include "dynamicsViewer.hpp"
 
 namespace hummus {
     class QtDisplay : public MainThreadAddon {
@@ -45,7 +45,7 @@ namespace hummus {
 
             qmlRegisterType<InputViewer>("InputViewer", 1, 0, "InputViewer");
             qmlRegisterType<OutputViewer>("OutputViewer", 1, 0, "OutputViewer");
-            qmlRegisterType<PotentialViewer>("PotentialViewer", 1, 0, "PotentialViewer");
+            qmlRegisterType<DynamicsViewer>("DynamicsViewer", 1, 0, "DynamicsViewer");
 			
 			engine = new QQmlApplicationEngine();
 			
@@ -67,34 +67,34 @@ namespace hummus {
             window->setFormat(format);
             window->show();
 
-            inputviewer = window->findChild<InputViewer*>("inputViewer");
-            outputviewer = window->findChild<OutputViewer*>("outputViewer");
-            potentialviewer = window->findChild<PotentialViewer*>("potentialViewer");
+            input_viewer = window->findChild<InputViewer*>("inputViewer");
+            output_viewer = window->findChild<OutputViewer*>("outputViewer");
+            dynamics_viewer = window->findChild<DynamicsViewer*>("dynamicsViewer");
         }
         
         virtual ~QtDisplay(){}
         
     	// ----- PUBLIC DISPLAY METHODS -----
 		void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-			potentialviewer->handleData(timestamp, s, postsynapticNeuron, network);
+			dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
 		}
 
         void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-			inputviewer->handleData(timestamp, s, postsynapticNeuron, network);
-			outputviewer->handleData(timestamp, s, postsynapticNeuron, network);
-			potentialviewer->handleData(timestamp, s, postsynapticNeuron, network);
+			input_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+			output_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+			dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
 		}
 
 		void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
-			inputviewer->handleTimestep(timestamp);
-			outputviewer->handleTimestep(timestamp);
-			potentialviewer->handleTimestep(timestamp, postsynapticNeuron, network);
+			input_viewer->handleTimestep(timestamp);
+			output_viewer->handleTimestep(timestamp);
+			dynamics_viewer->handleTimestep(timestamp, postsynapticNeuron, network);
 		}
 
         void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            inputviewer->handleTimestep(timestamp);
-            outputviewer->handleTimestep(timestamp);
-            potentialviewer->handleData(timestamp, s, postsynapticNeuron, network);
+            input_viewer->handleTimestep(timestamp);
+            output_viewer->handleTimestep(timestamp);
+            dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
         }
         
 		void begin(Network* network, std::mutex* sync) override {
@@ -129,14 +129,14 @@ namespace hummus {
             engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
             engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
 
-            inputviewer->setYLookup(neuronsInSublayers[0]);
-            outputviewer->setEngine(engine);
-            outputviewer->setYLookup(neuronsInSublayers, neuronsInLayers);
+            input_viewer->setYLookup(neuronsInSublayers[0]);
+            output_viewer->setEngine(engine);
+            output_viewer->setYLookup(neuronsInSublayers, neuronsInLayers);
 
-            inputviewer->changeSublayer(inputSublayerToTrack);
-            outputviewer->changeLayer(outputLayerToTrack);
-            outputviewer->changeSublayer(outputSublayerToTrack);
-            potentialviewer->trackNeuron(neuronToTrack);
+            input_viewer->changeSublayer(inputSublayerToTrack);
+            output_viewer->changeLayer(outputLayerToTrack);
+            output_viewer->changeSublayer(outputSublayerToTrack);
+            dynamics_viewer->trackNeuron(neuronToTrack);
 			
             sync->unlock();
 
@@ -145,9 +145,9 @@ namespace hummus {
 		
 		// ----- SETTERS -----
 		void useHardwareAcceleration(bool accelerate) {
-            inputviewer->useHardwareAcceleration(accelerate);
-            outputviewer->useHardwareAcceleration(accelerate);
-            potentialviewer->useHardwareAcceleration(accelerate);
+            input_viewer->useHardwareAcceleration(accelerate);
+            output_viewer->useHardwareAcceleration(accelerate);
+            dynamics_viewer->useHardwareAcceleration(accelerate);
         }
 
 		void trackLayer(int layerToTrack) {
@@ -167,9 +167,9 @@ namespace hummus {
         }
 
 		void setTimeWindow(double newWindow) {
-            inputviewer->setTimeWindow(newWindow);
-            outputviewer->setTimeWindow(newWindow);
-            potentialviewer->setTimeWindow(newWindow);
+            input_viewer->setTimeWindow(newWindow);
+            output_viewer->setTimeWindow(newWindow);
+            dynamics_viewer->setTimeWindow(newWindow);
         }
 		
     protected:
@@ -177,9 +177,9 @@ namespace hummus {
 		// ----- IMPLEMENTATION VARIABLES -----
         std::unique_ptr<QApplication>          app;
         QQmlApplicationEngine*                 engine;
-        InputViewer*                           inputviewer;
-        OutputViewer*                          outputviewer;
-        PotentialViewer*                       potentialviewer;
+        InputViewer*                           input_viewer;
+        OutputViewer*                          output_viewer;
+        DynamicsViewer*                        dynamics_viewer;
         size_t                                 neuronToTrack;
         int                                    inputSublayerToTrack;
         int                                    outputLayerToTrack;

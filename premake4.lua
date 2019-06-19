@@ -34,7 +34,7 @@ solution 'hummus'
         		'source/addons/**.hpp', 
         		'source/dependencies/**.hpp', 
         		'source/GUI/qt/**.hpp',
-        		'sourbrewce/GUI/puffin/**.hpp', 
+        		'source/GUI/puffin/**.hpp', 
         		'source/learningRules/**.hpp', 
         		'source/neurons/**.hpp', 
         		'source/synapticKernels/**.hpp', 
@@ -47,7 +47,7 @@ solution 'hummus'
 				-- Qt-dependent files
 				files(qt.moc({'source/GUI/qt/inputViewer.hpp', 
 							  'source/GUI/qt/outputViewer.hpp', 
-					          'source/GUI/qt/potentialViewer.hpp'
+					          'source/GUI/qt/dynamicsViewer.hpp'
 					          }, 
 							  'build/moc'))
 

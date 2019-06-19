@@ -29,7 +29,6 @@ namespace hummus {
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
                 refractoryPeriod(_refractoryPeriod),
                 decayPotential(_decayPotential),
-                current(0),
                 decayCurrent(_decayCurrent),
                 active(true),
                 burstingActivity(_burstingActivity),
@@ -366,10 +365,6 @@ namespace hummus {
             decayPotential = newDecayPotential;
         }
 		
-        float getCurrent() const {
-        	return current;
-		}
-		
         float getDecayCurrent() const {
             return decayCurrent;
         }
@@ -377,10 +372,6 @@ namespace hummus {
         void setDecayCurrent(float newCurrent) {
             decayCurrent = newCurrent;
         }
-        
-		void setCurrent(float newCurrent) {
-			current = newCurrent;
-		}
 		
 		void setInhibition(double timestamp, bool inhibitionStatus) {
 			inhibitionTime = timestamp;
@@ -465,7 +456,6 @@ namespace hummus {
 		// ----- LIF PARAMETERS -----
 		float                                    decayPotential;
         float                                    decayCurrent;
-        float                                    current;
 		bool                                     active;
 		bool                                     inhibited;
 		double                                   inhibitionTime;

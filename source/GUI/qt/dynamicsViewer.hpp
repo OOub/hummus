@@ -1,12 +1,12 @@
 /*
- * potentialViewer.hpp
+ * dynamicsViewer.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 17/01/2018
  *
- * Information: The PotentialViewer class is used by the Display class to show a specified neuron's potential. Depends on Qt5
+ * Information: The DynamicsViewer class is used by the Display class to show a specified neuron's potential and current. Depends on Qt5
  */
 
 #pragma once
@@ -31,13 +31,13 @@
 #include "../../core.hpp"
 
 namespace hummus {
-    class PotentialViewer : public QObject {
+    class DynamicsViewer : public QObject {
         
     Q_OBJECT
     public:
 		
         // ----- CONSTRUCTOR AND DESTRUCTOR
-        PotentialViewer(QObject *parent = 0) :
+        DynamicsViewer(QObject *parent = 0) :
                 QObject(parent),
                 timeWindow(100),
                 openGL(true),
@@ -45,28 +45,42 @@ namespace hummus {
                 maxX(0),
                 minY(20),
                 maxY(-70),
-                potential(0),
+                min_y_right(0),
+                max_y_right(1),
+                potential(-70),
+                current(0),
                 threshold(-50),
                 neuronTracker(-1) {
             atomicGuard.clear(std::memory_order_release);
         }
         
-        virtual ~PotentialViewer(){}
+        virtual ~DynamicsViewer(){}
 		
-    	// ----- PUBLIC POTENTIALVIEWER METHODS -----
+    	// ----- PUBLIC DYNAMICSVIEWER METHODS -----
 		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
 			if (postsynapticNeuron->getNeuronID() == neuronTracker) {
                 while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed) {
+                    // getting data from neurons
 					potential = postsynapticNeuron->getPotential();
+                    current = postsynapticNeuron->getCurrent();
 					threshold = postsynapticNeuron->getThreshold();
+                    // saving data points to plot
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));
+                    currentPoints.append(QPointF(timestamp,current));
+                    // membrane potential axis
 					minY = std::min(minY, static_cast<float>(potential));
 					maxY = std::max(maxY, static_cast<float>(potential));
+                    // injected current axis
+                    min_y_right = std::min(min_y_right, static_cast<float>(current));
+                    max_y_right = std::max(max_y_right, static_cast<float>(current));
+                    // time axis
                     maxX = timestamp;
 				} else {
 					points.clear();
+                    thresPoints.clear();
+                    currentPoints.clear();
 				}
 				atomicGuard.clear(std::memory_order_release);
 			}
@@ -76,14 +90,24 @@ namespace hummus {
 			if (postsynapticNeuron->getNeuronID() == neuronTracker) {
 				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed) {
+                    // getting data from neurons
 					potential = postsynapticNeuron->getPotential();
+                    threshold = postsynapticNeuron->getThreshold();
+                    current = postsynapticNeuron->getCurrent();
+                    // saving data points to plot
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));
+                    currentPoints.append(QPointF(timestamp,current));
+                    // membrane potential axis
 					minY = std::min(minY, static_cast<float>(potential));
 					maxY = std::max(maxY, static_cast<float>(potential));
+                    // injected current axis
+                    min_y_right = std::min(min_y_right, static_cast<float>(current));
+                    max_y_right = std::max(max_y_right, static_cast<float>(current));
 				} else {
 					points.clear();
 					thresPoints.clear();
+                    currentPoints.clear();
 				}
 				atomicGuard.clear(std::memory_order_release);
 			}
@@ -110,8 +134,10 @@ namespace hummus {
         void changeTrackedNeuron(size_t newNeuron) {
             if (neuronTracker != newNeuron) {
                 neuronTracker = newNeuron;
-                minY = 20;
-                maxY = -70;
+                minY = -70;
+                maxY = -50;
+                min_y_right = 0;
+                max_y_right = 1;
             }
         }
     
@@ -140,9 +166,8 @@ namespace hummus {
 							static_cast<QtCharts::QXYSeries *>(series)->replace(points);
 							axisY->setRange(minY-1,maxY+1);
 						}
-                    }
-                    else if (seriesType == 1) {
-						if (!points.isEmpty()) {
+                    } else if (seriesType == 1) {
+						if (!thresPoints.isEmpty()) {
 							auto firstToKeep = std::upper_bound(thresPoints.begin(), thresPoints.end(), thresPoints.back().x() - timeWindow, [](double timestamp, const QPointF& thresPoints) {
 								return timestamp < thresPoints.x();
 							});
@@ -150,7 +175,17 @@ namespace hummus {
 				
 							static_cast<QtCharts::QXYSeries *>(series)->replace(thresPoints);
 						}
-					}
+                    } else if (seriesType == 2) {
+                        if (!currentPoints.isEmpty()) {
+                            auto firstToKeep = std::upper_bound(currentPoints.begin(), currentPoints.end(), currentPoints.back().x() - timeWindow, [](double timestamp, const QPointF& currentPoints) {
+                                return timestamp < currentPoints.x();
+                            });
+                            currentPoints.remove(0, static_cast<int>(std::distance(currentPoints.begin(), firstToKeep)));
+                            
+                            static_cast<QtCharts::QXYSeries *>(series)->replace(currentPoints);
+                            axisY->setRange(min_y_right-1,max_y_right+1);
+                        }
+                    }
 					
                     atomicGuard.clear(std::memory_order_release);
                 }
@@ -165,11 +200,15 @@ namespace hummus {
         double                timeWindow;
         QVector<QPointF>      points;
         QVector<QPointF>      thresPoints;
+        QVector<QPointF>      currentPoints;
         double                maxX;
         float                 minY;
         float                 maxY;
+        float                 min_y_right;
+        float                 max_y_right;
         std::atomic_flag      atomicGuard;
         float                 potential;
+        float                 current;
         float                 threshold;
         size_t                neuronTracker;
     };

@@ -57,10 +57,10 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     auto input = network.makeLayer<hummus::Parrot>(1, {});
-    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true);
+    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0), 100);
+    network.allToAll<hummus::Pulse>(input, output, 1, hummus::Normal(1./2, 0), 100);
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);

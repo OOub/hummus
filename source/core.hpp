@@ -118,6 +118,7 @@ namespace hummus {
                 xyCoordinates(_xyCoordinates),
                 threshold(_threshold),
                 potential(_restingPotential),
+                current(0),
                 restingPotential(_restingPotential),
                 eligibilityTrace(0),
                 eligibilityDecay(_eligibilityDecay),
@@ -250,6 +251,13 @@ namespace hummus {
             return threshold = _threshold;
         }
         
+        float getCurrent() const {
+            return current;
+        }
+        void setCurrent(float newCurrent) {
+            current = newCurrent;
+        }
+        
         float getEligibilityTrace() const {
             return eligibilityTrace;
         }
@@ -301,6 +309,7 @@ namespace hummus {
         std::unique_ptr<Synapse>                   initialSynapse;
         float                                      threshold;
         float                                      potential;
+        float                                      current;
         float                                      restingPotential;
         std::vector<Addon*>                        relevantAddons;
         float                                      eligibilityTrace;
