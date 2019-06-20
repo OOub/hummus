@@ -15,6 +15,7 @@
 
 #include "../core.hpp"
 #include "../dependencies/json.hpp"
+#include "../dependencies/fastapprox/fastexp.h"
 
 namespace hummus {
 	class Parrot : public Neuron {

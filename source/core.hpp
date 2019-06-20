@@ -42,9 +42,8 @@
 #include "randomDistributions/normal.hpp"
 #include "randomDistributions/cauchy.hpp"
 
-// data parser and tools
+// data parser
 #include "dataParser.hpp"
-#include "tools.hpp"
 
 // addons
 #include "addon.hpp"

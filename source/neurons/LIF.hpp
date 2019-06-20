@@ -14,6 +14,8 @@
 #pragma once
 
 #include "../core.hpp"
+#include "../dependencies/fastapprox/fastexp.h"
+#include "../dependencies/fastapprox/fastlog.h"
 #include "../dependencies/json.hpp"
 #include "../synapses/exponential.hpp"
 #include "../synapses/dirac.hpp"
@@ -130,7 +132,7 @@ namespace hummus {
 					
                     if (s->getWeight() >= 0) {
                         // calculating time at which potential = threshold
-                        double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + restingPotential + current) + std::log( current - potential + restingPotential)) + timestamp;
+                        double predictedTimestamp = membrane_time_constant * (- fast_log2( - threshold + restingPotential + current) + fast_log2( current - potential + restingPotential)) + timestamp;
                         
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, s, spikeType::prediction}, spikeType::prediction);

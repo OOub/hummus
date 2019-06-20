@@ -16,6 +16,7 @@
 
 #include "../synapse.hpp"
 #include "../dependencies/json.hpp"
+#include "../dependencies/fastapprox/fastexp.h"
 
 namespace hummus {
 	class Neuron;

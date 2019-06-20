@@ -32,7 +32,9 @@ solution 'hummus'
 			-- All files in source
         	files {'source/**.hpp',
         		'source/addons/**.hpp', 
-        		'source/dependencies/**.hpp', 
+        		'source/dependencies/**.hpp',
+                'source/dependencies/fastapprox/**.h', 
+                'source/dependencies/flatbuffers/**.h', 
         		'source/GUI/qt/**.hpp',
         		'source/GUI/puffin/**.hpp', 
         		'source/learningRules/**.hpp', 
