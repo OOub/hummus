@@ -63,19 +63,19 @@ namespace hummus {
                 	// 1D data
                 	if (fields.size() == 2) {
                 		dataType = 0;
-						data.push_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1, -1});
+						data.emplace_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1, -1});
                         maxID = std::max(maxID, std::stod(fields[1]));
                     // 2D Data
 					} else if (fields.size() == 3) {
                 		dataType = 1;
-                		data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), -1});
+                		data.emplace_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), -1});
                         maxX = std::max(maxX, std::stod(fields[1]));
                         maxY = std::max(maxY, std::stod(fields[2]));
                         
                 		neuronCounter++;
 					} else if (fields.size() == 4) {
                         dataType = 2;
-                        data.push_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
+                        data.emplace_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
                         maxX = std::max(maxX, std::stod(fields[1]));
                         maxY = std::max(maxY, std::stod(fields[2]));
                         maxPolarity = std::max(maxPolarity, std::stod(fields[3]));
@@ -108,7 +108,7 @@ namespace hummus {
                         std::uniform_int_distribution<> uniformID(0, maxID);
                         
                         for (auto i=0; i<additiveSpikes; i++) {
-                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), static_cast<double>(uniformID(randomEngine)), -1, -1, -1});
+                            data.emplace_back(input{static_cast<double>(uniformTimestamp(randomEngine)), static_cast<double>(uniformID(randomEngine)), -1, -1, -1});
                         }
                     // two-dimensional data
                     } else if (dataType == 1){
@@ -116,7 +116,7 @@ namespace hummus {
                         std::uniform_int_distribution<> uniformY(0, maxY);
                         
                         for (auto i=0; i<additiveSpikes; i++) {
-                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), -1});
+                            data.emplace_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), -1});
                         }
                     } else if (dataType == 2){
                         std::uniform_int_distribution<> uniformX(0, maxX);
@@ -124,7 +124,7 @@ namespace hummus {
                         std::uniform_int_distribution<> uniformPolarity(0, maxPolarity);
                         
                         for (auto i=0; i<additiveSpikes; i++) {
-                            data.push_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), static_cast<double>(uniformPolarity(randomEngine))});
+                            data.emplace_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), static_cast<double>(uniformPolarity(randomEngine))});
                         }
                     }
                 }
@@ -156,11 +156,11 @@ namespace hummus {
                     
                     // filling temporary vector by each field of the line read, then convert the field to double
                     for (auto& f: fields) {
-                        postSynapticWeights.push_back(std::stod(f));
+                        postSynapticWeights.emplace_back(std::stod(f));
                     }
                     
                     // filling vector of vectors to build 2D weight matrix
-                    data.push_back(postSynapticWeights);
+                    data.emplace_back(postSynapticWeights);
                 }
                 dataFile.close();
                 return data;
@@ -182,7 +182,7 @@ namespace hummus {
 						std::vector<std::string> fields;
 						split(fields, line, " ,");
 						if (fields.size() == 2) {
-							dataLabels.push_back(label{fields[0], std::stod(fields[1])});
+							dataLabels.emplace_back(label{fields[0], std::stod(fields[1])});
 						}
 					}
 					dataFile.close();
@@ -210,7 +210,7 @@ namespace hummus {
 				// split string according to delimiters
 				current = next + 1;
 				next = s.find_first_of(delimiters, current);
-				result.push_back(s.substr(current, next - current));
+				result.emplace_back(s.substr(current, next - current));
 			}
 			while (next != Container::value_type::npos);
 			return result;

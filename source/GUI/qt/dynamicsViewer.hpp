@@ -155,36 +155,40 @@ namespace hummus {
                         series->setUseOpenGL(true);
                     }
 					
-                    if (seriesType == 0) {
-						axisX->setRange(maxX - timeWindow, maxX+1);
-						if (!points.isEmpty()) {
-							auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](double timestamp, const QPointF& point) {
-								return timestamp < point.x();
-							});
-							points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
-				
-							static_cast<QtCharts::QXYSeries *>(series)->replace(points);
-							axisY->setRange(minY-1,maxY+1);
-						}
-                    } else if (seriesType == 1) {
-						if (!thresPoints.isEmpty()) {
-							auto firstToKeep = std::upper_bound(thresPoints.begin(), thresPoints.end(), thresPoints.back().x() - timeWindow, [](double timestamp, const QPointF& thresPoints) {
-								return timestamp < thresPoints.x();
-							});
-							thresPoints.remove(0, static_cast<int>(std::distance(thresPoints.begin(), firstToKeep)));
-				
-							static_cast<QtCharts::QXYSeries *>(series)->replace(thresPoints);
-						}
-                    } else if (seriesType == 2) {
-                        if (!currentPoints.isEmpty()) {
-                            auto firstToKeep = std::upper_bound(currentPoints.begin(), currentPoints.end(), currentPoints.back().x() - timeWindow, [](double timestamp, const QPointF& currentPoints) {
-                                return timestamp < currentPoints.x();
-                            });
-                            currentPoints.remove(0, static_cast<int>(std::distance(currentPoints.begin(), firstToKeep)));
-                            
-                            static_cast<QtCharts::QXYSeries *>(series)->replace(currentPoints);
-                            axisY->setRange(min_y_right-1,max_y_right+1);
-                        }
+                    switch (seriesType) {
+                        case 0:
+                            axisX->setRange(maxX - timeWindow, maxX+1);
+                            if (!points.isEmpty()) {
+                                auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](double timestamp, const QPointF& point) {
+                                    return timestamp < point.x();
+                                });
+                                points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
+                    
+                                static_cast<QtCharts::QXYSeries *>(series)->replace(points);
+                                axisY->setRange(minY-1,maxY+1);
+                            }
+                            break;
+                        case 1:
+                            if (!thresPoints.isEmpty()) {
+                                auto firstToKeep = std::upper_bound(thresPoints.begin(), thresPoints.end(), thresPoints.back().x() - timeWindow, [](double timestamp, const QPointF& thresPoints) {
+                                    return timestamp < thresPoints.x();
+                                });
+                                thresPoints.remove(0, static_cast<int>(std::distance(thresPoints.begin(), firstToKeep)));
+                    
+                                static_cast<QtCharts::QXYSeries *>(series)->replace(thresPoints);
+                            }
+                            break;
+                        case 2:
+                            if (!currentPoints.isEmpty()) {
+                                auto firstToKeep = std::upper_bound(currentPoints.begin(), currentPoints.end(), currentPoints.back().x() - timeWindow, [](double timestamp, const QPointF& currentPoints) {
+                                    return timestamp < currentPoints.x();
+                                });
+                                currentPoints.remove(0, static_cast<int>(std::distance(currentPoints.begin(), firstToKeep)));
+                                
+                                static_cast<QtCharts::QXYSeries *>(series)->replace(currentPoints);
+                                axisY->setRange(min_y_right-1,max_y_right+1);
+                            }
+                            break;
                     }
 					
                     atomicGuard.clear(std::memory_order_release);

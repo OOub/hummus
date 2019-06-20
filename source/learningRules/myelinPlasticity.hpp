@@ -36,7 +36,7 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
         // select one neuron to track by its index
         void activate_for(size_t neuronIdx) override {
-            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+            neuron_mask.emplace_back(static_cast<size_t>(neuronIdx));
         }
         
         // select multiple neurons to track by passing a vector of indices
@@ -76,24 +76,24 @@ namespace hummus {
                         double time_difference = timestamp - spike_arrival_time;
                         
                         // saving information for the corresponding logger
-                        time_differences.push_back(time_difference);
-                        plastic_coordinates[0].push_back(presynaptic_neuron->getXYCoordinates().first);
-                        plastic_coordinates[1].push_back(presynaptic_neuron->getXYCoordinates().second);
-                        plastic_coordinates[2].push_back(presynaptic_neuron->getRfCoordinates().first);
-                        plastic_coordinates[3].push_back(presynaptic_neuron->getRfCoordinates().second);
+                        time_differences.emplace_back(time_difference);
+                        plastic_coordinates[0].emplace_back(presynaptic_neuron->getXYCoordinates().first);
+                        plastic_coordinates[1].emplace_back(presynaptic_neuron->getXYCoordinates().second);
+                        plastic_coordinates[2].emplace_back(presynaptic_neuron->getRfCoordinates().first);
+                        plastic_coordinates[3].emplace_back(presynaptic_neuron->getRfCoordinates().second);
                         
                         // change delay according to the time difference
                         float delta_delay = 0;
                         if (time_difference > 0) {
-                            delta_delay = learning_rate * (1/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(-time_difference/n->getDecayCurrent()) - std::exp(-time_difference/n->getDecayPotential()));
+                            delta_delay = learning_rate * (1/(input->getSynapseTimeConstant() - n->getMembraneTimeConstant())) * n->getCurrent() * (fast_exp(-time_difference/input->getSynapseTimeConstant()) - fast_exp(-time_difference/n->getMembraneTimeConstant()));
                             input->setDelay(delta_delay);
                         } else if (time_difference < 0) {
-                            delta_delay = - learning_rate * (1/(n->getDecayCurrent()-n->getDecayPotential())) * n->getCurrent() * (std::exp(time_difference/n->getDecayCurrent()) - std::exp(time_difference/n->getDecayPotential()));
+                            delta_delay = - learning_rate * (1/(input->getSynapseTimeConstant() - n->getMembraneTimeConstant())) * n->getCurrent() * (fast_exp(time_difference/input->getSynapseTimeConstant()) - fast_exp(time_difference/n->getMembraneTimeConstant()));
                             input->setDelay(delta_delay);
                         }
                         
                         // decrease the synaptic efficacy as the delays converge
-                        input->setSynapticEfficacy(-std::exp(-time_difference * time_difference)+1, false);
+                        input->setSynapticEfficacy(-fast_exp(-time_difference * time_difference)+1, false);
                         
                         // increasing weights depending on activity, according to a gaussian on the time difference
                         float delta_weight = learning_rate * gaussian_distribution(time_difference, 0, weight_learning_window_sigma);
@@ -128,7 +128,7 @@ namespace hummus {
         }
         
         inline float gaussian_distribution(float x, float mu, float sigma) {
-            return 12.533 * sigma / 5 * std::exp(- 0.5 * std::pow((x - mu)/sigma, 2)) / (sigma * std::sqrt(2 * M_PI));
+            return 12.533 * sigma / 5 * fast_exp(- 0.5 * std::pow((x - mu)/sigma, 2)) / (sigma * std::sqrt(2 * M_PI));
         }
         
 	protected:

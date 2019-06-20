@@ -62,15 +62,19 @@ namespace hummus {
 	
                         if (layer[i]["neuronType"].is_number()) {
                             int neuronType = layer[i]["neuronType"].get<int>();
-                            // creating input neuron layer
-                            if (neuronType == 0) {
-                                layerHelper<Input>(layer[i]);
-                            // creating LIF layer
-                            } else if (neuronType == 1) {
-                                layerHelper<LIF>(layer[i]);
-                            // creating DecisionMaking layer
-                            } else if (neuronType == 2) {
-                                layerHelper<DecisionMaking>(layer[i]);
+                            switch (neuronType) {
+                                // creating input neuron layer
+                                case 0:
+                                    layerHelper<Input>(layer[i]);
+                                    break;
+                                // creating LIF layer
+                                case 1:
+                                    layerHelper<LIF>(layer[i]);
+                                    break;
+                                // creating DecisionMaking layer
+                                case 2:
+                                    layerHelper<DecisionMaking>(layer[i]);
+                                    break;
                             }
                         } else {
                             throw std::logic_error("neuronType should be a number. 0 for InputNeuron, 1 for LIF, 2 for IF, 3 for DecisionMakingNeuron");
@@ -151,24 +155,25 @@ namespace hummus {
             // specific neuron parameters
             if (input["Type"].is_number()) {
                 int type = input["Type"].get<int>();
-                // input neuron
-                if (type == 0) {
-                    if (input["refractoryPeriod"].is_number()) {
-                        dynamic_cast<Input*>(n)->setRefractoryPeriod(input["refractoryPeriod"].get<float>());
-                    }
+                switch (type) {
+                    // input neuron
+                    case 0:
+                        if (input["refractoryPeriod"].is_number()) {
+                            dynamic_cast<Input*>(n)->setRefractoryPeriod(input["refractoryPeriod"].get<float>());
+                        }
+                        break;
+                    // LIF neuron
+                    case 1:
+                        captureLIFParameters<LIF>(input, n);
+                        break;
+                    // DecisionMaking neuron
+                    case 2:
+                        captureLIFParameters<DecisionMaking>(input, n);
 
-                // LIF neuron
-                } else if (type == 1) {
-                    captureLIFParameters<LIF>(input, n);
-                // DecisionMaking neuron
-                } else if (type == 2) {
-
-                    captureLIFParameters<DecisionMaking>(input, n);
-
-                    if (input["classLabel"].is_string()) {
-                        dynamic_cast<DecisionMaking*>(n)->setClassLabel(input["refractoryPeriod"].get<std::string>());
-                    }
-
+                        if (input["classLabel"].is_string()) {
+                            dynamic_cast<DecisionMaking*>(n)->setClassLabel(input["refractoryPeriod"].get<std::string>());
+                        }
+                        break;
                 }
             }
 
@@ -192,12 +197,16 @@ namespace hummus {
                     }
 
                     if (axonalSynapse[i]["postNeuronID"].is_number()) {
-                        if (axonalSynapse[i]["type"].get<int>() == 0) {
-                            n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
-                        } else if (axonalSynapse[i]["type"].get<int>() == 1){
-                            n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
-                        } else if (axonalSynapse[i]["type"].get<int>() == 2) {
-                            n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
+                        switch (axonalSynapse[i]["type"].get<int>()) {
+                            case 0:
+                                n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
+                                break;
+                            case 1:
+                                n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
+                                break;
+                            case 2:
+                                n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
+                                break;
                         }
                     } else {
                         throw std::logic_error("postNeuronID incorrectly formatted");

@@ -25,11 +25,10 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _decayPotential=20, float _decayCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _membrane_time_constant=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
                 refractoryPeriod(_refractoryPeriod),
-                decayPotential(_decayPotential),
-                decayCurrent(_decayCurrent),
+                membrane_time_constant(_membrane_time_constant),
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -41,7 +40,7 @@ namespace hummus {
                 wta(_wta) {
 					
 			// error handling
-    	    if (decayPotential <= 0) {
+    	    if (membrane_time_constant <= 0) {
                 throw std::logic_error("The potential decay cannot less than or equal to 0");
             }
 					
@@ -78,31 +77,42 @@ namespace hummus {
                     active = true;
                 }
 				
-				// updating the current
-                current *= std::exp(-(timestamp-previousInputTime)/decayCurrent);
-				
+                // updating current of synapses
+                float total_current = 0;
+                for (auto& synapse: dendriticTree) {
+                    total_current += synapse->update(timestamp);
+                }
+                current = total_current;
+                
                 // eligibility trace decay
-                eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
+                eligibilityTrace *= fast_exp(-(timestamp-previousInputTime)/eligibilityDecay);
                 
                 // potential decay
-                potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)/decayPotential);
+                potential = restingPotential + (potential-restingPotential)*fast_exp(-(timestamp-previousInputTime)/membrane_time_constant);
                 
                 // threshold decay
                 if (homeostasis) {
-                    threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousInputTime)/decayHomeostasis);
+                    threshold = restingThreshold + (threshold-restingThreshold)*fast_exp(-(timestamp-previousInputTime)/decayHomeostasis);
                 }
             
                 if (active && !inhibited) {
 					// calculating the potential
-                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
+                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membrane_time_constant)) + (potential - restingPotential) * fast_exp(-(timestamp-previousInputTime)/membrane_time_constant);
                     
                     // updating the threshold
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
                     }
 					
-                    // synaptic integration
-					current += s->receiveSpike(timestamp);
+                    // sending spike to relevant synapse
+                    s->receiveSpike(timestamp);
+                    
+                    // integating synaptic currents
+                    total_current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        total_current += synapse->getSynapticCurrent();
+                    }
+                    current = total_current;
 
                     if (network->getVerbose() == 2) {
                         std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
@@ -120,7 +130,7 @@ namespace hummus {
 					
                     if (s->getWeight() >= 0) {
                         // calculating time at which potential = threshold
-                        double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + current) + std::log( current - potential + restingPotential)) + timestamp;
+                        double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + restingPotential + current) + std::log( current - potential + restingPotential)) + timestamp;
                         
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, s, spikeType::prediction}, spikeType::prediction);
@@ -128,16 +138,16 @@ namespace hummus {
                             network->injectPredictedSpike(spike{timestamp + s->getSynapseTimeConstant(), s, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
-                        potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
+                        potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membrane_time_constant)) + (potential - restingPotential);
                     }
                 }
             } else if (type == spikeType::prediction) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
+                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membrane_time_constant)) + (potential - restingPotential);
                 }
             } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - std::exp(-s->getSynapseTimeConstant()/decayPotential)) + (potential - restingPotential) * std::exp(-s->getSynapseTimeConstant()/decayPotential);
+                    potential = restingPotential + current * (1 - fast_exp(-s->getSynapseTimeConstant()/membrane_time_constant)) + (potential - restingPotential) * fast_exp(-s->getSynapseTimeConstant()/membrane_time_constant);
                 }
             }
         
@@ -198,18 +208,23 @@ namespace hummus {
             if (timestamp - previousSpikeTime >= refractoryPeriod) {
                 active = true;
             }
-			
-            current *= std::exp(-timestep/decayCurrent);
+            
+            // updating current of synapses
+            float total_current = 0;
+            for (auto& synapse: dendriticTree) {
+                total_current += synapse->update(timestamp);
+            }
+            current = total_current;
             
             // eligibility trace decay
-            eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
+            eligibilityTrace *= fast_exp(-timestep/eligibilityDecay);
             
 			// potential decay
-            potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
+            potential = restingPotential + (potential-restingPotential)*fast_exp(-timestep/membrane_time_constant);
             
 			// threshold decay
 			if (homeostasis) {
-                threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-timestep/decayHomeostasis);
+                threshold = restingThreshold + (threshold-restingThreshold)*fast_exp(-timestep/decayHomeostasis);
 			}
                 
 			// neuron inactive during refractory period
@@ -220,9 +235,16 @@ namespace hummus {
 						threshold += homeostasisBeta/decayHomeostasis;
 					}
                     
-                    // integrating spike
-                    current += s->receiveSpike(timestamp);
-
+                    // sending spike to relevant synapse
+                    s->receiveSpike(timestamp);
+                    
+                    // integating synaptic currents
+                    total_current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        total_current += synapse->getSynapticCurrent();
+                    }
+                    current = total_current;
+                    
 					activeSynapse = s;
                     
                     // updating the timestamp when a synapse was propagating a spike
@@ -243,7 +265,7 @@ namespace hummus {
                     }
 				}
 				
-                potential += current * (1 - std::exp(-timestep/decayPotential));
+                potential += current * (1 - fast_exp(-timestep/membrane_time_constant));
             }
             
             if (s) {
@@ -318,8 +340,7 @@ namespace hummus {
                 {"threshold", threshold},
                 {"restingPotential", restingPotential},
                 {"refractoryPeriod", refractoryPeriod},
-                {"decayPotential", decayPotential},
-                {"decayCurrent", decayCurrent},
+                {"membrane_time_constant", membrane_time_constant},
                 {"burstingActivity", burstingActivity},
                 {"homeostasis", homeostasis},
                 {"restingThreshold", restingThreshold},
@@ -357,20 +378,12 @@ namespace hummus {
 			return active;
 		}
 		
-		float getDecayPotential() const {
-            return decayPotential;
+		float getMembraneTimeConstant() const {
+            return membrane_time_constant;
         }
 		
-        void setDecayPotential(float newDecayPotential) {
-            decayPotential = newDecayPotential;
-        }
-		
-        float getDecayCurrent() const {
-            return decayCurrent;
-        }
-        
-        void setDecayCurrent(float newCurrent) {
-            decayCurrent = newCurrent;
+        void setMembraneTimeConstant(float newmembrane_time_constant) {
+            membrane_time_constant = newmembrane_time_constant;
         }
 		
 		void setInhibition(double timestamp, bool inhibitionStatus) {
@@ -454,8 +467,7 @@ namespace hummus {
         }
         
 		// ----- LIF PARAMETERS -----
-		float                                    decayPotential;
-        float                                    decayCurrent;
+		float                                    membrane_time_constant;
 		bool                                     active;
 		bool                                     inhibited;
 		double                                   inhibitionTime;

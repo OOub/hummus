@@ -36,8 +36,11 @@ namespace hummus {
         
         // ----- PUBLIC SYNAPSE METHODS -----
         
-        // pure virtual method that outputs an updated current value
-        virtual float receiveSpike(double timestamp) = 0;
+        // pure virtuak method that updates the current value in the absence of a spike
+        virtual float update(double timestamp) = 0;
+        
+        // pure virtual method that outputs an updated current value upon receiving a spike
+        virtual void receiveSpike(double timestamp) = 0;
         
         // write synapse parameters in a JSON format
         virtual void toJson(nlohmann::json& output) {}

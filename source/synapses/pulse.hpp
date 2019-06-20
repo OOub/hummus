@@ -44,17 +44,18 @@ namespace hummus {
 		virtual ~Pulse(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual float receiveSpike(double timestamp) override {
-            // updating step function
+        virtual float update(double timestamp) override {
             if (timestamp - previousInputTime > synapseTimeConstant) {
                 synapticCurrent = 0;
             }
-            
+            return synapticCurrent;
+        }
+        
+		virtual void receiveSpike(double timestamp) override {
             // saving timestamp
             previousInputTime = timestamp;
             
             synapticCurrent += weight * (externalCurrent+normalDistribution(randomEngine));
-            return synapticCurrent;
 		}
 		
 		virtual void toJson(nlohmann::json& output) override {

@@ -44,17 +44,19 @@ namespace hummus {
 		
 		virtual ~Exponential(){}
 		
-		// ----- PUBLIC METHODS -----        
-		virtual float receiveSpike(double timestamp) override {
+		// ----- PUBLIC METHODS -----
+        virtual float update(double timestamp) override {
             // exponentially decay the current
-            synapticCurrent = synapticCurrent * std::exp(-(timestamp - previousInputTime)/synapseTimeConstant);
-            
+            synapticCurrent = synapticCurrent * fast_exp(-(timestamp - previousInputTime)/synapseTimeConstant);
+            return synapticCurrent;
+        }
+        
+		virtual void receiveSpike(double timestamp) override {
             // saving timestamp
             previousInputTime = timestamp;
             
             // increase the synaptic current in response to an incoming spike
             synapticCurrent += weight * (externalCurrent+normalDistribution(randomEngine));
-            return synapticCurrent;
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {

@@ -51,7 +51,7 @@ namespace hummus {
             }
             
             // eligibility trace decay
-            eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
+            eligibilityTrace *= fast_exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
             
             // instantly making the input neuron fire at every input spike
             if (active) {
@@ -97,7 +97,7 @@ namespace hummus {
             }
             
             // eligibility trace decay
-            eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
+            eligibilityTrace *= fast_exp(-timestep/eligibilityDecay);
             
             if (s && active) {
                 potential = threshold;

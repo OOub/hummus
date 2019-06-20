@@ -39,11 +39,15 @@ namespace hummus {
 		virtual ~Dirac(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual float receiveSpike(double timestamp) override {
+        virtual float update(double timestamp) override {
+            synapticCurrent = 0;
+            return synapticCurrent;
+        }
+        
+		virtual void receiveSpike(double timestamp) override {
             // saving timestamp
             previousInputTime = timestamp;
-            
-            return amplitudeScaling * weight * (externalCurrent+normalDistribution(randomEngine));
+            synapticCurrent = amplitudeScaling * weight * (externalCurrent+normalDistribution(randomEngine));
 		}
 	
 		virtual void toJson(nlohmann::json& output) override {
