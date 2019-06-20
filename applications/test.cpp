@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     auto input = network.makeLayer<hummus::Parrot>(1, {});
-    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 3, true);
+    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 200, 10, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 5, 3), 100);

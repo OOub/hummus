@@ -76,7 +76,7 @@ namespace hummus {
                     
                     // if a postsynapticNeuron fired, the deltaT (presynaptic time - postsynaptic time) should be positive
                     // ignoring inhibitory synapses
-                    if (axonTerminal->getWeight() >=0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getEligibilityTrace() > 0.1) {
+                    if (axonTerminal->getWeight() >=0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getTrace() > 0.1) {
                         float postTrace = (- A_minus * fast_exp(-(timestamp - at_postsynapticNeuron->getPreviousSpikeTime())/tau_minus)) * axonTerminal->getWeight() * (1 - axonTerminal->getWeight());
                         
                         axonTerminal->setWeight(postTrace);
@@ -99,7 +99,7 @@ namespace hummus {
                     auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
 					// if a presynapticNeuron already fired, the deltaT (presynaptic time - postsynaptic time) should be negative
                     // ignoring inhibitory synapses
-					if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getEligibilityTrace() > 0.1) {
+					if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getTrace() > 0.1) {
 						float preTrace = (A_plus * fast_exp((d_presynapticNeuron->getPreviousSpikeTime() - timestamp)/tau_plus)) * dendrite->getWeight() * (1 - dendrite->getWeight());
                         dendrite->setWeight(preTrace);
                         

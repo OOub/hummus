@@ -108,12 +108,12 @@ namespace hummus {
 				for (auto& layer: rl) {
 					// if presynaptic time - postsynaptic time is positive
 					for (auto& n: network->getLayers()[layer.preLayer].neurons) {
-                        if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
+                        if (network->getNeurons()[n]->getTrace() > 0.1) {
                             for (auto& axonTerminal: network->getNeurons()[n]->getAxonTerminals()) {
                                 auto& at_postsynapticNeuron = network->getNeurons()[axonTerminal->getPostsynapticNeuronID()];
                                 
                                 // ignoring inhibitory synapses
-                                if (axonTerminal->getWeight() >= 0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getEligibilityTrace() > 0.1) {
+                                if (axonTerminal->getWeight() >= 0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getTrace() > 0.1) {
                                     double delta = alpha*Ar_minus+beta*Ap_plus;
                                     
                                     if (network->getVerbose() >= 1) {
@@ -133,12 +133,12 @@ namespace hummus {
 
 					// if presynaptic time - postsynaptic time is positive
 					for (auto& n: network->getLayers()[layer.postLayer].neurons) {
-                        if (network->getNeurons()[n]->getEligibilityTrace() > 0.1) {
+                        if (network->getNeurons()[n]->getTrace() > 0.1) {
                             for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
                                 auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
                                 
                                 // ignoring inhibitory synapses
-                                if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getEligibilityTrace() > 0.1) {
+                                if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getTrace() > 0.1) {
                                     double delta = alpha*Ar_plus+beta*Ap_minus;
                                     
                                     if (network->getVerbose() >= 1) {

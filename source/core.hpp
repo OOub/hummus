@@ -110,21 +110,31 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
+        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, float _conductance=200,
+               float _leakageConductance=10, int _refractoryPeriod=3, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
                 neuronID(_neuronID),
                 layerID(_layerID),
                 sublayerID(_sublayerID),
                 rfCoordinates(_rfCoordinates),
                 xyCoordinates(_xyCoordinates),
-                threshold(_threshold),
-                potential(_restingPotential),
-                current(0),
-                restingPotential(_restingPotential),
-                eligibilityTrace(0),
-                eligibilityDecay(_eligibilityDecay),
+                threshold(_threshold), //mV
+                potential(_restingPotential), //mV
+                conductance(_conductance), // pF
+                leakageConductance(_leakageConductance), // nS
+                membraneTimeConstant(_conductance/_leakageConductance), // ms
+                current(0), // pA
+                refractoryPeriod(_refractoryPeriod), //ms
+                restingPotential(_restingPotential), //mV
+                trace(0),
+                traceTimeConstant(_traceTimeConstant),
                 previousSpikeTime(0),
                 previousInputTime(0),
-                neuronType(0) {}
+                neuronType(0) {
+                    // error handling
+                    if (membraneTimeConstant <= 0) {
+                        throw std::logic_error("The potential decay cannot less than or equal to 0");
+                    }
+                }
     	
 		virtual ~Neuron(){}
 		
@@ -144,7 +154,7 @@ namespace hummus {
         virtual void resetNeuron(Network* network, bool clearAddons=true) {
             previousSpikeTime = 0;
             potential = restingPotential;
-            eligibilityTrace = 0;
+            trace = 0;
             if (clearAddons) {
                 relevantAddons.clear();
             }
@@ -260,20 +270,20 @@ namespace hummus {
             current = newCurrent;
         }
         
-        float getEligibilityTrace() const {
-            return eligibilityTrace;
+        float getTrace() const {
+            return trace;
         }
         
-        float getEligibilityDecay() const {
-            return eligibilityDecay;
+        void setTrace(float newtrace) {
+            trace = newtrace;
         }
         
-        void setEligibilityDecay(float newDecay) {
-            eligibilityDecay = newDecay;
+        float getTraceTimeConstant() const {
+            return traceTimeConstant;
         }
         
-        void setEligibilityTrace(float newtrace) {
-            eligibilityTrace = newtrace;
+        void setTraceTimeConstant(float newConstant) {
+            traceTimeConstant = newConstant;
         }
         
         double getPreviousSpikeTime() const {
@@ -292,61 +302,50 @@ namespace hummus {
             relevantAddons.emplace_back(newAddon);
         }
 		
+        float getConductance() const {
+            return conductance;
+        }
+        
+        float getMembraneTimeConstant() const {
+            return membraneTimeConstant;
+        }
+        
     protected:
         
         // loops through any learning rules and activates them
         virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
-        // ----- NEURON PARAMETERS -----
+        // ----- NEURON SPATIAL PARAMETERS -----
         int                                        neuronID;
         int                                        layerID;
         int                                        sublayerID;
         std::pair<int, int>                        rfCoordinates;
         std::pair<float, float>                    xyCoordinates;
+        
+        // ----- SYNAPSES OF THE NEURON -----
         std::vector<Synapse*>                      dendriticTree;
         std::vector<std::unique_ptr<Synapse>>      axonTerminals;
         std::unique_ptr<Synapse>                   initialSynapse;
-        float                                      threshold;
-        float                                      potential;
+        
+        // ----- DYNAMIC VARIABLES -----
         float                                      current;
+        float                                      potential;
+        float                                      trace;
+        
+        // ----- FIXED PARAMETERS -----
+        float                                      threshold;
         float                                      restingPotential;
+        float                                      traceTimeConstant;
+        float                                      conductance;
+        float                                      leakageConductance;
+        float                                      membraneTimeConstant;
+        float                                      refractoryPeriod;
+        
+        // ----- IMPLEMENTATION PARAMETERS -----
         std::vector<Addon*>                        relevantAddons;
-        float                                      eligibilityTrace;
-        float                                      eligibilityDecay;
         double                                     previousSpikeTime;
         double                                     previousInputTime;
         int                                        neuronType;
-        
-//        // ----- NEURON SPATIAL PARAMETERS -----
-//        int                                        neuron_id;
-//        int                                        layer_id;
-//        int                                        sublayer_id;
-//        std::pair<int, int>                        rf_coordinates;
-//        std::pair<float, float>                    xy_coordinates;
-//
-//        // ----- SYNAPSES OF THE NEURON -----
-//        std::unique_ptr<Synapse>                   initial_synapse;
-//        std::vector<Synapse*>                      dendritic_tree;
-//        std::vector<std::unique_ptr<Synapse>>      axon_terminals;
-//
-//        // ----- DYNAMIC VARIABLES -----
-//        float                                      membrane_potential;
-//        float                                      injected_current;
-//        float                                      trace;
-//
-//        // ----- FIXED PARAMETERS -----
-//        float                                      membrane_threshold;
-//        float                                      membrane_resting_potential;
-//        float                                      trace_time_constant;
-//        float                                      membrane_conductance;
-//        float                                      membrane_leak_conductance;
-//        float                                      membrane_time_constant;
-//
-//        // ----- IMPLEMENTATION PARAMETERS -----
-//        std::vector<Addon*>                        relevant_addons;
-//        int                                        neuron_type;
-//        double                                     previous_spike_time;
-//        double                                     previous_input_time;
     };
 	
     class Network {

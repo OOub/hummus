@@ -22,8 +22,9 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
+        Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, float _conductance=200,
+               float _leakageConductance=10, int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
                 active(true),
                 refractoryPeriod(_refractoryPeriod) {}
 		
@@ -51,13 +52,13 @@ namespace hummus {
                 active = true;
             }
             
-            // eligibility trace decay
-            eligibilityTrace *= fast_exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
+            // trace decay
+            trace *= fast_exp(-(timestamp - previousSpikeTime)/traceTimeConstant);
             
             // instantly making the input neuron fire at every input spike
             if (active) {
                 potential = threshold;
-                eligibilityTrace = 1;
+                trace = 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
@@ -97,12 +98,12 @@ namespace hummus {
                 active = true;
             }
             
-            // eligibility trace decay
-            eligibilityTrace *= fast_exp(-timestep/eligibilityDecay);
+            // trace decay
+            trace *= fast_exp(-timestep/traceTimeConstant);
             
             if (s && active) {
                 potential = threshold;
-                eligibilityTrace = 1;
+                trace = 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
@@ -145,7 +146,7 @@ namespace hummus {
                 {"sublayerID", sublayerID},
                 {"receptiveFieldCoordinates", rfCoordinates},
                 {"XYCoordinates", xyCoordinates},
-                {"eligibilityDecay", eligibilityDecay},
+                {"traceTimeConstant", traceTimeConstant},
                 {"threshold", threshold},
                 {"restingPotential", restingPotential},
                 {"refractoryPeriod", refractoryPeriod},

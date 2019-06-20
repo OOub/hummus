@@ -27,10 +27,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _membrane_time_constant=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
-                refractoryPeriod(_refractoryPeriod),
-                membrane_time_constant(_membrane_time_constant),
+        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -39,12 +37,7 @@ namespace hummus {
                 homeostasisBeta(_homeostasisBeta),
                 inhibited(false),
                 inhibitionTime(0) {
-					
-			// error handling
-    	    if (membrane_time_constant <= 0) {
-                throw std::logic_error("The potential decay cannot less than or equal to 0");
-            }
-					
+                    
             // LIF neuron type == 1 (for JSON save)
             neuronType = 1;
 		}
@@ -85,11 +78,11 @@ namespace hummus {
                 }
                 current = total_current;
                 
-                // eligibility trace decay
-                eligibilityTrace *= fast_exp(-(timestamp-previousInputTime)/eligibilityDecay);
+                // etrace decay
+                trace *= fast_exp(-(timestamp-previousInputTime)/traceTimeConstant);
                 
                 // potential decay
-                potential = restingPotential + (potential-restingPotential)*fast_exp(-(timestamp-previousInputTime)/membrane_time_constant);
+                potential = restingPotential + (potential-restingPotential)*fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant);
                 
                 // threshold decay
                 if (homeostasis) {
@@ -98,7 +91,7 @@ namespace hummus {
             
                 if (active && !inhibited) {
 					// calculating the potential
-                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membrane_time_constant)) + (potential - restingPotential) * fast_exp(-(timestamp-previousInputTime)/membrane_time_constant);
+                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential) * fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant);
                     
                     // updating the threshold
                     if (homeostasis) {
@@ -131,7 +124,7 @@ namespace hummus {
 					
                     if (s->getWeight() >= 0) {
                         // calculating time at which potential = threshold
-                        double predictedTimestamp = membrane_time_constant * (- fast_log2( - threshold + restingPotential + current) + fast_log2( current - potential + restingPotential)) + timestamp;
+                        double predictedTimestamp = membraneTimeConstant * (- fast_log2( - threshold + restingPotential + current) + fast_log2( current - potential + restingPotential)) + timestamp;
                         
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, s, spikeType::prediction}, spikeType::prediction);
@@ -139,16 +132,16 @@ namespace hummus {
                             network->injectPredictedSpike(spike{timestamp + s->getSynapseTimeConstant(), s, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
-                        potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membrane_time_constant)) + (potential - restingPotential);
+                        potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
                     }
                 }
             } else if (type == spikeType::prediction) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membrane_time_constant)) + (potential - restingPotential);
+                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
                 }
             } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - fast_exp(-s->getSynapseTimeConstant()/membrane_time_constant)) + (potential - restingPotential) * fast_exp(-s->getSynapseTimeConstant()/membrane_time_constant);
+                    potential = restingPotential + current * (1 - fast_exp(-s->getSynapseTimeConstant()/membraneTimeConstant)) + (potential - restingPotential) * fast_exp(-s->getSynapseTimeConstant()/membraneTimeConstant);
                 }
             }
         
@@ -157,7 +150,7 @@ namespace hummus {
             }
 
             if (potential >= threshold) {
-                eligibilityTrace = 1;
+                trace = 1;
 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
@@ -220,11 +213,11 @@ namespace hummus {
             }
             current = total_current;
             
-            // eligibility trace decay
-            eligibilityTrace *= fast_exp(-timestep/eligibilityDecay);
+            // trace decay
+            trace *= fast_exp(-timestep/traceTimeConstant);
             
 			// potential decay
-            potential = restingPotential + (potential-restingPotential)*fast_exp(-timestep/membrane_time_constant);
+            potential = restingPotential + (potential-restingPotential)*fast_exp(-timestep/membraneTimeConstant);
             
 			// threshold decay
 			if (homeostasis) {
@@ -269,7 +262,7 @@ namespace hummus {
                     }
 				}
 				
-                potential += current * (1 - fast_exp(-timestep/membrane_time_constant));
+                potential += current * (1 - fast_exp(-timestep/membraneTimeConstant));
             }
             
             if (s) {
@@ -288,7 +281,7 @@ namespace hummus {
             }
 
 			if (potential >= threshold) {
-				eligibilityTrace = 1;
+				trace = 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << activeSynapse->getPresynapticNeuronID() << "->" << neuronID << " w=" << activeSynapse->getWeight() << " d=" << activeSynapse->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
@@ -335,7 +328,7 @@ namespace hummus {
             previousSpikeTime = 0;
             current = 0;
             potential = restingPotential;
-            eligibilityTrace = 0;
+            trace = 0;
             inhibited = false;
             active = true;
             threshold = restingThreshold;
@@ -353,11 +346,12 @@ namespace hummus {
                 {"sublayerID", sublayerID},
                 {"receptiveFieldCoordinates", rfCoordinates},
                 {"XYCoordinates", xyCoordinates},
-                {"eligibilityDecay", eligibilityDecay},
+                {"traceTimeConstant", traceTimeConstant},
                 {"threshold", threshold},
                 {"restingPotential", restingPotential},
                 {"refractoryPeriod", refractoryPeriod},
-                {"membrane_time_constant", membrane_time_constant},
+                {"conductance", conductance},
+                {"leakageConductance", leakageConductance},
                 {"burstingActivity", burstingActivity},
                 {"homeostasis", homeostasis},
                 {"restingThreshold", restingThreshold},
@@ -394,22 +388,10 @@ namespace hummus {
 			return active;
 		}
 		
-		float getMembraneTimeConstant() const {
-            return membrane_time_constant;
-        }
-		
-        void setMembraneTimeConstant(float newmembrane_time_constant) {
-            membrane_time_constant = newmembrane_time_constant;
-        }
-		
 		void setInhibition(double timestamp, bool inhibitionStatus) {
 			inhibitionTime = timestamp;
 			inhibited = inhibitionStatus;
 		}
-		
-        void setRefractoryPeriod(float newRefractoryPeriod) {
-            refractoryPeriod = newRefractoryPeriod;
-        }
         
         void setBurstingActivity(bool newBool) {
             burstingActivity = newBool;
@@ -445,11 +427,9 @@ namespace hummus {
         }
         
 		// ----- LIF PARAMETERS -----
-		float                                    membrane_time_constant;
 		bool                                     active;
 		bool                                     inhibited;
 		double                                   inhibitionTime;
-		float                                    refractoryPeriod;
 		bool                                     burstingActivity;
 		bool                                     homeostasis;
 		float                                    restingThreshold;
