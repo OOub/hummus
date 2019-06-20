@@ -92,8 +92,8 @@ namespace hummus {
 				if (!isClosed) {
                     // getting data from neurons
 					potential = postsynapticNeuron->getPotential();
-                    threshold = postsynapticNeuron->getThreshold();
                     current = postsynapticNeuron->getCurrent();
+                    threshold = postsynapticNeuron->getThreshold();
                     // saving data points to plot
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));

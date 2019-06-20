@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
     std::cout << "Stay connection probability: " << std::setw(static_cast<int>(clean_cout-std::string("Stay connection probability: ").size())) << argv[10] << std::endl;
 	
     // current step function reset value (integration time)
-    float decayCurrent = std::atof(argv[11]);
-    std::cout << "Current decay time " << std::setw(static_cast<int>(clean_cout-std::string("Current decay time ").size())) << argv[11] << std::endl;
+    float synapseTimeConstant = std::atof(argv[11]);
+    std::cout << "Synapse time constant " << std::setw(static_cast<int>(clean_cout-std::string("Synapse time constant ").size())) << argv[11] << std::endl;
 	
     // time constant for membrane potential (decay)
     float decayPotential = std::atof(argv[12]);
@@ -131,20 +131,20 @@ int main(int argc, char** argv) {
     
     if (useMatrix) {
         // create reservoir layer
-        auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, decayCurrent, refractoryPeriod, wta);
+        auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, refractoryPeriod, wta);
         
         // connecting input according to weight matrix
-        network.connectivityMatrix<hummus::Pulse>(pixel_grid, reservoir, 1, inputWeightMatrix, inputDelayMatrix);
+        network.connectivityMatrix<hummus::Pulse>(pixel_grid, reservoir, 1, inputWeightMatrix, inputDelayMatrix, synapseTimeConstant);
         
         // connecting reservoir according to weight matrix
-        network.connectivityMatrix<hummus::Pulse>(reservoir, reservoir, 1, reservoirWeightMatrix, reservoirDelayMatrix);
+        network.connectivityMatrix<hummus::Pulse>(reservoir, reservoir, 1, reservoirWeightMatrix, reservoirDelayMatrix, synapseTimeConstant);
         
     } else {
         // reservoir layer
-        auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, decayCurrent, refractoryPeriod, wta);
+        auto reservoir = network.makeLayer<hummus::LIF>(numberOfNeurons, {}, homeostasis, decayPotential, refractoryPeriod, wta);
         
         // connect pixel grid to the reservoir in an all to all fashion
-        network.reservoir<hummus::Pulse>(reservoir, 1, hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0), feedforwardProbability, feedbackProbability, selfExcitationProbability);
+        network.reservoir<hummus::Pulse>(reservoir, 1, hummus::Normal(inputWeightMean, inputWeightStdDev, 0, 0), feedforwardProbability, feedbackProbability, selfExcitationProbability, synapseTimeConstant);
     }
     
     std::cout << "\nsaving network into rcNetwork.json file..." << std::endl;

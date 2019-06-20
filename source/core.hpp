@@ -158,13 +158,15 @@ namespace hummus {
         Synapse* makeSynapse(Neuron* postNeuron, int probability, float weight, float delay, Args&&... args) {
             if (postNeuron) {
                 if (connectionProbability(probability)) {
-                    axonTerminals.emplace_back(new T{postNeuron->neuronID, neuronID, weight, delay, std::forward<Args>(args)...});
+                    axonTerminals.emplace_back(new T{postNeuron->neuronID, neuronID, weight, delay, static_cast<float>(std::forward<Args>(args))...});
                     postNeuron->getDendriticTree().emplace_back(axonTerminals.back().get());
+                    return axonTerminals.back().get();
+                } else {
+                    return nullptr;
                 }
             } else {
                 throw std::logic_error("Neuron does not exist");
             }
-            return axonTerminals.back().get();
         }
 		
         // initialise the initial synapse when a neuron receives an input event
@@ -291,9 +293,6 @@ namespace hummus {
         }
 		
     protected:
-        
-        // winner-take-all algorithm
-        virtual void WTA(double timestamp, Network* network) {}
         
         // loops through any learning rules and activates them
         virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
@@ -981,46 +980,36 @@ namespace hummus {
         }
 
         // interconnecting a layer with soft winner-takes-all synapses, using negative weights
-        template <typename T, typename... Args>
-        void lateralInhibition(layer l, int number_of_synapses, float _weightMean, float _weightstdev, int probability, Args&&... args) {
-            if (_weightMean != 0) {
-                if (_weightMean > 0 && verbose != 0) {
-                    std::cout << "lateral inhibition synapses must have negative weights. The input weight was automatically converted to its negative counterpart" << std::endl;
-                }
-                
-                // generating normal distribution
-                std::normal_distribution<> weightRandom(_weightMean, _weightstdev);
-                
-                for (auto& sub: l.sublayers) {
-                    // intra-sublayer soft WTA
-                    for (auto& preNeurons: sub.neurons) {
-                        for (auto& postNeurons: sub.neurons) {
-                            if (preNeurons != postNeurons) {
-                                for (auto i=0; i<number_of_synapses; i++) {
-                                    neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), probability, std::forward<Args>(args)...);
-                                }
+        template <typename T, typename F, typename... Args>
+        void lateralInhibition(layer l, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
+            for (auto& sub: l.sublayers) {
+                // intra-sublayer soft WTA
+                for (auto& preNeurons: sub.neurons) {
+                    for (auto& postNeurons: sub.neurons) {
+                        if (preNeurons != postNeurons) {
+                            for (auto i=0; i<number_of_synapses; i++) {
+                                const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
+                                neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                             }
                         }
                     }
-                    
-                    // inter-sublayer soft WTA
-                    for (auto& subToInhibit: l.sublayers) {
-                        if (sub.ID != subToInhibit.ID) {
-                            for (auto& preNeurons: sub.neurons) {
-                                for (auto& postNeurons: subToInhibit.neurons) {
-                                    if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
-                                        for (auto i=0; i<number_of_synapses; i++) {
-                                            neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weightRandom(randomEngine)), 0, std::forward<Args>(args)...);
-                                        }
+                }
+                
+                // inter-sublayer soft WTA
+                for (auto& subToInhibit: l.sublayers) {
+                    if (sub.ID != subToInhibit.ID) {
+                        for (auto& preNeurons: sub.neurons) {
+                            for (auto& postNeurons: subToInhibit.neurons) {
+                                if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
+                                    for (auto i=0; i<number_of_synapses; i++) {
+                                        const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
+                                        neurons[preNeurons].get()->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                                     }
                                 }
                             }
                         }
                     }
                 }
-                
-            } else {
-                throw std::logic_error("lateral inhibition synapses cannot have a null weight");
             }
         }
         
@@ -1448,7 +1437,7 @@ namespace hummus {
                             initialSpikes.pop_front();
                         }
                     }
-					
+                    
                     for (auto& n: neurons) {
                         std::vector<spike> local_currentSpikes(currentSpikes.size());
                         const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
@@ -1459,9 +1448,9 @@ namespace hummus {
                                 return false;
                             }
                         });
-                        
+
                         local_currentSpikes.resize(std::distance(local_currentSpikes.begin(), it));
-                        
+
                         if (it != currentSpikes.end()) {
                             for (auto& currentSpike: local_currentSpikes) {
                                 n->updateSync(i, currentSpike.propagationSynapse, this, timestep);
@@ -1470,7 +1459,7 @@ namespace hummus {
                             n->updateSync(i, nullptr, this, timestep);
                         }
                     }
-                    
+
                     // checking for new spikes
                     std::vector<spike> newSpikes;
                     if (!generatedSpikes.empty()) {
@@ -1479,7 +1468,7 @@ namespace hummus {
                             generatedSpikes.pop_front();
                         }
                     }
-                    
+
                     for (auto& spike: newSpikes) {
                         neurons[spike.propagationSynapse->getPostsynapticNeuronID()]->updateSync(i, spike.propagationSynapse, this, timestep);
                     }

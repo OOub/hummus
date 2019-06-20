@@ -55,10 +55,10 @@ int main(int argc, char** argv) {
 
         /// creating the layers
         auto pixel_grid = network.makeGrid<hummus::Parrot>(32, 32, 1, {}); // input layer
-        auto conv_one = network.makeGrid<hummus::LIF>(pixel_grid, 4, 5, 1, {&ti_stdp}, homeostasis, 20, 10, 10, conv_wta, burst); // first convolution
-        auto pool_one = network.makeSubsampledGrid<hummus::LIF>(conv_one, {}, false, 20, 10, 10, pool_wta, false); // first pooling
-        auto conv_two = network.makeGrid<hummus::LIF>(pool_one, 8, 5, 1, {&ti_stdp}, homeostasis, 100, 50, 10, conv_wta, burst); // second convolution
-        auto pool_two = network.makeSubsampledGrid<hummus::LIF>(conv_two, {}, false, 20, 10, 10, pool_wta, false); // second pooling
+        auto conv_one = network.makeGrid<hummus::LIF>(pixel_grid, 4, 5, 1, {&ti_stdp}, homeostasis, 20, 10, conv_wta, burst); // first convolution
+        auto pool_one = network.makeSubsampledGrid<hummus::LIF>(conv_one, {}, false, 20, 10, pool_wta, false); // first pooling
+        auto conv_two = network.makeGrid<hummus::LIF>(pool_one, 8, 5, 1, {&ti_stdp}, homeostasis, 100, 10, conv_wta, burst); // second convolution
+        auto pool_two = network.makeSubsampledGrid<hummus::LIF>(conv_two, {}, false, 20, 10, pool_wta, false); // second pooling
         
         /// connecting the layers
         network.convolution<hummus::Exponential>(pixel_grid, conv_one, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100);
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
         
         /// creating the layers
         auto pixel_grid = network.makeGrid<hummus::Parrot>(32, 32, 1, {}); // input layer
-        auto output = network.makeLayer<hummus::LIF>(100, {&ti_stdp}, homeostasis, 20, 10, 10, wta, burst); // output layer with STDP
+        auto output = network.makeLayer<hummus::LIF>(100, {&ti_stdp}, homeostasis, 20, 10, wta, burst); // output layer with STDP
         
         /// connecting the layers
         network.allToAll<hummus::Pulse>(pixel_grid, output, 1, hummus::Normal(0.6, 0.1, 0, 0, 0, 1), 100);

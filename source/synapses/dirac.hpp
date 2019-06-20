@@ -49,7 +49,7 @@ namespace hummus {
             previousInputTime = timestamp;
             synapticCurrent = amplitudeScaling * weight * (externalCurrent+normalDistribution(randomEngine));
 		}
-	
+        
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({

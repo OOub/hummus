@@ -45,6 +45,11 @@ namespace hummus {
         // write synapse parameters in a JSON format
         virtual void toJson(nlohmann::json& output) {}
         
+        // resets the synapse
+        virtual void reset() {
+            synapticCurrent = 0;
+        }
+        
         // ----- SETTERS AND GETTERS -----
         int getType() const {
             return type;
@@ -62,7 +67,7 @@ namespace hummus {
             previousInputTime = newTime;
         }
         
-        float getSynapseTimeConstant() const {
+        const float getSynapseTimeConstant() const {
             return synapseTimeConstant;
         }
         
@@ -115,13 +120,13 @@ namespace hummus {
         int                        postsynaptic_neuron;
         float                      weight;
         float                      delay;
-        float                      externalCurrent;
         float                      synapticCurrent;
         double                     previousInputTime;
         int                        kernelID;
         float                      gaussianStdDev;
         int                        type;
         float                      synapseTimeConstant;
+        float                      externalCurrent;
         float                      synapticEfficacy;
     };
 }

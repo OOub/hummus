@@ -37,7 +37,6 @@ int main(int argc, char** argv) {
     
     //  ----- NETWORK PARAMETERS -----
 	float potentialDecay = 20;
-    float currentDecay = 20;
 	float refractoryPeriod = 30;
     int inputNeurons = 10;
     int layer1Neurons = 1; 
@@ -48,7 +47,7 @@ int main(int argc, char** argv) {
 	
 	//  ----- CREATING THE NETWORK -----
     auto input = network.makeLayer<hummus::Parrot>(inputNeurons, {});
-    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, false, potentialDecay, currentDecay, refractoryPeriod);
+    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, false, potentialDecay, refractoryPeriod);
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 1, 0), 100);

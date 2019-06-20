@@ -25,15 +25,15 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _externalCurrent=100, float _decayCurrent=10, float gaussianStandardDeviation=0) :
+		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=10, const float _externalCurrent=100, float gaussianStandardDeviation=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 				
-			synapseTimeConstant = _decayCurrent;
+			synapseTimeConstant = _synapseTimeConstant;
 			gaussianStdDev = gaussianStandardDeviation;
 			type = 1;
 			
 			// error handling
-			if (_decayCurrent <= 0) {
+			if (_synapseTimeConstant <= 0) {
                 throw std::logic_error("The current decay value cannot be less than or equal to 0");
             }
 				
@@ -59,13 +59,13 @@ namespace hummus {
             // increase the synaptic current in response to an incoming spike
             synapticCurrent += weight * (externalCurrent+normalDistribution(randomEngine));
 		}
-	
+        
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({
             	{"type", type},
 				{"gaussianStdDev", gaussianStdDev},
-				{"decayCurrent", synapseTimeConstant},
+				{"synapseTimeConstant", synapseTimeConstant},
             });
 		}
 		

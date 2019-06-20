@@ -57,14 +57,15 @@ int main(int argc, char** argv) {
     
     // creating layers of neurons
     auto input = network.makeLayer<hummus::Parrot>(1, {});
-    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true, true);
+    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 3, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0), 100);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 5, 3), 100);
+    network.lateralInhibition<hummus::Pulse>(output, 1, hummus::Normal(-1, 0), 100);
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
-    network.injectSpike(0, 11);
+    network.injectSpike(0, 12);
     network.injectSpike(0, 30);
 
     //  ----- DISPLAY SETTINGS -----
@@ -72,11 +73,8 @@ int main(int argc, char** argv) {
     display.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
-    network.verbosity(1);
-    network.run(100, 0);
-
-	//  ----- SAVING THE NETWORK -----
-    network.save("testSave");
+    network.verbosity(2);
+    network.run(100, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

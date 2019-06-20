@@ -21,8 +21,8 @@ namespace hummus {
 	class DecisionMaking : public LIF {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", bool _homeostasis=false, float _membrane_time_constant=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
-                LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _homeostasis, _membrane_time_constant, _refractoryPeriod, _wta, _burstingActivity, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential),
+		DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", bool _homeostasis=false, float _membrane_time_constant=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+                LIF(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _homeostasis, _membrane_time_constant, _refractoryPeriod, _burstingActivity, _eligibilityDecay, _decayHomeostasis, _homeostasisBeta, _threshold, _restingPotential),
                 classLabel(_classLabel) {
             // DecisionMaking neuron type = 2 for JSON save
             neuronType = 2;
@@ -172,6 +172,9 @@ namespace hummus {
                 potential = restingPotential;
                 if (!burstingActivity) {
                     current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        synapse->reset();
+                    }
                 }
                 active = false;
                 
@@ -304,6 +307,9 @@ namespace hummus {
                 potential = restingPotential;
                 if (!burstingActivity) {
                     current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        synapse->reset();
+                    }
                 }
                 active = false;
             }
@@ -366,7 +372,6 @@ namespace hummus {
                 {"restingThreshold", restingThreshold},
                 {"decayHomeostasis", decayHomeostasis},
                 {"homeostasisBeta", homeostasisBeta},
-                {"wta", wta},
                 {"classLabel", classLabel},
                 {"dendriticSynapses", nlohmann::json::array()},
                 {"axonalSynapses", nlohmann::json::array()},

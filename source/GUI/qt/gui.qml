@@ -158,6 +158,17 @@ ApplicationWindow {
 					borderColor: 'transparent'
 				}
 
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:  {
+                        var width_zoom = width/2
+                        var height_zoom = height/2
+                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
+                        inputChart.zoomIn(r)
+                    }
+                    onDoubleClicked: inputChart.zoomReset();
+                }
+
 				Timer {
 					id: refreshTimer
 					interval: refresh
@@ -261,6 +272,17 @@ ApplicationWindow {
 					borderColor: 'transparent'
 				}
 
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:  {
+                        var width_zoom = width/2
+                        var height_zoom = height/2
+                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
+                        outputChart.zoomIn(r)
+                    }
+                    onDoubleClicked: outputChart.zoomReset();
+                }
+
 				Timer {
 					id: refreshTimer2
 					interval: refresh
@@ -363,6 +385,17 @@ ApplicationWindow {
 					axisYRight: mY_right
 				}
 
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:  {
+                        var width_zoom = width/2
+                        var height_zoom = height/2
+                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
+                        membraneChart.zoomIn(r)
+                    }
+                    onDoubleClicked: membraneChart.zoomReset();
+                }
+                
 				Timer {
 					id: refreshTimer3
 					interval: refresh

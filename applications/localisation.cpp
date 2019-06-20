@@ -28,7 +28,6 @@ int main(int argc, char** argv) {
     
     /// ----- PARAMETERS -----
     float direction_potentialDecay   = 20;
-    float direction_currentDecay     = 10;
     float direction_eligibilityDecay = 20;
     bool  direction_wta              = true;
     bool  direction_burst            = false;
@@ -52,7 +51,7 @@ int main(int argc, char** argv) {
     /// ----- DIRECTION LAYER -----
     
     // layer that learns the delays
-    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, direction_homeostasis, direction_potentialDecay, direction_currentDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
+    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, direction_homeostasis, direction_potentialDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
     
     // connecting input layer with the direction neurons
     network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]

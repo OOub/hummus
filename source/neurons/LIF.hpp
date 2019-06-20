@@ -27,7 +27,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _membrane_time_constant=20, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _membrane_time_constant=20, int _refractoryPeriod=3, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
                 refractoryPeriod(_refractoryPeriod),
                 membrane_time_constant(_membrane_time_constant),
@@ -38,8 +38,7 @@ namespace hummus {
                 decayHomeostasis(_decayHomeostasis),
                 homeostasisBeta(_homeostasisBeta),
                 inhibited(false),
-                inhibitionTime(0),
-                wta(_wta) {
+                inhibitionTime(0) {
 					
 			// error handling
     	    if (membrane_time_constant <= 0) {
@@ -182,6 +181,9 @@ namespace hummus {
                 potential = restingPotential;
                 if (!burstingActivity) {
                     current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        synapse->reset();
+                    }
                 }
                 active = false;
                 
@@ -291,7 +293,13 @@ namespace hummus {
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << activeSynapse->getPresynapticNeuronID() << "->" << neuronID << " w=" << activeSynapse->getWeight() << " d=" << activeSynapse->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
                 }
-
+                
+                if (!burstingActivity) {
+                    for (auto& synapse: dendriticTree) {
+                        synapse->reset();
+                    }
+                }
+                
 				for (auto& addon: relevantAddons) {
 					addon->neuronFired(timestamp, activeSynapse, this, network);
 				}
@@ -307,9 +315,16 @@ namespace hummus {
 
 				previousSpikeTime = timestamp;
 				potential = restingPotential;
+                
 				if (!burstingActivity) {
-					current = 0;
+                    current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        if (synapse->getWeight() > 0) {
+                            synapse->reset();
+                        }
+                    }
 				}
+                
 				active = false;
 			}
 		}
@@ -348,7 +363,6 @@ namespace hummus {
                 {"restingThreshold", restingThreshold},
                 {"decayHomeostasis", decayHomeostasis},
                 {"homeostasisBeta", homeostasisBeta},
-                {"wta", wta},
                 {"dendriticSynapses", nlohmann::json::array()},
                 {"axonalSynapses", nlohmann::json::array()},
             });
@@ -417,42 +431,7 @@ namespace hummus {
             homeostasisBeta = newHB;
         }
         
-        void setWTA(bool newBool) {
-            wta = newBool;
-        }
-        
 	protected:
-        
-        // winner-take-all algorithm
-		virtual void WTA(double timestamp, Network* network) override {
-            for (auto& sub: network->getLayers()[layerID].sublayers) {
-                // intra-sublayer hard WTA
-                if (sub.ID == sublayerID) {
-                    for (auto& n: sub.neurons) {
-                        if (network->getNeurons()[n]->getNeuronID() != neuronID && network->getNeurons()[n]->getRfCoordinates() == rfCoordinates) {
-                            network->getNeurons()[n]->setPotential(restingPotential);
-                            if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibitionTime = timestamp;
-                            }
-                        }
-                    }
-                // inter-sublayer hard WTA
-                } else {
-                    for (auto& n: sub.neurons) {
-                        if (network->getNeurons()[n]->getRfCoordinates() == rfCoordinates) {
-                            network->getNeurons()[n]->setPotential(restingPotential);
-                            if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibitionTime = timestamp;
-                            }
-                        }
-                    }
-                }
-            }
-		}
 		
         // loops through any learning rules and activates them
         virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
@@ -462,9 +441,6 @@ namespace hummus {
                         addon->learn(timestamp, s, postsynapticNeuron, network);
                     }
                 }
-            }
-            if (wta) {
-                WTA(timestamp, network);
             }
         }
         
@@ -479,7 +455,6 @@ namespace hummus {
 		float                                    restingThreshold;
 		float                                    decayHomeostasis;
 		float                                    homeostasisBeta;
-		bool                                     wta;
 		Synapse*                                 activeSynapse;
 	};
 }

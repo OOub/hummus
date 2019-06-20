@@ -24,15 +24,15 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _externalCurrent=100, float _resetCurrent=5, float gaussianStandardDeviation=0) :
+		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=5, const float _externalCurrent=100, float gaussianStandardDeviation=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 			
-			synapseTimeConstant = _resetCurrent;
+			synapseTimeConstant = _synapseTimeConstant;
 			gaussianStdDev = gaussianStandardDeviation;
 			type = 2;
 			
 			// error handling
-			if (_resetCurrent <= 0) {
+			if (_synapseTimeConstant <= 0) {
                 throw std::logic_error("The current reset value cannot be less than or equal to 0");
             }
 					
@@ -54,16 +54,15 @@ namespace hummus {
 		virtual void receiveSpike(double timestamp) override {
             // saving timestamp
             previousInputTime = timestamp;
-            
             synapticCurrent += weight * (externalCurrent+normalDistribution(randomEngine));
 		}
-		
+        
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse sparameters
             output.push_back({
             	{"type", type},
 				{"gaussianStdDev", gaussianStdDev},
-				{"resetCurrent", synapseTimeConstant},
+				{"synapseTimeConstant", synapseTimeConstant},
             });
 		}
 		
