@@ -13,7 +13,7 @@
 
 #include "core.hpp"
 
-#include "neurons/input.hpp"
+#include "neurons/parrot.hpp"
 #include "neurons/decisionMaking.hpp"
 #include "neurons/LIF.hpp"
 
@@ -63,18 +63,19 @@ namespace hummus {
                         if (layer[i]["neuronType"].is_number()) {
                             int neuronType = layer[i]["neuronType"].get<int>();
                             switch (neuronType) {
-                                // creating input neuron layer
-                                case 0:
-                                    layerHelper<Input>(layer[i]);
+                                // creating parrot neuron layer
+                                case 0: {
+                                    layerHelper<Parrot>(layer[i]);
                                     break;
                                 // creating LIF layer
-                                case 1:
+                                } case 1: {
                                     layerHelper<LIF>(layer[i]);
                                     break;
                                 // creating DecisionMaking layer
-                                case 2:
+                                } case 2: {
                                     layerHelper<DecisionMaking>(layer[i]);
                                     break;
+                                }
                             }
                         } else {
                             throw std::logic_error("neuronType should be a number. 0 for InputNeuron, 1 for LIF, 2 for IF, 3 for DecisionMakingNeuron");
@@ -140,8 +141,8 @@ namespace hummus {
                 n->setXYCoordinates(x, y);
             }
             
-            if (input["eligibilityDecay"].is_number()) {
-                n->setEligibilityDecay(input["eligibilityDecay"].get<float>());
+            if (input["traceTimeConstant"].is_number()) {
+                n->setTraceTimeConstant(input["traceTimeConstant"].get<float>());
             }
             
             if (input["restingPotential"].is_number()) {
@@ -152,28 +153,39 @@ namespace hummus {
                 n->setThreshold(input["threshold"].get<float>());
             }
             
+            if (input["refractoryPeriod"].is_number()) {
+                n->setRefractoryPeriod(input["refractoryPeriod"].get<float>());
+            }
+            
+            if (input["membraneTimeConstant"].is_number()) {
+                n->setMembraneTimeConstant(input["membraneTimeConstant"].get<float>());
+            }
+            
+            if (input["conductance"].is_number()) {
+                n->setConductance(input["conductance"].get<float>());
+            }
+            
+            if (input["leakageConductance"].is_number()) {
+                n->setLeakageConductance(input["leakageConductance"].get<float>());
+            }
+            
             // specific neuron parameters
             if (input["Type"].is_number()) {
                 int type = input["Type"].get<int>();
                 switch (type) {
-                    // input neuron
-                    case 0:
-                        if (input["refractoryPeriod"].is_number()) {
-                            dynamic_cast<Input*>(n)->setRefractoryPeriod(input["refractoryPeriod"].get<float>());
-                        }
-                        break;
                     // LIF neuron
-                    case 1:
+                    case 1: {
                         captureLIFParameters<LIF>(input, n);
                         break;
                     // DecisionMaking neuron
-                    case 2:
+                    } case 2: {
                         captureLIFParameters<DecisionMaking>(input, n);
 
                         if (input["classLabel"].is_string()) {
                             dynamic_cast<DecisionMaking*>(n)->setClassLabel(input["refractoryPeriod"].get<std::string>());
                         }
                         break;
+                    }
                 }
             }
 
@@ -182,34 +194,53 @@ namespace hummus {
             if (axonalSynapse.is_array() && !axonalSynapse.empty()) {
 
                 for (auto i=0; i<axonalSynapse.size(); i++) {
-                    double weight = 0;
+                    float weight = 0;
                     if (axonalSynapse[i]["weight"].is_number()) {
                         weight = axonalSynapse[i]["weight"].get<float>();
                     } else {
                         throw std::logic_error("axonal synapse weight incorrectly formatted");
                     }
 
-                    double delay = 0;
+                    float delay = 0;
                     if (axonalSynapse[i]["delay"].is_number()) {
                         delay = axonalSynapse[i]["delay"].get<float>();
                     } else {
                         throw std::logic_error("axonal synapse weight incorrectly formatted");
                     }
-
-                    if (axonalSynapse[i]["postNeuronID"].is_number()) {
-                        switch (axonalSynapse[i]["type"].get<int>()) {
-                            case 0:
-                                n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
+                    
+                    if (axonalSynapse[i]["postsynapticNeuron"].is_number()) {
+                        float synapseTimeConstant = 0;
+                        int type = axonalSynapse[i]["type"].get<int>();
+                        switch (type) {
+                            case 0: {
+                                float amplitudeScaling = 0;
+                                if (axonalSynapse[i]["amplitudeScaling"].is_number()) {
+                                    amplitudeScaling = axonalSynapse[i]["amplitudeScaling"].get<float>();
+                                } else {
+                                    throw std::logic_error("dirac synapse amplitude scaling incorrectly formatted");
+                                }
+                                
+                                n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
                                 break;
-                            case 1:
-                                n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
+                            } case 1: {
+                                if (axonalSynapse[i]["synapseTimeConstant"].is_number()) {
+                                    synapseTimeConstant = axonalSynapse[i]["synapseTimeConstant"].get<float>();
+                                } else {
+                                    throw std::logic_error("exponential synaptic time constant incorrectly formatted");
+                                }
+                                n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
                                 break;
-                            case 2:
-                                n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postNeuronID"].get<int>()].get(), 100, weight, delay);
+                            } case 2:
+                                if (axonalSynapse[i]["synapseTimeConstant"].is_number()) {
+                                    synapseTimeConstant = axonalSynapse[i]["synapseTimeConstant"].get<float>();
+                                } else {
+                                    throw std::logic_error("pulse synaptic time constant incorrectly formatted");
+                                }
+                                n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
                                 break;
                         }
                     } else {
-                        throw std::logic_error("postNeuronID incorrectly formatted");
+                        throw std::logic_error("postsynapticNeuron incorrectly formatted");
                     }
                 }
             }
@@ -250,24 +281,12 @@ namespace hummus {
         // parameters specific for the LIF parent class
         template<typename T>
         void captureLIFParameters(nlohmann::json& input, Neuron* n) {
-            if (input["refractoryPeriod"].is_number()) {
-                dynamic_cast<T*>(n)->setRefractoryPeriod(input["refractoryPeriod"].get<float>());
-            }
-            
             if (input["burstingActivity"].is_boolean()) {
                 dynamic_cast<T*>(n)->setBurstingActivity(input["burstingActivity"].get<bool>());
             }
 
             if (input["decayHomeostasis"].is_number()) {
                 dynamic_cast<T*>(n)->setDecayHomeostasis(input["decayHomeostasis"].get<float>());
-            }
-
-            if (input["decayPotential"].is_number()) {
-                dynamic_cast<T*>(n)->setDecayPotential(input["decayPotential"].get<float>());
-            }
-            
-            if (input["decayCurrent"].is_number()) {
-                dynamic_cast<T*>(n)->setDecayCurrent(input["decayCurrent"].get<float>());
             }
 
             if (input["homeostasis"].is_boolean()) {
@@ -280,10 +299,6 @@ namespace hummus {
 
             if (input["restingThreshold"].is_number()) {
                 dynamic_cast<T*>(n)->setRestingThreshold(input["restingThreshold"].get<float>());
-            }
-            
-            if (input["wta"].is_boolean()) {
-                dynamic_cast<T*>(n)->setWTA(input["wta"].get<bool>());
             }
         }
         

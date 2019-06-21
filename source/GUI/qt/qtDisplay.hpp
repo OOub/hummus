@@ -53,7 +53,8 @@ namespace hummus {
 			engine->rootContext()->setContextProperty("inputSublayer", 1);
 			engine->rootContext()->setContextProperty("sublayers", 1);
 			engine->rootContext()->setContextProperty("numberOfNeurons", 1);
-			
+			engine->rootContext()->setContextProperty("displayCurrents", false);
+                    
             engine->loadData(
 				#include "gui.qml"
             );
@@ -172,6 +173,11 @@ namespace hummus {
             dynamics_viewer->setTimeWindow(newWindow);
         }
 		
+        void plotCurrents(bool current_plot) {
+            engine->rootContext()->setContextProperty("displayCurrents", current_plot);
+            dynamics_viewer->plotCurrents(current_plot);
+        }
+        
     protected:
 
 		// ----- IMPLEMENTATION VARIABLES -----

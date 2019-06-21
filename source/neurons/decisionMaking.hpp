@@ -73,19 +73,19 @@ namespace hummus {
                 current = total_current;
                 
                 // trace decay
-                trace *= fast_exp(-(timestamp-previousInputTime)/traceTimeConstant);
+                trace *= std::exp(-(timestamp-previousInputTime)/traceTimeConstant);
                 
                 // potential decay
-                potential = restingPotential + (potential-restingPotential)*fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant);
+                potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)/membraneTimeConstant);
                 
                 // threshold decay
                 if (homeostasis) {
-                    threshold = restingThreshold + (threshold-restingThreshold)*fast_exp(-(timestamp-previousInputTime)/decayHomeostasis);
+                    threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousInputTime)/decayHomeostasis);
                 }
                 
                 if (active && !inhibited) {
                     // calculating the potential
-                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential) * fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant);
+                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/membraneTimeConstant);
                     
                     // updating the threshold
                     if (homeostasis) {
@@ -117,7 +117,7 @@ namespace hummus {
                     
                     if (s->getWeight() >= 0) {
                         // calculating time at which potential = threshold
-                        double predictedTimestamp = membraneTimeConstant * (- fast_log2( - threshold + restingPotential + current) + fast_log2( current - potential + restingPotential)) + timestamp;
+                        double predictedTimestamp = membraneTimeConstant * (- std::log( - threshold + restingPotential + current) + std::log( current - potential + restingPotential)) + timestamp;
                         
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, s, spikeType::prediction}, spikeType::prediction);
@@ -125,16 +125,16 @@ namespace hummus {
                             network->injectPredictedSpike(spike{timestamp + s->getSynapseTimeConstant(), s, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
-                        potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
+                        potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
                     }
                 }
             } else if (type == spikeType::prediction) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - fast_exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
+                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
                 }
             } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - fast_exp(-s->getSynapseTimeConstant()/membraneTimeConstant)) + (potential - restingPotential) * fast_exp(-s->getSynapseTimeConstant()/membraneTimeConstant);
+                    potential = restingPotential + current * (1 - std::exp(-s->getSynapseTimeConstant()/membraneTimeConstant)) + (potential - restingPotential) * std::exp(-s->getSynapseTimeConstant()/membraneTimeConstant);
                 }
             }
             
@@ -212,14 +212,14 @@ namespace hummus {
             current = total_current;
             
             // trace decay
-            trace *= fast_exp(-timestep/traceTimeConstant);
+            trace *= std::exp(-timestep/traceTimeConstant);
             
             // potential decay
-            potential = restingPotential + (potential-restingPotential)*fast_exp(-timestep/membraneTimeConstant);
+            potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/membraneTimeConstant);
             
             // threshold decay
             if (homeostasis) {
-                threshold = restingThreshold + (threshold-restingThreshold)*fast_exp(-timestep/decayHomeostasis);
+                threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-timestep/decayHomeostasis);
             }
             
             // neuron inactive during refractory period
@@ -260,7 +260,7 @@ namespace hummus {
                     }
                 }
 				
-				potential += current * (1 - fast_exp(-timestep/membraneTimeConstant));
+				potential += current * (1 - std::exp(-timestep/membraneTimeConstant));
             }
             
             if (s) {
@@ -381,22 +381,13 @@ namespace hummus {
             // dendritic synapses (preSynapse)
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
             for (auto& dendrite: dendriticTree) {
-                dendriticSynapses.push_back({
-                    {"type", dendrite->getType()},
-                    {"weight", dendrite->getWeight()},
-                    {"delay", dendrite->getDelay()},
-                });
+                dendrite->toJson(dendriticSynapses);
             }
             
             // axonal synapses (postSynapse)
             auto& axonalSynapses = output.back()["axonalSynapses"];
             for (auto& axonTerminal: axonTerminals) {
-                axonalSynapses.push_back({
-                    {"type", axonTerminal->getType()},
-                    {"postNeuronID", axonTerminal->getPostsynapticNeuronID()},
-                    {"weight", axonTerminal->getWeight()},
-                    {"delay", axonTerminal->getDelay()},
-                });
+                axonTerminal->toJson(axonalSynapses);
             }
         }
         

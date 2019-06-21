@@ -15,7 +15,6 @@
 
 #include "../core.hpp"
 #include "../dependencies/json.hpp"
-#include "../dependencies/fastapprox/fastexp.h"
 
 namespace hummus {
 	class Parrot : public Neuron {
@@ -25,8 +24,7 @@ namespace hummus {
         Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, float _conductance=200,
                float _leakageConductance=10, int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
-                active(true),
-                refractoryPeriod(_refractoryPeriod) {}
+                active(true) {}
 		
 		virtual ~Parrot(){}
 		
@@ -53,7 +51,7 @@ namespace hummus {
             }
             
             // trace decay
-            trace *= fast_exp(-(timestamp - previousSpikeTime)/traceTimeConstant);
+            trace *= std::exp(-(timestamp - previousSpikeTime)/traceTimeConstant);
             
             // instantly making the input neuron fire at every input spike
             if (active) {
@@ -99,7 +97,7 @@ namespace hummus {
             }
             
             // trace decay
-            trace *= fast_exp(-timestep/traceTimeConstant);
+            trace *= std::exp(-timestep/traceTimeConstant);
             
             if (s && active) {
                 potential = threshold;
@@ -157,28 +155,14 @@ namespace hummus {
             // dendritic synapses (preSynapse)
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
             for (auto& dendrite: dendriticTree) {
-                dendriticSynapses.push_back({
-                    {"type", dendrite->getType()},
-                    {"weight", dendrite->getWeight()},
-                    {"delay", dendrite->getDelay()},
-                });
+                dendrite->toJson(dendriticSynapses);
             }
             
             // axonal synapses (postSynapse)
             auto& axonalSynapses = output.back()["axonalSynapses"];
             for (auto& axonTerminal: axonTerminals) {
-                axonalSynapses.push_back({
-                    {"type", axonTerminal->getType()},
-                    {"postNeuronID", axonTerminal->getPostsynapticNeuronID()},
-                    {"weight", axonTerminal->getWeight()},
-                    {"delay", axonTerminal->getDelay()},
-                });
+                axonTerminal->toJson(axonalSynapses);
             }
-        }
-        
-        // ----- SETTERS AND GETTERS -----
-        void setRefractoryPeriod(float newRefractoryPeriod) {
-            refractoryPeriod = newRefractoryPeriod;
         }
         
     protected:
@@ -193,7 +177,6 @@ namespace hummus {
         }
         
         // ----- INPUT NEURON PARAMETERS -----
-        float refractoryPeriod;
         bool  active;
 	};
 }

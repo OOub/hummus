@@ -59,7 +59,7 @@ namespace hummus {
                     // Long term potentiation for all presynaptic neurons that spiked
                     if (timestamp >= d_presynapticNeuron->getPreviousSpikeTime() && d_presynapticNeuron->getPreviousSpikeTime() > targetNeuron->getPreviousSpikeTime()) {
                         // positive weight change
-                        float delta_weight = (alpha_plus * fast_exp(- beta_plus * dendrite->getWeight())) * dendrite->getWeight() * (1 - dendrite->getWeight());
+                        float delta_weight = (alpha_plus * std::exp(- beta_plus * dendrite->getWeight())) * dendrite->getWeight() * (1 - dendrite->getWeight());
                         dendrite->setWeight(delta_weight);
                         
                         if (network->getVerbose() >= 1) {
@@ -69,7 +69,7 @@ namespace hummus {
                     } else {
                         
                         // negative weight change
-                        float delta_weight = (alpha_minus * fast_exp(- beta_minus * (1 - dendrite->getWeight()))) * dendrite->getWeight() * (1 - dendrite->getWeight());
+                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - dendrite->getWeight()))) * dendrite->getWeight() * (1 - dendrite->getWeight());
                         dendrite->setWeight(delta_weight);
                         
                         if (network->getVerbose() >= 1) {

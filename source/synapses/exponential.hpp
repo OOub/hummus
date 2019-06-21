@@ -16,7 +16,6 @@
 
 #include "../synapse.hpp"
 #include "../dependencies/json.hpp"
-#include "../dependencies/fastapprox/fastexp.h"
 
 namespace hummus {
 	class Neuron;
@@ -25,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=10, const float _externalCurrent=100, float gaussianStandardDeviation=0) :
+		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=50, float _externalCurrent=250, float gaussianStandardDeviation=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 				
 			synapseTimeConstant = _synapseTimeConstant;
@@ -48,7 +47,7 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
         virtual float update(double timestamp) override {
             // exponentially decay the current
-            synapticCurrent = synapticCurrent * fast_exp(-(timestamp - previousInputTime)/synapseTimeConstant);
+            synapticCurrent = synapticCurrent * std::exp(-(timestamp - previousInputTime)/synapseTimeConstant);
             return synapticCurrent;
         }
         
@@ -63,8 +62,10 @@ namespace hummus {
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({
-            	{"type", type},
-				{"gaussianStdDev", gaussianStdDev},
+                {"type", type},
+                {"weight", weight},
+                {"delay", delay},
+                {"postsynapticNeuron", postsynaptic_neuron},
 				{"synapseTimeConstant", synapseTimeConstant},
             });
 		}

@@ -50,6 +50,7 @@ namespace hummus {
                 potential(-70),
                 current(0),
                 threshold(-50),
+                current_plot(false),
                 neuronTracker(-1) {
             atomicGuard.clear(std::memory_order_release);
         }
@@ -63,12 +64,17 @@ namespace hummus {
 				if (!isClosed) {
                     // getting data from neurons
 					potential = postsynapticNeuron->getPotential();
-                    current = postsynapticNeuron->getCurrent();
+                    
+                    if (current_plot) {
+                        current = postsynapticNeuron->getCurrent();
+                        currentPoints.append(QPointF(timestamp,current));
+                    }
+                    
 					threshold = postsynapticNeuron->getThreshold();
+                    
                     // saving data points to plot
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));
-                    currentPoints.append(QPointF(timestamp,current));
                     // membrane potential axis
 					minY = std::min(minY, static_cast<float>(potential));
 					maxY = std::max(maxY, static_cast<float>(potential));
@@ -92,12 +98,16 @@ namespace hummus {
 				if (!isClosed) {
                     // getting data from neurons
 					potential = postsynapticNeuron->getPotential();
-                    current = postsynapticNeuron->getCurrent();
+                    
+                    if (current_plot) {
+                        current = postsynapticNeuron->getCurrent();
+                        currentPoints.append(QPointF(timestamp,current));
+                    }
+                    
                     threshold = postsynapticNeuron->getThreshold();
                     // saving data points to plot
 					points.append(QPointF(timestamp, potential));
 					thresPoints.append(QPointF(timestamp, threshold));
-                    currentPoints.append(QPointF(timestamp,current));
                     // membrane potential axis
 					minY = std::min(minY, static_cast<float>(potential));
 					maxY = std::max(maxY, static_cast<float>(potential));
@@ -127,6 +137,10 @@ namespace hummus {
             neuronTracker = neuronToTrack;
         }
 		
+        void plotCurrents(bool _current_plot) {
+            current_plot = _current_plot;
+        }
+        
     Q_SIGNALS:
     public slots:
 		
@@ -179,16 +193,18 @@ namespace hummus {
                             }
                             break;
                         case 2:
-                            if (!currentPoints.isEmpty()) {
-                                auto firstToKeep = std::upper_bound(currentPoints.begin(), currentPoints.end(), currentPoints.back().x() - timeWindow, [](double timestamp, const QPointF& currentPoints) {
-                                    return timestamp < currentPoints.x();
-                                });
-                                currentPoints.remove(0, static_cast<int>(std::distance(currentPoints.begin(), firstToKeep)));
-                                
-                                static_cast<QtCharts::QXYSeries *>(series)->replace(currentPoints);
-                                axisY->setRange(min_y_right-1,max_y_right+1);
+                            if (current_plot) {
+                                if (!currentPoints.isEmpty()) {
+                                    auto firstToKeep = std::upper_bound(currentPoints.begin(), currentPoints.end(), currentPoints.back().x() - timeWindow, [](double timestamp, const QPointF& currentPoints) {
+                                        return timestamp < currentPoints.x();
+                                    });
+                                    currentPoints.remove(0, static_cast<int>(std::distance(currentPoints.begin(), firstToKeep)));
+                                    
+                                    static_cast<QtCharts::QXYSeries *>(series)->replace(currentPoints);
+                                    axisY->setRange(min_y_right-1,max_y_right+1);
+                                }
+                                break;
                             }
-                            break;
                     }
 					
                     atomicGuard.clear(std::memory_order_release);
@@ -215,5 +231,6 @@ namespace hummus {
         float                 current;
         float                 threshold;
         size_t                neuronTracker;
+        bool                  current_plot;
     };
 }

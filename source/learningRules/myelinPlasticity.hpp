@@ -17,7 +17,6 @@
 #define _USE_MATH_DEFINES
 
 #include "../addon.hpp"
-#include "../neurons/LIF.hpp"
 #include "../addons/myelinPlasticityLogger.hpp"
 
 namespace hummus {
@@ -52,16 +51,13 @@ namespace hummus {
             std::vector<double> time_differences;
             std::vector<std::vector<int>> plastic_coordinates(4);
             
-            // forcing the neuron to be a LIF
-            LIF* n = dynamic_cast<LIF*>(postsynapticNeuron);
-            
             // weight normaliser
             float weight_normaliser = 0;
             
             /// CONDUCTION DELAY CONVERGENCE ON THE WINNER NEURON
             
             // saving relevant synapses and their spike times
-            for (auto& input: n->getDendriticTree()) {
+            for (auto& input: postsynapticNeuron->getDendriticTree()) {
                 if (input->getWeight() > 0) {
                     double spike_arrival_time = input->getPreviousInputTime();
                     
@@ -85,15 +81,15 @@ namespace hummus {
                         // change delay according to the time difference
                         float delta_delay = 0;
                         if (time_difference > 0) {
-                            delta_delay = learning_rate * (1/(input->getSynapseTimeConstant() - n->getMembraneTimeConstant())) * n->getCurrent() * (fast_exp(-time_difference/input->getSynapseTimeConstant()) - fast_exp(-time_difference/n->getMembraneTimeConstant()));
+                            delta_delay = learning_rate * (1/(input->getSynapseTimeConstant() - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(-time_difference/input->getSynapseTimeConstant()) - std::exp(-time_difference/postsynapticNeuron->getMembraneTimeConstant()));
                             input->setDelay(delta_delay);
                         } else if (time_difference < 0) {
-                            delta_delay = - learning_rate * (1/(input->getSynapseTimeConstant() - n->getMembraneTimeConstant())) * n->getCurrent() * (fast_exp(time_difference/input->getSynapseTimeConstant()) - fast_exp(time_difference/n->getMembraneTimeConstant()));
+                            delta_delay = - learning_rate * (1/(input->getSynapseTimeConstant() - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(time_difference/input->getSynapseTimeConstant()) - std::exp(time_difference/postsynapticNeuron->getMembraneTimeConstant()));
                             input->setDelay(delta_delay);
                         }
                         
                         // decrease the synaptic efficacy as the delays converge
-                        input->setSynapticEfficacy(-fast_exp(-time_difference * time_difference)+1, false);
+                        input->setSynapticEfficacy(-std::exp(-time_difference * time_difference)+1, false);
                         
                         // increasing weights depending on activity, according to a gaussian on the time difference
                         float delta_weight = learning_rate * gaussian_distribution(time_difference, 0, weight_learning_window_sigma);
@@ -110,7 +106,7 @@ namespace hummus {
             }
             
             // normalising synaptic weights
-            for (auto& input: n->getDendriticTree()) {
+            for (auto& input: postsynapticNeuron->getDendriticTree()) {
                 if (input->getWeight() > 0) {
                     input->setWeight(input->getWeight() / weight_normaliser, false);
                     if (network->getVerbose() >= 1) {
@@ -128,7 +124,7 @@ namespace hummus {
         }
         
         inline float gaussian_distribution(float x, float mu, float sigma) {
-            return 12.533 * sigma / 5 * fast_exp(- 0.5 * std::pow((x - mu)/sigma, 2)) / (sigma * std::sqrt(2 * M_PI));
+            return 12.533 * sigma / 5 * std::exp(- 0.5 * std::pow((x - mu)/sigma, 2)) / (sigma * std::sqrt(2 * M_PI));
         }
         
 	protected:

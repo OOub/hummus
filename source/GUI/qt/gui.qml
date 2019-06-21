@@ -404,7 +404,9 @@ ApplicationWindow {
 					onTriggered: {
 						dynamicsViewer.update(mX, mY, membraneChart.series(0),a);
 						dynamicsViewer.update(mX, mY, membraneChart.series(1),b);
-						dynamicsViewer.update(mX, mY_right, membraneChart.series(2),c);
+						if (displayCurrents == true) {
+							dynamicsViewer.update(mX, mY_right, membraneChart.series(2),c);
+						}
 					}
 				}
 

@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=5, const float _externalCurrent=100, float gaussianStandardDeviation=0) :
+		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=5, float _externalCurrent=100, float gaussianStandardDeviation=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 			
 			synapseTimeConstant = _synapseTimeConstant;
@@ -60,8 +60,10 @@ namespace hummus {
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse sparameters
             output.push_back({
-            	{"type", type},
-				{"gaussianStdDev", gaussianStdDev},
+                {"type", type},
+                {"weight", weight},
+                {"delay", delay},
+                {"postsynapticNeuron", postsynaptic_neuron},
 				{"synapseTimeConstant", synapseTimeConstant},
             });
 		}

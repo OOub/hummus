@@ -36,13 +36,11 @@ int main(int argc, char** argv) {
     network.makeAddon<hummus::SpikeLogger>("10neurons_4patterns_unsupervised_spikeLog.bin");
     
     //  ----- NETWORK PARAMETERS -----
-	float potentialDecay = 20;
+	float conductance = 200;
+    float leakageConductance = 10;
     int inputNeurons = 10;
     int layer1Neurons = 4;
 	
-	float eligibilityDecay = 20;
-	
-	bool wta = true;
 	bool burst = false;
 	bool homeostasis = true;
 	
@@ -51,13 +49,14 @@ int main(int argc, char** argv) {
     
     //  ----- CREATING THE NETWORK -----
     auto input = network.makeLayer<hummus::Parrot>(inputNeurons, {});
-    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, homeostasis, potentialDecay, 3, wta, burst, eligibilityDecay);
+    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, homeostasis, conductance, leakageConductance, 3, burst, 20);
 	
 	//  ----- CONNECTING THE NETWORK -----
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
+    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0), 100);
     
     //  ----- DISPLAY SETTINGS -----
-	display.setTimeWindow(1000);
+	display.setTimeWindow(5000);
 	display.trackNeuron(11);
 
     network.turnOffLearning(80000);

@@ -306,8 +306,24 @@ namespace hummus {
             return conductance;
         }
         
+        void setConductance(float k) {
+            conductance = k;
+        }
+        
+        void setLeakageConductance(float k) {
+            leakageConductance = k;
+        }
+        
         float getMembraneTimeConstant() const {
             return membraneTimeConstant;
+        }
+        
+        void setMembraneTimeConstant(float newConstant) {
+            membraneTimeConstant = newConstant;
+        }
+        
+        void setRefractoryPeriod(float newRefractoryPeriod) {
+            refractoryPeriod = newRefractoryPeriod;
         }
         
     protected:
