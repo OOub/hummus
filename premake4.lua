@@ -18,6 +18,11 @@ solution 'hummus'
    				description = 'Compiles without Qt'
 			}
 
+
+            if _OPTIONS['tbb'] then
+                with_tbb = true
+            end
+
 			if _OPTIONS['no-qt'] then
    				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
    			else
@@ -27,9 +32,11 @@ solution 'hummus'
 			-- All files in source
         	files {'source/**.hpp',
         		'source/addons/**.hpp', 
-        		'source/dependencies/**.hpp', 
+        		'source/dependencies/**.hpp',
+                'source/dependencies/fastapprox/**.h', 
+                'source/dependencies/flatbuffers/**.h', 
         		'source/GUI/qt/**.hpp',
-        		'sourbrewce/GUI/puffin/**.hpp', 
+        		'source/GUI/puffin/**.hpp', 
         		'source/learningRules/**.hpp', 
         		'source/neurons/**.hpp', 
         		'source/synapticKernels/**.hpp', 
@@ -42,7 +49,7 @@ solution 'hummus'
 				-- Qt-dependent files
 				files(qt.moc({'source/GUI/qt/inputViewer.hpp', 
 							  'source/GUI/qt/outputViewer.hpp', 
-					          'source/GUI/qt/potentialViewer.hpp'
+					          'source/GUI/qt/dynamicsViewer.hpp'
 					          }, 
 							  'build/moc'))
 
@@ -67,17 +74,24 @@ solution 'hummus'
 	        configuration 'linux or macosx'
             	includedirs {'/usr/local/include'}
 	        	libdirs {'/usr/local/lib'}
-  				defines { "UNIX" }
 
 	        -- Linux specific settings
 	        configuration 'linux'
-	        	links {'pthread', 'sqlite3', 'tbb'}
+                if with_tbb then
+	        	    links {'pthread', 'tbb'}
+                    defines {"TBB"}
+                else
+                    links {'pthread'}
+                end
 	            buildoptions {'-std=c++11'}
 	           	linkoptions {'-std=c++11'}
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
-	        	links {'sqlite3', 'tbb'}
+                if with_tbb then
+	        	    links {'tbb'}
+                    defines { "TBB" }
+                end
 	            buildoptions {'-std=c++11'}
 	           	linkoptions {'-std=c++11'}
 end

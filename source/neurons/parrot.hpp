@@ -21,10 +21,10 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=0, float _eligibilityDecay=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
-                active(true),
-                refractoryPeriod(_refractoryPeriod) {}
+        Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, float _conductance=200,
+               float _leakageConductance=10, int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
+                active(true) {}
 		
 		virtual ~Parrot(){}
 		
@@ -50,20 +50,16 @@ namespace hummus {
                 active = true;
             }
             
-            // eligibility trace decay
-            eligibilityTrace *= std::exp(-(timestamp - previousSpikeTime)/eligibilityDecay);
+            // trace decay
+            trace *= std::exp(-(timestamp - previousSpikeTime)/traceTimeConstant);
             
             // instantly making the input neuron fire at every input spike
             if (active) {
                 potential = threshold;
-                eligibilityTrace = 1;
+                trace += 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
-                }
-                
-                if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
                 }
                 
                 for (auto& addon: relevantAddons) {
@@ -100,19 +96,15 @@ namespace hummus {
                 active = true;
             }
             
-            // eligibility trace decay
-            eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
+            // trace decay
+            trace *= std::exp(-timestep/traceTimeConstant);
             
             if (s && active) {
                 potential = threshold;
-                eligibilityTrace = 1;
+                trace += 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
-                }
-                
-                if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->incomingSpike(timestamp, s, this, network);
                 }
                 
                 for (auto& addon: relevantAddons) {
@@ -152,7 +144,7 @@ namespace hummus {
                 {"sublayerID", sublayerID},
                 {"receptiveFieldCoordinates", rfCoordinates},
                 {"XYCoordinates", xyCoordinates},
-                {"eligibilityDecay", eligibilityDecay},
+                {"traceTimeConstant", traceTimeConstant},
                 {"threshold", threshold},
                 {"restingPotential", restingPotential},
                 {"refractoryPeriod", refractoryPeriod},
@@ -163,28 +155,14 @@ namespace hummus {
             // dendritic synapses (preSynapse)
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
             for (auto& dendrite: dendriticTree) {
-                dendriticSynapses.push_back({
-                    {"type", dendrite->getType()},
-                    {"weight", dendrite->getWeight()},
-                    {"delay", dendrite->getDelay()},
-                });
+                dendrite->toJson(dendriticSynapses);
             }
             
             // axonal synapses (postSynapse)
             auto& axonalSynapses = output.back()["axonalSynapses"];
             for (auto& axonTerminal: axonTerminals) {
-                axonalSynapses.push_back({
-                    {"type", axonTerminal->getType()},
-                    {"postNeuronID", axonTerminal->getPostsynapticNeuronID()},
-                    {"weight", axonTerminal->getWeight()},
-                    {"delay", axonTerminal->getDelay()},
-                });
+                axonTerminal->toJson(axonalSynapses);
             }
-        }
-        
-        // ----- SETTERS AND GETTERS -----
-        void setRefractoryPeriod(float newRefractoryPeriod) {
-            refractoryPeriod = newRefractoryPeriod;
         }
         
     protected:
@@ -199,7 +177,6 @@ namespace hummus {
         }
         
         // ----- INPUT NEURON PARAMETERS -----
-        float refractoryPeriod;
         bool  active;
 	};
 }

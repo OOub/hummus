@@ -20,7 +20,7 @@ import QtCharts 2.1
 
 import InputViewer 1.0
 import OutputViewer 1.0
-import PotentialViewer 1.0
+import DynamicsViewer 1.0
 
 ApplicationWindow {
 	id: mainWindow
@@ -32,6 +32,7 @@ ApplicationWindow {
 	property int refresh: 100
 	property int a: 0
 	property int b: 1
+	property int c: 2
 	property bool pp: true
 	visible: true
 	color: "#FFFFFF"
@@ -119,11 +120,15 @@ ApplicationWindow {
 				ValueAxis {
 					id:inputX
 					tickCount: inputRec.width/75
+					titleText: "Time (ms)"
+					labelsFont:Qt.font({pointSize: 11})
 				}
 
 				ValueAxis {
 					id:inputY
 					tickCount: inputRec.height/50
+					titleText: "Input Neurons"
+					labelsFont:Qt.font({pointSize: 11})
 				}
 
 				Text {
@@ -152,6 +157,17 @@ ApplicationWindow {
 					axisY: inputY
 					borderColor: 'transparent'
 				}
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:  {
+                        var width_zoom = width/2
+                        var height_zoom = height/2
+                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
+                        inputChart.zoomIn(r)
+                    }
+                    onDoubleClicked: inputChart.zoomReset();
+                }
 
 				Timer {
 					id: refreshTimer
@@ -189,7 +205,7 @@ ApplicationWindow {
 
 			ChartView {
 				id: outputChart
-				title: "Output Neurons"
+				title: "Downstream Neurons"
 				titleFont : Qt.font({bold: true})
 				anchors.fill: parent
 				antialiasing: true
@@ -200,11 +216,16 @@ ApplicationWindow {
 				ValueAxis {
 					id:outputX
 					tickCount: outputRec.width/75
+					titleText: "Time (ms)"
+					labelsFont:Qt.font({pointSize: 11})
 				}
 
 				ValueAxis {
 					id:outputY
 					tickCount: outputRec.height/50
+					titleText: "Downstream Neurons"
+					labelsFont:Qt.font({pointSize: 11})
+
 				}
 
 				Text {
@@ -251,6 +272,17 @@ ApplicationWindow {
 					borderColor: 'transparent'
 				}
 
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:  {
+                        var width_zoom = width/2
+                        var height_zoom = height/2
+                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
+                        outputChart.zoomIn(r)
+                    }
+                    onDoubleClicked: outputChart.zoomReset();
+                }
+
 				Timer {
 					id: refreshTimer2
 					interval: refresh
@@ -289,7 +321,7 @@ ApplicationWindow {
 
 			ChartView {
 				id: membraneChart
-				title: "Membrane Potential (mV)"
+				title: "Neuron Dynamics"
 				titleFont : Qt.font({bold: true})
 				anchors.fill: parent
 				antialiasing: true
@@ -300,11 +332,22 @@ ApplicationWindow {
 				ValueAxis {
 					id:mX
 					tickCount: potentialRec.width/75
+					titleText: "Time (ms)"
+					labelsFont:Qt.font({pointSize: 11})
 				}
 
 				ValueAxis {
 					id:mY
 					tickCount: potentialRec.height/50
+					titleText: "Membrane Potential (mV)"
+					labelsFont:Qt.font({pointSize: 11})
+				}
+
+				ValueAxis {
+					id:mY_right
+					tickCount: potentialRec.height/50
+					titleText: "Injected Current (A)"
+					labelsFont:Qt.font({pointSize: 11})
 				}
 
 				Text {
@@ -318,13 +361,13 @@ ApplicationWindow {
                     anchors.left: neuronLegend.right
 					anchors.leftMargin: 5
 					onEditingFinished: {
-						potentialViewer.changeTrackedNeuron(value)
+						dynamicsViewer.changeTrackedNeuron(value)
 					}
 				}
 
 				LineSeries {
 					id: membranePotential
-					name: "Approximate Membrane Potential - Discrete Values"
+					name: "Neuron Dynamics"
 					axisX: mX
 					axisY: mY
 				}
@@ -336,20 +379,40 @@ ApplicationWindow {
 					color: "#ED6A56"
 				}
 
+				LineSeries {
+					id: injectedCurrent
+					axisX: mX
+					axisYRight: mY_right
+				}
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:  {
+                        var width_zoom = width/2
+                        var height_zoom = height/2
+                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
+                        membraneChart.zoomIn(r)
+                    }
+                    onDoubleClicked: membraneChart.zoomReset();
+                }
+                
 				Timer {
 					id: refreshTimer3
 					interval: refresh
 					running: pp
 					repeat: true
 					onTriggered: {
-						potentialViewer.update(mX, mY, membraneChart.series(0),a);
-						potentialViewer.update(mX, mY, membraneChart.series(1),b);
+						dynamicsViewer.update(mX, mY, membraneChart.series(0),a);
+						dynamicsViewer.update(mX, mY, membraneChart.series(1),b);
+						if (displayCurrents == true) {
+							dynamicsViewer.update(mX, mY_right, membraneChart.series(2),c);
+						}
 					}
 				}
 
-				PotentialViewer {
-					objectName: "potentialViewer"
-					id: potentialViewer
+				DynamicsViewer {
+					objectName: "dynamicsViewer"
+					id: dynamicsViewer
 				}
 			}
 		}
@@ -357,7 +420,7 @@ ApplicationWindow {
 	onClosing: {
 		inputViewer.disable();
     	outputViewer.disable();
-    	potentialViewer.disable();
+    	dynamicsViewer.disable();
 	}
 }
 )""

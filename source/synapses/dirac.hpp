@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _externalCurrent=100, int _amplitudeScaling=50, float gaussianStandardDeviation=0) :
+		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitudeScaling=50, float _externalCurrent=100, float gaussianStandardDeviation=0) :
                 Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent),
                 amplitudeScaling(_amplitudeScaling) {
 		
@@ -39,24 +39,30 @@ namespace hummus {
 		virtual ~Dirac(){}
 		
 		// ----- PUBLIC METHODS -----
-		virtual float receiveSpike(double timestamp) override {
+        virtual float update(double timestamp) override {
+            synapticCurrent = 0;
+            return synapticCurrent;
+        }
+        
+		virtual void receiveSpike(double timestamp) override {
             // saving timestamp
             previousInputTime = timestamp;
-            
-            return amplitudeScaling * weight * (externalCurrent+normalDistribution(randomEngine));
+            synapticCurrent = amplitudeScaling * weight * (externalCurrent+normalDistribution(randomEngine));
 		}
-	
+        
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({
             	{"type", type},
+                {"weight", weight},
+                {"delay", delay},
+                {"postsynapticNeuron", postsynaptic_neuron},
             	{"amplitudeScaling", amplitudeScaling},
-				{"gaussianStdDev", gaussianStdDev},
             });
 		}
 		
 	protected:
-		int                        amplitudeScaling;
+		double                     amplitudeScaling;
 		std::mt19937               randomEngine;
 		std::normal_distribution<> normalDistribution;
 	};

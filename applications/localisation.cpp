@@ -16,7 +16,7 @@
 #include "../source/core.hpp"
 #include "../source/dataParser.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/GUI/qt/qtDisplay.hpp"
 #include "../source/synapses/pulse.hpp"
 #include "../source/addons/potentialLogger.hpp"
@@ -27,12 +27,11 @@
 int main(int argc, char** argv) {
     
     /// ----- PARAMETERS -----
-    float direction_potentialDecay   = 20;
-    float direction_currentDecay     = 10;
-    float direction_eligibilityDecay = 20;
-    bool  direction_wta              = true;
-    bool  direction_burst            = false;
-    bool  direction_homeostasis      = true;
+    float direction_conductance         = 200;
+    float direction_leakage_conductance = 10;
+    float direction_trace_time_constant = 20;
+    bool  direction_burst               = false;
+    bool  direction_homeostasis         = true;
     
     /// ----- INITIALISATION -----
     
@@ -44,19 +43,20 @@ int main(int argc, char** argv) {
     auto& potential_log = network.makeAddon<hummus::PotentialLogger>("localisation_potential.bin");
     
     // delay learning rule
-    auto& mp = network.makeAddon<hummus::MyelinPlasticity>(10, 0.1);
+    auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
 
     // input layer with 8 channels for each sensor
-    auto input = network.makeCircle<hummus::Input>(8, {0.3}, {});
+    auto input = network.makeCircle<hummus::Parrot>(8, {0.3}, {});
     
     /// ----- DIRECTION LAYER -----
     
     // layer that learns the delays
-    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, direction_homeostasis, direction_potentialDecay, direction_currentDecay, 0, direction_wta, direction_burst, direction_eligibilityDecay);
+    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, direction_homeostasis, direction_conductance, direction_leakage_conductance, 0, direction_burst, direction_trace_time_constant);
     
     // connecting input layer with the direction neurons
     network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
-    
+    network.lateralInhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0), 100);
+
     // neuron mask for loggers
     mp_log.activate_for(direction.neurons[0]);
     potential_log.activate_for(direction.neurons[0]);
@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
     // settings
     display.setTimeWindow(10000);
     display.trackNeuron(direction.neurons[0]);
+    display.plotCurrents(false);
     
     /// ----- RUNNING CALIBRATION -----
     

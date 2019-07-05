@@ -25,12 +25,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _decayPotential=20, float _decayCurrent=10, int _refractoryPeriod=3, bool _wta=false, bool _burstingActivity=false, float _eligibilityDecay=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _eligibilityDecay, _threshold, _restingPotential),
-                refractoryPeriod(_refractoryPeriod),
-                decayPotential(_decayPotential),
-                current(0),
-                decayCurrent(_decayCurrent),
+        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -38,14 +34,8 @@ namespace hummus {
                 decayHomeostasis(_decayHomeostasis),
                 homeostasisBeta(_homeostasisBeta),
                 inhibited(false),
-                inhibitionTime(0),
-                wta(_wta) {
-					
-			// error handling
-    	    if (decayPotential <= 0) {
-                throw std::logic_error("The potential decay cannot less than or equal to 0");
-            }
-					
+                inhibitionTime(0) {
+                    
             // LIF neuron type == 1 (for JSON save)
             neuronType = 1;
 		}
@@ -79,14 +69,18 @@ namespace hummus {
                     active = true;
                 }
 				
-				// updating the current
-                current *= std::exp(-(timestamp-previousInputTime)/decayCurrent);
-				
-                // eligibility trace decay
-                eligibilityTrace *= std::exp(-(timestamp-previousInputTime)/eligibilityDecay);
+                // updating current of synapses
+                float total_current = 0;
+                for (auto& synapse: dendriticTree) {
+                    total_current += synapse->update(timestamp);
+                }
+                current = total_current;
+                
+                // etrace decay
+                trace *= std::exp(-(timestamp-previousInputTime)/traceTimeConstant);
                 
                 // potential decay
-                potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)/decayPotential);
+                potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)/membraneTimeConstant);
                 
                 // threshold decay
                 if (homeostasis) {
@@ -95,15 +89,22 @@ namespace hummus {
             
                 if (active && !inhibited) {
 					// calculating the potential
-                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/decayPotential);
+                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/membraneTimeConstant);
                     
                     // updating the threshold
                     if (homeostasis) {
                         threshold += homeostasisBeta/decayHomeostasis;
                     }
 					
-                    // synaptic integration
-					current += s->receiveSpike(timestamp);
+                    // sending spike to relevant synapse
+                    s->receiveSpike(timestamp);
+                    
+                    // integating synaptic currents
+                    total_current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        total_current += synapse->getSynapticCurrent();
+                    }
+                    current = total_current;
 
                     if (network->getVerbose() == 2) {
                         std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
@@ -121,7 +122,7 @@ namespace hummus {
 					
                     if (s->getWeight() >= 0) {
                         // calculating time at which potential = threshold
-                        double predictedTimestamp = decayPotential * (- std::log( - threshold + restingPotential + current) + std::log( current - potential + restingPotential)) + timestamp;
+                        double predictedTimestamp = membraneTimeConstant * (- std::log( - threshold + restingPotential + current) + std::log( current - potential + restingPotential)) + timestamp;
                         
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->getSynapseTimeConstant()) {
                             network->injectPredictedSpike(spike{predictedTimestamp, s, spikeType::prediction}, spikeType::prediction);
@@ -129,16 +130,16 @@ namespace hummus {
                             network->injectPredictedSpike(spike{timestamp + s->getSynapseTimeConstant(), s, spikeType::endOfIntegration}, spikeType::endOfIntegration);
                         }
                     } else {
-                        potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
+                        potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
                     }
                 }
             } else if (type == spikeType::prediction) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/decayPotential)) + (potential - restingPotential);
+                    potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential);
                 }
             } else if (type == spikeType::endOfIntegration) {
                 if (active && !inhibited) {
-                    potential = restingPotential + current * (1 - std::exp(-s->getSynapseTimeConstant()/decayPotential)) + (potential - restingPotential) * std::exp(-s->getSynapseTimeConstant()/decayPotential);
+                    potential = restingPotential + current * (1 - std::exp(-s->getSynapseTimeConstant()/membraneTimeConstant)) + (potential - restingPotential) * std::exp(-s->getSynapseTimeConstant()/membraneTimeConstant);
                 }
             }
         
@@ -147,7 +148,7 @@ namespace hummus {
             }
 
             if (potential >= threshold) {
-                eligibilityTrace = 1;
+                trace += 1;
 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
@@ -171,6 +172,9 @@ namespace hummus {
                 potential = restingPotential;
                 if (!burstingActivity) {
                     current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        synapse->reset();
+                    }
                 }
                 active = false;
                 
@@ -199,14 +203,19 @@ namespace hummus {
             if (timestamp - previousSpikeTime >= refractoryPeriod) {
                 active = true;
             }
-			
-            current *= std::exp(-timestep/decayCurrent);
             
-            // eligibility trace decay
-            eligibilityTrace *= std::exp(-timestep/eligibilityDecay);
+            // updating current of synapses
+            float total_current = 0;
+            for (auto& synapse: dendriticTree) {
+                total_current += synapse->update(timestamp);
+            }
+            current = total_current;
+            
+            // trace decay
+            trace *= std::exp(-timestep/traceTimeConstant);
             
 			// potential decay
-            potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/decayPotential);
+            potential = restingPotential + (potential-restingPotential)*std::exp(-timestep/membraneTimeConstant);
             
 			// threshold decay
 			if (homeostasis) {
@@ -216,14 +225,22 @@ namespace hummus {
 			// neuron inactive during refractory period
 			if (active && !inhibited) {
 				if (s) {
+                                        
 					// updating the threshold
 					if (homeostasis) {
 						threshold += homeostasisBeta/decayHomeostasis;
 					}
                     
-                    // integrating spike
-                    current += s->receiveSpike(timestamp);
-
+                    // sending spike to relevant synapse
+                    s->receiveSpike(timestamp);
+                    
+                    // integating synaptic currents
+                    total_current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        total_current += synapse->getSynapticCurrent();
+                    }
+                    current = total_current;
+                    
 					activeSynapse = s;
                     
                     // updating the timestamp when a synapse was propagating a spike
@@ -244,7 +261,7 @@ namespace hummus {
                     }
 				}
 				
-                potential += current * (1 - std::exp(-timestep/decayPotential));
+                potential += current * (1 - std::exp(-timestep/membraneTimeConstant));
             }
             
             if (s) {
@@ -263,12 +280,18 @@ namespace hummus {
             }
 
 			if (potential >= threshold) {
-				eligibilityTrace = 1;
+				trace += 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << activeSynapse->getPresynapticNeuronID() << "->" << neuronID << " w=" << activeSynapse->getWeight() << " d=" << activeSynapse->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
                 }
-
+                
+                if (!burstingActivity) {
+                    for (auto& synapse: dendriticTree) {
+                        synapse->reset();
+                    }
+                }
+                
 				for (auto& addon: relevantAddons) {
 					addon->neuronFired(timestamp, activeSynapse, this, network);
 				}
@@ -284,9 +307,16 @@ namespace hummus {
 
 				previousSpikeTime = timestamp;
 				potential = restingPotential;
+                
 				if (!burstingActivity) {
-					current = 0;
+                    current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        if (synapse->getWeight() > 0) {
+                            synapse->reset();
+                        }
+                    }
 				}
+                
 				active = false;
 			}
 		}
@@ -297,7 +327,7 @@ namespace hummus {
             previousSpikeTime = 0;
             current = 0;
             potential = restingPotential;
-            eligibilityTrace = 0;
+            trace = 0;
             inhibited = false;
             active = true;
             threshold = restingThreshold;
@@ -315,18 +345,17 @@ namespace hummus {
                 {"sublayerID", sublayerID},
                 {"receptiveFieldCoordinates", rfCoordinates},
                 {"XYCoordinates", xyCoordinates},
-                {"eligibilityDecay", eligibilityDecay},
+                {"traceTimeConstant", traceTimeConstant},
                 {"threshold", threshold},
                 {"restingPotential", restingPotential},
                 {"refractoryPeriod", refractoryPeriod},
-                {"decayPotential", decayPotential},
-                {"decayCurrent", decayCurrent},
+                {"conductance", conductance},
+                {"leakageConductance", leakageConductance},
                 {"burstingActivity", burstingActivity},
                 {"homeostasis", homeostasis},
                 {"restingThreshold", restingThreshold},
                 {"decayHomeostasis", decayHomeostasis},
                 {"homeostasisBeta", homeostasisBeta},
-                {"wta", wta},
                 {"dendriticSynapses", nlohmann::json::array()},
                 {"axonalSynapses", nlohmann::json::array()},
             });
@@ -334,22 +363,13 @@ namespace hummus {
             // dendritic synapses (preSynapse)
             auto& dendriticSynapses = output.back()["dendriticSynapses"];
             for (auto& dendrite: dendriticTree) {
-                dendriticSynapses.push_back({
-                    {"type", dendrite->getType()},
-                    {"weight", dendrite->getWeight()},
-                    {"delay", dendrite->getDelay()},
-                });
+                dendrite->toJson(dendriticSynapses);
             }
             
             // axonal synapses (postSynapse)
             auto& axonalSynapses = output.back()["axonalSynapses"];
             for (auto& axonTerminal: axonTerminals) {
-                axonalSynapses.push_back({
-                    {"type", axonTerminal->getType()},
-                    {"postNeuronID", axonTerminal->getPostsynapticNeuronID()},
-                    {"weight", axonTerminal->getWeight()},
-                    {"delay", axonTerminal->getDelay()},
-                });
+                axonTerminal->toJson(axonalSynapses);
             }
         }
         
@@ -358,38 +378,10 @@ namespace hummus {
 			return active;
 		}
 		
-		float getDecayPotential() const {
-            return decayPotential;
-        }
-		
-        void setDecayPotential(float newDecayPotential) {
-            decayPotential = newDecayPotential;
-        }
-		
-        float getCurrent() const {
-        	return current;
-		}
-		
-        float getDecayCurrent() const {
-            return decayCurrent;
-        }
-        
-        void setDecayCurrent(float newCurrent) {
-            decayCurrent = newCurrent;
-        }
-        
-		void setCurrent(float newCurrent) {
-			current = newCurrent;
-		}
-		
 		void setInhibition(double timestamp, bool inhibitionStatus) {
 			inhibitionTime = timestamp;
 			inhibited = inhibitionStatus;
 		}
-		
-        void setRefractoryPeriod(float newRefractoryPeriod) {
-            refractoryPeriod = newRefractoryPeriod;
-        }
         
         void setBurstingActivity(bool newBool) {
             burstingActivity = newBool;
@@ -411,42 +403,7 @@ namespace hummus {
             homeostasisBeta = newHB;
         }
         
-        void setWTA(bool newBool) {
-            wta = newBool;
-        }
-        
 	protected:
-        
-        // winner-take-all algorithm
-		virtual void WTA(double timestamp, Network* network) override {
-            for (auto& sub: network->getLayers()[layerID].sublayers) {
-                // intra-sublayer hard WTA
-                if (sub.ID == sublayerID) {
-                    for (auto& n: sub.neurons) {
-                        if (network->getNeurons()[n]->getNeuronID() != neuronID && network->getNeurons()[n]->getRfCoordinates() == rfCoordinates) {
-                            network->getNeurons()[n]->setPotential(restingPotential);
-                            if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibitionTime = timestamp;
-                            }
-                        }
-                    }
-                // inter-sublayer hard WTA
-                } else {
-                    for (auto& n: sub.neurons) {
-                        if (network->getNeurons()[n]->getRfCoordinates() == rfCoordinates) {
-                            network->getNeurons()[n]->setPotential(restingPotential);
-                            if (LIF* neuron = dynamic_cast<LIF*>(network->getNeurons()[n].get())) {
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->current = 0;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibited = true;
-                                dynamic_cast<LIF*>(network->getNeurons()[n].get())->inhibitionTime = timestamp;
-                            }
-                        }
-                    }
-                }
-            }
-		}
 		
         // loops through any learning rules and activates them
         virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
@@ -457,25 +414,17 @@ namespace hummus {
                     }
                 }
             }
-            if (wta) {
-                WTA(timestamp, network);
-            }
         }
         
 		// ----- LIF PARAMETERS -----
-		float                                    decayPotential;
-        float                                    decayCurrent;
-        float                                    current;
 		bool                                     active;
 		bool                                     inhibited;
 		double                                   inhibitionTime;
-		float                                    refractoryPeriod;
 		bool                                     burstingActivity;
 		bool                                     homeostasis;
 		float                                    restingThreshold;
 		float                                    decayHomeostasis;
 		float                                    homeostasisBeta;
-		bool                                     wta;
 		Synapse*                                 activeSynapse;
 	};
 }

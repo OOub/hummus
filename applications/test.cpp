@@ -30,7 +30,6 @@
 #include "../source/addons/potentialLogger.hpp"
 #include "../source/addons/classificationLogger.hpp"
 #include "../source/addons/weightMaps.hpp"
-#include "../source/addons/sql_example.hpp"
 #include "../source/addons/analysis.hpp"
 
 #include "../source/learningRules/myelinPlasticity.hpp"
@@ -54,18 +53,17 @@ int main(int argc, char** argv) {
     auto& display = network.makeGUI<hummus::QtDisplay>();
     
     //  ----- CREATING THE NETWORK -----
-    hummus::DataParser parser;
-    
     // creating layers of neurons
     auto input = network.makeLayer<hummus::Parrot>(1, {});
-    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 20, 10, 3, true);
+    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 200, 10, 3, false);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0), 100);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 1, 0.5), 100, 20);
+    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0), 100);
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
-    network.injectSpike(0, 11);
+    network.injectSpike(0, 12);
     network.injectSpike(0, 30);
 
     //  ----- DISPLAY SETTINGS -----
@@ -76,9 +74,9 @@ int main(int argc, char** argv) {
     network.verbosity(1);
     network.run(100, 0.1);
 
-	//  ----- SAVING THE NETWORK -----
+    //  ----- SAVE THE NETWORK IN A JSON FILE -----
     network.save("testSave");
-
+    
     //  ----- EXITING APPLICATION -----
     return 0;
 }

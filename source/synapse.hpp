@@ -36,11 +36,19 @@ namespace hummus {
         
         // ----- PUBLIC SYNAPSE METHODS -----
         
-        // pure virtual method that outputs an updated current value
-        virtual float receiveSpike(double timestamp) = 0;
+        // pure virtuak method that updates the current value in the absence of a spike
+        virtual float update(double timestamp) = 0;
+        
+        // pure virtual method that outputs an updated current value upon receiving a spike
+        virtual void receiveSpike(double timestamp) = 0;
         
         // write synapse parameters in a JSON format
         virtual void toJson(nlohmann::json& output) {}
+        
+        // resets the synapse
+        virtual void reset() {
+            synapticCurrent = 0;
+        }
         
         // ----- SETTERS AND GETTERS -----
         int getType() const {
@@ -59,7 +67,7 @@ namespace hummus {
             previousInputTime = newTime;
         }
         
-        float getSynapseTimeConstant() const {
+        const float getSynapseTimeConstant() const {
             return synapseTimeConstant;
         }
         
@@ -89,9 +97,20 @@ namespace hummus {
         
         void setDelay(float newDelay, bool increment=true) {
             if (increment) {
-                delay += synapticEfficacy * newDelay;
+                if (delay > 0) {
+                    delay += newDelay;
+                    // prevent delays from being negative
+                    if (delay < 0) {
+                        delay = 0;
+                    }
+                }
             } else {
                 delay = newDelay;
+                // prevent delays from being negative
+                if (delay < 0) {
+                    delay = 0;
+                    std::cout << "negative delay set to 0" << std::endl;
+                }
             }
         }
         
@@ -112,13 +131,13 @@ namespace hummus {
         int                        postsynaptic_neuron;
         float                      weight;
         float                      delay;
-        float                      externalCurrent;
         float                      synapticCurrent;
         double                     previousInputTime;
         int                        kernelID;
         float                      gaussianStdDev;
         int                        type;
         float                      synapseTimeConstant;
+        float                      externalCurrent;
         float                      synapticEfficacy;
     };
 }

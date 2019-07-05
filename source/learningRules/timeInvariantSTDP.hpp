@@ -32,7 +32,7 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
         // select one neuron to track by its index
         void activate_for(size_t neuronIdx) override {
-            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+            neuron_mask.emplace_back(static_cast<size_t>(neuronIdx));
         }
         
         // select multiple neurons to track by passing a vector of indices

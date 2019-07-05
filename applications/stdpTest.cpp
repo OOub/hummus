@@ -20,7 +20,7 @@
 #include "../source/learningRules/timeInvariantSTDP.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/rewardModulatedSTDP.hpp"
-#include "../source/neurons/input.hpp"
+#include "../source/neurons/parrot.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/synapses/exponential.hpp"
@@ -36,8 +36,8 @@ int main(int argc, char** argv) {
     auto& display = network.makeGUI<hummus::QtDisplay>();
     
     //  ----- NETWORK PARAMETERS -----
-	float potentialDecay = 20;
-    float currentDecay = 20;
+    float conductance = 200;
+    float leakageConductance = 10;
 	float refractoryPeriod = 30;
     int inputNeurons = 10;
     int layer1Neurons = 1; 
@@ -47,17 +47,18 @@ int main(int argc, char** argv) {
     auto& stdp = network.makeAddon<hummus::STDP>();
 	
 	//  ----- CREATING THE NETWORK -----
-    auto input = network.makeLayer<hummus::Input>(inputNeurons, {});
-    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, false, potentialDecay, currentDecay, refractoryPeriod);
+    auto input = network.makeLayer<hummus::Parrot>(inputNeurons, {});
+    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, false, conductance, leakageConductance, refractoryPeriod, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 1, 0), 100);
-	
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 0, 0), 100);
+    
     //  ----- DISPLAY SETTINGS -----
   	display.setTimeWindow(100);
   	display.trackNeuron(10);
   	display.trackLayer(1);
-	
+    display.plotCurrents(true);
+    
     //  ----- RUNNING THE NETWORK -----
     network.run(&trainingData, 0.1);
 

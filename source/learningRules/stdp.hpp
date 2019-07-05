@@ -33,7 +33,7 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
         // select one neuron to track by its index
         void activate_for(size_t neuronIdx) override {
-            neuron_mask.push_back(static_cast<size_t>(neuronIdx));
+            neuron_mask.emplace_back(static_cast<size_t>(neuronIdx));
         }
         
         // select multiple neurons to track by passing a vector of indices
@@ -56,8 +56,6 @@ namespace hummus {
                                     preLayer = std::max(d_presynapticNeuron->getLayerID(), preLayer);
                                 }
                             }
-						} else {
-							throw std::logic_error("the STDP learning rule has to be on a postsynaptic layer");
 						}
 					}
 				}
@@ -76,7 +74,7 @@ namespace hummus {
                     
                     // if a postsynapticNeuron fired, the deltaT (presynaptic time - postsynaptic time) should be positive
                     // ignoring inhibitory synapses
-                    if (axonTerminal->getWeight() >=0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getEligibilityTrace() > 0.1) {
+                    if (axonTerminal->getWeight() >=0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getTrace() > 0.1) {
                         float postTrace = (- A_minus * std::exp(-(timestamp - at_postsynapticNeuron->getPreviousSpikeTime())/tau_minus)) * axonTerminal->getWeight() * (1 - axonTerminal->getWeight());
                         
                         axonTerminal->setWeight(postTrace);
@@ -99,7 +97,7 @@ namespace hummus {
                     auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
 					// if a presynapticNeuron already fired, the deltaT (presynaptic time - postsynaptic time) should be negative
                     // ignoring inhibitory synapses
-					if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getEligibilityTrace() > 0.1) {
+					if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getTrace() > 0.1) {
 						float preTrace = (A_plus * std::exp((d_presynapticNeuron->getPreviousSpikeTime() - timestamp)/tau_plus)) * dendrite->getWeight() * (1 - dendrite->getWeight());
                         dendrite->setWeight(preTrace);
                         

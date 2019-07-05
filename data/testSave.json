@@ -25,20 +25,21 @@
                 ],
                 "axonalSynapses": [
                     {
-                        "delay": 0.0,
-                        "postNeuronID": 1,
+                        "delay": 1.5751601457595825,
+                        "postsynapticNeuron": 1,
+                        "synapseTimeConstant": 20.0,
                         "type": 1,
                         "weight": 0.5
                     },
                     {
-                        "delay": 0.0,
-                        "postNeuronID": 2,
+                        "delay": 0.2731940746307373,
+                        "postsynapticNeuron": 2,
+                        "synapseTimeConstant": 20.0,
                         "type": 1,
                         "weight": 0.5
                     }
                 ],
                 "dendriticSynapses": [],
-                "eligibilityDecay": 20.0,
                 "layerID": 0,
                 "receptiveFieldCoordinates": [
                     0,
@@ -47,7 +48,8 @@
                 "refractoryPeriod": 0.0,
                 "restingPotential": -70.0,
                 "sublayerID": 0,
-                "threshold": -50.0
+                "threshold": -50.0,
+                "traceTimeConstant": 20.0
             },
             {
                 "Type": 1,
@@ -55,22 +57,38 @@
                     -1.0,
                     -1.0
                 ],
-                "axonalSynapses": [],
-                "burstingActivity": false,
-                "decayCurrent": 10.0,
-                "decayHomeostasis": 20.0,
-                "decayPotential": 20.0,
-                "dendriticSynapses": [
+                "axonalSynapses": [
                     {
                         "delay": 0.0,
+                        "postsynapticNeuron": 2,
+                        "synapseTimeConstant": 40.0,
                         "type": 1,
-                        "weight": 0.5
+                        "weight": -1.0
                     }
                 ],
-                "eligibilityDecay": 20.0,
+                "burstingActivity": false,
+                "conductance": 200.0,
+                "decayHomeostasis": 20.0,
+                "dendriticSynapses": [
+                    {
+                        "delay": 1.5751601457595825,
+                        "postsynapticNeuron": 1,
+                        "synapseTimeConstant": 20.0,
+                        "type": 1,
+                        "weight": 0.5
+                    },
+                    {
+                        "delay": 0.0,
+                        "postsynapticNeuron": 1,
+                        "synapseTimeConstant": 40.0,
+                        "type": 1,
+                        "weight": -1.0
+                    }
+                ],
                 "homeostasis": false,
                 "homeostasisBeta": 0.10000000149011612,
                 "layerID": 1,
+                "leakageConductance": 10.0,
                 "receptiveFieldCoordinates": [
                     0,
                     0
@@ -80,7 +98,7 @@
                 "restingThreshold": -50.0,
                 "sublayerID": 0,
                 "threshold": -50.0,
-                "wta": true
+                "traceTimeConstant": 20.0
             },
             {
                 "Type": 1,
@@ -88,22 +106,38 @@
                     -1.0,
                     -1.0
                 ],
-                "axonalSynapses": [],
-                "burstingActivity": false,
-                "decayCurrent": 10.0,
-                "decayHomeostasis": 20.0,
-                "decayPotential": 20.0,
-                "dendriticSynapses": [
+                "axonalSynapses": [
                     {
                         "delay": 0.0,
+                        "postsynapticNeuron": 1,
+                        "synapseTimeConstant": 40.0,
                         "type": 1,
-                        "weight": 0.5
+                        "weight": -1.0
                     }
                 ],
-                "eligibilityDecay": 20.0,
+                "burstingActivity": false,
+                "conductance": 200.0,
+                "decayHomeostasis": 20.0,
+                "dendriticSynapses": [
+                    {
+                        "delay": 0.2731940746307373,
+                        "postsynapticNeuron": 2,
+                        "synapseTimeConstant": 20.0,
+                        "type": 1,
+                        "weight": 0.5
+                    },
+                    {
+                        "delay": 0.0,
+                        "postsynapticNeuron": 2,
+                        "synapseTimeConstant": 40.0,
+                        "type": 1,
+                        "weight": -1.0
+                    }
+                ],
                 "homeostasis": false,
                 "homeostasisBeta": 0.10000000149011612,
                 "layerID": 1,
+                "leakageConductance": 10.0,
                 "receptiveFieldCoordinates": [
                     0,
                     0
@@ -113,7 +147,7 @@
                 "restingThreshold": -50.0,
                 "sublayerID": 0,
                 "threshold": -50.0,
-                "wta": true
+                "traceTimeConstant": 20.0
             }
         ]
     }
