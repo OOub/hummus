@@ -47,26 +47,22 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-        void myelinPlasticityEvent(double timestamp, Neuron* postsynapticNeuron, Network* network, const std::vector<double>& timeDifferences, const std::vector<std::vector<int>>& plasticNeurons) {
+        void myelinPlasticityEvent(double timestamp, Neuron* postsynapticNeuron, Network* network, const std::vector<double>& timeDifferences, const std::vector<Synapse*>& modifiedSynapses) {
             
             // defining what to save and constraining it so that file size doesn't blow up
-            const int16_t bitSize = 11+4*timeDifferences.size()+4*plasticNeurons[0].size();
+            const int16_t bitSize = 8+4*timeDifferences.size()+5*modifiedSynapses.size();
             std::vector<char> bytes(bitSize);
             SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
             SpikeLogger::copy_to(bytes.data() + 2, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
             SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
-            SpikeLogger::copy_to(bytes.data() + 8, static_cast<int8_t>(postsynapticNeuron->getLayerID()));
-            SpikeLogger::copy_to(bytes.data() + 9, static_cast<int8_t>(postsynapticNeuron->getRfCoordinates().first));
-            SpikeLogger::copy_to(bytes.data() + 10, static_cast<int8_t>(postsynapticNeuron->getRfCoordinates().second));
-            
-            int count = 11;
+
+            int count = 8;
             for (auto i=0; i<timeDifferences.size(); i++) {
                 SpikeLogger::copy_to(bytes.data() + count,   static_cast<int32_t>(timeDifferences[i] * 100));
-                SpikeLogger::copy_to(bytes.data() + count+4, static_cast<int8_t>(plasticNeurons[0][i]));
-                SpikeLogger::copy_to(bytes.data() + count+5, static_cast<int8_t>(plasticNeurons[1][i]));
-                SpikeLogger::copy_to(bytes.data() + count+6, static_cast<int8_t>(plasticNeurons[2][i]));
-                SpikeLogger::copy_to(bytes.data() + count+7, static_cast<int8_t>(plasticNeurons[3][i]));
-                count += 8;
+                SpikeLogger::copy_to(bytes.data() + count+4, static_cast<int16_t>(modifiedSynapses[i]->getPresynapticNeuronID()));
+                SpikeLogger::copy_to(bytes.data() + count+6, static_cast<int16_t>(modifiedSynapses[i]->getDelay()*100));
+                SpikeLogger::copy_to(bytes.data() + count+8, static_cast<int8_t>(modifiedSynapses[i]->getWeight()*100));
+                count += 9;
             }
             
             // saving to file

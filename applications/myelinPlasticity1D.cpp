@@ -27,13 +27,14 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 	
-    auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", false, 0);
+    auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", true, 0);
     
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
     
     auto& display = network.makeGUI<hummus::QtDisplay>();
-    network.makeAddon<hummus::SpikeLogger>("10neurons_4patterns_unsupervised_spikeLog.bin");
+    network.makeAddon<hummus::SpikeLogger>("1D_spikeLog.bin");
+    network.makeAddon<hummus::MyelinPlasticityLogger>("1D_mpLog.bin");
     
     //  ----- NETWORK PARAMETERS -----
 	float conductance = 200;
@@ -45,7 +46,7 @@ int main(int argc, char** argv) {
 	bool homeostasis = true;
 	
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto& mp = network.makeAddon<hummus::MyelinPlasticity>(20);
+	auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
     
     //  ----- CREATING THE NETWORK -----
     auto input = network.makeLayer<hummus::Parrot>(inputNeurons, {});

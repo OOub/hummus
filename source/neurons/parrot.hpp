@@ -56,7 +56,7 @@ namespace hummus {
             // instantly making the input neuron fire at every input spike
             if (active) {
                 potential = threshold;
-                trace = 1;
+                trace += 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
@@ -101,7 +101,7 @@ namespace hummus {
             
             if (s && active) {
                 potential = threshold;
-                trace = 1;
+                trace += 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;

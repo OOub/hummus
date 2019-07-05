@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     auto& potential_log = network.makeAddon<hummus::PotentialLogger>("localisation_potential.bin");
     
     // delay learning rule
-//    auto& mp = network.makeAddon<hummus::MyelinPlasticity>(10, 0.1);
+    auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
 
     // input layer with 8 channels for each sensor
     auto input = network.makeCircle<hummus::Parrot>(8, {0.3}, {});
@@ -51,11 +51,11 @@ int main(int argc, char** argv) {
     /// ----- DIRECTION LAYER -----
     
     // layer that learns the delays
-    auto direction = network.makeLayer<hummus::LIF>(100, {}, direction_homeostasis, direction_conductance, direction_leakage_conductance, 0, direction_burst, direction_trace_time_constant);
+    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, direction_homeostasis, direction_conductance, direction_leakage_conductance, 0, direction_burst, direction_trace_time_constant);
     
     // connecting input layer with the direction neurons
     network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
-    network.lateralInhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1./2, 0), 100);
+    network.lateralInhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0), 100);
 
     // neuron mask for loggers
     mp_log.activate_for(direction.neurons[0]);

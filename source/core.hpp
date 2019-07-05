@@ -290,6 +290,10 @@ namespace hummus {
             return previousSpikeTime;
         }
         
+        double getPreviousInputTime() const {
+            return previousInputTime;
+        }
+        
         int getType() const {
             return neuronType;
         }

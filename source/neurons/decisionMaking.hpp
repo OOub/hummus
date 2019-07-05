@@ -148,7 +148,7 @@ namespace hummus {
                 auto idx = std::distance(network->getUniqueLabels().begin(), it);
                 labelTracker[idx] += 1;
                 
-                trace = 1;
+                trace += 1;
 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
@@ -284,7 +284,7 @@ namespace hummus {
                 auto idx = std::distance(network->getUniqueLabels().begin(), it);
                 labelTracker[idx] += 1;
                 
-                trace = 1;
+                trace += 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << activeSynapse->getPresynapticNeuronID() << "->" << neuronID << " w=" << activeSynapse->getWeight() << " d=" << activeSynapse->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;

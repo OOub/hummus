@@ -53,8 +53,6 @@ int main(int argc, char** argv) {
     auto& display = network.makeGUI<hummus::QtDisplay>();
     
     //  ----- CREATING THE NETWORK -----
-    hummus::DataParser parser;
-    
     // creating layers of neurons
     auto input = network.makeLayer<hummus::Parrot>(1, {});
     auto output = network.makeLayer<hummus::LIF>(2, {}, false, 200, 10, 3, false);

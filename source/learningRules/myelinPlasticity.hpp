@@ -27,7 +27,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        MyelinPlasticity(int _delay_learning_window_sigma=20, int _weight_learning_window_sigma=10, float _learning_rate=1) :
+        MyelinPlasticity(int _time_constant=10, int _delay_learning_window_sigma=20, int _weight_learning_window_sigma=10, float _learning_rate=1) :
+                time_constant(_time_constant),
                 delay_learning_window_sigma(_delay_learning_window_sigma),
                 weight_learning_window_sigma(_weight_learning_window_sigma),
                 learning_rate(_learning_rate) {}
@@ -44,12 +45,17 @@ namespace hummus {
         }
         
         virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            // error handling
+            if (time_constant == postsynapticNeuron->getMembraneTimeConstant()) {
+                throw std::logic_error("the myelin plasticity time constant cannot be equal to the neuron's membrane time constant");
+            }
+            
             if (network->getVerbose() >= 1) {
                 std::cout << "New learning epoch at t=" << timestamp << std::endl;
             }
             
             std::vector<double> time_differences;
-            std::vector<std::vector<int>> plastic_coordinates(4);
+            std::vector<Synapse*> modified_synapses;
             
             // weight normaliser
             float weight_normaliser = 0;
@@ -66,37 +72,25 @@ namespace hummus {
                     
                     // taking the neurons that were active within a gaussian learning window
                     if (gaussian_window >= 0.01) {
-                        auto& presynaptic_neuron = network->getNeurons()[input->getPresynapticNeuronID()];
+                        modified_synapses.emplace_back(input);
                         
                         // calculating the time difference
-                        double time_difference = timestamp - spike_arrival_time;
+                        double time_difference = postsynapticNeuron->getPreviousInputTime() - spike_arrival_time;
                         
                         // saving information for the corresponding logger
                         time_differences.emplace_back(time_difference);
-                        plastic_coordinates[0].emplace_back(presynaptic_neuron->getXYCoordinates().first);
-                        plastic_coordinates[1].emplace_back(presynaptic_neuron->getXYCoordinates().second);
-                        plastic_coordinates[2].emplace_back(presynaptic_neuron->getRfCoordinates().first);
-                        plastic_coordinates[3].emplace_back(presynaptic_neuron->getRfCoordinates().second);
                         
                         // change delay according to the time difference
                         float delta_delay = 0;
-                        if (time_difference > 0) {
-                            delta_delay = learning_rate * (1/(input->getSynapseTimeConstant() - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(-time_difference/input->getSynapseTimeConstant()) - std::exp(-time_difference/postsynapticNeuron->getMembraneTimeConstant()));
-                            input->setDelay(delta_delay);
-                        } else if (time_difference < 0) {
-                            delta_delay = - learning_rate * (1/(input->getSynapseTimeConstant() - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(time_difference/input->getSynapseTimeConstant()) - std::exp(time_difference/postsynapticNeuron->getMembraneTimeConstant()));
-                            input->setDelay(delta_delay);
-                        }
-                        
-                        // decrease the synaptic efficacy as the delays converge
-                        input->setSynapticEfficacy(-std::exp(-time_difference * time_difference)+1, false);
+                        delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->getMembraneTimeConstant()));
+                        input->setDelay(delta_delay);
                         
                         // increasing weights depending on activity, according to a gaussian on the time difference
                         float delta_weight = learning_rate * gaussian_distribution(time_difference, 0, weight_learning_window_sigma);
                         input->setWeight(delta_weight);
                         
                         if (network->getVerbose() >= 1) {
-                            std::cout << timestamp << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->getDelay() << " synaptic efficacy: " << input->getSynapticEfficacy() << std::endl;
+                            std::cout << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->getDelay() << " synaptic efficacy: " << input->getSynapticEfficacy() << std::endl;
                         }
                     }
                     
@@ -118,7 +112,7 @@ namespace hummus {
             // saving into the neuron's logger if the logger exists
             for (auto& addon: postsynapticNeuron->getRelevantAddons()) {
                 if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
-                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, time_differences, plastic_coordinates);
+                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, time_differences, modified_synapses);
                 }
             }
         }
@@ -130,6 +124,7 @@ namespace hummus {
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
+        int              time_constant;
         int              delay_learning_window_sigma;
         int              weight_learning_window_sigma;
         float            learning_rate;

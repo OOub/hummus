@@ -85,7 +85,7 @@ namespace hummus {
         
         void setWeight(float newWeight, bool increment=true) {
             if (increment) {
-                weight += synapticEfficacy * newWeight;
+                weight += newWeight;
             } else {
                 weight = newWeight;
             }
@@ -97,9 +97,20 @@ namespace hummus {
         
         void setDelay(float newDelay, bool increment=true) {
             if (increment) {
-                delay += synapticEfficacy * newDelay;
+                if (delay > 0) {
+                    delay += newDelay;
+                    // prevent delays from being negative
+                    if (delay < 0) {
+                        delay = 0;
+                    }
+                }
             } else {
                 delay = newDelay;
+                // prevent delays from being negative
+                if (delay < 0) {
+                    delay = 0;
+                    std::cout << "negative delay set to 0" << std::endl;
+                }
             }
         }
         

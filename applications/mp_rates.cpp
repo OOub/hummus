@@ -35,45 +35,33 @@
 #include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {
-
-    //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
+    network.makeAddon<hummus::MyelinPlasticityLogger>("rates_mpLog.bin");
     
-    //  ----- INITIALISING ADD-ONS -----
-    network.makeAddon<hummus::SpikeLogger>("spikeLog.bin");
-    
-    // ----- INITIALISING GUI -----
     auto& display = network.makeGUI<hummus::QtDisplay>();
+    auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
     
-    //  ----- CREATING THE NETWORK -----
-    hummus::DataParser parser;
-    
-    // creating layers of neurons
     auto input = network.makeLayer<hummus::Parrot>(3, {});
-    auto output = network.makeLayer<hummus::LIF>(1, {}, false, 200, 10, 1, false);
+    auto output = network.makeLayer<hummus::LIF>(1, {&mp}, true, 200, 10, 1, false);
 
-    //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1., 0, 1, 0), 100);
-	
-    //  ----- INJECTING SPIKES -----
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100);
+    
     int repetitions = 10;
     int time_between_spikes = 100;
-    int runtime = repetitions*time_between_spikes+100;
+    int runtime = repetitions*time_between_spikes+10;
     
     for (auto i=0; i<repetitions; i++) {
-        network.injectPoissonSpikes(0, 10+time_between_spikes*i, 1, 0.1, 0.5);
-        network.injectPoissonSpikes(1, 15+time_between_spikes*i, 1, 0.1, 0.5);
-        network.injectPoissonSpikes(2, 20+time_between_spikes*i, 1, 0.1, 0.5);
+        network.injectSpike(0, 10+time_between_spikes*i);
+        network.injectSpike(0, 11.5+time_between_spikes*i);
+        network.injectSpike(1, 15+time_between_spikes*i);
+        network.injectSpike(2, 20+time_between_spikes*i);
     }
-    
-    //  ----- DISPLAY SETTINGS -----
-    display.setTimeWindow(500);
+
+    display.setTimeWindow(200);
     display.trackNeuron(3);
 
-    //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);
     network.run(runtime, 0.1);
     
-    //  ----- EXITING APPLICATION -----
     return 0;
 }

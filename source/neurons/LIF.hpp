@@ -148,7 +148,7 @@ namespace hummus {
             }
 
             if (potential >= threshold) {
-                trace = 1;
+                trace += 1;
 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
@@ -225,6 +225,7 @@ namespace hummus {
 			// neuron inactive during refractory period
 			if (active && !inhibited) {
 				if (s) {
+                                        
 					// updating the threshold
 					if (homeostasis) {
 						threshold += homeostasisBeta/decayHomeostasis;
@@ -279,7 +280,7 @@ namespace hummus {
             }
 
 			if (potential >= threshold) {
-				trace = 1;
+				trace += 1;
                 
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << activeSynapse->getPresynapticNeuronID() << "->" << neuronID << " w=" << activeSynapse->getWeight() << " d=" << activeSynapse->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> SPIKED" << std::endl;
