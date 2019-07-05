@@ -28,6 +28,7 @@
 #include <cmath>
 #include <mutex>
 #include <deque>
+#include <queue>
 
 // external Dependencies
 #ifdef TBB
@@ -99,6 +100,8 @@ namespace hummus {
         double        timestamp;
         Synapse*      propagationSynapse;
         spikeType     type;
+        // provides the logic for the priority queue
+        bool operator<(const spike& s) const {return timestamp > s.timestamp;}
     };
     
     // forward declaration of the Network class
@@ -1033,10 +1036,14 @@ namespace hummus {
         }
         
         // ----- PUBLIC NETWORK METHODS -----
-        
-        // add spike to the initial spike vector
+        // creates a spike and adds it to the spike_queue priority queue
         void injectSpike(int neuronIndex, double timestamp) {
-            initialSpikes.emplace_back(neurons[neuronIndex].get()->receiveExternalInput<Dirac>(timestamp, neuronIndex, -1, 1, 0));
+            spike_queue.emplace(neurons[neuronIndex].get()->receiveExternalInput<Dirac>(timestamp, neuronIndex, -1, 1, 0));
+        }
+        
+        // adds a spike to the priority queue
+        void injectSpike(spike s) {
+            spike_queue.emplace(s);
         }
         
         // add a poissonian spike train to the initial spike vector
@@ -1233,7 +1240,7 @@ namespace hummus {
             std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
-
+                
                 // importing training data and running the network through the data
                 train(_timestep, trainingData, shift);
                 
@@ -1442,16 +1449,23 @@ namespace hummus {
         // helper function that runs the network when clock-mode is selected
         void clockRunHelper(double runtime, double timestep, bool classification=false) {
             if (!neurons.empty()) {
+
+                // creating vector of the same size as neurons
+                std::vector<bool> neuronStatus(neurons.size(), false);
+
+                // loop over the full runtime
                 for (double i=0; i<runtime; i+=timestep) {
-                    
+                    // for cross-validation / test phase
                     if (classification) {
+                        // get the current training label if a set of labels are provided
                         if (!trainingLabels.empty()) {
                             if (trainingLabels.front().onset <= i) {
                                 currentLabel = trainingLabels.front().name;
                                 trainingLabels.pop_front();
                             }
                         }
-                        
+
+                        // turn off learning for classification
                         if (learningOffSignal != -1) {
                             if (learningStatus==true && i >= learningOffSignal) {
                                 if (verbose != 0) {
@@ -1461,65 +1475,24 @@ namespace hummus {
                             }
                         }
                     }
-					
-                    std::vector<spike> currentSpikes;
-                    if (generatedSpikes.empty() && !initialSpikes.empty()) {
-                        while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
-                            currentSpikes.emplace_back(initialSpikes.front());
-                            initialSpikes.pop_front();
-                        }
-                    }
-                    else if (initialSpikes.empty() && !generatedSpikes.empty()) {
-                        while (!generatedSpikes.empty() && std::round(generatedSpikes.front().timestamp) <= i) {
-                            currentSpikes.emplace_back(generatedSpikes.front());
-                            generatedSpikes.pop_front();
-                        }
-                    }
-                    else {
-                        while (!generatedSpikes.empty() && std::round(generatedSpikes.front().timestamp) <= i) {
-                            currentSpikes.emplace_back(generatedSpikes.front());
-                            generatedSpikes.pop_front();
-                        }
-                        
-                        while (!initialSpikes.empty() && std::round(initialSpikes.front().timestamp) <= i) {
-                            currentSpikes.emplace_back(initialSpikes.front());
-                            initialSpikes.pop_front();
-                        }
-                    }
-                    
-                    for (auto& n: neurons) {
-                        std::vector<spike> local_currentSpikes(currentSpikes.size());
-                        const auto it = std::copy_if(currentSpikes.begin(), currentSpikes.end(), local_currentSpikes.begin(), [&](const spike s) {
-                            if (s.propagationSynapse) {
-                                return s.propagationSynapse->getPostsynapticNeuronID() == n->getNeuronID();
-                            }
-                            else {
-                                return false;
-                            }
-                        });
 
-                        local_currentSpikes.resize(std::distance(local_currentSpikes.begin(), it));
+                    while (!spike_queue.empty() && spike_queue.top().timestamp <= i) {
+                        // access first element and update corresponding neuron
+                        auto index = spike_queue.top().propagationSynapse->getPostsynapticNeuronID();
+                        neurons[index]->updateSync(i, spike_queue.top().propagationSynapse, this, timestep);
+                        neuronStatus[index] = true;
 
-                        if (it != currentSpikes.end()) {
-                            for (auto& currentSpike: local_currentSpikes) {
-                                n->updateSync(i, currentSpike.propagationSynapse, this, timestep);
-                            }
+                        // remove first element
+                        spike_queue.pop();
+                    }
+
+                    // update neurons that haven't received a spike
+                    for (auto idx=0; idx<neurons.size(); idx++) {
+                        if (neuronStatus[idx]) {
+                            neuronStatus[idx] = false;
                         } else {
-                            n->updateSync(i, nullptr, this, timestep);
+                            neurons[idx]->updateSync(i, nullptr, this, timestep);
                         }
-                    }
-
-                    // checking for new spikes
-                    std::vector<spike> newSpikes;
-                    if (!generatedSpikes.empty()) {
-                        while (!generatedSpikes.empty() && generatedSpikes.front().timestamp <= i) {
-                            newSpikes.emplace_back(generatedSpikes.front());
-                            generatedSpikes.pop_front();
-                        }
-                    }
-
-                    for (auto& spike: newSpikes) {
-                        neurons[spike.propagationSynapse->getPostsynapticNeuronID()]->updateSync(i, spike.propagationSynapse, this, timestep);
                     }
                 }
             } else {
@@ -1551,6 +1524,7 @@ namespace hummus {
 		
 		// ----- IMPLEMENTATION VARIABLES -----
         int                                                 verbose;
+        std::priority_queue<spike>                          spike_queue;
 		std::deque<spike>                                   initialSpikes;
         std::deque<spike>                                   generatedSpikes;
         std::deque<spike>                                   predictedSpikes;

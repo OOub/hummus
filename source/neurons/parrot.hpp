@@ -116,7 +116,7 @@ namespace hummus {
                 }
                 
                 for (auto& axonTerminal : axonTerminals) {
-                    network->injectGeneratedSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
+                    network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
                 }
                 
                 requestLearning(timestamp, s, this, network);

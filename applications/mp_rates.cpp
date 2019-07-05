@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     
     for (auto i=0; i<repetitions; i++) {
         network.injectSpike(0, 10+time_between_spikes*i);
-        network.injectSpike(0, 11.5+time_between_spikes*i);
+        network.injectSpike(0, 18+time_between_spikes*i);
         network.injectSpike(1, 15+time_between_spikes*i);
         network.injectSpike(2, 20+time_between_spikes*i);
     }
