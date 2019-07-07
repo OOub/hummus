@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);
-    network.run(100, 0);
+    network.run(100, 0.1);
 
     //  ----- SAVE THE NETWORK IN A JSON FILE -----
     network.save("testSave");
