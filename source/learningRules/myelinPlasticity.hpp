@@ -65,6 +65,8 @@ namespace hummus {
             // saving relevant synapses and their spike times
             for (auto& input: postsynapticNeuron->getDendriticTree()) {
                 if (input->getWeight() > 0) {
+//                    auto& inputNeuron = network->getNeurons()[input->getPresynapticNeuronID()];
+                    
                     double spike_arrival_time = input->getPreviousInputTime();
                     
                     // learning window
@@ -85,6 +87,7 @@ namespace hummus {
                         delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->getMembraneTimeConstant()));
                         input->setDelay(delta_delay);
                         
+                        // if trace higher than 1 then multiple spikes -> decrease weights, else, increase weights slightly. above weight is controlled according to a truncated gaussian on the eligibility trace so I can have 1 eligibility trace gaussian for a complicated function
                         // increasing weights depending on activity, according to a gaussian on the time difference
                         float delta_weight = learning_rate * gaussian_distribution(time_difference, 0, weight_learning_window_sigma);
                         input->setWeight(delta_weight);
