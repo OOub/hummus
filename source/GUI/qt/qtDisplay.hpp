@@ -59,7 +59,7 @@ namespace hummus {
 				#include "gui.qml"
             );
             auto window = qobject_cast<QQuickWindow*>(engine->rootObjects().first());
-
+            
 			QSurfaceFormat format;
             format.setDepthBufferSize(24);
             format.setStencilBufferSize(8);
