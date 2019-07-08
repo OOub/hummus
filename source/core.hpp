@@ -1190,17 +1190,15 @@ namespace hummus {
                     std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
                 }
                     
-                // serial implementation
                 for (auto& addon: addons) {
                     addon->onCompleted(this);
                 }
-				
             });
 
             if (thAddon) {
                 thAddon->begin(this, &sync);
             }
-
+            
             spikeManager.join();
             
             // resetting network and clearing addons initialised for this particular run
@@ -1246,7 +1244,6 @@ namespace hummus {
                 for (auto& addon: addons) {
                     addon->onCompleted(this);
                 }
-			
             });
 
             if (thAddon) {
