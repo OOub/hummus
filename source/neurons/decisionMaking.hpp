@@ -54,7 +54,7 @@ namespace hummus {
         }
         
         virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
-            if (type == spikeType::normal) {
+            if (type == spikeType::initial || type == spikeType::generated || type == spikeType::inhibitory) {
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
                     inhibited = false;
@@ -163,7 +163,11 @@ namespace hummus {
                 }
                 
                 for (auto& axonTerminal: axonTerminals) {
-                    network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
+                    if (axonTerminal->getType() == synapseType::inhibitory) {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                    } else {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                    }
                 }
                 
                 requestLearning(timestamp, s, this, network);
@@ -298,7 +302,11 @@ namespace hummus {
                 }
                 
                 for (auto& axonTerminal : axonTerminals) {
-                    network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
+                    if (axonTerminal->getType() == synapseType::inhibitory) {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                    } else {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                    }
                 }
                 
                 requestLearning(timestamp, activeSynapse, this, network);
