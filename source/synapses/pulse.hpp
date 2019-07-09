@@ -7,7 +7,7 @@
  * Last Version: 23/01/2019
  *
  * Information: a synaptic kernel updating the current according to a square pulse function; the current stays constant for a period of time then resets
- * kernel type 2
+ * kernel json_id 2
  */
 
 #pragma once
@@ -24,12 +24,12 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=5, float _externalCurrent=100, float gaussianStandardDeviation=0) :
-				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
+		Pulse(int _target_neuron, int _parent_neuron, float _weight, float _delay, synapseType _type, float _synapseTimeConstant=5, float _externalCurrent=100, float gaussianStandardDeviation=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _type, _externalCurrent) {
 			
 			synapseTimeConstant = _synapseTimeConstant;
 			gaussianStdDev = gaussianStandardDeviation;
-			type = 2;
+			json_id = 2;
 			
 			// error handling
 			if (_synapseTimeConstant <= 0) {
@@ -60,7 +60,7 @@ namespace hummus {
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse sparameters
             output.push_back({
-                {"type", type},
+                {"json_id", json_id},
                 {"weight", weight},
                 {"delay", delay},
                 {"postsynapticNeuron", postsynaptic_neuron},

@@ -7,7 +7,7 @@
  * Last Version: 23/01/2019
  *
  * Information: a synaptic kernel that instantly rises then exponentially decays
-  * kernel type 1
+  * kernel json_id 1
  */
 
 #pragma once
@@ -24,12 +24,12 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=50, float _externalCurrent=250, float gaussianStandardDeviation=0) :
-				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
+		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, synapseType _type, float _synapseTimeConstant=50, float _externalCurrent=250, float gaussianStandardDeviation=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _type, _externalCurrent) {
 				
 			synapseTimeConstant = _synapseTimeConstant;
 			gaussianStdDev = gaussianStandardDeviation;
-			type = 1;
+			json_id = 1;
 			
 			// error handling
 			if (_synapseTimeConstant <= 0) {
@@ -62,7 +62,7 @@ namespace hummus {
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({
-                {"type", type},
+                {"json_id", json_id},
                 {"weight", weight},
                 {"delay", delay},
                 {"postsynapticNeuron", postsynaptic_neuron},

@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     auto output = network.makeLayer<hummus::LIF>(2, {}, false, 200, 10, 3, false);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 1, 0.5), 100, 20);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 1, 0.5), 100, hummus::synapseType::excitatory);
     network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0), 100);
 	
     //  ----- INJECTING SPIKES -----
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     display.trackNeuron(1);
 
     //  ----- RUNNING THE NETWORK -----
-    network.verbosity(1);
+    network.verbosity(2);
     network.run(100, 0.1);
 
     //  ----- SAVE THE NETWORK IN A JSON FILE -----

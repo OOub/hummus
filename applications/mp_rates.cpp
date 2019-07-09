@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     auto input = network.makeLayer<hummus::Parrot>(3, {});
     auto output = network.makeLayer<hummus::LIF>(1, {&mp}, true, 200, 10, 1, false);
 
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100, hummus::synapseType::excitatory);
     
     int repetitions = 10;
     int time_between_spikes = 100;

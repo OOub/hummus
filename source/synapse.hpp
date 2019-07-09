@@ -14,20 +14,27 @@
 #include "dependencies/json.hpp"
 
 namespace hummus {
+    // synapse models enum for readability
+    enum class synapseType {
+        excitatory,
+        inhibitory
+    };
+    
     class Synapse {
     public:
         
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, float _externalCurrent=100) :
+        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, synapseType _type, float _externalCurrent=100) :
                 presynaptic_neuron(_presynaptic_neuron),
                 postsynaptic_neuron(_postsynaptic_neuron),
                 weight(_weight),
                 delay(_delay),
+                type(_type),
                 externalCurrent(_externalCurrent),
                 synapticCurrent(0),
                 previousInputTime(0),
                 gaussianStdDev(0),
-                type(0),
+                json_id(0),
                 kernelID(0),
                 synapticEfficacy(1),
                 synapseTimeConstant(0) {}
@@ -51,8 +58,12 @@ namespace hummus {
         }
         
         // ----- SETTERS AND GETTERS -----
-        int getType() const {
+        synapseType getType() const {
             return type;
+        }
+        
+        int getJsonId() const {
+            return json_id;
         }
         
         float getSynapticCurrent() const {
@@ -135,9 +146,10 @@ namespace hummus {
         double                     previousInputTime;
         int                        kernelID;
         float                      gaussianStdDev;
-        int                        type;
+        int                        json_id;
         float                      synapseTimeConstant;
         float                      externalCurrent;
         float                      synapticEfficacy;
+        synapseType                type;
     };
 }

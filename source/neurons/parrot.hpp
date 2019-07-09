@@ -71,7 +71,11 @@ namespace hummus {
                 }
                 
                 for (auto& axonTerminal : axonTerminals) {
-                    network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
+                    if (axonTerminal->getType() == synapseType::inhibitory) {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                    } else {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                    }
                 }
                 
                 requestLearning(timestamp, s, this, network);
@@ -116,7 +120,11 @@ namespace hummus {
                 }
                 
                 for (auto& axonTerminal : axonTerminals) {
-                    network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::normal});
+                    if (axonTerminal->getType() == synapseType::inhibitory) {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                    } else {
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                    }
                 }
                 
                 requestLearning(timestamp, s, this, network);

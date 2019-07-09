@@ -24,8 +24,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitudeScaling=50, float _externalCurrent=100, float gaussianStandardDeviation=0) :
-                Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent),
+		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, synapseType _type, float _amplitudeScaling=50, float _externalCurrent=100, float gaussianStandardDeviation=0) :
+                Synapse(_target_neuron, _parent_neuron, _weight, _delay, _type, _externalCurrent),
                 amplitudeScaling(_amplitudeScaling) {
 		
 			gaussianStdDev = gaussianStandardDeviation;
@@ -53,7 +53,7 @@ namespace hummus {
 		virtual void toJson(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({
-            	{"type", type},
+            	{"json_id", json_id},
                 {"weight", weight},
                 {"delay", delay},
                 {"postsynapticNeuron", postsynaptic_neuron},

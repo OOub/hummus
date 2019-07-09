@@ -210,8 +210,8 @@ namespace hummus {
                     
                     if (axonalSynapse[i]["postsynapticNeuron"].is_number()) {
                         float synapseTimeConstant = 0;
-                        int type = axonalSynapse[i]["type"].get<int>();
-                        switch (type) {
+                        int json_id = axonalSynapse[i]["json_id"].get<int>();
+                        switch (json_id) {
                             case 0: {
                                 float amplitudeScaling = 0;
                                 if (axonalSynapse[i]["amplitudeScaling"].is_number()) {
