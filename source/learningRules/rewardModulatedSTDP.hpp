@@ -113,7 +113,7 @@ namespace hummus {
                                 auto& at_postsynapticNeuron = network->getNeurons()[axonTerminal->getPostsynapticNeuronID()];
                                 
                                 // ignoring inhibitory synapses
-                                if (axonTerminal->getWeight() >= 0 && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getTrace() > 0.1) {
+                                if (axonTerminal->getType() == synapseType::excitatory && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getTrace() > 0.1) {
                                     double delta = alpha*Ar_minus+beta*Ap_plus;
                                     
                                     if (network->getVerbose() >= 1) {
@@ -138,7 +138,7 @@ namespace hummus {
                                 auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
                                 
                                 // ignoring inhibitory synapses
-                                if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1 && d_presynapticNeuron->getTrace() > 0.1) {
+                                if (dendrite->getType() == synapseType::excitatory && dendrite->getWeight() <= 1 && d_presynapticNeuron->getTrace() > 0.1) {
                                     double delta = alpha*Ar_plus+beta*Ap_minus;
                                     
                                     if (network->getVerbose() >= 1) {

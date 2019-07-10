@@ -64,8 +64,7 @@ namespace hummus {
             
             // saving relevant synapses and their spike times
             for (auto& input: postsynapticNeuron->getDendriticTree()) {
-                if (input->getWeight() > 0) {
-//                    auto& inputNeuron = network->getNeurons()[input->getPresynapticNeuronID()];
+                if (input->getType() == synapseType::excitatory) {
                     
                     double spike_arrival_time = input->getPreviousInputTime();
                     
@@ -87,7 +86,6 @@ namespace hummus {
                         delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->getMembraneTimeConstant()));
                         input->setDelay(delta_delay);
                         
-                        // if trace higher than 1 then multiple spikes -> decrease weights, else, increase weights slightly. above weight is controlled according to a truncated gaussian on the eligibility trace so I can have 1 eligibility trace gaussian for a complicated function
                         // increasing weights depending on activity, according to a gaussian on the time difference
                         float delta_weight = learning_rate * gaussian_distribution(time_difference, 0, weight_learning_window_sigma);
                         input->setWeight(delta_weight);
@@ -104,8 +102,17 @@ namespace hummus {
             
             // normalising synaptic weights
             for (auto& input: postsynapticNeuron->getDendriticTree()) {
-                if (input->getWeight() > 0) {
-                    input->setWeight(input->getWeight() / weight_normaliser, false);
+                if (input->getType() == synapseType::excitatory) {
+                    auto& inputNeuron = network->getNeurons()[input->getPresynapticNeuronID()];
+                    
+                    if (inputNeuron->getTrace() <= 1) {
+                        input->setWeight(input->getWeight() / weight_normaliser, false);
+                    } else {
+                        std::cout << "equalising" << std::endl;
+                        input->setWeight((input->getWeight() / (weight_normaliser ) /inputNeuron->getTrace()), false);
+                    }
+                    
+                    
                     if (network->getVerbose() >= 1) {
                         std::cout << input->getPresynapticNeuronID() << "->" << input->getPostsynapticNeuronID() << " weight: " << input->getWeight() << std::endl;
                     }

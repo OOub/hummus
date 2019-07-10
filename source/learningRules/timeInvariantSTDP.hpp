@@ -54,7 +54,7 @@ namespace hummus {
 		virtual void learn(double timestamp, Synapse* s, Neuron* targetNeuron, Network* network) override {
             for (auto& dendrite: targetNeuron->getDendriticTree()) {
                 // ignoring inhibitory synapses and ignoring synapses that are outside the [0,1] range
-                if (dendrite->getWeight() >= 0 && dendrite->getWeight() <= 1) {
+                if (dendrite->getType() == synapseType::excitatory && dendrite->getWeight() <= 1) {
                     auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
                     // Long term potentiation for all presynaptic neurons that spiked
                     if (timestamp >= d_presynapticNeuron->getPreviousSpikeTime() && d_presynapticNeuron->getPreviousSpikeTime() > targetNeuron->getPreviousSpikeTime()) {

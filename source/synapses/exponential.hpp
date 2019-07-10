@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, synapseType _type, float _synapseTimeConstant=50, float _externalCurrent=250, float gaussianStandardDeviation=0) :
+		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, synapseType _type, float _synapseTimeConstant=10, float _externalCurrent=400, float gaussianStandardDeviation=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _type, _externalCurrent) {
 				
 			synapseTimeConstant = _synapseTimeConstant;

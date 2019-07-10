@@ -52,12 +52,12 @@ int main(int argc, char** argv) {
     
     for (auto i=0; i<repetitions; i++) {
         network.injectSpike(0, 10+time_between_spikes*i);
-        network.injectSpike(0, 18+time_between_spikes*i);
+        network.injectSpike(0, 12+time_between_spikes*i);
         network.injectSpike(1, 15+time_between_spikes*i);
         network.injectSpike(2, 20+time_between_spikes*i);
     }
 
-    display.setTimeWindow(200);
+    display.setTimeWindow(1100);
     display.trackNeuron(3);
 
     network.verbosity(1);

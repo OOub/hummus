@@ -105,7 +105,8 @@ namespace hummus {
         // provides the logic for the priority queue
         bool operator<(const spike& s) const {
             if (timestamp == s.timestamp) {
-                // logic for generated spikes
+                
+                // logic for generated spikes when equal timestamps
                 if (type == spikeType::generated && s.type == spikeType::initial) {
                     return type > s.type;
                 } else if (type == spikeType::generated && s.type == spikeType::prediction) {
@@ -115,7 +116,7 @@ namespace hummus {
                 } else if (type == spikeType::generated && s.type == spikeType::generated) {
                     return propagationSynapse->getPostsynapticNeuronID() > s.propagationSynapse->getPostsynapticNeuronID();
                 
-                // logic for predicted spikes
+                // logic for predicted spikes when equal timestamps
                 } else if (type == spikeType::prediction && s.type == spikeType::initial) {
                     return type > s.type;
                 } else if (type == spikeType::prediction && s.type == spikeType::prediction) {
@@ -125,7 +126,7 @@ namespace hummus {
                 } else if (type == spikeType::prediction && s.type == spikeType::generated) {
                     return s.type > type;
                     
-                // logic for initial spikes
+                // logic for initial spikes when equal timestamps
                 } else if (type == spikeType::initial && s.type == spikeType::initial) {
                     return propagationSynapse->getPostsynapticNeuronID() > s.propagationSynapse->getPostsynapticNeuronID();
                 } else if (type == spikeType::initial && s.type == spikeType::prediction) {
@@ -135,7 +136,7 @@ namespace hummus {
                 } else if (type == spikeType::initial && s.type == spikeType::generated) {
                    return s.type > type;
                     
-                // logic for inhibitory spikes
+                // logic for inhibitory spikes when equal timestamps
                 } else if (type == spikeType::inhibitory && s.type == spikeType::initial) {
                     return type > s.type;
                 } else if (type == spikeType::inhibitory && s.type == spikeType::prediction) {
@@ -1296,6 +1297,7 @@ namespace hummus {
             if (thAddon) {
                 thAddon->begin(this, &sync);
             }
+            
             spikeManager.join();
             
             // resetting network and clearing addons initialised for this particular run

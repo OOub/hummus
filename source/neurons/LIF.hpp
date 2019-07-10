@@ -76,7 +76,7 @@ namespace hummus {
                 }
                 current = total_current;
                 
-                // etrace decay
+                // trace decay
                 trace *= std::exp(-(timestamp-previousInputTime)/traceTimeConstant);
                 
                 // potential decay

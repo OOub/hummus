@@ -33,11 +33,14 @@ ApplicationWindow {
 	property int a: 0
 	property int b: 1
 	property int c: 2
+	property int xScaleZoom: 0
+	property int yScaleZoom: 0
 	property bool pp: true
+	property bool timer: true
 	visible: true
 	color: "#FFFFFF"
 	flags: Qt.Window | Qt.WindowFullscreenButtonHint
-    
+
 	ColumnLayout {
 		id: mainGrid
 		anchors.fill: parent
@@ -55,7 +58,7 @@ ApplicationWindow {
 
 			RoundButton {
 				id: play
-				text: qsTr("\u2759\u2759")
+				text: qsTr("\u25B6")
 				anchors.centerIn: parent
 
 				contentItem: Text {
@@ -78,11 +81,11 @@ ApplicationWindow {
 				onClicked: {
 					if (pp == true) {
 						pp = false
-						play.text = qsTr("\u25B6")
+						play.text = qsTr("\u2759\u2759")
 					}
 					else {
 						pp = true
-						play.text = qsTr("\u2759\u2759")
+						play.text = qsTr("\u25B6")
 					}
 				}
 			}
@@ -158,22 +161,56 @@ ApplicationWindow {
 					borderColor: 'transparent'
 				}
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked:  {
-                        var width_zoom = width/2
-                        var height_zoom = height/2
-                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
-                        inputChart.zoomIn(r)
-                    }
-                    onDoubleClicked: inputChart.zoomReset();
-                }
+				Rectangle{
+				    id: recZoom
+				    border.color: "steelblue"
+				    border.width: 1
+				    color: "steelblue"
+				    opacity: 0.3
+				    visible: false
+				    transform: Scale { origin.x: 0; origin.y: 0; xScale: xScaleZoom; yScale: yScaleZoom}
+				}
+
+				MouseArea {
+				    anchors.fill: parent
+				    hoverEnabled: true
+				    onPressed: {
+				        recZoom.x = mouseX;
+				        recZoom.y = mouseY;
+				        recZoom.visible = true;
+				    }
+				    onMouseXChanged: {
+				        if (mouseX - recZoom.x >= 0) {
+				            xScaleZoom = 1;
+				            recZoom.width = mouseX - recZoom.x;
+				        } else {
+				            xScaleZoom = -1;
+				            recZoom.width = recZoom.x - mouseX;
+				        }
+				    }
+				    onMouseYChanged: {
+				        if (mouseY - recZoom.y >= 0) {
+				            yScaleZoom = 1;
+				            recZoom.height = mouseY - recZoom.y;
+				        } else {
+				            yScaleZoom = -1;
+				            recZoom.height = recZoom.y - mouseY;
+				        }
+				    }
+				    onReleased: {
+				        var x = (mouseX >= recZoom.x) ? recZoom.x : mouseX
+				        var y = (mouseY >= recZoom.y) ? recZoom.y : mouseY
+				        inputChart.zoomIn(Qt.rect(x, y, recZoom.width, recZoom.height));
+				        recZoom.visible = false;
+				    }
+				    onDoubleClicked: inputChart.zoomReset();
+				}
 
 				Timer {
 					id: refreshTimer
 					interval: refresh
 					running: pp
-					repeat: true
+					repeat: timer
 					onTriggered: {
 						inputViewer.update(inputX, inputY, inputChart.series(0));
 					}
@@ -272,22 +309,56 @@ ApplicationWindow {
 					borderColor: 'transparent'
 				}
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked:  {
-                        var width_zoom = width/2
-                        var height_zoom = height/2
-                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
-                        outputChart.zoomIn(r)
-                    }
-                    onDoubleClicked: outputChart.zoomReset();
-                }
+				Rectangle {
+				    id: recZoom2
+				    border.color: "steelblue"
+				    border.width: 1
+				    color: "steelblue"
+				    opacity: 0.3
+				    visible: false
+				    transform: Scale { origin.x: 0; origin.y: 0; xScale: xScaleZoom; yScale: yScaleZoom}
+				}
+
+				MouseArea {
+				    anchors.fill: parent
+				    hoverEnabled: true
+				    onPressed: {
+				        recZoom2.x = mouseX;
+				        recZoom2.y = mouseY;
+				        recZoom2.visible = true;
+				    }
+				    onMouseXChanged: {
+				        if (mouseX - recZoom2.x >= 0) {
+				            xScaleZoom = 1;
+				            recZoom2.width = mouseX - recZoom2.x;
+				        } else {
+				            xScaleZoom = -1;
+				            recZoom2.width = recZoom2.x - mouseX;
+				        }
+				    }
+				    onMouseYChanged: {
+				        if (mouseY - recZoom2.y >= 0) {
+				            yScaleZoom = 1;
+				            recZoom2.height = mouseY - recZoom2.y;
+				        } else {
+				            yScaleZoom = -1;
+				            recZoom2.height = recZoom2.y - mouseY;
+				        }
+				    }
+				    onReleased: {
+				        var x = (mouseX >= recZoom2.x) ? recZoom2.x : mouseX
+				        var y = (mouseY >= recZoom2.y) ? recZoom2.y : mouseY
+				        outputChart.zoomIn(Qt.rect(x, y, recZoom2.width, recZoom2.height));
+				        recZoom2.visible = false;
+				    }
+				    onDoubleClicked: outputChart.zoomReset();
+				}
 
 				Timer {
 					id: refreshTimer2
 					interval: refresh
 					running: pp
-					repeat: true
+					repeat: timer
 					onTriggered: {
 						outputViewer.update(outputX, outputY, outputChart.series(0));
 					}
@@ -385,25 +456,60 @@ ApplicationWindow {
 					axisYRight: mY_right
 				}
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked:  {
-                        var width_zoom = width/2
-                        var height_zoom = height/2
-                        var r = Qt.rect(mouseX-width_zoom/2, mouseY - height_zoom/2, width_zoom, height_zoom)
-                        membraneChart.zoomIn(r)
-                    }
-                    onDoubleClicked: membraneChart.zoomReset();
-                }
+                Rectangle {
+				    id: recZoom3
+				    border.color: "steelblue"
+				    border.width: 1
+				    color: "steelblue"
+				    opacity: 0.3
+				    visible: false
+				    transform: Scale { origin.x: 0; origin.y: 0; xScale: xScaleZoom; yScale: yScaleZoom}
+				}
+
+				MouseArea {
+				    anchors.fill: parent
+				    hoverEnabled: true
+				    onPressed: {
+				        recZoom3.x = mouseX;
+				        recZoom3.y = mouseY;
+				        recZoom3.visible = true;
+				    }
+				    onMouseXChanged: {
+				        if (mouseX - recZoom3.x >= 0) {
+				            xScaleZoom = 1;
+				            recZoom3.width = mouseX - recZoom3.x;
+				        } else {
+				            xScaleZoom = -1;
+				            recZoom3.width = recZoom3.x - mouseX;
+				        }
+				    }
+				    onMouseYChanged: {
+				        if (mouseY - recZoom3.y >= 0) {
+				            yScaleZoom = 1;
+				            recZoom3.height = mouseY - recZoom3.y;
+				        } else {
+				            yScaleZoom = -1;
+				            recZoom3.height = recZoom3.y - mouseY;
+				        }
+				    }
+				    onReleased: {
+				        var x = (mouseX >= recZoom3.x) ? recZoom3.x : mouseX
+				        var y = (mouseY >= recZoom3.y) ? recZoom3.y : mouseY
+				        membraneChart.zoomIn(Qt.rect(x, y, recZoom3.width, recZoom3.height));
+				        recZoom3.visible = false;
+				    }
+				    onDoubleClicked: membraneChart.zoomReset();
+				}
                 
 				Timer {
 					id: refreshTimer3
 					interval: refresh
 					running: pp
-					repeat: true
+					repeat: timer
 					onTriggered: {
 						dynamicsViewer.update(mX, mY, membraneChart.series(0),a);
 						dynamicsViewer.update(mX, mY, membraneChart.series(1),b);
+
 						if (displayCurrents == true) {
 							dynamicsViewer.update(mX, mY_right, membraneChart.series(2),c);
 						}
