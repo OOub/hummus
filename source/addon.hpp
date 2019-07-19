@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "synapse.hpp"
+
 namespace hummus {
     class Synapse;
     class Neuron;

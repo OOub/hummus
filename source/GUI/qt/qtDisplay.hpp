@@ -173,7 +173,7 @@ namespace hummus {
             dynamics_viewer->setTimeWindow(newWindow);
         }
 		
-        void plotCurrents(bool current_plot) {
+        void plotCurrents(bool current_plot=true) {
             engine->rootContext()->setContextProperty("displayCurrents", current_plot);
             dynamics_viewer->plotCurrents(current_plot);
         }

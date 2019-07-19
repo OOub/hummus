@@ -41,26 +41,27 @@ int main(int argc, char** argv) {
     auto& display = network.makeGUI<hummus::QtDisplay>();
     auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
     
-    auto input = network.makeLayer<hummus::Parrot>(3, {});
-    auto output = network.makeLayer<hummus::LIF>(1, {&mp}, true, 200, 10, 1, false);
+    auto input = network.makeLayer<hummus::LIF>(4, {}, false, 200, 10, 0, false);
+    auto output = network.makeLayer<hummus::LIF>(1, {&mp}, false, 200, 10, 3, false);
 
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100, hummus::synapseType::excitatory);
     
-    int repetitions = 10;
+    int repetitions = 100;
     int time_between_spikes = 100;
     int runtime = repetitions*time_between_spikes+10;
     
     for (auto i=0; i<repetitions; i++) {
         network.injectSpike(0, 10+time_between_spikes*i);
-        network.injectSpike(0, 18+time_between_spikes*i);
+        network.injectSpike(0, 12+time_between_spikes*i);
         network.injectSpike(1, 15+time_between_spikes*i);
         network.injectSpike(2, 20+time_between_spikes*i);
     }
-
-    display.setTimeWindow(200);
-    display.trackNeuron(3);
-
-    network.verbosity(1);
+    
+    display.setTimeWindow(1100);
+    display.trackNeuron(4);
+    display.plotCurrents(false);
+    
+    network.verbosity(2);
     network.run(runtime, 0.1);
     
     return 0;

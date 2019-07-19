@@ -53,6 +53,7 @@ namespace hummus {
             }
         }
         
+        // homeostasis does not work for the event-based neuron because it would complicated spike prediction
         virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
             if (type == spikeType::initial || type == spikeType::generated || type == spikeType::inhibitory) {
                 // checking if the neuron is inhibited
@@ -66,42 +67,38 @@ namespace hummus {
                 }
                 
                 // updating current of synapses
-                float total_current = 0;
-                for (auto& synapse: dendriticTree) {
-                    total_current += synapse->update(timestamp);
+                if (type == spikeType::initial) {
+                    current = s->update(timestamp);
+                } else {
+                    float total_current = 0;
+                    for (auto& synapse: dendriticTree) {
+                        total_current += synapse->update(timestamp);
+                    }
+                    current = total_current;
                 }
-                current = total_current;
-                
                 // trace decay
                 trace *= std::exp(-(timestamp-previousInputTime)/traceTimeConstant);
                 
                 // potential decay
                 potential = restingPotential + (potential-restingPotential)*std::exp(-(timestamp-previousInputTime)/membraneTimeConstant);
                 
-                // threshold decay
-                if (homeostasis) {
-                    threshold = restingThreshold + (threshold-restingThreshold)*std::exp(-(timestamp-previousInputTime)/decayHomeostasis);
-                }
-                
                 if (active && !inhibited) {
                     // calculating the potential
                     potential = restingPotential + current * (1 - std::exp(-(timestamp-previousInputTime)/membraneTimeConstant)) + (potential - restingPotential) * std::exp(-(timestamp-previousInputTime)/membraneTimeConstant);
-                    
-                    // updating the threshold
-                    if (homeostasis) {
-                        threshold += homeostasisBeta/decayHomeostasis;
-                    }
 					
                     // sending spike to relevant synapse
                     s->receiveSpike(timestamp);
                     
                     // integating synaptic currents
-                    total_current = 0;
-                    for (auto& synapse: dendriticTree) {
-                        total_current += synapse->getSynapticCurrent();
+                    if (type == spikeType::initial) {
+                        current = s->getSynapticCurrent();
+                    } else {
+                        float total_current = 0;
+                        for (auto& synapse: dendriticTree) {
+                            total_current += synapse->getSynapticCurrent();
+                        }
+                        current = total_current;
                     }
-                    current = total_current;
-                    
                     if (network->getVerbose() == 2) {
                         std::cout << "t=" << timestamp << " " << s->getPresynapticNeuronID() << "->" << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layerID << " --> EMITTED" << std::endl;
                     }
@@ -192,7 +189,7 @@ namespace hummus {
             s->setPreviousInputTime(timestamp);
         }
         
-        virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep) override {
+        virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep, spikeType type) override {
             // handling multiple spikes at the same timestamp (to prevent excessive decay)
             if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
                 timestep = 0;
@@ -209,12 +206,15 @@ namespace hummus {
             }
             
             // updating current of synapses
-            float total_current = 0;
-            for (auto& synapse: dendriticTree) {
-                total_current += synapse->update(timestamp);
+            if (type == spikeType::initial) {
+                current = s->update(timestamp);
+            } else {
+                float total_current = 0;
+                for (auto& synapse: dendriticTree) {
+                    total_current += synapse->update(timestamp);
+                }
+                current = total_current;
             }
-            current = total_current;
-            
             // trace decay
             trace *= std::exp(-timestep/traceTimeConstant);
             
@@ -238,12 +238,15 @@ namespace hummus {
                     s->receiveSpike(timestamp);
                     
                     // integating synaptic currents
-                    total_current = 0;
-                    for (auto& synapse: dendriticTree) {
-                        total_current += synapse->getSynapticCurrent();
+                    if (type == spikeType::initial) {
+                        current = s->getSynapticCurrent();
+                    } else {
+                        float total_current = 0;
+                        for (auto& synapse: dendriticTree) {
+                            total_current += synapse->getSynapticCurrent();
+                        }
+                        current = total_current;
                     }
-                    current = total_current;
-                    
                     activeSynapse = s;
                     
                     // updating the timestamp when a synapse was propagating a spike
@@ -282,7 +285,7 @@ namespace hummus {
                 }
             }
             
-            if (potential >= threshold) {
+            if (potential >= threshold && activeSynapse) {
                 
                 auto it = std::find(network->getUniqueLabels().begin(), network->getUniqueLabels().end(), network->getCurrentLabel());
                 auto idx = std::distance(network->getUniqueLabels().begin(), it);
