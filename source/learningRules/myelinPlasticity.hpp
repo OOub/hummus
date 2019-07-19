@@ -58,7 +58,7 @@ namespace hummus {
             }
             
             std::vector<double> time_differences;
-            std::vector<Synapse*> active_synapses;
+            std::vector<Synapse*> accepted_synapses;
             
             // weight normaliser
             float weight_normaliser = 0;
@@ -77,14 +77,13 @@ namespace hummus {
                     
                     // taking the input neurons that were active within a gaussian learning window
                     if (inputNeuron->getTrace() > 0 && gaussian_window >= 0.01) {
+                        accepted_synapses.emplace_back(input);
                         
                         // increasing the threshold if the trace is too high
                         if (inputNeuron->getTrace() >= 1) {
                             auto updated_threshold = inputNeuron->getThreshold() + 2;
                             inputNeuron->setThreshold(updated_threshold);
                         }
-                        
-                        active_synapses.emplace_back(input);
                         
                         // calculating the time difference
                         double time_difference = postsynapticNeuron->getPreviousInputTime() - spike_arrival_time;
@@ -100,6 +99,8 @@ namespace hummus {
                         // long-term potentiation on weights
                         float delta_weight = (alpha_plus * std::exp(- time_difference * beta_plus * input->getWeight())) * input->getWeight() * (1 - input->getWeight());
                         input->setWeight(delta_weight);
+                        
+                        weight_normaliser += input->getWeight();
                         
                         if (network->getVerbose() >= 1) {
                             std::cout << " inside learning window " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->getDelay() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
@@ -117,6 +118,8 @@ namespace hummus {
                         float delta_weight = (alpha_plus * std::exp(- beta_plus * input->getWeight())) * input->getWeight() * (1 - input->getWeight());
                         input->setWeight(delta_weight);
                         
+                        weight_normaliser += input->getWeight();
+                        
                         if (network->getVerbose() >= 1) {
                             std::cout << " outside learning window " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
                         }
@@ -131,9 +134,6 @@ namespace hummus {
                         }
                     }
                     
-                    // calculating weight normaliser
-                    weight_normaliser += input->getWeight();
-                    
                     // resetting trace for the input neuron
                     inputNeuron->setTrace(0);
                 }
@@ -141,8 +141,7 @@ namespace hummus {
             
             for (auto& input: postsynapticNeuron->getDendriticTree()) {
                 if (input->getType() == synapseType::excitatory && weight_normaliser > 0) {
-                    // normalising synaptic weights
-                    // I need a normalisation gradient instead of one-shot normalisation
+                    // normalising synaptic weights only when pattern has more than 1 neuron responding
                     input->setWeight(input->getWeight()/ weight_normaliser, false);
                     
                     // printing the weights
@@ -155,7 +154,7 @@ namespace hummus {
             // saving into the neuron's logger if the logger exists
             for (auto& addon: postsynapticNeuron->getRelevantAddons()) {
                 if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
-                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, time_differences, active_synapses);
+                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, time_differences, accepted_synapses);
                 }
             }
         }

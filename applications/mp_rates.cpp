@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100, hummus::synapseType::excitatory);
     
-    int repetitions = 10;
+    int repetitions = 100;
     int time_between_spikes = 100;
     int runtime = repetitions*time_between_spikes+10;
     
