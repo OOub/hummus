@@ -41,48 +41,23 @@
 #include "../source/synapses/pulse.hpp"
 #include "../source/synapses/exponential.hpp"
 
-#include "../source/dependencies/matplotlibcpp.h"
-
 int main(int argc, char** argv) {
-
-    //  ----- INITIALISING THE NETWORK -----
-    
-    matplotlibcpp::plot({1,3,2,4});
-    matplotlibcpp::show();
-    
     hummus::Network network;
-    
-    //  ----- INITIALISING ADD-ONS -----
-    network.makeAddon<hummus::SpikeLogger>("spikeLog.bin");
-    
-    // ----- INITIALISING GUI -----
-    auto& display = network.makeGUI<hummus::QtDisplay>();
-    
-    //  ----- CREATING THE NETWORK -----
-    // creating layers of neurons
+    network.makeGUI<hummus::PuffinDisplay>();
     auto input = network.makeLayer<hummus::Parrot>(1, {});
-    auto output = network.makeLayer<hummus::LIF>(2, {}, false, 200, 10, 3, false);
 
-    //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 1, 0.5), 100, hummus::synapseType::excitatory);
-    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0), 100);
-	
-    //  ----- INJECTING SPIKES -----
-    network.injectSpike(0, 10);
-    network.injectSpike(0, 12);
-    network.injectSpike(0, 30);
+    int repetitions = 3600;
+    int time_between_spikes = 5;
+    int runtime = repetitions*time_between_spikes;
 
-    //  ----- DISPLAY SETTINGS -----
-    display.setTimeWindow(100);
-    display.trackNeuron(1);
+    for (auto i=0; i<repetitions; i++) {
+        network.injectSpike(0, 1+time_between_spikes*i);
+    }
+
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(2);
-    network.run(100, 0.1);
+    network.run(runtime, 0.1);
 
-    //  ----- SAVE THE NETWORK IN A JSON FILE -----
-    network.save("testSave");
-    
-    //  ----- EXITING APPLICATION -----
     return 0;
 }

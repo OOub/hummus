@@ -89,7 +89,7 @@ namespace hummus {
             }
 		}
         
-        virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep) override {
+        virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep, spikeType type) override {
             
             if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
                 timestep = 0;
@@ -106,7 +106,6 @@ namespace hummus {
             if (s && active) {
                 potential = threshold;
                 trace += 1;
-                
                 if (network->getVerbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
                 }

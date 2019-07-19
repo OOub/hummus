@@ -11,10 +11,13 @@
 
 #include <vector>
 #include <string>
+#include <sstream>
 
 #include "../../core.hpp"
 #include "../../dependencies/puffin.hpp"
 #include "../../dependencies/json.hpp"
+
+#include <chrono> // @DEV (remove once done)
 
 namespace hummus {
     class PuffinDisplay : public MainThreadAddon {
@@ -25,32 +28,46 @@ namespace hummus {
         PuffinDisplay() = default;
 
         // ----- PUBLIC DISPLAY METHODS -----
-        void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            // server->broadcast(puffin::string_to_message("s,0,0,2,3.2"));
-        }
+       void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
 
-        void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            // server->broadcast(puffin::string_to_message("neuronFired"));
-        }
+           std::this_thread::sleep_for(std::chrono::seconds(1)); // @DEV (remove once done)
+
+           std::stringstream stream;
+           stream << "{\"type\":\"incomingSpike\",\"timestamp\":" << timestamp << ",\"pre\":" << s->getPresynapticNeuronID() << ",\"post\":" << s->getPostsynapticNeuronID() << ", \"postPotential\":" << postsynapticNeuron->getPotential() << "}";
+           server->broadcast(puffin::string_to_message(stream.str()));
+       }
+
+       void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+
+           std::this_thread::sleep_for(std::chrono::seconds(1)); // @DEV (remove once done)
+
+           std::stringstream stream;
+           stream << "{\"type\":\"neuronFired\",\"timestamp\":" << timestamp << ",\"pre\":" << s->getPresynapticNeuronID() << ",\"post\":" << s->getPostsynapticNeuronID() << ", \"postPotential\":" << postsynapticNeuron->getPotential() << "}";
+           server->broadcast(puffin::string_to_message(stream.str()));
+       }
 
         void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
-            // server->broadcast(puffin::string_to_message("timestep"));
+            std::string message_passed = std::to_string(timestamp) + std::to_string(postsynapticNeuron->getPotential());
+            std::stringstream stream;
+            stream << "{\"type\":\"timestep\",\"timestamp\":" << timestamp << ", \"postPotential\":" << postsynapticNeuron->getPotential() << "}";
+            server->broadcast(puffin::string_to_message(stream.str()));
         }
 
-        void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            // server->broadcast(puffin::string_to_message("statusUpdate"));
-        }
+       void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+           // server->broadcast(puffin::string_to_message("statusUpdate"));
+       }
 
         // Method to start the server
         void begin(Network* network, std::mutex* sync) override {
           server = puffin::make_server(
               8080,
               [network](std::size_t id, const std::string& url) {
-                  std::cout << id << " connected" << std::endl;
-                  return puffin::string_to_message("welcome");
+                  std::stringstream stream;
+                  stream << "{\"type\":\"state\"}";
+                  return puffin::string_to_message(stream.str());
               },
               [this](std::size_t id, const puffin::message& message) {},
-              [](std::size_t id) { std::cout << id << " disconnected" << std::endl; });
+              [](std::size_t id) {});
 
             sync->unlock();
         }

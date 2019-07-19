@@ -197,8 +197,8 @@ namespace hummus {
 		virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) = 0;
         
 		// synchronous update method
-		virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep) {
-			update(timestamp, s, network, spikeType::none);
+		virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep, spikeType type) {
+			update(timestamp, s, network, type);
 		}
         
         // reset a neuron to its initial status
@@ -1525,7 +1525,7 @@ namespace hummus {
                     while (!spike_queue.empty() && spike_queue.top().timestamp <= i) {
                         // access first element and update corresponding neuron
                         auto index = spike_queue.top().propagationSynapse->getPostsynapticNeuronID();
-                        neurons[index]->updateSync(i, spike_queue.top().propagationSynapse, this, timestep);
+                        neurons[index]->updateSync(i, spike_queue.top().propagationSynapse, this, timestep, spike_queue.top().type);
                         neuronStatus[index] = true;
 
                         // remove first element
@@ -1537,7 +1537,7 @@ namespace hummus {
                         if (neuronStatus[idx]) {
                             neuronStatus[idx] = false;
                         } else {
-                            neurons[idx]->updateSync(i, nullptr, this, timestep);
+                            neurons[idx]->updateSync(i, nullptr, this, timestep, spikeType::none);
                         }
                     }
                 }

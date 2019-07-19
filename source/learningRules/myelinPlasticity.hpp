@@ -27,7 +27,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        MyelinPlasticity(int _time_constant=10, int _learning_window=20, float _learning_rate=1, float _alpha_plus=0.2, float _alpha_minus=-0.08, float _beta_plus=0.1, float _beta_minus=0) :
+        MyelinPlasticity(int _time_constant=10, int _learning_window=20, float _learning_rate=1, float _alpha_plus=0.2, float _alpha_minus=-0.08, float _beta_plus=1, float _beta_minus=0) :
                 time_constant(_time_constant),
                 learning_window(_learning_window),
                 learning_rate(_learning_rate),
@@ -77,6 +77,12 @@ namespace hummus {
                     
                     // taking the input neurons that were active within a gaussian learning window
                     if (gaussian_window >= 0.01 && inputNeuron->getTrace() > 0) {
+                        
+                        // increasing the threshold if the trace is too high
+                        if (inputNeuron->getTrace() > 0.9) {
+                            auto updated_threshold = inputNeuron->getThreshold() + 2;
+                            inputNeuron->setThreshold(updated_threshold);
+                        }
                         active_synapses.emplace_back(input);
                         
                         // calculating the time difference
@@ -94,15 +100,19 @@ namespace hummus {
                         float delta_weight = (alpha_plus * std::exp(- time_difference * beta_plus * input->getWeight())) * input->getWeight() * (1 - input->getWeight());
                         input->setWeight(delta_weight);
                         
-                        // calculating weight normaliser
-                        weight_normaliser += input->getWeight();
-                        
                         if (network->getVerbose() >= 1) {
                             std::cout << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->getDelay() << " weight change: " << delta_weight << " weight " << input->getWeight() << std::endl;
                         }
                         
-                    // taking the input neurons that are outside the learning window or that didn't spike
+                    // taking the input neurons that are outside the learning window or inactive
                     } else {
+                        // if outside the learning window -> increase threshold (fires too early)
+                        // if doesn't fire at all -> decrease threshold up to a minimum
+                        
+                        // decreasing the threshold if the neurons are inactive
+//                        auto updated_threshold = inputNeuron->getThreshold() - 1;
+//                        inputNeuron->setThreshold(updated_threshold);
+                        
                         // long-term depression on weights
                         float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->getWeight()))) * input->getWeight() * (1 - input->getWeight());
                         input->setWeight(delta_weight);
@@ -111,23 +121,27 @@ namespace hummus {
                             std::cout << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << std::endl;
                         }
                     }
+
+                    // calculating weight normaliser
+                    weight_normaliser += input->getWeight();
+                    
+                    // resetting trace for the input neuron
+                    inputNeuron->setTrace(0);
                 }
             }
             
-            // normalising synaptic weights on active synapses
-            for (auto& active_synapse: active_synapses) {
-                active_synapse->setWeight(active_synapse->getWeight()/ weight_normaliser, false);
-            }
-            
-            // printing the weights
-            if (network->getVerbose() >= 1) {
-                for (auto& input: postsynapticNeuron->getDendriticTree()) {
-                    if (input->getType() == synapseType::excitatory) {
+            for (auto& input: postsynapticNeuron->getDendriticTree()) {
+                if (input->getType() == synapseType::excitatory && weight_normaliser > 0) {
+                    // normalising synaptic weights
+                    input->setWeight(input->getWeight()/ weight_normaliser, false);
+                    
+                    // printing the weights
+                    if (network->getVerbose() >= 1) {
                         std::cout << input->getPresynapticNeuronID() << "->" << input->getPostsynapticNeuronID() << " weight: " << input->getWeight() << std::endl;
                     }
                 }
             }
-            
+        
             // saving into the neuron's logger if the logger exists
             for (auto& addon: postsynapticNeuron->getRelevantAddons()) {
                 if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
@@ -153,35 +167,3 @@ namespace hummus {
         float            beta_minus;
 	};
 }
-
-/*for (auto& dendrite: targetNeuron->getDendriticTree()) {
-    // ignoring inhibitory synapses and ignoring synapses that are outside the [0,1] range
-    if (dendrite->getType() == synapseType::excitatory && dendrite->getWeight() <= 1) {
-        auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
-        // Long term potentiation for all presynaptic neurons that spiked
-        if (timestamp >= d_presynapticNeuron->getPreviousSpikeTime() && d_presynapticNeuron->getPreviousSpikeTime() > targetNeuron->getPreviousSpikeTime()) {
-            // positive weight change
-            float delta_weight = (alpha_plus * std::exp(- beta_plus * dendrite->getWeight())) * dendrite->getWeight() * (1 - dendrite->getWeight());
-            dendrite->setWeight(delta_weight);
-            
-            if (network->getVerbose() >= 1) {
-                std::cout << "LTP weight change " << delta_weight << " weight " << dendrite->getWeight() << std::endl;
-                }
-                // Long term depression for all presynaptic neurons that didn't spike
-                } else {
-                    
-                    // negative weight change
-                    float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - dendrite->getWeight()))) * dendrite->getWeight() * (1 - dendrite->getWeight());
-                    dendrite->setWeight(delta_weight);
-                    
-                    if (network->getVerbose() >= 1) {
-                        std::cout << "LTD weight change " << delta_weight << " weight " << dendrite->getWeight() << std::endl;
-                    }
-                }
-                } else if (dendrite->getWeight() > 1) {
-                    if (network->getVerbose() >= 1) {
-                        std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
-                    }
-                }
-                }
-*/
