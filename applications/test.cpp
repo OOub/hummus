@@ -41,15 +41,9 @@
 #include "../source/synapses/pulse.hpp"
 #include "../source/synapses/exponential.hpp"
 
-#include "../source/dependencies/matplotlibcpp.h"
-
 int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
-    
-    matplotlibcpp::plot({1,3,2,4});
-    matplotlibcpp::show();
-    
     hummus::Network network;
     
     //  ----- INITIALISING ADD-ONS -----

@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
+        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
                 active(true),
                 burstingActivity(_burstingActivity),
@@ -35,7 +35,8 @@ namespace hummus {
                 homeostasisBeta(_homeostasisBeta),
                 activeSynapse(nullptr),
                 inhibited(false),
-                inhibitionTime(0) {
+                inhibitionTime(0),
+                classLabel(_classLabel) {
                     
             // LIF neuron type == 1 (for JSON save)
             neuronType = 1;
@@ -148,6 +149,11 @@ namespace hummus {
             }
 
             if (potential >= threshold) {
+                // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
+                if (!network->getTrainingLabels().empty() && network->getDecisionParameters().layer_number == layerID+1) {
+                    decision_queue.emplace_back(network->getCurrentLabel());
+                }
+                
                 trace += 1;
 
                 if (network->getVerbose() == 2) {
@@ -162,11 +168,13 @@ namespace hummus {
                     network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                for (auto& axonTerminal : axonTerminals) {
-                    if (axonTerminal->getType() == synapseType::inhibitory) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                    } else {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                if (network->getLayers()[layerID].do_not_propagate) {
+                    for (auto& axonTerminal : axonTerminals) {
+                        if (axonTerminal->getType() == synapseType::inhibitory) {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                        } else {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                        }
                     }
                 }
                 
@@ -291,6 +299,12 @@ namespace hummus {
             }
 
 			if (potential >= threshold && activeSynapse) {
+                
+                // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
+                if (!network->getTrainingLabels().empty() && network->getDecisionParameters().layer_number == layerID+1) {
+                    decision_queue.emplace_back(network->getCurrentLabel());
+                }
+                
                 trace += 1;
                 
                 if (network->getVerbose() == 2) {
@@ -309,15 +323,17 @@ namespace hummus {
 				if (network->getMainThreadAddon()) {
 					network->getMainThreadAddon()->neuronFired(timestamp, activeSynapse, this, network);
 				}
-
-				for (auto& axonTerminal: axonTerminals) {
-                    if (axonTerminal->getType() == synapseType::inhibitory) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                    } else {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                
+                if (network->getLayers()[layerID].do_not_propagate) {
+                    for (auto& axonTerminal: axonTerminals) {
+                        if (axonTerminal->getType() == synapseType::inhibitory) {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                        } else {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                        }
                     }
-				}
-
+                }
+                
 				requestLearning(timestamp, activeSynapse, this, network);
 
 				previousSpikeTime = timestamp;
@@ -418,6 +434,14 @@ namespace hummus {
             homeostasisBeta = newHB;
         }
         
+        std::string getClassLabel() const {
+            return classLabel;
+        }
+        
+        void setClassLabel(std::string newLabel) {
+            classLabel = newLabel;
+        }
+        
 	protected:
 		
         // loops through any learning rules and activates them
@@ -432,14 +456,16 @@ namespace hummus {
         }
         
 		// ----- LIF PARAMETERS -----
-		bool                                     active;
-		bool                                     inhibited;
-		double                                   inhibitionTime;
-		bool                                     burstingActivity;
-		bool                                     homeostasis;
-		float                                    restingThreshold;
-		float                                    decayHomeostasis;
-		float                                    homeostasisBeta;
-		Synapse*                                 activeSynapse;
+		bool                         active;
+		bool                         inhibited;
+		double                       inhibitionTime;
+		bool                         burstingActivity;
+		bool                         homeostasis;
+		float                        restingThreshold;
+		float                        decayHomeostasis;
+		float                        homeostasisBeta;
+		Synapse*                     activeSynapse;
+        std::string                  classLabel;
+        std::deque<std::string>      decision_queue;
 	};
 }

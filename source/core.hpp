@@ -80,6 +80,14 @@ namespace hummus {
         none
     };
     
+    // parameters for the decision-making layer
+    struct decisionHeuristics {
+        int                         layer_number;
+        int                         spike_history_size;
+        int                         rejection_threshold;
+        double                      timer;
+    };
+    
     // the equivalent of feature maps
 	struct sublayer {
 		std::vector<std::size_t>    neurons;
@@ -95,6 +103,7 @@ namespace hummus {
 		int                         height;
         int                         kernelSize;
         int                         stride;
+        bool                        do_not_propagate;
 	};
 
     // spike - propagated between synapses
@@ -501,16 +510,18 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1});
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1, false});
             return layers.back();
         }
         
-        // overloading the makeLayer method specifically to handle decisionMaking neurons
+        // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should at the end
         template <typename T, typename... Args>
-        layer makeLayer( std::string trainingLabelFilename, int neurons_per_population, bool _preTrainingLabelAssignment, std::vector<Addon*> _addons, Args&&... args) {
+        layer makeDecision(std::string trainingLabelFilename, int _spike_history_size, int _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             trainingLabels = dataParser.readLabels(trainingLabelFilename);
-            preTrainingLabelAssignment = _preTrainingLabelAssignment;
+            
+            // do not let the last layer propagate to the decision-making layer during the training phase
+            layers.back().do_not_propagate = true;
             
             // find number of classes
             for (auto& label: trainingLabels) {
@@ -531,35 +542,11 @@ namespace hummus {
             }
             
             // add decision-making neurons
-            int counter = 0;
-            std::vector<sublayer> sublayers;
             std::vector<std::size_t> neuronsInLayer;
-            if (preTrainingLabelAssignment) {
-                for (auto i=0; i<static_cast<int>(uniqueLabels.size()); i++) {
-                    std::vector<std::size_t> neuronsInSublayer;
-                    for (auto k=0+shift; k<neurons_per_population+shift; k++) {
-                        neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), uniqueLabels[i], std::forward<Args>(args)...));
-                        neuronsInSublayer.emplace_back(neurons.size()-1);
-                        neuronsInLayer.emplace_back(neurons.size()-1);
-                    }
-                    sublayers.emplace_back(sublayer{neuronsInSublayer, i});
-                    
-                    // to shift the neuron IDs with the sublayers
-                    counter += neurons_per_population;
-                }
-            } else {
-                for (auto i=0; i<static_cast<int>(uniqueLabels.size()); i++) {
-                    std::vector<std::size_t> neuronsInSublayer;
-                    for (auto k=0+shift; k<neurons_per_population+shift; k++) {
-                        neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), "", std::forward<Args>(args)...));
-                        neuronsInSublayer.emplace_back(neurons.size()-1);
-                        neuronsInLayer.emplace_back(neurons.size()-1);
-                    }
-                    sublayers.emplace_back(sublayer{neuronsInSublayer, i});
-                    
-                    // to shift the neuron IDs with the sublayers
-                    counter += neurons_per_population;
-                }
+            
+            for (auto i=0; i<static_cast<int>(uniqueLabels.size()); i++) {
+                neurons.emplace_back(make_unique<T>(static_cast<int>(i)+shift, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), uniqueLabels[i], std::forward<Args>(args)...));
+                neuronsInLayer.emplace_back(neurons.size()-1);
             }
             
             // looping through addons and adding the layer to the neuron mask
@@ -568,8 +555,14 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, -1, -1, -1, -1});
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1, false});
             return layers.back();
+            
+            // saving the decision parameters
+            decision.layer_number = layerID;
+            decision.spike_history_size = _spike_history_size;
+            decision.rejection_threshold = _rejection_threshold;
+            decision.timer = _timer;
         }
         
         // adds neurons arranged in circles of various radii
@@ -612,7 +605,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, -1, -1, -1, -1});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, -1, -1, -1, -1, false});
             return layers.back();
         }
         
@@ -664,7 +657,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH, -1, -1});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH, -1, -1, false});
             return layers.back();
         }
         
@@ -733,7 +726,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, newWidth, newHeight, _kernelSize, _stride});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, newWidth, newHeight, _kernelSize, _stride, false});
             return layers.back();
         }
         
@@ -1363,12 +1356,12 @@ namespace hummus {
             return currentLabel;
         }
         
+        std::deque<label>& getTrainingLabels() {
+            return trainingLabels;
+        }
+        
         std::vector<std::string>& getUniqueLabels() {
             return uniqueLabels;
-        }
-
-        bool getPreTrainingLabelAssignment() const {
-            return preTrainingLabelAssignment;
         }
         
         bool getNetworkType() const {
@@ -1379,6 +1372,10 @@ namespace hummus {
             return verbose;
         }
 		
+        decisionHeuristics& getDecisionParameters() {
+            return decision;
+        }
+        
         // verbose argument (0 for no couts at all, 1 for network-related print-outs and learning rule print-outs, 2 for network and neuron-related print-outs
         void verbosity(int value) {
             if (value >= 0 && value <= 2) {
@@ -1415,6 +1412,12 @@ namespace hummus {
 
         // importing test data and running it through the network for classification
         void predict(double timestep, std::vector<input>* testData, int shift) {
+            
+            // can now propagate through all layers in case a decision-making layer is present
+            for (auto& layer: layers) {
+                layer.do_not_propagate = false;
+            }
+            
             learningStatus = false;
             for (auto& n: neurons) {
                 n->resetNeuron(this, false);
@@ -1557,11 +1560,11 @@ namespace hummus {
 		std::deque<label>                                   trainingLabels;
         std::vector<std::string>                            uniqueLabels;
         std::string                                         currentLabel;
-        bool                                                preTrainingLabelAssignment;
 		bool                                                learningStatus;
 		double                                              learningOffSignal;
         int                                                 maxDelay;
         bool                                                asynchronous;
         std::mt19937                                        randomEngine;
+        decisionHeuristics                                  decision;
     };
 }
