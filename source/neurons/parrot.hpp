@@ -69,7 +69,7 @@ namespace hummus {
                     network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                if (network->getLayers()[layerID].do_not_propagate) {
+                if (!network->getLayers()[layerID].do_not_propagate) {
                     for (auto& axonTerminal : axonTerminals) {
                         if (axonTerminal->getType() == synapseType::inhibitory) {
                             network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
@@ -119,7 +119,7 @@ namespace hummus {
                     network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                if (network->getLayers()[layerID].do_not_propagate) {
+                if (!network->getLayers()[layerID].do_not_propagate) {
                     for (auto& axonTerminal : axonTerminals) {
                         if (axonTerminal->getType() == synapseType::inhibitory) {
                             network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});

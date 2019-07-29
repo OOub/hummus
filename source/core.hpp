@@ -438,6 +438,7 @@ namespace hummus {
                 asynchronous(false),
                 learningOffSignal(-1),
                 verbose(0),
+                decision_td(0),
                 maxDelay(0) {
                     // seeding and initialising random engine with a Mersenne Twister pseudo-random generator
                     std::random_device device;
@@ -1181,7 +1182,7 @@ namespace hummus {
         }
         
         // running through the network asynchronously if timestep = 0 and synchronously otherwise
-        void run(double _runtime, double _timestep=0) {
+        void run(double _runtime, double _timestep=0, bool classification=false) {
             // error handling
             if (_timestep < 0) {
                 throw std::logic_error("the timestep cannot be negative");
@@ -1215,14 +1216,14 @@ namespace hummus {
                 std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
-
+ 
                 std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
 
                     
                 if (_timestep == 0) {
-                    eventRunHelper(_runtime, _timestep, false);
+                    eventRunHelper(_runtime, _timestep, classification);
                 } else {
-                    clockRunHelper(_runtime, _timestep, false);
+                    clockRunHelper(_runtime, _timestep, classification);
                 }
                 
                 std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
@@ -1399,9 +1400,9 @@ namespace hummus {
             }
             
             if (timestep == 0) {
-                eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, true);
+                eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
             } else {
-                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, true);
+                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
             }
             
             std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
@@ -1434,9 +1435,9 @@ namespace hummus {
             }
             
             if (timestep == 0) {
-                eventRunHelper(testData->back().timestamp+maxDelay+shift, timestep, false);
+                eventRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
             } else {
-                clockRunHelper(testData->back().timestamp+maxDelay+shift, timestep, false);
+                clockRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
             }
             
             if (verbose != 0) {
@@ -1475,7 +1476,7 @@ namespace hummus {
         
         // update neuron status asynchronously
         void requestUpdate(spike s, bool classification=false) {
-            if (classification) {
+            if (!classification) {
                 if (!trainingLabels.empty()) {
                     if (trainingLabels.front().onset <= s.timestamp) {
                         currentLabel = trainingLabels.front().name;
@@ -1493,6 +1494,11 @@ namespace hummus {
                 }
             }
             neurons[s.propagationSynapse->getPostsynapticNeuronID()]->update(s.timestamp, s.propagationSynapse, this, s.type);
+            
+            // if the decision-making layer method was used and we are at the testing phase
+            if (!trainingLabels.empty() && classification) {
+                
+            }
         }
         
         // helper function that runs the network when clock-mode is selected
@@ -1505,7 +1511,7 @@ namespace hummus {
                 // loop over the full runtime
                 for (double i=0; i<runtime; i+=timestep) {
                     // for cross-validation / test phase
-                    if (classification) {
+                    if (!classification) {
                         // get the current training label if a set of labels are provided
                         if (!trainingLabels.empty()) {
                             if (trainingLabels.front().onset <= i) {
@@ -1566,5 +1572,6 @@ namespace hummus {
         bool                                                asynchronous;
         std::mt19937                                        randomEngine;
         decisionHeuristics                                  decision;
+        double                                              decision_td;
     };
 }

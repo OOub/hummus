@@ -45,7 +45,6 @@ namespace hummus {
             }
         }
         
-        // homeostasis does not work for the event-based neuron because it would complicated spike prediction
         virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
         }
         
