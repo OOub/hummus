@@ -26,7 +26,7 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -35,8 +35,7 @@ namespace hummus {
                 homeostasisBeta(_homeostasisBeta),
                 activeSynapse(nullptr),
                 inhibited(false),
-                inhibitionTime(0),
-                classLabel(_classLabel) {
+                inhibitionTime(0){
                     
             // LIF neuron type == 1 (for JSON save)
             neuronType = 1;
@@ -434,14 +433,6 @@ namespace hummus {
             homeostasisBeta = newHB;
         }
         
-        std::string getClassLabel() const {
-            return classLabel;
-        }
-        
-        void setClassLabel(std::string newLabel) {
-            classLabel = newLabel;
-        }
-        
 	protected:
 		
         // loops through any learning rules and activates them
@@ -465,7 +456,5 @@ namespace hummus {
 		float                        decayHomeostasis;
 		float                        homeostasisBeta;
 		Synapse*                     activeSynapse;
-        std::string                  classLabel;
-        std::deque<std::string>      decision_queue;
 	};
 }

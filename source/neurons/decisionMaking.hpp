@@ -21,8 +21,7 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
-                classLabel(_classLabel) {
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential, _classLabel){
                     
             // DecisionMaking neuron type = 2 for JSON save
             neuronType = 2;
@@ -85,17 +84,10 @@ namespace hummus {
         }
         
 		// ----- SETTERS AND GETTERS -----
-        std::string getClassLabel() const {
-            return classLabel;
-        }
-        
-        void setClassLabel(std::string newLabel) {
-            classLabel = newLabel;
-        }
         
     protected:
     
 		// ----- DECISION-MAKING NEURON PARAMETERS -----
-        std::string        classLabel;
+
 	};
 }

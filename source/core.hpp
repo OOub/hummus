@@ -77,6 +77,7 @@ namespace hummus {
         inhibitory,
         endOfIntegration,
         prediction,
+        decision,
         none
     };
     
@@ -84,7 +85,7 @@ namespace hummus {
     struct decisionHeuristics {
         int                         layer_number;
         int                         spike_history_size;
-        int                         rejection_threshold;
+        int                         rejection_threshold; // percentage (0.6 = 60% for a maximum of 1)
         double                      timer;
     };
     
@@ -171,7 +172,7 @@ namespace hummus {
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, float _conductance=200,
-               float _leakageConductance=10, int _refractoryPeriod=3, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+               float _leakageConductance=10, int _refractoryPeriod=3, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 neuronID(_neuronID),
                 layerID(_layerID),
                 sublayerID(_sublayerID),
@@ -189,6 +190,7 @@ namespace hummus {
                 traceTimeConstant(_traceTimeConstant),
                 previousSpikeTime(0),
                 previousInputTime(0),
+                classLabel(_classLabel),
                 neuronType(0) {
                     // error handling
                     if (membraneTimeConstant <= 0) {
@@ -390,6 +392,18 @@ namespace hummus {
             refractoryPeriod = newRefractoryPeriod;
         }
         
+        std::deque<std::string>& getDecisionQueue() {
+            return decision_queue;
+        }
+        
+        std::string getClassLabel() const {
+            return classLabel;
+        }
+        
+        void setClassLabel(std::string newLabel) {
+            classLabel = newLabel;
+        }
+        
     protected:
         
         // loops through any learning rules and activates them
@@ -426,6 +440,8 @@ namespace hummus {
         double                                     previousSpikeTime;
         double                                     previousInputTime;
         int                                        neuronType;
+        std::deque<std::string>                    decision_queue;
+        std::string                                classLabel;
     };
 	
     class Network {
@@ -438,7 +454,7 @@ namespace hummus {
                 asynchronous(false),
                 learningOffSignal(-1),
                 verbose(0),
-                decision_td(0),
+                decision_pre_ts(0),
                 maxDelay(0) {
                     // seeding and initialising random engine with a Mersenne Twister pseudo-random generator
                     std::random_device device;
@@ -524,11 +540,9 @@ namespace hummus {
             // do not let the last layer propagate to the decision-making layer during the training phase
             layers.back().do_not_propagate = true;
             
-            // find number of classes
+            // add the unique classes to the classes_map
             for (auto& label: trainingLabels) {
-                if (std::find(uniqueLabels.begin(), uniqueLabels.end(), label.name) == uniqueLabels.end()) {
-                    uniqueLabels.emplace_back(label.name);
-                }
+                classes_map.insert({label.name, 0});
             }
             
             unsigned long shift = 0;
@@ -540,14 +554,18 @@ namespace hummus {
                     shift += l.neurons.size();
                 }
                 layerID = layers.back().ID+1;
+            } else {
+                throw std::logic_error("the decision layer can only be on the last layer");
             }
             
             // add decision-making neurons
             std::vector<std::size_t> neuronsInLayer;
             
-            for (auto i=0; i<static_cast<int>(uniqueLabels.size()); i++) {
-                neurons.emplace_back(make_unique<T>(static_cast<int>(i)+shift, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), uniqueLabels[i], std::forward<Args>(args)...));
+            int i=0;
+            for (auto& it: classes_map) {
+                neurons.emplace_back(make_unique<T>(static_cast<int>(i)+shift, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), it.first, std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
+                ++i;
             }
             
             // looping through addons and adding the layer to the neuron mask
@@ -1208,6 +1226,18 @@ namespace hummus {
                 addon->onStart(this);
             }
 			
+            if (classification) {
+                std::cout << "classification is true. This instance will assume a training run has already been done, and will try to initialise the Decision-Making (assuming it was initialised in the first place)" << std::endl;
+                
+                // can now propagate through all layers in case a decision-making layer is present
+                for (auto& layer: layers) {
+                    layer.do_not_propagate = false;
+                }
+                
+                // during a classification run, labels the neurons if a decision-making layer was used
+                prepareDecisionMaking();
+            }
+                
             std::mutex sync;
             if (thAddon) {
                 sync.lock();
@@ -1361,10 +1391,6 @@ namespace hummus {
             return trainingLabels;
         }
         
-        std::vector<std::string>& getUniqueLabels() {
-            return uniqueLabels;
-        }
-        
         bool getNetworkType() const {
             return asynchronous;
         }
@@ -1424,6 +1450,8 @@ namespace hummus {
                 n->resetNeuron(this, false);
             }
 
+            prepareDecisionMaking();
+            
             injectSpikeFromData(testData);
 			
             for (auto& addon: addons) {
@@ -1492,13 +1520,19 @@ namespace hummus {
                         learningStatus = false;
                     }
                 }
+            } else {
+                if (!trainingLabels.empty()) {
+                    if (s.timestamp - decision_pre_ts >= decision.timer) {
+                        // make all the decision neurons fire
+                        for (auto& n: layers[decision.layer_number].neurons) {
+                            neurons[n]->update(s.timestamp, nullptr, this, spikeType::decision);
+                        }
+                        // saving previous timestamp
+                        decision_pre_ts = s.timestamp;
+                    }
+                }
             }
             neurons[s.propagationSynapse->getPostsynapticNeuronID()]->update(s.timestamp, s.propagationSynapse, this, s.type);
-            
-            // if the decision-making layer method was used and we are at the testing phase
-            if (!trainingLabels.empty() && classification) {
-                
-            }
         }
         
         // helper function that runs the network when clock-mode is selected
@@ -1529,6 +1563,18 @@ namespace hummus {
                                 learningStatus = false;
                             }
                         }
+                    } else {
+                        if (!trainingLabels.empty()) {
+                            if (i - decision_pre_ts >= decision.timer) {
+                                // make all the decision neurons fire
+                                for (auto& n: layers[decision.layer_number].neurons) {
+                                    neurons[n]->update(i, nullptr, this, spikeType::decision);
+                                }
+                                
+                                // saving previous timestamp
+                                decision_pre_ts = i;
+                            }
+                        }
                     }
 
                     while (!spike_queue.empty() && spike_queue.top().timestamp <= i) {
@@ -1555,6 +1601,44 @@ namespace hummus {
             }
         }
 		
+        // method used to label and set the weights for the neurons connecting to the decision-making layer
+        void prepareDecisionMaking() {
+            if (!trainingLabels.empty()) {
+                // loop through last layer before DM
+                for (auto& n: layers[decision.layer_number-1].neurons) {
+                    // resetting the unordered map values to 0 for every neuron
+                    for (auto& label: classes_map) {
+                        label.second = 0;
+                    }
+                    
+                    // loop through the decision_queue of a neuron and find the number of spikes per label
+                    for (auto& label: neurons[n]->getDecisionQueue()) {
+                        ++classes_map[label];
+                    }
+                    
+                    // return the element with the maximum number of spikes
+                    auto max_label = *std::max_element(classes_map.begin(), classes_map.end(), [](const std::pair<std::string, int> &p1,
+                                                                                const std::pair<std::string, int> &p2) {
+                                                                                    return p1.second < p2.second;
+                                                                                });
+                    
+                    // assign label to neuron if element larger than the rejection threshold
+                    if (max_label.second / neurons[n]->getDecisionQueue().size() >= decision.rejection_threshold) {
+                        neurons[n]->setClassLabel(max_label.first);
+                    }
+                    
+                    // set weights of synapses towards decision-making layer according to labels (binary)
+                    for (auto& s: neurons[n]->getAxonTerminals()) {
+                        if (neurons[s->getPostsynapticNeuronID()]->getClassLabel() == max_label.first) {
+                            s->setWeight(1, false);
+                        } else {
+                            s->setWeight(0, false);
+                        }
+                    }
+                }
+            }
+        }
+        
 		// ----- IMPLEMENTATION VARIABLES -----
         int                                                 verbose;
         std::priority_queue<spike>                          spike_queue;
@@ -1564,7 +1648,7 @@ namespace hummus {
         std::deque<std::unique_ptr<Addon>>                  addons;
         std::unique_ptr<MainThreadAddon>                    thAddon;
 		std::deque<label>                                   trainingLabels;
-        std::vector<std::string>                            uniqueLabels;
+        std::unordered_map<std::string, int>                classes_map;
         std::string                                         currentLabel;
 		bool                                                learningStatus;
 		double                                              learningOffSignal;
@@ -1572,6 +1656,6 @@ namespace hummus {
         bool                                                asynchronous;
         std::mt19937                                        randomEngine;
         decisionHeuristics                                  decision;
-        double                                              decision_td;
+        double                                              decision_pre_ts;
     };
 }
