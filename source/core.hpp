@@ -1618,7 +1618,7 @@ namespace hummus {
                     
                     // return the element with the maximum number of spikes
                     auto max_label = *std::max_element(classes_map.begin(), classes_map.end(), [](const std::pair<std::string, int> &p1,
-                                                                                const std::pair<std::string, int> &p2) {
+                                                                                                  const std::pair<std::string, int> &p2) {
                                                                                     return p1.second < p2.second;
                                                                                 });
                     
@@ -1629,6 +1629,7 @@ namespace hummus {
                     
                     // set weights of synapses towards decision-making layer according to labels (binary)
                     for (auto& s: neurons[n]->getAxonTerminals()) {
+                        s->setDelay(0, false);
                         if (neurons[s->getPostsynapticNeuronID()]->getClassLabel() == max_label.first) {
                             s->setWeight(1, false);
                         } else {

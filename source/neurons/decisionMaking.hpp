@@ -21,7 +21,9 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential, _classLabel){
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
+                active_synapses(0),
+                normalised(false) {
                     
             // DecisionMaking neuron type = 2 for JSON save
             neuronType = 2;
@@ -45,9 +47,52 @@ namespace hummus {
         }
         
         virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
-        }
-        
-        virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep, spikeType type) override {
+            if (type == spikeType::decision) {
+                // calculate number of non-zero dendrites for normalisation purposes (happens only once)
+                if (!normalised) {
+                    active_synapses = static_cast<int>(std::count_if(dendriticTree.begin(), dendriticTree.end(), [](Synapse* s) {
+                        if (s->getWeight() != 0) {
+                            return true;
+                        } else {
+                            return false;
+                        }}));
+                    
+                    // make sure this computation only occurs once
+                    normalised = true;
+                }
+                
+                // fucntion that converts the intensity to a delay
+                auto intensity_to_latency = 5 * 1 - std::exp(- intensity/active_synapses);
+                
+                // make the neuron fire so we can get the decision
+                potential = threshold;
+                
+                if (network->getVerbose() == 2) {
+                    std::cout << "t=" << timestamp << " " << neuronID << " class " << classLabel << " --> DECISION" << std::endl;
+                }
+                
+                for (auto& addon: relevantAddons) {
+                    addon->neuronFired(timestamp, s, this, network);
+                }
+                
+                if (network->getMainThreadAddon()) {
+                    network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
+                }
+                
+                // propagating the decision spike
+                if (!network->getLayers()[layerID].do_not_propagate) {
+                    for (auto& axonTerminal: axonTerminals) {
+                        if (axonTerminal->getType() == synapseType::inhibitory) {
+                            network->injectSpike(spike{timestamp + intensity_to_latency, axonTerminal.get(), spikeType::inhibitory});
+                        } else {
+                            network->injectSpike(spike{timestamp + intensity_to_latency, axonTerminal.get(), spikeType::generated});
+                        }
+                    }
+                }
+                
+            } else {
+                ++intensity;
+            }
         }
         
         // write neuron parameters in a JSON format
@@ -63,9 +108,6 @@ namespace hummus {
                 {"threshold", threshold},
                 {"restingPotential", restingPotential},
                 {"refractoryPeriod", refractoryPeriod},
-                {"conductance", conductance},
-                {"leakageConductance", leakageConductance},
-                {"classLabel", classLabel},
                 {"dendriticSynapses", nlohmann::json::array()},
                 {"axonalSynapses", nlohmann::json::array()},
             });
@@ -88,6 +130,8 @@ namespace hummus {
     protected:
     
 		// ----- DECISION-MAKING NEURON PARAMETERS -----
-
+        int      intensity;
+        bool     normalised;
+        int     active_synapses;
 	};
 }
