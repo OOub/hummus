@@ -545,13 +545,13 @@ namespace hummus {
                 classes_map.insert({label.name, 0});
             }
             
-            unsigned long shift = 0;
+            int shift = 0;
             
             // find the layer ID
             int layerID = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
-                    shift += l.neurons.size();
+                    shift += static_cast<int>(l.neurons.size());
                 }
                 layerID = layers.back().ID+1;
             } else {
@@ -562,8 +562,8 @@ namespace hummus {
             std::vector<std::size_t> neuronsInLayer;
             
             int i=0;
-            for (auto& it: classes_map) {
-                neurons.emplace_back(make_unique<T>(static_cast<int>(i)+shift, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), it.first, std::forward<Args>(args)...));
+            for (auto it: classes_map) {
+                neurons.emplace_back(make_unique<T>(i+shift, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), it.first, std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
                 ++i;
             }
