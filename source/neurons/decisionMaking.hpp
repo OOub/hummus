@@ -67,8 +67,8 @@ namespace hummus {
                 // make the neuron fire so we can get the decision
                 potential = threshold;
                 
-                if (network->getVerbose() == 2) {
-                    std::cout << "t=" << timestamp << " " << neuronID << " class " << classLabel << " --> DECISION" << std::endl;
+                if (network->getVerbose() == 1) {
+                    std::cout << "t=" << timestamp << " class " << classLabel << " --> DECISION" << std::endl;
                 }
                 
                 for (auto& addon: relevantAddons) {

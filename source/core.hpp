@@ -531,7 +531,7 @@ namespace hummus {
             return layers.back();
         }
         
-        // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should at the end
+        // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer
         template <typename T, typename... Args>
         layer makeDecision(std::string trainingLabelFilename, int _spike_history_size, int _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
@@ -749,7 +749,7 @@ namespace hummus {
             return layers.back();
         }
         
-        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size (non-overlapping receptive fields)
+        // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size
         template <typename T, typename... Args>
         layer makeSubsampledGrid(layer presynapticLayer, std::vector<Addon*> _addons, Args&&... args) {
             // find lowest common divisor
@@ -1278,7 +1278,9 @@ namespace hummus {
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
-        void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr, int shift=20) {
+        void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr) {
+            // the shift variable adds some time to the runtime - to fully visualise current dynamics
+            int shift = 20;
             
             if (_timestep == 0) {
                 asynchronous = true;

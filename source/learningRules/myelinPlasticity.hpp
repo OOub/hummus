@@ -125,13 +125,13 @@ namespace hummus {
                         }
                     // taking the input neurons that didn't fire
                     } else {
-                        // long-term depression on weights
-                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->getWeight()))) * input->getWeight() * (1 - input->getWeight());
-                        input->setWeight(delta_weight);
-                        
-                        if (network->getVerbose() >= 1) {
-                            std::cout << " never fired " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
-                        }
+//                        // long-term depression on weights
+//                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->getWeight()))) * input->getWeight() * (1 - input->getWeight());
+//                        input->setWeight(delta_weight);
+//
+//                        if (network->getVerbose() >= 1) {
+//                            std::cout << " never fired " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
+//                        }
                     }
                     
                     // resetting trace for the input neuron
