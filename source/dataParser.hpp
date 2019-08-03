@@ -46,7 +46,7 @@ namespace hummus {
         };
         
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity used as the sublayerID (timestamp, X, Y, P)
-        std::vector<input> readData(std::string filename, bool timeJitter=false, int additiveNoise=0) {
+        std::vector<input> readData(std::string filename, double shift_timestamps=0, bool timeJitter=false, int additiveNoise=0) {
             dataFile.open(filename);
             
             if (dataFile.good()) {
@@ -84,10 +84,17 @@ namespace hummus {
                 }
                 dataFile.close();
                 
-                // adding gaussian time jitter
+                // adding gaussian time jitter + shiting the timestamp
                 if (timeJitter) {
                     for (auto& datum: data) {
                         datum.timestamp += gaussian(randomEngine);
+                    }
+                }
+                
+                // shiting the timestamps
+                if (shift_timestamps != 0) {
+                    for (auto& datum: data) {
+                        datum.timestamp += shift_timestamps;
                     }
                 }
                 

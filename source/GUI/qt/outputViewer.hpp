@@ -92,6 +92,10 @@ namespace hummus {
 		    neuronsInLayers = _neuronsInLayers;
 		}
 		
+        void reset() {
+            points.clear();
+        }
+        
     Q_SIGNALS:
     public slots:
 		

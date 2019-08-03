@@ -141,6 +141,12 @@ namespace hummus {
             current_plot = _current_plot;
         }
         
+        void reset() {
+            points.clear();
+            thresPoints.clear();
+            currentPoints.clear();
+        }
+        
     Q_SIGNALS:
     public slots:
 		

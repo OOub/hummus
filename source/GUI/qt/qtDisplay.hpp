@@ -144,6 +144,12 @@ namespace hummus {
 			app->exec();
 		}
 		
+        void reset() override {
+            input_viewer->reset();
+            output_viewer->reset();
+            dynamics_viewer->reset();
+        }
+        
 		// ----- SETTERS -----
 		void useHardwareAcceleration(bool accelerate) {
             input_viewer->useHardwareAcceleration(accelerate);

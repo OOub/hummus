@@ -25,8 +25,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
+        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=3, float _conductance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -54,6 +54,15 @@ namespace hummus {
                     if (it != addon->getNeuronMask().end()) {
                         addRelevantAddon(addon.get());
                     }
+                }
+            }
+            
+            // asynchronous network cannot use exponential synapses
+            if (network->getNetworkType()) {
+                if (std::any_of(axonTerminals.begin(), axonTerminals.end(), [](std::unique_ptr<Synapse>& synapse) {
+                    return dynamic_cast<Exponential*>(synapse.get()) != nullptr;
+                })) {
+                    throw std::logic_error("Exponential synapses are not compatible with the event-based mode");
                 }
             }
 		}
@@ -149,8 +158,13 @@ namespace hummus {
 
             if (potential >= threshold) {
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (!network->getTrainingLabels().empty() && network->getDecisionParameters().layer_number == layerID+1) {
-                    decision_queue.emplace_back(network->getCurrentLabel());
+                if (network->getDecisionMaking() && network->getDecisionParameters().layer_number == layerID+1) {
+                    if (decision_queue.size() < network->getDecisionParameters().spike_history_size) {
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    } else {
+                        decision_queue.pop_front();
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    }
                 }
                 
                 trace += 1;
@@ -300,8 +314,13 @@ namespace hummus {
 			if (potential >= threshold && activeSynapse) {
                 
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (!network->getTrainingLabels().empty() && network->getDecisionParameters().layer_number == layerID+1) {
-                    decision_queue.emplace_back(network->getCurrentLabel());
+                if (network->getDecisionMaking() && network->getDecisionParameters().layer_number == layerID+1) {
+                    if (decision_queue.size() < network->getDecisionParameters().spike_history_size) {
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    } else {
+                        decision_queue.pop_front();
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    }
                 }
                 
                 trace += 1;

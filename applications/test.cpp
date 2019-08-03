@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 1, 0.5), 100, hummus::synapseType::excitatory);
-    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0), 100);
+    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 1, 0.5), 100);
 	
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);
@@ -69,8 +69,7 @@ int main(int argc, char** argv) {
     //  ----- DISPLAY SETTINGS -----
     display.setTimeWindow(100);
     display.trackNeuron(1);
-
-    network.turnOffLearning(2);
+    display.plotCurrents();
     
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(2);
