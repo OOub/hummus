@@ -20,7 +20,7 @@ namespace hummus {
 	class DecisionMaking : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=3, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=10, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 inhibition_time(0) {
@@ -53,9 +53,9 @@ namespace hummus {
             }
             
             if (type == spikeType::decision) {
-                if (active) {
+                if (active && intensity > 0) {
                     // function that converts the intensity to a delay
-                    auto intensity_to_latency = 3 * 1 - std::exp(- intensity/dendriticTree.size());
+                    float intensity_to_latency = 10 * 1 - std::exp(- intensity/dendriticTree.size());
                     
                     // make the neuron fire so we can get the decision
                     potential = threshold;
@@ -86,7 +86,10 @@ namespace hummus {
                     // inhibiting the other decision_making neurons
                     winner_takes_all(timestamp, network);
                 }
-            } else {
+                
+                intensity = 0;
+                
+            } else if (type != spikeType::none){
                 ++intensity;
             }
         }
@@ -145,7 +148,7 @@ namespace hummus {
         }
         
 		// ----- DECISION-MAKING NEURON PARAMETERS -----
-        int      intensity;
+        float    intensity;
         bool     active;
         double   inhibition_time;
 	};

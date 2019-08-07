@@ -1295,7 +1295,6 @@ namespace hummus {
         void reset() {
             learningStatus = true;
             learningOffSignal = -1;
-            addons.clear();
             
             for (auto& n: neurons) {
                 n->resetNeuron(this);
@@ -1597,6 +1596,12 @@ namespace hummus {
                     std::cout << "assigning labels to neurons and connecting them to their respective decision neuron" << std::endl;
                 }
                 
+                // clearing synapses in case user accidentally created them on decision-making neurons earlier
+                for (auto& decision_n: layers[decision.layer_number].neurons) {
+                    neurons[decision_n]->getAxonTerminals().clear();
+                    neurons[decision_n]->getDendriticTree().clear();
+                }
+                
                 // loop through last layer before DM
                 for (auto& pre_decision_n: layers[decision.layer_number-1].neurons) {
                     auto& neuron_to_label = neurons[pre_decision_n];
@@ -1623,9 +1628,6 @@ namespace hummus {
                         }
                         
                         for (auto& decision_n: layers[decision.layer_number].neurons) {
-                            // clearing synapses in case user accidentally created them on decision-making neurons earlier
-                            neurons[decision_n]->getAxonTerminals().clear();
-                            neurons[decision_n]->getDendriticTree().clear();
                             // connect the neuron to its corresponding decision making neuron if they have the same label
                             if (!max_label.first.compare(neurons[decision_n]->getClassLabel())) {
                                 neuron_to_label->makeSynapse<Dirac>(neurons[decision_n].get(), 100, 1, 0, synapseType::excitatory);
