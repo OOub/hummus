@@ -59,7 +59,7 @@ namespace hummus {
     	// ----- PUBLIC INPUTVIEWER METHODS -----
 		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
             maxX = timestamp;
-            if (s->getPresynapticNeuronID() == -1) {
+            if (s && s->getPresynapticNeuronID() == -1) {
                 if (postsynapticNeuron->getSublayerID() == sublayerTracker) {
     
                     while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
@@ -90,7 +90,11 @@ namespace hummus {
 		void useHardwareAcceleration(bool accelerate) {
             openGL = accelerate;
         }
-
+        
+        void reset() {
+            points.clear();
+        }
+        
     Q_SIGNALS:
     public slots:
 		

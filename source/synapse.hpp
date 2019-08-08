@@ -96,7 +96,13 @@ namespace hummus {
         
         void setWeight(float newWeight, bool increment=true) {
             if (increment) {
-                weight += newWeight;
+                if (weight > 0) {
+                    weight += newWeight;
+                    // prevent weights from being negative
+                    if (weight < 0) {
+                        weight = 0;
+                    }
+                }
             } else {
                 weight = newWeight;
             }

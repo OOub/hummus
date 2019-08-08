@@ -25,8 +25,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, bool _homeostasis=false, float _conductance=200, float _leakageConductance=10, int _refractoryPeriod=3, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
+        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=3, float _conductance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 burstingActivity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -35,7 +35,7 @@ namespace hummus {
                 homeostasisBeta(_homeostasisBeta),
                 activeSynapse(nullptr),
                 inhibited(false),
-                inhibitionTime(0) {
+                inhibitionTime(0){
                     
             // LIF neuron type == 1 (for JSON save)
             neuronType = 1;
@@ -56,9 +56,18 @@ namespace hummus {
                     }
                 }
             }
+            
+            // asynchronous network cannot use exponential synapses
+            if (network->getNetworkType()) {
+                if (std::any_of(axonTerminals.begin(), axonTerminals.end(), [](std::unique_ptr<Synapse>& synapse) {
+                    return dynamic_cast<Exponential*>(synapse.get()) != nullptr;
+                })) {
+                    throw std::logic_error("Exponential synapses are not compatible with the event-based mode");
+                }
+            }
 		}
         
-        // homeostasis does not work for the event-based neuron because it would complicated spike prediction
+        // homeostasis does not work for the event-based neuron because it would complicate spike prediction
 		virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
             if (type == spikeType::initial || type == spikeType::generated || type == spikeType::inhibitory) {
                 // checking if the neuron is inhibited
@@ -148,6 +157,16 @@ namespace hummus {
             }
 
             if (potential >= threshold) {
+                // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
+                if (network->getDecisionMaking() && network->getDecisionParameters().layer_number == layerID+1) {
+                    if (decision_queue.size() < network->getDecisionParameters().spike_history_size) {
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    } else {
+                        decision_queue.pop_front();
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    }
+                }
+                
                 trace += 1;
 
                 if (network->getVerbose() == 2) {
@@ -162,11 +181,13 @@ namespace hummus {
                     network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                for (auto& axonTerminal : axonTerminals) {
-                    if (axonTerminal->getType() == synapseType::inhibitory) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                    } else {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                if (!network->getLayers()[layerID].do_not_propagate) {
+                    for (auto& axonTerminal : axonTerminals) {
+                        if (axonTerminal->getType() == synapseType::inhibitory) {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                        } else {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                        }
                     }
                 }
                 
@@ -291,6 +312,17 @@ namespace hummus {
             }
 
 			if (potential >= threshold && activeSynapse) {
+                
+                // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
+                if (network->getDecisionMaking() && network->getDecisionParameters().layer_number == layerID+1) {
+                    if (decision_queue.size() < network->getDecisionParameters().spike_history_size) {
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    } else {
+                        decision_queue.pop_front();
+                        decision_queue.emplace_back(network->getCurrentLabel());
+                    }
+                }
+                
                 trace += 1;
                 
                 if (network->getVerbose() == 2) {
@@ -309,15 +341,17 @@ namespace hummus {
 				if (network->getMainThreadAddon()) {
 					network->getMainThreadAddon()->neuronFired(timestamp, activeSynapse, this, network);
 				}
-
-				for (auto& axonTerminal: axonTerminals) {
-                    if (axonTerminal->getType() == synapseType::inhibitory) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                    } else {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                
+                if (!network->getLayers()[layerID].do_not_propagate) {
+                    for (auto& axonTerminal: axonTerminals) {
+                        if (axonTerminal->getType() == synapseType::inhibitory) {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                        } else {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                        }
                     }
-				}
-
+                }
+                
 				requestLearning(timestamp, activeSynapse, this, network);
 
 				previousSpikeTime = timestamp;
@@ -432,14 +466,14 @@ namespace hummus {
         }
         
 		// ----- LIF PARAMETERS -----
-		bool                                     active;
-		bool                                     inhibited;
-		double                                   inhibitionTime;
-		bool                                     burstingActivity;
-		bool                                     homeostasis;
-		float                                    restingThreshold;
-		float                                    decayHomeostasis;
-		float                                    homeostasisBeta;
-		Synapse*                                 activeSynapse;
+		bool                         active;
+		bool                         inhibited;
+		double                       inhibitionTime;
+		bool                         burstingActivity;
+		bool                         homeostasis;
+		float                        restingThreshold;
+		float                        decayHomeostasis;
+		float                        homeostasisBeta;
+		Synapse*                     activeSynapse;
 	};
 }

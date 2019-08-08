@@ -14,7 +14,6 @@
 #include <vector>
 
 #include "../core.hpp"
-#include "../neurons/decisionMaking.hpp"
 #include "../dataParser.hpp"
 
 namespace hummus {
@@ -50,34 +49,35 @@ namespace hummus {
 		}
 		
 		void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-			// logging only after learning is stopped
-			if (!network->getLearningStatus()) {
-				// restrict only to the decision-making layer
-                if (DecisionMaking* neuron = dynamic_cast<DecisionMaking*>(postsynapticNeuron)) {
-                    classifiedSpikes.emplace_back(spike{timestamp, s});
-				}
-			}
+            if (network->getDecisionMaking()) {
+                // logging only after learning is stopped and restrict only to the decision-making layer
+                if (!network->getLearningStatus() && postsynapticNeuron->getLayerID() == network->getDecisionParameters().layer_number) {
+                    classifiedSpikes.emplace_back(std::make_pair(timestamp, postsynapticNeuron));
+                }
+            } else {
+                throw std::logic_error("the analysis class works only when decision-making neurons are added to the network");
+            }
 		}
 		
 		void onCompleted(Network* network) override {
-			labels.emplace_back(label{"end", labels.back().onset+10000});
-			
-			for (auto i=1; i<labels.size(); i++) {
-				auto it = std::find_if(classifiedSpikes.begin(), classifiedSpikes.end(), [&](spike a){return a.timestamp >= labels[i-1].onset && a.timestamp < labels[i].onset;});
-				if (it != classifiedSpikes.end()) {
-					auto idx = std::distance(classifiedSpikes.begin(), it);
-					classifiedLabels.emplace_back(dynamic_cast<DecisionMaking*>(network->getNeurons()[classifiedSpikes[idx].propagationSynapse->getPostsynapticNeuronID()].get())->getClassLabel());
-				} else {
-					classifiedLabels.emplace_back("NaN");
-				}
-			}
+            labels.emplace_back(label{"end", labels.back().onset+10000});
+
+            for (auto i=1; i<labels.size(); i++) {
+                auto it = std::find_if(classifiedSpikes.begin(), classifiedSpikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;});
+                if (it != classifiedSpikes.end()) {
+                    auto idx = std::distance(classifiedSpikes.begin(), it);
+                    classifiedLabels.emplace_back(classifiedSpikes[idx].second->getClassLabel());
+                } else {
+                    classifiedLabels.emplace_back("NaN");
+                }
+            }
 		}
 		
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::vector<spike>       classifiedSpikes;
-		std::deque<label>        labels;
-		std::deque<std::string>  actualLabels;
-		std::deque<std::string>  classifiedLabels;
+		std::vector<std::pair<double, Neuron*>>  classifiedSpikes;
+		std::deque<label>                        labels;
+		std::deque<std::string>                  actualLabels;
+		std::deque<std::string>                  classifiedLabels;
 	};
 }

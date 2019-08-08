@@ -20,7 +20,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Normal(float _weightMu=1, float _weightSigma=0, float _delayMu=0, float _delaySigma=0, float _weightLowerLimit=-INFINITY, float _weightUpperLimit=INFINITY, float _delayLowerLimit=-INFINITY, float _delayUpperLimit=INFINITY) :
+        Normal(float _weightMu=1, float _weightSigma=0, float _delayMu=0, float _delaySigma=0, float _weightLowerLimit=-INFINITY, float _weightUpperLimit=INFINITY, float _delayLowerLimit=0, float _delayUpperLimit=INFINITY) :
                 weightMu(_weightMu),
                 weightSigma(_weightSigma),
                 weightLowerLimit(_weightLowerLimit),
@@ -37,7 +37,7 @@ namespace hummus {
         }
 		
         std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
-            return std::make_pair(truncate(weightRandom(randomEngine), weightLowerLimit, weightUpperLimit), std::abs(truncate(delayRandom(randomEngine), delayLowerLimit, delayUpperLimit)));
+            return std::make_pair(truncate(weightRandom(randomEngine), weightLowerLimit, weightUpperLimit), truncate(delayRandom(randomEngine), delayLowerLimit, delayUpperLimit));
         }
 		
         // truncated normal distribution

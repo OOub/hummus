@@ -21,9 +21,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, float _conductance=200,
-               float _leakageConductance=10, int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _conductance, _leakageConductance, _refractoryPeriod, _traceTimeConstant, _threshold, _restingPotential),
+        Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true) {}
 		
 		virtual ~Parrot(){}
@@ -70,11 +69,13 @@ namespace hummus {
                     network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                for (auto& axonTerminal : axonTerminals) {
-                    if (axonTerminal->getType() == synapseType::inhibitory) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                    } else {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                if (!network->getLayers()[layerID].do_not_propagate) {
+                    for (auto& axonTerminal : axonTerminals) {
+                        if (axonTerminal->getType() == synapseType::inhibitory) {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                        } else {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                        }
                     }
                 }
                 
@@ -118,11 +119,13 @@ namespace hummus {
                     network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
                 }
                 
-                for (auto& axonTerminal : axonTerminals) {
-                    if (axonTerminal->getType() == synapseType::inhibitory) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                    } else {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                if (!network->getLayers()[layerID].do_not_propagate) {
+                    for (auto& axonTerminal : axonTerminals) {
+                        if (axonTerminal->getType() == synapseType::inhibitory) {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
+                        } else {
+                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                        }
                     }
                 }
                 

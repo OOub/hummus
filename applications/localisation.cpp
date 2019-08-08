@@ -25,75 +25,75 @@
 #include "../source/learningRules/myelinPlasticity.hpp"
 
 int main(int argc, char** argv) {
-    
+
     /// ----- PARAMETERS -----
     float direction_conductance         = 200;
     float direction_leakage_conductance = 10;
     float direction_trace_time_constant = 20;
     bool  direction_burst               = false;
     bool  direction_homeostasis         = true;
-    
+
     /// ----- INITIALISATION -----
-    
+
     // initialising the network
     hummus::Network network;
-    
+
     // initialising the loggers
     auto& mp_log = network.makeAddon<hummus::MyelinPlasticityLogger>("localisation_learning.bin");
     auto& potential_log = network.makeAddon<hummus::PotentialLogger>("localisation_potential.bin");
-    
+
     // delay learning rule
     auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
 
     // input layer with 8 channels for each sensor
     auto input = network.makeCircle<hummus::Parrot>(8, {0.3}, {});
-    
+
     /// ----- DIRECTION LAYER -----
-    
+
     // layer that learns the delays
-    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, direction_homeostasis, direction_conductance, direction_leakage_conductance, 0, direction_burst, direction_trace_time_constant);
-    
+    auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, 0, direction_conductance, direction_leakage_conductance, direction_homeostasis, direction_burst, direction_trace_time_constant);
+
     // connecting input layer with the direction neurons
-    network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
+    network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100, hummus::synapseType::excitatory); // fixed weight on [0,1], random delays on [0, inf]
     network.lateralInhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0), 100);
 
     // neuron mask for loggers
     mp_log.activate_for(direction.neurons[0]);
     potential_log.activate_for(direction.neurons[0]);
-    
+
     /// ----- DISTANCE LAYER -----
-    
+
     // distance neuron
 //    auto distance = network.makeCircle<hummus::LIF>(8, {0.3}, {});
-    
+
     // connecting input layer with the distance neurons
-    
+
     /// ----- USER INTERFACE SETTINGS -----
-    
+
     // initialising the GUI
     auto& display = network.makeGUI<hummus::QtDisplay>();
-    
+
     // settings
     display.setTimeWindow(10000);
     display.trackNeuron(direction.neurons[0]);
     display.plotCurrents(false);
-    
+
     /// ----- RUNNING CALIBRATION -----
-    
+
     // reading the calibration data
     hummus::DataParser parser;
     auto calibration = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/calibration_direction_only_100.txt", false);
-    
+
     // run calibration
     network.verbosity(0);
     network.run(&calibration, 0.1);
 
     // assigning labels to direction neurons
-//    
+//
 //    // run test
 //    auto test = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
 //    network.turnOffLearning();
 //    network.run(&test, 0.1);
-    
+
     return 0;
 }

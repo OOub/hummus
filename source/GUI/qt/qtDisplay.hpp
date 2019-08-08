@@ -144,6 +144,12 @@ namespace hummus {
 			app->exec();
 		}
 		
+        void reset() override {
+            input_viewer->reset();
+            output_viewer->reset();
+            dynamics_viewer->reset();
+        }
+        
 		// ----- SETTERS -----
 		void useHardwareAcceleration(bool accelerate) {
             input_viewer->useHardwareAcceleration(accelerate);
@@ -163,7 +169,7 @@ namespace hummus {
 			outputSublayerToTrack = sublayerToTrack;
 		}
 		
-        void trackNeuron(size_t _neuronToTrack) {
+        void trackNeuron(int _neuronToTrack) {
         	neuronToTrack = _neuronToTrack;
         }
 
@@ -186,7 +192,7 @@ namespace hummus {
         InputViewer*                           input_viewer;
         OutputViewer*                          output_viewer;
         DynamicsViewer*                        dynamics_viewer;
-        size_t                                 neuronToTrack;
+        int                                    neuronToTrack;
         int                                    inputSublayerToTrack;
         int                                    outputLayerToTrack;
         int                                    outputSublayerToTrack;

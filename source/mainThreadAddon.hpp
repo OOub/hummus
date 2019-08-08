@@ -26,5 +26,8 @@ namespace hummus {
         
         // method that is used to send an update to the GUI when an asynchronous network is used. This helps approximate the potential curve on the GUI.
         virtual void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
+        
+        // method to reset the GUI
+        virtual void reset() {}
 	};
 }
