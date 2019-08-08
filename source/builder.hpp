@@ -169,6 +169,10 @@ namespace hummus {
                 n->setLeakageConductance(input["leakageConductance"].get<float>());
             }
             
+            if (input["classLabel"].is_string()) {
+            	dynamic_cast<DecisionMaking*>(n)->setClassLabel(input["refractoryPeriod"].get<std::string>());
+            }
+
             // specific neuron parameters
             if (input["Type"].is_number()) {
                 int type = input["Type"].get<int>();
@@ -178,14 +182,7 @@ namespace hummus {
                         captureLIFParameters<LIF>(input, n);
                         break;
                     // DecisionMaking neuron
-                    } case 2: {
-                        captureLIFParameters<DecisionMaking>(input, n);
-
-                        if (input["classLabel"].is_string()) {
-                            dynamic_cast<DecisionMaking*>(n)->setClassLabel(input["refractoryPeriod"].get<std::string>());
-                        }
-                        break;
-                    }
+                    } 
                 }
             }
 
