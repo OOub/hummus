@@ -25,17 +25,19 @@
                 ],
                 "axonalSynapses": [
                     {
-                        "delay": 1.5751601457595825,
+                        "delay": 2.087702751159668,
+                        "json_id": 1,
                         "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 20.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 0,
                         "weight": 0.5
                     },
                     {
-                        "delay": 0.2731940746307373,
+                        "delay": 0.9398466944694519,
+                        "json_id": 1,
                         "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 20.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 0,
                         "weight": 0.5
                     }
                 ],
@@ -59,10 +61,11 @@
                 ],
                 "axonalSynapses": [
                     {
-                        "delay": 0.0,
+                        "delay": 1.2429190874099731,
+                        "json_id": 1,
                         "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 40.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 1,
                         "weight": -1.0
                     }
                 ],
@@ -71,17 +74,19 @@
                 "decayHomeostasis": 20.0,
                 "dendriticSynapses": [
                     {
-                        "delay": 1.5751601457595825,
+                        "delay": 2.087702751159668,
+                        "json_id": 1,
                         "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 20.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 0,
                         "weight": 0.5
                     },
                     {
-                        "delay": 0.0,
+                        "delay": 0.9686081409454346,
+                        "json_id": 1,
                         "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 40.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 1,
                         "weight": -1.0
                     }
                 ],
@@ -108,10 +113,11 @@
                 ],
                 "axonalSynapses": [
                     {
-                        "delay": 0.0,
+                        "delay": 0.9686081409454346,
+                        "json_id": 1,
                         "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 40.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 1,
                         "weight": -1.0
                     }
                 ],
@@ -120,17 +126,19 @@
                 "decayHomeostasis": 20.0,
                 "dendriticSynapses": [
                     {
-                        "delay": 0.2731940746307373,
+                        "delay": 0.9398466944694519,
+                        "json_id": 1,
                         "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 20.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 0,
                         "weight": 0.5
                     },
                     {
-                        "delay": 0.0,
+                        "delay": 1.2429190874099731,
+                        "json_id": 1,
                         "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 40.0,
-                        "type": 1,
+                        "synapseTimeConstant": 18.0,
+                        "synapse_type": 1,
                         "weight": -1.0
                     }
                 ],

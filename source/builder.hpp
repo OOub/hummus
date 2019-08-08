@@ -181,7 +181,6 @@ namespace hummus {
                     case 1: {
                         captureLIFParameters<LIF>(input, n);
                         break;
-                    // DecisionMaking neuron
                     } 
                 }
             }
@@ -208,6 +207,8 @@ namespace hummus {
                     if (axonalSynapse[i]["postsynapticNeuron"].is_number()) {
                         float synapseTimeConstant = 0;
                         int json_id = axonalSynapse[i]["json_id"].get<int>();
+                        int synapse_type = axonalSynapse[i]["synapse_type"].get<int>();
+                        
                         switch (json_id) {
                             case 0: {
                                 float amplitudeScaling = 0;
@@ -217,7 +218,11 @@ namespace hummus {
                                     throw std::logic_error("dirac synapse amplitude scaling incorrectly formatted");
                                 }
                                 
-                                n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
+                                if (synapse_type == 0) {
+                                    n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::excitatory, amplitudeScaling);
+                                } else {
+                                    n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::inhibitory, amplitudeScaling);
+                                }
                                 break;
                             } case 1: {
                                 if (axonalSynapse[i]["synapseTimeConstant"].is_number()) {
@@ -225,7 +230,12 @@ namespace hummus {
                                 } else {
                                     throw std::logic_error("exponential synaptic time constant incorrectly formatted");
                                 }
-                                n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
+                                
+                                if (synapse_type == 0) {
+                                    n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::excitatory, synapseTimeConstant);
+                                } else {
+                                    n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::inhibitory, synapseTimeConstant);
+                                }
                                 break;
                             } case 2:
                                 if (axonalSynapse[i]["synapseTimeConstant"].is_number()) {
@@ -233,7 +243,12 @@ namespace hummus {
                                 } else {
                                     throw std::logic_error("pulse synaptic time constant incorrectly formatted");
                                 }
-                                n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
+                                
+                                if (synapse_type == 0) {
+                                    n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::excitatory, synapseTimeConstant);
+                                } else {
+                                    n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::inhibitory, synapseTimeConstant);
+                                }
                                 break;
                         }
                     } else {
