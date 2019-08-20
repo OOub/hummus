@@ -1,5 +1,5 @@
 /*
- * qtDisplay.hpp
+ * display.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -22,18 +22,18 @@
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
 
-#include "../../core.hpp"
+#include "../core.hpp"
 #include "inputViewer.hpp"
 #include "outputViewer.hpp"
 #include "dynamicsViewer.hpp"
 
 namespace hummus {
-    class QtDisplay : public MainThreadAddon {
+    class Display : public MainThreadAddon {
         
     public:
 
     	// ----- CONSTRUCTOR AND DESTRUCTOR-----
-        QtDisplay() :
+        Display() :
                 neuronToTrack(-1),
                 inputSublayerToTrack(0),
                 outputLayerToTrack(1),
@@ -73,7 +73,7 @@ namespace hummus {
             dynamics_viewer = window->findChild<DynamicsViewer*>("dynamicsViewer");
         }
         
-        virtual ~QtDisplay(){}
+        virtual ~Display(){}
         
     	// ----- PUBLIC DISPLAY METHODS -----
 		void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {

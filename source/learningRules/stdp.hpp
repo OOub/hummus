@@ -8,8 +8,6 @@
  *
  * Information: The stdp learning rule has to be on a postsynaptic layer because it automatically detects the presynaptic layer.
  * Adapted From: Galluppi, F., Lagorce, X., Stromatias, E., Pfeiffer, M., Plana, L. A., Furber, S. B., & Benosman, R. B. (2015). A framework for plasticity implementation on the SpiNNaker neural architecture. Frontiers in Neuroscience, 8. doi:10.3389/fnins.2014.00429
- *
- * LEARNING RULE TYPE 1 (in JSON SAVE FILE)
  */
 
 #pragma once

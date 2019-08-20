@@ -7,8 +7,6 @@
  * Last Version: 14/01/2019
  *
  * Information: The MyelinPlasticity learning rule compatible only with leaky integrate-and-fire neurons.
- *
- * LEARNING RULE TYPE 0 (in JSON SAVE FILE)
  */
 
 #pragma once
@@ -99,7 +97,7 @@ namespace hummus {
                         // long-term potentiation on weights
                         float delta_weight = (alpha_plus * std::exp(- time_difference * beta_plus * input->getWeight())) * input->getWeight() * (1 - input->getWeight());
                         input->setWeight(delta_weight);
-                        
+
                         weight_normaliser += input->getWeight();
                         
                         if (network->getVerbose() >= 1) {
@@ -117,21 +115,21 @@ namespace hummus {
                         // long-term potentiation on weights
                         float delta_weight = (alpha_plus * std::exp(- beta_plus * input->getWeight())) * input->getWeight() * (1 - input->getWeight());
                         input->setWeight(delta_weight);
-                        
+
                         weight_normaliser += input->getWeight();
-                        
+
                         if (network->getVerbose() >= 1) {
                             std::cout << " outside learning window " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
                         }
                     // taking the input neurons that didn't fire
                     } else {
-//                        // long-term depression on weights
-//                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->getWeight()))) * input->getWeight() * (1 - input->getWeight());
-//                        input->setWeight(delta_weight);
-//
-//                        if (network->getVerbose() >= 1) {
-//                            std::cout << " never fired " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
-//                        }
+                        // long-term depression on weights
+                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->getWeight()))) * input->getWeight() * (1 - input->getWeight());
+                        input->setWeight(delta_weight);
+
+                        if (network->getVerbose() >= 1) {
+                            std::cout << " never fired " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
+                        }
                     }
                     
                     // resetting trace for the input neuron
@@ -143,7 +141,7 @@ namespace hummus {
                 if (input->getType() == synapseType::excitatory && weight_normaliser > 0) {
                     // normalising synaptic weights only when pattern has more than 1 neuron responding
                     input->setWeight(input->getWeight()/ weight_normaliser, false);
-                    
+
                     // printing the weights
                     if (network->getVerbose() >= 1) {
                         std::cout << input->getPresynapticNeuronID() << "->" << input->getPostsynapticNeuronID() << " weight: " << input->getWeight() << std::endl;

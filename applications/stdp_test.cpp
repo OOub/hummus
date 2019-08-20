@@ -1,5 +1,5 @@
 /*
- * stdpPotentiation.cpp
+ * stdp_test.cpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -14,16 +14,10 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/randomDistributions/normal.hpp"
-#include "../source/GUI/qt/qtDisplay.hpp"
+#include "../source/GUI/display.hpp"
 #include "../source/learningRules/stdp.hpp"
-#include "../source/learningRules/timeInvariantSTDP.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
-#include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/decisionMaking.hpp"
-#include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
@@ -33,7 +27,7 @@ int main(int argc, char** argv) {
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
-    auto& display = network.makeGUI<hummus::QtDisplay>();
+    auto& display = network.makeGUI<hummus::Display>();
 
     //  ----- NETWORK PARAMETERS -----
     float conductance = 200;
@@ -51,7 +45,7 @@ int main(int argc, char** argv) {
     auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, refractoryPeriod, conductance, leakageConductance, false, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 0, 0), 100, hummus::synapseType::excitatory);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 0, 0), 100);
 
     //  ----- DISPLAY SETTINGS -----
   	display.setTimeWindow(100);

@@ -24,12 +24,11 @@ namespace hummus {
     public:
         
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, synapseType _type, float _externalCurrent=100) :
+        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, float _externalCurrent=100) :
                 presynaptic_neuron(_presynaptic_neuron),
                 postsynaptic_neuron(_postsynaptic_neuron),
                 weight(_weight),
                 delay(_delay),
-                type(_type),
                 externalCurrent(_externalCurrent),
                 synapticCurrent(0),
                 previousInputTime(0),
@@ -37,13 +36,15 @@ namespace hummus {
                 json_id(0),
                 kernelID(0),
                 synapticEfficacy(1),
-                synapseTimeConstant(0) {}
+                synapseTimeConstant(0) {
+                    
+                }
         
         virtual ~Synapse(){}
         
         // ----- PUBLIC SYNAPSE METHODS -----
         
-        // pure virtuak method that updates the current value in the absence of a spike
+        // pure virtual method that updates the current value in the absence of a spike
         virtual float update(double timestamp) = 0;
         
         // pure virtual method that outputs an updated current value upon receiving a spike
@@ -152,10 +153,10 @@ namespace hummus {
         double                     previousInputTime;
         int                        kernelID;
         float                      gaussianStdDev;
-        int                        json_id;
         float                      synapseTimeConstant;
         float                      externalCurrent;
         float                      synapticEfficacy;
         synapseType                type;
+        int                        json_id;
     };
 }

@@ -1,5 +1,5 @@
 /*
- * unsupervisedNetwork.cpp
+ * mp_1D.cpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -12,16 +12,12 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/randomDistributions/normal.hpp"
-#include "../source/dataParser.hpp"
-#include "../source/GUI/qt/qtDisplay.hpp"
+#include "../source/GUI/display.hpp"
 #include "../source/addons/spikeLogger.hpp"
-#include "../source/addons/potentialLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/decisionMaking.hpp"
-#include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
@@ -32,7 +28,7 @@ int main(int argc, char** argv) {
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
 
-    auto& display = network.makeGUI<hummus::QtDisplay>();
+    auto& display = network.makeGUI<hummus::Display>();
     network.makeAddon<hummus::SpikeLogger>("1D_spikeLog.bin");
     network.makeAddon<hummus::MyelinPlasticityLogger>("1D_mpLog.bin");
 
@@ -53,7 +49,7 @@ int main(int argc, char** argv) {
     auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, homeostasis, burst, 20);
 
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100, hummus::synapseType::excitatory);
+    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
     network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0), 100);
 
     //  ----- DISPLAY SETTINGS -----

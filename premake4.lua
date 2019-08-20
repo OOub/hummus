@@ -33,22 +33,19 @@ solution 'hummus'
         	files {'source/**.hpp',
         		'source/addons/**.hpp', 
         		'source/dependencies/**.hpp',
-                'source/dependencies/flatbuffers/**.h', 
-        		'source/GUI/qt/**.hpp',
-        		'source/GUI/puffin/**.hpp', 
+        		'source/GUI/**.hpp',
         		'source/learningRules/**.hpp', 
         		'source/neurons/**.hpp', 
         		'source/synapticKernels/**.hpp', 
-        		'source/networkExtensions/**.hpp', 
         		'source/randomDistributions/**.hpp', 
         		'applications/' .. name .. '.cpp'
         	}
 
 			if with_qt then
 				-- Qt-dependent files
-				files(qt.moc({'source/GUI/qt/inputViewer.hpp', 
-							  'source/GUI/qt/outputViewer.hpp', 
-					          'source/GUI/qt/dynamicsViewer.hpp'
+				files(qt.moc({'source/GUI/inputViewer.hpp', 
+							  'source/GUI/outputViewer.hpp', 
+					          'source/GUI/dynamicsViewer.hpp'
 					          }, 
 							  'build/moc'))
 

@@ -7,7 +7,7 @@
  * Last Version: 23/01/2019
  *
  * Information: a synaptic kernel that instantly rises then exponentially decays
-  * kernel json_id 1
+ * json_id 1
  */
 
 #pragma once
@@ -24,9 +24,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, synapseType _type, float _synapseTimeConstant=18, float _externalCurrent=300, float gaussianStandardDeviation=0) :
-				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _type, _externalCurrent),
-                json_synapse_type(0) {
+		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapseTimeConstant=18, float _externalCurrent=300, float gaussianStandardDeviation=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent) {
 				
 			synapseTimeConstant = _synapseTimeConstant;
 			gaussianStdDev = gaussianStandardDeviation;
@@ -42,8 +41,11 @@ namespace hummus {
             randomEngine = std::mt19937(device());
             normalDistribution = std::normal_distribution<>(0, gaussianStandardDeviation);
                     
-            if (_type == synapseType::inhibitory) {
-                json_synapse_type = 1;
+            // current-based synapse figuring out if excitatory or inhibitory
+            if (_weight < 0) {
+                type = synapseType::inhibitory;
+            } else {
+                type = synapseType::excitatory;
             }
 		}
 		
@@ -68,7 +70,6 @@ namespace hummus {
 			// general synapse parameters
             output.push_back({
                 {"json_id", json_id},
-                {"synapse_type", json_synapse_type},
                 {"weight", weight},
                 {"delay", delay},
                 {"postsynapticNeuron", postsynaptic_neuron},
@@ -79,6 +80,5 @@ namespace hummus {
 	protected:
 		std::mt19937               randomEngine;
 		std::normal_distribution<> normalDistribution;
-        int                        json_synapse_type;
 	};
 }

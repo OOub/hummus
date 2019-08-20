@@ -75,11 +75,7 @@ namespace hummus {
                     // propagating the decision spike
                     if (!network->getLayers()[layerID].do_not_propagate) {
                         for (auto& axonTerminal: axonTerminals) {
-                            if (axonTerminal->getType() == synapseType::inhibitory) {
-                                network->injectSpike(spike{timestamp + intensity_to_latency, axonTerminal.get(), spikeType::inhibitory});
-                            } else {
-                                network->injectSpike(spike{timestamp + intensity_to_latency, axonTerminal.get(), spikeType::generated});
-                            }
+                            network->injectSpike(spike{timestamp + intensity_to_latency, axonTerminal.get(), spikeType::generated});
                         }
                     }
                     

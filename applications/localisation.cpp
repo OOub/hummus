@@ -14,13 +14,10 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/dataParser.hpp"
 #include "../source/neurons/LIF.hpp"
 #include "../source/neurons/parrot.hpp"
-#include "../source/GUI/qt/qtDisplay.hpp"
-#include "../source/synapses/pulse.hpp"
+#include "../source/GUI/display.hpp"
 #include "../source/addons/potentialLogger.hpp"
-#include "../source/randomDistributions/normal.hpp"
 #include "../source/addons/myelinPlasticityLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 
@@ -54,7 +51,7 @@ int main(int argc, char** argv) {
     auto direction = network.makeLayer<hummus::LIF>(16, {&mp}, 0, direction_conductance, direction_leakage_conductance, direction_homeostasis, direction_burst, direction_trace_time_constant);
 
     // connecting input layer with the direction neurons
-    network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100, hummus::synapseType::excitatory); // fixed weight on [0,1], random delays on [0, inf]
+    network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
     network.lateralInhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0), 100);
 
     // neuron mask for loggers
@@ -71,7 +68,7 @@ int main(int argc, char** argv) {
     /// ----- USER INTERFACE SETTINGS -----
 
     // initialising the GUI
-    auto& display = network.makeGUI<hummus::QtDisplay>();
+    auto& display = network.makeGUI<hummus::Display>();
 
     // settings
     display.setTimeWindow(10000);

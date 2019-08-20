@@ -17,11 +17,6 @@
 #include "neurons/decisionMaking.hpp"
 #include "neurons/LIF.hpp"
 
-#include "learningRules/stdp.hpp"
-#include "learningRules/timeInvariantSTDP.hpp"
-#include "learningRules/myelinPlasticity.hpp"
-#include "learningRules/rewardModulatedSTDP.hpp"
-
 #include "synapses/exponential.hpp"
 #include "synapses/dirac.hpp"
 #include "synapses/pulse.hpp"
@@ -63,7 +58,7 @@ namespace hummus {
                         if (layer[i]["neuronType"].is_number()) {
                             int neuronType = layer[i]["neuronType"].get<int>();
                             switch (neuronType) {
-                                // creating parrot neuron layer
+                                // creating parrot layer
                                 case 0: {
                                     layerHelper<Parrot>(layer[i]);
                                     break;
@@ -207,7 +202,6 @@ namespace hummus {
                     if (axonalSynapse[i]["postsynapticNeuron"].is_number()) {
                         float synapseTimeConstant = 0;
                         int json_id = axonalSynapse[i]["json_id"].get<int>();
-                        int synapse_type = axonalSynapse[i]["synapse_type"].get<int>();
                         
                         switch (json_id) {
                             case 0: {
@@ -218,11 +212,8 @@ namespace hummus {
                                     throw std::logic_error("dirac synapse amplitude scaling incorrectly formatted");
                                 }
                                 
-                                if (synapse_type == 0) {
-                                    n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::excitatory, amplitudeScaling);
-                                } else {
-                                    n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::inhibitory, amplitudeScaling);
-                                }
+                                n->makeSynapse<Dirac>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
+                                
                                 break;
                             } case 1: {
                                 if (axonalSynapse[i]["synapseTimeConstant"].is_number()) {
@@ -231,11 +222,8 @@ namespace hummus {
                                     throw std::logic_error("exponential synaptic time constant incorrectly formatted");
                                 }
                                 
-                                if (synapse_type == 0) {
-                                    n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::excitatory, synapseTimeConstant);
-                                } else {
-                                    n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::inhibitory, synapseTimeConstant);
-                                }
+                                n->makeSynapse<Exponential>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
+                                
                                 break;
                             } case 2:
                                 if (axonalSynapse[i]["synapseTimeConstant"].is_number()) {
@@ -244,11 +232,8 @@ namespace hummus {
                                     throw std::logic_error("pulse synaptic time constant incorrectly formatted");
                                 }
                                 
-                                if (synapse_type == 0) {
-                                    n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::excitatory, synapseTimeConstant);
-                                } else {
-                                    n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseType::inhibitory, synapseTimeConstant);
-                                }
+                                n->makeSynapse<Pulse>(network->getNeurons()[axonalSynapse[i]["postsynapticNeuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
+                                
                                 break;
                         }
                     } else {

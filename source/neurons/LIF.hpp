@@ -15,9 +15,6 @@
 
 #include "../core.hpp"
 #include "../dependencies/json.hpp"
-#include "../synapses/exponential.hpp"
-#include "../synapses/dirac.hpp"
-#include "../synapses/pulse.hpp"
 
 namespace hummus {
     
@@ -69,7 +66,7 @@ namespace hummus {
         
         // homeostasis does not work for the event-based neuron because it would complicate spike prediction
 		virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
-            if (type == spikeType::initial || type == spikeType::generated || type == spikeType::inhibitory) {
+            if (type == spikeType::initial || type == spikeType::generated) {
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibitionTime >= refractoryPeriod) {
                     inhibited = false;
@@ -183,11 +180,7 @@ namespace hummus {
                 
                 if (!network->getLayers()[layerID].do_not_propagate) {
                     for (auto& axonTerminal : axonTerminals) {
-                        if (axonTerminal->getType() == synapseType::inhibitory) {
-                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                        } else {
-                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
-                        }
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
                     }
                 }
                 
@@ -344,14 +337,10 @@ namespace hummus {
                 
                 if (!network->getLayers()[layerID].do_not_propagate) {
                     for (auto& axonTerminal: axonTerminals) {
-                        if (axonTerminal->getType() == synapseType::inhibitory) {
-                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::inhibitory});
-                        } else {
-                            network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
-                        }
+                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
                     }
                 }
-                
+
 				requestLearning(timestamp, activeSynapse, this, network);
 
 				previousSpikeTime = timestamp;

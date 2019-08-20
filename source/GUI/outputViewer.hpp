@@ -29,7 +29,7 @@
 #include <QtCharts/QChart>
 #include <QtWidgets/QSpinBox>
 
-#include "../../core.hpp"
+#include "../core.hpp"
 
 namespace hummus {
     class OutputViewer : public QObject {

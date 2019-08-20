@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 31/07/2018
  *
- * Information: Expands the addon class, used for add-ons that need to be run on the main thread such as the Qt or Puffin GUI
+ * Information: Expands the addon class, used for add-ons that need to be run on the main thread such as the Qt GUI
  */
 
 #pragma once
