@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <deque>
+#include <dirent.h>
 
 namespace hummus {
     
@@ -45,8 +46,13 @@ namespace hummus {
             gaussian = std::normal_distribution<>(0.0, 1.0);
         };
         
+        // saves the files from a database - formatted to eventstream format - into a vector of strings
+        std::vector<std::string> generateDatabase(std::string directory_path, int sample_percentage=100, bool shuffle=true) {
+            
+        }
+        
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity (timestamp, X, Y, P)
-        std::vector<input> readData(std::string filename, double shift_timestamps=0, bool timeJitter=false, int additiveNoise=0) {
+        std::vector<input> readTextData(std::string filename, double shift_timestamps=0, bool timeJitter=false, int additiveNoise=0) {
             dataFile.open(filename);
             
             if (dataFile.good()) {
@@ -222,7 +228,7 @@ namespace hummus {
 			while (next != Container::value_type::npos);
 			return result;
 		}
-	
+        
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----
         std::ifstream                   dataFile;

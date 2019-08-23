@@ -15,7 +15,7 @@
 #include <random>
 
 #include "../synapse.hpp"
-#include "../dependencies/json.hpp"
+#include "../../third_party/json.hpp"
 
 namespace hummus {
 	class Neuron;

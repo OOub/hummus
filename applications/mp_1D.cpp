@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 
-    auto trainingData = dataParser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", true, 0);
+    auto trainingData = dataParser.readTextData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", true, 0);
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
 	//  ----- CONNECTING THE NETWORK -----
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
-    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0), 100);
+    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     //  ----- DISPLAY SETTINGS -----
 	display.setTimeWindow(5000);

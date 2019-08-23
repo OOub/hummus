@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 
     // connecting input layer with the direction neurons
     network.allToAll<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
-    network.lateralInhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0), 100);
+    network.lateralInhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     // neuron mask for loggers
     mp_log.activate_for(direction.neurons[0]);
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 
     // reading the calibration data
     hummus::DataParser parser;
-    auto calibration = parser.readData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/calibration_direction_only_100.txt", false);
+    auto calibration = parser.readTextData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/calibration_direction_only_100.txt", false);
 
     // run calibration
     network.verbosity(0);

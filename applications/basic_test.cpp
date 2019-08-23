@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
     //  ----- CONNECTING THE NETWORK -----
     network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 1, 0.5), 100);
-    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 1, 0.5), 100);
+    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     //  ----- INJECTING SPIKES -----
     network.injectSpike(0, 10);

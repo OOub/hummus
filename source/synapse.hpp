@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "dependencies/json.hpp"
+#include "../third_party/json.hpp"
 
 namespace hummus {
     // synapse models enum for readability

@@ -18,26 +18,21 @@ solution 'hummus'
    				description = 'Compiles without Qt'
 			}
 
-
-            if _OPTIONS['tbb'] then
-                with_tbb = true
-            end
-
 			if _OPTIONS['no-qt'] then
    				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
    			else
    				with_qt = true
 			end
 
-			-- All files in source
+			-- All files in source, third_party and applications
         	files {'source/**.hpp',
         		'source/addons/**.hpp', 
-        		'source/dependencies/**.hpp',
         		'source/GUI/**.hpp',
         		'source/learningRules/**.hpp', 
         		'source/neurons/**.hpp', 
         		'source/synapticKernels/**.hpp', 
-        		'source/randomDistributions/**.hpp', 
+        		'source/randomDistributions/**.hpp',
+                'third_party/**.hpp',
         		'applications/' .. name .. '.cpp'
         	}
 
@@ -60,7 +55,7 @@ solution 'hummus'
 	        configuration 'Release'
 	            targetdir 'build/release'
 	            defines {'NDEBUG'}
-	            flags {'OptimizeSpeed'}
+	            flags {'OptimizeSpeed','FloatFast'}
 
 	        configuration 'Debug'
 	            targetdir 'build/debug'
@@ -74,8 +69,7 @@ solution 'hummus'
 	        -- Linux specific settings
 	        configuration 'linux'
                 if with_tbb then
-	        	    links {'pthread', 'tbb'}
-                    defines {"TBB"}
+	        	    links {'pthread'}
                 else
                     links {'pthread'}
                 end
@@ -84,10 +78,6 @@ solution 'hummus'
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
-                if with_tbb then
-	        	    links {'tbb'}
-                    defines { "TBB" }
-                end
 	            buildoptions {'-std=c++11'}
 	           	linkoptions {'-std=c++11'}
 end

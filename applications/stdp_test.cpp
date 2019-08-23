@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 
-	auto trainingData = dataParser.readData("../../data/stdpTest.txt");
+	auto trainingData = dataParser.readTextData("../../data/stdpTest.txt");
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;

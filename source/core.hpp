@@ -31,11 +31,8 @@
 #include <queue>
 
 // external Dependencies
-#ifdef TBB
-#include "tbb/tbb.h"
-#endif
-
-#include "dependencies/json.hpp"
+#include "../third_party/json.hpp"
+#include "../third_party/sepia.hpp"
 
 // random distributions
 #include "randomDistributions/lognormal.hpp"
@@ -1055,36 +1052,6 @@ namespace hummus {
             spike_queue.emplace(neurons[neuronIndex]->receiveExternalInput<Dirac>(timestamp, neuronIndex, -1, 1, 0));
         }
         
-        // add a poissonian spike train to the initial spike vector
-        void injectPoissonSpikes(int neuronIndex, double timestamp, float rate, float timestep, float duration) {
-            // calculating number of spikes
-            int spike_number = std::floor(duration/timestep);
-            
-            // initialising the random engine
-            std::random_device                     device;
-            std::mt19937                           randomEngine(device());
-            std::uniform_real_distribution<double> distribution(0.0,1.0);
-            
-            std::vector<double> inter_spike_intervals;
-            // generating uniformly distributed random numbers
-            for (auto i = 0; i < spike_number; ++i) {
-                inter_spike_intervals.emplace_back((- std::log(distribution(randomEngine)) / rate) * 1000);
-            }
-            
-            // computing spike times from inter-spike intervals
-            std::vector<double> spike_times(inter_spike_intervals.size(), 0.0);
-            spike_times[0] = inter_spike_intervals[0];
-            for (auto i=1; i<spike_times.size(); i++) {
-                spike_times[i] = spike_times[i-1] + inter_spike_intervals[i];
-            }
-            std::transform(spike_times.begin(), spike_times.end(), spike_times.begin(), [&](double& st){return st*0.001+timestamp;});
-            
-            // injecting into the initial spike vector
-            for (auto& spike_time: spike_times) {
-                spike_queue.emplace(neurons[neuronIndex]->receiveExternalInput<Dirac>(spike_time, neuronIndex, -1, 1, 0));
-            }
-        }
-        
         
         // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
         void injectPredictedSpike(spike s, spikeType stype) {
@@ -1127,7 +1094,37 @@ namespace hummus {
                 }
             }
         }
-
+        
+        // add a poissonian spike train to the initial spike vector
+        void poissonSpikeGenerator(int neuronIndex, double timestamp, float rate, float timestep, float duration) {
+            // calculating number of spikes
+            int spike_number = std::floor(duration/timestep);
+            
+            // initialising the random engine
+            std::random_device                     device;
+            std::mt19937                           randomEngine(device());
+            std::uniform_real_distribution<double> distribution(0.0,1.0);
+            
+            std::vector<double> inter_spike_intervals;
+            // generating uniformly distributed random numbers
+            for (auto i = 0; i < spike_number; ++i) {
+                inter_spike_intervals.emplace_back((- std::log(distribution(randomEngine)) / rate) * 1000);
+            }
+            
+            // computing spike times from inter-spike intervals
+            std::vector<double> spike_times(inter_spike_intervals.size(), 0.0);
+            spike_times[0] = inter_spike_intervals[0];
+            for (auto i=1; i<spike_times.size(); i++) {
+                spike_times[i] = spike_times[i-1] + inter_spike_intervals[i];
+            }
+            std::transform(spike_times.begin(), spike_times.end(), spike_times.begin(), [&](double& st){return st*0.001+timestamp;});
+            
+            // injecting into the initial spike vector
+            for (auto& spike_time: spike_times) {
+                spike_queue.emplace(neurons[neuronIndex]->receiveExternalInput<Dirac>(spike_time, neuronIndex, -1, 1, 0));
+            }
+        }
+        
         // turn off learning
         void turnOffLearning() {
             learningStatus = false;
@@ -1191,7 +1188,6 @@ namespace hummus {
                 sync.unlock();
  
                 std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-
                     
                 if (_timestep == 0) {
                     eventRunHelper(_runtime, _timestep, classification);
@@ -1273,6 +1269,54 @@ namespace hummus {
             reset();
         }
 
+        // runs through a dataset pattern by pattern. The time is reset after each presentation
+        void run(std::string training_directory, float timestep=0, std::string test_directory="") {
+            // figuring out whether the network is running synchronously or asynchronously
+            if (timestep == 0) {
+                asynchronous = true;
+            }
+            
+            // initialising the neurons
+            for (auto& n: neurons) {
+                n->initialisation(this);
+            }
+            
+            // initialising the addons
+            for (auto& addon: addons) {
+                addon->onStart(this);
+            }
+            
+            // initialising the GUI if available
+            std::mutex sync;
+            if (thAddon) {
+                sync.lock();
+            }
+            
+            // running network in separate thread, and GUI in main thread
+            std::thread spikeManager([&] {
+                sync.lock();
+                sync.unlock();
+                
+                // walking through training dataset
+                
+                // walking through test dataset
+                
+                // notifying addons the run is complete
+                for (auto& addon: addons) {
+                    addon->onCompleted(this);
+                }
+            });
+            
+            if (thAddon) {
+                thAddon->begin(this, &sync);
+            }
+ 
+            spikeManager.join();
+ 
+            // resetting network and clearing addons initialised for this particular run
+            reset();
+        }
+        
         // reset the network back to the initial conditions without changing the network build
         void reset() {
             learningStatus = true;
@@ -1493,10 +1537,10 @@ namespace hummus {
         // helper function that runs the network when clock-mode is selected
         void clockRunHelper(double runtime, double timestep, bool classification=false) {
             if (!neurons.empty()) {
-
+                
                 // creating vector of the same size as neurons
                 std::vector<bool> neuronStatus(neurons.size(), false);
-
+                
                 // loop over the full runtime
                 for (double i=0; i<runtime; i+=timestep) {
                     // for cross-validation / test phase
