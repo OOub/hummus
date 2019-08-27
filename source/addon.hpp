@@ -55,6 +55,11 @@ namespace hummus {
         // select which neurons the addon is active on
         virtual void activate_for(std::vector<size_t> neuronIdx){};
         
+        template <typename T>
+        static void copy_to(char* target, T t) {
+            *reinterpret_cast<T*>(target) = t;
+        }
+        
         // ----- SETTERS AND GETTERS -----
         const std::vector<size_t>& getNeuronMask() {
             return neuron_mask;

@@ -29,9 +29,8 @@
 #include <QtCharts/QChart>
 #include <QtWidgets/QSpinBox>
 
-#include "../core.hpp"
-
 namespace hummus {
+    
     class OutputViewer : public QObject {
         
     Q_OBJECT
@@ -54,14 +53,14 @@ namespace hummus {
         virtual ~OutputViewer(){}
 		
     	// ----- PUBLIC OUTPUTVIEWER METHODS -----		
-		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
+		void handleData(double timestamp, int postsynapticNeuronID, int postsynapticLayerID, int postsynapticSublayerID) {
             input = timestamp;
-			if (postsynapticNeuron->getLayerID() == layerTracker) {
-				if (postsynapticNeuron->getSublayerID() == sublayerTracker) {
+			if (postsynapticLayerID == layerTracker) {
+				if (postsynapticSublayerID == sublayerTracker) {
 					while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 					if (!isClosed) {
-						points.append(QPointF(timestamp, postsynapticNeuron->getNeuronID()));
-						maxY = std::max(static_cast<float>(maxY), static_cast<float>(postsynapticNeuron->getNeuronID()));
+						points.append(QPointF(timestamp, postsynapticNeuronID));
+						maxY = std::max(static_cast<float>(maxY), static_cast<float>(postsynapticNeuronID));
 					} else {
 						points.clear();
 					}

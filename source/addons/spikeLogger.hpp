@@ -17,10 +17,11 @@
 #include <array>
 #include <stdexcept>
 
-
-#include "../core.hpp"
-
 namespace hummus {
+    class Synapse;
+    class Neuron;
+    class Network;
+    
     class SpikeLogger : public Addon {
         
     public:
@@ -100,11 +101,6 @@ namespace hummus {
             // changing the previoud timestamp
             previousTimestamp = timestamp;
         }
-		
-		template <typename T>
-		static void copy_to(char* target, T t) {
-		    *reinterpret_cast<T*>(target) = t;
-		}
 		
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----

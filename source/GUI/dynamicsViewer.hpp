@@ -28,9 +28,8 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-#include "../core.hpp"
-
 namespace hummus {
+    
     class DynamicsViewer : public QObject {
         
     Q_OBJECT
@@ -47,9 +46,6 @@ namespace hummus {
                 maxY(-70),
                 min_y_right(0),
                 max_y_right(1),
-                potential(-70),
-                current(0),
-                threshold(-50),
                 current_plot(false),
                 neuronTracker(-1) {
             atomicGuard.clear(std::memory_order_release);
@@ -58,31 +54,22 @@ namespace hummus {
         virtual ~DynamicsViewer(){}
 		
     	// ----- PUBLIC DYNAMICSVIEWER METHODS -----
-		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
-			if (postsynapticNeuron->getNeuronID() == neuronTracker) {
+		void handleData(double timestamp, int postsynapticNeuronID, float _potential, float _current, float _threshold) {
+			if (postsynapticNeuronID == neuronTracker) {
                 while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed) {
-                    // getting data from neurons
-					potential = postsynapticNeuron->getPotential();
-                    
-                    if (current_plot) {
-                        current = postsynapticNeuron->getCurrent();
-                        currentPoints.append(QPointF(timestamp,current));
-                    }
-                    
-					threshold = postsynapticNeuron->getThreshold();
-                    
                     // saving data points to plot
-					points.append(QPointF(timestamp, potential));
-					thresPoints.append(QPointF(timestamp, threshold));
+                    if (current_plot) {
+                        currentPoints.append(QPointF(timestamp,_current));
+                    }
+					points.append(QPointF(timestamp, _potential));
+					thresPoints.append(QPointF(timestamp, _threshold));
                     // membrane potential axis
-					minY = std::min(minY, static_cast<float>(potential));
-					maxY = std::max(maxY, static_cast<float>(potential));
+					minY = std::min(minY, static_cast<float>(_potential));
+					maxY = std::max(maxY, static_cast<float>(_potential));
                     // injected current axis
-                    min_y_right = std::min(min_y_right, static_cast<float>(current));
-                    max_y_right = std::max(max_y_right, static_cast<float>(current));
-                    // time axis
-                    maxX = timestamp;
+                    min_y_right = std::min(min_y_right, static_cast<float>(_current));
+                    max_y_right = std::max(max_y_right, static_cast<float>(_current));
 				} else {
 					points.clear();
                     thresPoints.clear();
@@ -90,38 +77,9 @@ namespace hummus {
 				}
 				atomicGuard.clear(std::memory_order_release);
 			}
-		}
-		
-		void handleTimestep(double timestamp, Neuron* postsynapticNeuron, Network* network) {
-			if (postsynapticNeuron->getNeuronID() == neuronTracker) {
-				while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-				if (!isClosed) {
-                    // getting data from neurons
-					potential = postsynapticNeuron->getPotential();
-                    
-                    if (current_plot) {
-                        current = postsynapticNeuron->getCurrent();
-                        currentPoints.append(QPointF(timestamp,current));
-                    }
-                    
-                    threshold = postsynapticNeuron->getThreshold();
-                    // saving data points to plot
-					points.append(QPointF(timestamp, potential));
-					thresPoints.append(QPointF(timestamp, threshold));
-                    // membrane potential axis
-					minY = std::min(minY, static_cast<float>(potential));
-					maxY = std::max(maxY, static_cast<float>(potential));
-                    // injected current axis
-                    min_y_right = std::min(min_y_right, static_cast<float>(current));
-                    max_y_right = std::max(max_y_right, static_cast<float>(current));
-				} else {
-					points.clear();
-					thresPoints.clear();
-                    currentPoints.clear();
-				}
-				atomicGuard.clear(std::memory_order_release);
-			}
-			maxX = timestamp;
+            
+            // time axis
+            maxX = timestamp;
 		}
 		
 		// ----- SETTERS -----
@@ -233,9 +191,6 @@ namespace hummus {
         float                 min_y_right;
         float                 max_y_right;
         std::atomic_flag      atomicGuard;
-        float                 potential;
-        float                 current;
-        float                 threshold;
         int                   neuronTracker;
         bool                  current_plot;
     };

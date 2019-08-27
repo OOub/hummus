@@ -13,10 +13,14 @@
 
 #pragma once
 
-#include "../core.hpp"
 #include "../../third_party/json.hpp"
 
 namespace hummus {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
 	class DecisionMaking : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----

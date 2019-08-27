@@ -19,7 +19,10 @@
 #include <stdexcept>
 #include <algorithm>
 #include <deque>
-#include <dirent.h>
+
+#include "../third_party/filesystem.hpp"
+
+namespace fs = ghc::filesystem;
 
 namespace hummus {
     
@@ -47,8 +50,26 @@ namespace hummus {
         };
         
         // saves the files from a database - formatted to eventstream format - into a vector of strings
-        std::vector<std::string> generateDatabase(std::string directory_path, int sample_percentage=100, bool shuffle=true) {
+        std::vector<std::string> importNmnist(std::string directory_path, int sample_percentage=100) {
             
+            std::vector<std::string> database;
+            
+            fs::path current_dir(directory_path);
+            // save all files containing the .es extension in the database vector
+            for (auto &file : fs::recursive_directory_iterator(current_dir)) {
+                if (file.path().extension() == ".es") {
+                    database.push_back(file.path());
+                }
+            }
+            
+            // get the number of samples from the percentage
+            if (sample_percentage < 100) {
+                size_t number_of_samples = static_cast<size_t>(std::ceil(database.size() * sample_percentage / 100));
+                sample(database.begin(), database.end(), number_of_samples);
+                return std::vector<std::string>(database.begin(), database.begin()+number_of_samples);
+            } else {
+                return database;
+            }
         }
         
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity (timestamp, X, Y, P)
@@ -229,7 +250,21 @@ namespace hummus {
 			return result;
 		}
         
+        template<class BidiIter>
+        BidiIter sample(BidiIter begin, BidiIter end, size_t num_random) {
+            size_t left = std::distance(begin, end);
+            while (num_random--) {
+                BidiIter r = begin;
+                std::advance(r, rand()%left);
+                std::swap(*begin, *r);
+                ++begin;
+                --left;
+            }
+            return begin;
+        }
+        
     protected:
+        
     	// ----- IMPLEMENTATION VARIABLES -----
         std::ifstream                   dataFile;
         std::mt19937                    randomEngine;

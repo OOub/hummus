@@ -19,12 +19,16 @@
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/stdp.hpp"
+#include "../source/dataParser.hpp"
 
 int main(int argc, char** argv) {
-
+    
+    hummus::DataParser parser;
+    auto train_data = parser.importNmnist("/Users/omaroubari/Downloads/N-MNIST/Train", 100);
+    
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
-
+    
     //  ----- INITIALISING ADD-ONS -----
     network.makeAddon<hummus::SpikeLogger>("spikeLog.bin");
 

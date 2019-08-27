@@ -16,13 +16,13 @@ from joblib import Parallel, delayed
 
 ####### BATCH CONVERSION OF WHOLE DATASET USING PARALLELISATION #######
 def batch_nmnist_to_es(nmnist_directory_in,nmnist_directory_out):
-    train_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(nmnist_directory_in,"Short_Train")) for f in fn]
-    test_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(nmnist_directory_in,"Short_Test")) for f in fn]
+    train_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(nmnist_directory_in,"Train")) for f in fn]
+    test_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(nmnist_directory_in,"Test")) for f in fn]
 
     num_cores = multiprocessing.cpu_count()
 
-    Parallel(n_jobs=num_cores)(delayed(nmnist_to_es)(f_in,os.path.join(nmnist_directory_out,"Short_Train",f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in train_files)
-    Parallel(n_jobs=num_cores)(delayed(nmnist_to_es)(f_in,os.path.join(nmnist_directory_out,"Short_Test",f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in test_files)
+    Parallel(n_jobs=num_cores)(delayed(nmnist_to_es)(f_in,os.path.join(nmnist_directory_out,"Train",f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in train_files)
+    Parallel(n_jobs=num_cores)(delayed(nmnist_to_es)(f_in,os.path.join(nmnist_directory_out,"Test",f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in test_files)
 
 ####### METHODS TO CONVERT FILES FROM POPULAR NEUROMORPHIC DATASETS INTO THE ES FORMAT #######
 def poker_to_es(filepath_in, filepath_out):

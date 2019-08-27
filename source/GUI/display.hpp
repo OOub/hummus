@@ -22,12 +22,16 @@
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
 
-#include "../core.hpp"
 #include "inputViewer.hpp"
 #include "outputViewer.hpp"
 #include "dynamicsViewer.hpp"
 
 namespace hummus {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
     class Display : public MainThreadAddon {
         
     public:
@@ -77,25 +81,25 @@ namespace hummus {
         
     	// ----- PUBLIC DISPLAY METHODS -----
 		void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-			dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+			dynamics_viewer->handleData(timestamp, postsynapticNeuron->getNeuronID(), postsynapticNeuron->getPotential(), postsynapticNeuron->getCurrent(), postsynapticNeuron->getThreshold());
 		}
 
         void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-			input_viewer->handleData(timestamp, s, postsynapticNeuron, network);
-			output_viewer->handleData(timestamp, s, postsynapticNeuron, network);
-			dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+			input_viewer->handleData(timestamp, s->getPresynapticNeuronID(), postsynapticNeuron->getNeuronID(), postsynapticNeuron->getSublayerID());
+			output_viewer->handleData(timestamp, postsynapticNeuron->getNeuronID(), postsynapticNeuron->getLayerID(), postsynapticNeuron->getSublayerID());
+			dynamics_viewer->handleData(timestamp, postsynapticNeuron->getNeuronID(), postsynapticNeuron->getPotential(), postsynapticNeuron->getCurrent(), postsynapticNeuron->getThreshold());
 		}
 
 		void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
 			input_viewer->handleTimestep(timestamp);
 			output_viewer->handleTimestep(timestamp);
-			dynamics_viewer->handleTimestep(timestamp, postsynapticNeuron, network);
+			dynamics_viewer->handleData(timestamp, postsynapticNeuron->getNeuronID(), postsynapticNeuron->getPotential(), postsynapticNeuron->getCurrent(), postsynapticNeuron->getThreshold());
 		}
 
         void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             input_viewer->handleTimestep(timestamp);
             output_viewer->handleTimestep(timestamp);
-            dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+            dynamics_viewer->handleData(timestamp, postsynapticNeuron->getNeuronID(), postsynapticNeuron->getPotential(), postsynapticNeuron->getCurrent(), postsynapticNeuron->getThreshold());
         }
         
 		void begin(Network* network, std::mutex* sync) override {

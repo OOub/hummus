@@ -28,12 +28,11 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-#include "../core.hpp"
-
 Q_DECLARE_METATYPE(QtCharts::QAbstractSeries *)
 Q_DECLARE_METATYPE(QtCharts::QValueAxis *)
 
 namespace hummus {
+    
     class InputViewer : public QObject {
         
     Q_OBJECT
@@ -57,15 +56,15 @@ namespace hummus {
         virtual ~InputViewer(){}
 		
     	// ----- PUBLIC INPUTVIEWER METHODS -----
-		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
+		void handleData(double timestamp, int presynapticNeuronID, int postsynapticNeuronID, int postsynapticSublayerID) {
             maxX = timestamp;
-            if (s && s->getPresynapticNeuronID() == -1) {
-                if (postsynapticNeuron->getSublayerID() == sublayerTracker) {
+            if (presynapticNeuronID == -1) {
+                if (postsynapticSublayerID == sublayerTracker) {
     
                     while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
                     if (!isClosed) {
-                        points.append(QPointF(timestamp, postsynapticNeuron->getNeuronID()));
-                        maxY = std::max(static_cast<float>(maxY), static_cast<float>(postsynapticNeuron->getNeuronID()));
+                        points.append(QPointF(timestamp, postsynapticNeuronID));
+                        maxY = std::max(static_cast<float>(maxY), static_cast<float>(postsynapticNeuronID));
                     } else {
                         points.clear();
                     }

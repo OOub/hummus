@@ -13,10 +13,14 @@
 
 #include <vector>
 
-#include "../core.hpp"
 #include "../dataParser.hpp"
 
 namespace hummus {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
 	class Analysis : public Addon {
         
 	public:

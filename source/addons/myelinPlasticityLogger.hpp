@@ -17,10 +17,12 @@
 #include <array>
 #include <stdexcept>
 
-#include "../core.hpp"
-#include "spikeLogger.hpp"
-
 namespace hummus {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
     class MyelinPlasticityLogger : public Addon {
         
     public:
@@ -52,16 +54,16 @@ namespace hummus {
             // defining what to save and constraining it so that file size doesn't blow up
             const int16_t bitSize = 8+4*timeDifferences.size()+5*modifiedSynapses.size();
             std::vector<char> bytes(bitSize);
-            SpikeLogger::copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
-            SpikeLogger::copy_to(bytes.data() + 2, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-            SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
+            copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
+            copy_to(bytes.data() + 2, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
+            copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
 
             int count = 8;
             for (auto i=0; i<timeDifferences.size(); i++) {
-                SpikeLogger::copy_to(bytes.data() + count,   static_cast<int32_t>(timeDifferences[i] * 100));
-                SpikeLogger::copy_to(bytes.data() + count+4, static_cast<int16_t>(modifiedSynapses[i]->getPresynapticNeuronID()));
-                SpikeLogger::copy_to(bytes.data() + count+6, static_cast<int16_t>(modifiedSynapses[i]->getDelay()*100));
-                SpikeLogger::copy_to(bytes.data() + count+8, static_cast<int8_t>(modifiedSynapses[i]->getWeight()*100));
+                copy_to(bytes.data() + count,   static_cast<int32_t>(timeDifferences[i] * 100));
+                copy_to(bytes.data() + count+4, static_cast<int16_t>(modifiedSynapses[i]->getPresynapticNeuronID()));
+                copy_to(bytes.data() + count+6, static_cast<int16_t>(modifiedSynapses[i]->getDelay()*100));
+                copy_to(bytes.data() + count+8, static_cast<int8_t>(modifiedSynapses[i]->getWeight()*100));
                 count += 9;
             }
             

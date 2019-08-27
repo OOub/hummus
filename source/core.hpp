@@ -1269,53 +1269,53 @@ namespace hummus {
             reset();
         }
 
-        // runs through a dataset pattern by pattern. The time is reset after each presentation
-        void run(std::string training_directory, float timestep=0, std::string test_directory="") {
-            // figuring out whether the network is running synchronously or asynchronously
-            if (timestep == 0) {
-                asynchronous = true;
-            }
-            
-            // initialising the neurons
-            for (auto& n: neurons) {
-                n->initialisation(this);
-            }
-            
-            // initialising the addons
-            for (auto& addon: addons) {
-                addon->onStart(this);
-            }
-            
-            // initialising the GUI if available
-            std::mutex sync;
-            if (thAddon) {
-                sync.lock();
-            }
-            
-            // running network in separate thread, and GUI in main thread
-            std::thread spikeManager([&] {
-                sync.lock();
-                sync.unlock();
-                
-                // walking through training dataset
-                
-                // walking through test dataset
-                
-                // notifying addons the run is complete
-                for (auto& addon: addons) {
-                    addon->onCompleted(this);
-                }
-            });
-            
-            if (thAddon) {
-                thAddon->begin(this, &sync);
-            }
- 
-            spikeManager.join();
- 
-            // resetting network and clearing addons initialised for this particular run
-            reset();
-        }
+//        // runs through a dataset pattern by pattern. The time is reset after each presentation
+//        void run(std::string training_directory, float timestep=0, std::string test_directory="") {
+//            // figuring out whether the network is running synchronously or asynchronously
+//            if (timestep == 0) {
+//                asynchronous = true;
+//            }
+//
+//            // initialising the neurons
+//            for (auto& n: neurons) {
+//                n->initialisation(this);
+//            }
+//
+//            // initialising the addons
+//            for (auto& addon: addons) {
+//                addon->onStart(this);
+//            }
+//
+//            // initialising the GUI if available
+//            std::mutex sync;
+//            if (thAddon) {
+//                sync.lock();
+//            }
+//
+//            // running network in separate thread, and GUI in main thread
+//            std::thread spikeManager([&] {
+//                sync.lock();
+//                sync.unlock();
+//
+//                // walking through training dataset
+//
+//                // walking through test dataset
+//
+//                // notifying addons the run is complete
+//                for (auto& addon: addons) {
+//                    addon->onCompleted(this);
+//                }
+//            });
+//
+//            if (thAddon) {
+//                thAddon->begin(this, &sync);
+//            }
+//
+//            spikeManager.join();
+//
+//            // resetting network and clearing addons initialised for this particular run
+//            reset();
+//        }
         
         // reset the network back to the initial conditions without changing the network build
         void reset() {
