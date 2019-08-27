@@ -24,7 +24,7 @@
 int main(int argc, char** argv) {
     
     hummus::DataParser parser;
-    auto train_data = parser.importNmnist("/Users/omaroubari/Downloads/N-MNIST/Train", 100);
+    auto train_data = parser.importNmnist("/Users/omaroubari/Downloads/N-MNIST/Train", 10);
     
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
+#include <random>
 #include <deque>
 
 #include "../third_party/filesystem.hpp"
@@ -49,26 +50,38 @@ namespace hummus {
             gaussian = std::normal_distribution<>(0.0, 1.0);
         };
         
-        // saves the files from a database - formatted to eventstream format - into a vector of strings
-        std::vector<std::string> importNmnist(std::string directory_path, int sample_percentage=100) {
-            
+        // saves the files from the N-MNIST database - formatted to eventstream format - into a vector of strings
+        // The N-MNIST database needs to have the same structure as the original folder. For example: ~/N-MNIST/Train/0
+        std::pair<std::vector<std::string>, std::vector<label>> importNmnist(std::string directory_path, int sample_percentage=100) {
             std::vector<std::string> database;
+            std::vector<label> labels;
             
             fs::path current_dir(directory_path);
             // save all files containing the .es extension in the database vector
             for (auto &file : fs::recursive_directory_iterator(current_dir)) {
                 if (file.path().extension() == ".es") {
-                    database.push_back(file.path());
+                    labels.emplace_back(label{std::string(1, file.path().parent_path().string().back()), -1});
+                    database.emplace_back(file.path());
                 }
             }
+            
+            // shuffle the database and labels vectors
+            std::random_device r;
+            std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
+            
+            // create two random engines with the same state
+            std::mt19937 eng1(seed);
+            auto eng2 = eng1;
+            
+            std::shuffle(begin(database), end(database), eng1);
+            std::shuffle(begin(labels), end(labels), eng2);
             
             // get the number of samples from the percentage
             if (sample_percentage < 100) {
                 size_t number_of_samples = static_cast<size_t>(std::ceil(database.size() * sample_percentage / 100));
-                sample(database.begin(), database.end(), number_of_samples);
-                return std::vector<std::string>(database.begin(), database.begin()+number_of_samples);
+                return std::make_pair(std::vector<std::string>(database.begin(), database.begin()+number_of_samples), std::vector<label>(labels.begin(), labels.begin()+number_of_samples));
             } else {
-                return database;
+                return std::make_pair(database, labels);
             }
         }
         
@@ -249,19 +262,6 @@ namespace hummus {
 			while (next != Container::value_type::npos);
 			return result;
 		}
-        
-        template<class BidiIter>
-        BidiIter sample(BidiIter begin, BidiIter end, size_t num_random) {
-            size_t left = std::distance(begin, end);
-            while (num_random--) {
-                BidiIter r = begin;
-                std::advance(r, rand()%left);
-                std::swap(*begin, *r);
-                ++begin;
-                --left;
-            }
-            return begin;
-        }
         
     protected:
         
