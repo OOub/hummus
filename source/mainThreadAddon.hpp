@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 31/07/2018
  *
- * Information: Expands the addon class, used for add-ons that need to be run on the main thread such as the Qt or Puffin GUI
+ * Information: Expands the addon class, used for add-ons that need to be run on the main thread such as the Qt GUI
  */
 
 #pragma once
@@ -25,7 +25,7 @@ namespace hummus {
 		virtual void begin(Network* network, std::mutex* sync){}
         
         // method that is used to send an update to the GUI when an asynchronous network is used. This helps approximate the potential curve on the GUI.
-        virtual void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
+        virtual void status_update(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
         // method to reset the GUI
         virtual void reset() {}

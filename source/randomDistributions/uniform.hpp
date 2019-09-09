@@ -16,54 +16,54 @@
 
 namespace hummus {
 	
-	enum class uniformType {
-		integerType,
-		realType
+	enum class uniform_type {
+		integer,
+		real
 	};
 	
 	class Uniform {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Uniform(float weightLowerLimit=0, float weightUpperLimit=1, float delayLowerLimit=0, float delayUpperLimit=0, uniformType _int_or_real=uniformType::integerType) :
+        Uniform(float weight_lower_limit=0, float weight_upper_limit=1, float delay_lower_limit=0, float delay_upper_limit=0, uniform_type _int_or_real=uniform_type::integer) :
         		int_or_real(_int_or_real) {
 			
 			// error handling
-			if (delayLowerLimit < 0 || delayUpperLimit < 0) {
+                    if (delay_lower_limit < 0 || delay_upper_limit < 0) {
 				throw std::logic_error("the delays cannot be in a negative range");
 			}
 
             // randomising weights and delays
             std::random_device device;
-            randomEngine = std::mt19937(device());
+            random_engine = std::mt19937(device());
 			
-			if (_int_or_real == uniformType::integerType) {
-            	int_delayRandom = std::uniform_int_distribution<>(static_cast<int>(delayLowerLimit), static_cast<int>(delayUpperLimit));
-            	int_weightRandom = std::uniform_int_distribution<>(static_cast<int>(weightLowerLimit), static_cast<int>(weightUpperLimit));
+			if (_int_or_real == uniform_type::integer) {
+                int_delay_random = std::uniform_int_distribution<>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
+                int_weight_random = std::uniform_int_distribution<>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
 			} else {
-				real_delayRandom = std::uniform_real_distribution<>(delayLowerLimit, delayUpperLimit);
-				real_weightRandom = std::uniform_real_distribution<>(weightLowerLimit, weightUpperLimit);
+                real_delay_random = std::uniform_real_distribution<>(delay_lower_limit, delay_upper_limit);
+                real_weight_random = std::uniform_real_distribution<>(weight_lower_limit, weight_upper_limit);
 			}
         }
 		
 		
         std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
-        	if (int_or_real == uniformType::integerType) {
-				return std::make_pair(real_weightRandom(randomEngine), real_delayRandom(randomEngine));
+        	if (int_or_real == uniform_type::integer) {
+				return std::make_pair(real_weight_random(random_engine), real_delay_random(random_engine));
 			} else {
-				return std::make_pair(int_weightRandom(randomEngine), int_delayRandom(randomEngine));
+				return std::make_pair(int_weight_random(random_engine), int_delay_random(random_engine));
 			}
         }
 		
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                     randomEngine;
-        std::uniform_int_distribution<>  int_delayRandom;
-		std::uniform_real_distribution<> real_delayRandom;
-        std::uniform_int_distribution<>  int_weightRandom;
-		std::uniform_real_distribution<> real_weightRandom;
-		uniformType                      int_or_real;
+        std::mt19937                     random_engine;
+        std::uniform_int_distribution<>  int_delay_random;
+		std::uniform_real_distribution<> real_delay_random;
+        std::uniform_int_distribution<>  int_weight_random;
+		std::uniform_real_distribution<> real_weight_random;
+		uniform_type                     int_or_real;
 	};
 }
 

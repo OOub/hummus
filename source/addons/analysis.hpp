@@ -13,19 +13,23 @@
 
 #include <vector>
 
-#include "../core.hpp"
 #include "../dataParser.hpp"
 
 namespace hummus {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
 	class Analysis : public Addon {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
 		Analysis(std::string testLabels) {
 			DataParser parser;
-			labels = parser.readLabels(testLabels);
+			labels = parser.read_txt_labels(testLabels);
 			for (auto label: labels) {
-				actualLabels.emplace_back(label.name);
+				actual_labels.emplace_back(label.name);
 			}
 		}
 		
@@ -33,51 +37,51 @@ namespace hummus {
         
 		// ----- PUBLIC METHODS -----
 		void accuracy() {
-			if (!classifiedLabels.empty() && classifiedLabels.size() == actualLabels.size()) {
+			if (!classified_labels.empty() && classified_labels.size() == actual_labels.size()) {
 				std::vector<std::string> correctLabels;
-				for (auto i=0; i<actualLabels.size(); i++) {
-					if (classifiedLabels[i] == actualLabels[i]) {
-						correctLabels.emplace_back(classifiedLabels[i]);
+				for (auto i=0; i<actual_labels.size(); i++) {
+					if (classified_labels[i] == actual_labels[i]) {
+						correctLabels.emplace_back(classified_labels[i]);
 					}
 				}
 				
-				double accuracy = (static_cast<double>(correctLabels.size())/actualLabels.size())*100;
+				double accuracy = (static_cast<double>(correctLabels.size())/actual_labels.size())*100;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
 			} else {
 				throw std::logic_error("there is a problem with the classified and actual labels");
 			}
 		}
 		
-		void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            if (network->getDecisionMaking()) {
+		void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            if (network->get_decision_making()) {
                 // logging only after learning is stopped and restrict only to the decision-making layer
-                if (!network->getLearningStatus() && postsynapticNeuron->getLayerID() == network->getDecisionParameters().layer_number) {
-                    classifiedSpikes.emplace_back(std::make_pair(timestamp, postsynapticNeuron));
+                if (!network->get_learning_status() && postsynapticNeuron->get_layer_id() == network->getDecisionParameters().layer_number) {
+                    classified_spikes.emplace_back(std::make_pair(timestamp, postsynapticNeuron));
                 }
             } else {
                 throw std::logic_error("the analysis class works only when decision-making neurons are added to the network");
             }
 		}
 		
-		void onCompleted(Network* network) override {
+		void on_completed(Network* network) override {
             labels.emplace_back(label{"end", labels.back().onset+10000});
 
             for (auto i=1; i<labels.size(); i++) {
-                auto it = std::find_if(classifiedSpikes.begin(), classifiedSpikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;});
-                if (it != classifiedSpikes.end()) {
-                    auto idx = std::distance(classifiedSpikes.begin(), it);
-                    classifiedLabels.emplace_back(classifiedSpikes[idx].second->getClassLabel());
+                auto it = std::find_if(classified_spikes.begin(), classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;});
+                if (it != classified_spikes.end()) {
+                    auto idx = std::distance(classified_spikes.begin(), it);
+                    classified_labels.emplace_back(classified_spikes[idx].second->get_class_label());
                 } else {
-                    classifiedLabels.emplace_back("NaN");
+                    classified_labels.emplace_back("NaN");
                 }
             }
 		}
 		
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::vector<std::pair<double, Neuron*>>  classifiedSpikes;
+		std::vector<std::pair<double, Neuron*>>  classified_spikes;
 		std::deque<label>                        labels;
-		std::deque<std::string>                  actualLabels;
-		std::deque<std::string>                  classifiedLabels;
+		std::deque<std::string>                  actual_labels;
+		std::deque<std::string>                  classified_labels;
 	};
 }

@@ -23,25 +23,25 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Addon() = default;
+        Addon() = default;
 		virtual ~Addon(){}
 		
 		// ----- PUBLIC METHODS -----
         
         // message that is actived before the network starts running
-		virtual void onStart(Network* network){}
+		virtual void on_start(Network* network){}
 		
 		// message that is actived before the network starts running on the test data
-		virtual void onPredict(Network* network){}
+		virtual void on_predict(Network* network){}
 		
         // message that is actived when the network finishes running
-		virtual void onCompleted(Network* network){}
+		virtual void on_completed(Network* network){}
         
         // message that is activated whenever a neuron receives a spike
-		virtual void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
+		virtual void incoming_spike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
         // message that is activated whenever a neuron emits a spike
-		virtual void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
+		virtual void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
         // message that is activated on every timestep on the synchronous network only. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
 		virtual void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network){}
@@ -55,12 +55,22 @@ namespace hummus {
         // select which neurons the addon is active on
         virtual void activate_for(std::vector<size_t> neuronIdx){};
         
+        template <typename T>
+        static void copy_to(char* target, T t) {
+            *reinterpret_cast<T*>(target) = t;
+        }
+        
         // ----- SETTERS AND GETTERS -----
-        const std::vector<size_t>& getNeuronMask() {
+        const std::vector<size_t>& get_mask() {
             return neuron_mask;
+        }
+        
+        bool no_automatic_include() {
+            return do_not_automatically_include;
         }
         
     protected:
         std::vector<size_t> neuron_mask;
+        bool                do_not_automatically_include;
 	};
 }

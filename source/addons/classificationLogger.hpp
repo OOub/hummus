@@ -17,20 +17,21 @@
 #include <array>
 #include <stdexcept>
 
-#include "../core.hpp"
-#include "spikeLogger.hpp"
-#include "../dataParser.hpp"
-
 namespace hummus {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
     class ClassificationLogger : public Addon {
         
     public:
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         ClassificationLogger(std::string filename) :
-                saveFile(filename, std::ios::out | std::ios::binary),
-                previousTimestamp(0) {
+                save_file(filename, std::ios::out | std::ios::binary),
+                previous_timestamp(0) {
                     
-            if (!saveFile.good()) {
+            if (!save_file.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
@@ -48,25 +49,25 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-		void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+		void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
 			// logging only after learning is stopped
-			if (!network->getLearningStatus()) {
+            if (!network->get_learning_status()) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 6> bytes;
-                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
+                copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                 
                 // saving to file
-                saveFile.write(bytes.data(), bytes.size());
+                save_file.write(bytes.data(), bytes.size());
                 
                 // changing the previoud timestamp
-                previousTimestamp = timestamp;
+                previous_timestamp = timestamp;
 			}
 		}
 
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
-        std::ofstream        saveFile;
-        double               previousTimestamp;
+        std::ofstream        save_file;
+        double               previous_timestamp;
 	};
 }

@@ -17,18 +17,19 @@
 #include <array>
 #include <stdexcept>
 
-
-#include "../core.hpp"
-
 namespace hummus {
+    class Synapse;
+    class Neuron;
+    class Network;
+    
     class SpikeLogger : public Addon {
         
     public:
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         SpikeLogger(std::string filename) :
-                saveFile(filename, std::ios::out | std::ios::binary),
-                previousTimestamp(0) {
-            if (!saveFile.good()) {
+                save_file(filename, std::ios::out | std::ios::binary),
+                previous_timestamp(0) {
+            if (!save_file.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
@@ -46,69 +47,64 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-        void onStart(Network* network) override {
+        void on_start(Network* network) override {
             // learning off time header
             std::array<char, 8> bytes;
-            copy_to(bytes.data() + 0, network->getLearningOffSignal());
-            saveFile.write(bytes.data(), bytes.size());
+            copy_to(bytes.data() + 0, network->get_learning_off_signal());
+            save_file.write(bytes.data(), bytes.size());
         }
         
-		void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+		void incoming_spike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             
             // defining what to save and constraining it so that file size doesn't blow up
             std::array<char, 16> bytes;
-            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-            copy_to(bytes.data() + 4,  static_cast<int16_t>(s->getDelay()*100));
-            copy_to(bytes.data() + 6,  static_cast<int8_t>(s->getWeight()*100));
-            copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
-            copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
-            copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->getLayerID()));
-            copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->getRfCoordinates().first));
-            copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->getRfCoordinates().second));
-            copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->getXYCoordinates().first));
-            copy_to(bytes.data() + 15, static_cast<int8_t>(postsynapticNeuron->getXYCoordinates().second));
+            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+            copy_to(bytes.data() + 4,  static_cast<int16_t>(s->get_delay()*100));
+            copy_to(bytes.data() + 6,  static_cast<int8_t>(s->get_weight()*100));
+            copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+            copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
+            copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
+            copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->get_rf_coordinates().first));
+            copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->get_rf_coordinates().second));
+            copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().first));
+            copy_to(bytes.data() + 15, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().second));
             
             // saving to file
-			saveFile.write(bytes.data(), bytes.size());
+			save_file.write(bytes.data(), bytes.size());
             
             // changing the previoud timestamp
-            previousTimestamp = timestamp;
+            previous_timestamp = timestamp;
         }
 		
-        void onPredict(Network* network) override {
-            previousTimestamp = 0;
+        void on_predict(Network* network) override {
+            previous_timestamp = 0;
         }
         
-		void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+		void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             
             // defining what to save and constraining it so that file size doesn't blow up
             std::array<char, 16> bytes;
-            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-            copy_to(bytes.data() + 4,  static_cast<int16_t>(s->getDelay()*100));
-            copy_to(bytes.data() + 6,  static_cast<int8_t>(s->getWeight()*100));
-            copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
-            copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
-            copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->getLayerID()));
-            copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->getRfCoordinates().first));
-            copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->getRfCoordinates().second));
-            copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->getXYCoordinates().first));
-            copy_to(bytes.data() + 15, static_cast<int8_t>(postsynapticNeuron->getXYCoordinates().second));
+            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+            copy_to(bytes.data() + 4,  static_cast<int16_t>(s->get_delay()*100));
+            copy_to(bytes.data() + 6,  static_cast<int8_t>(s->get_weight()*100));
+            copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+            copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
+            copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
+            copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->get_rf_coordinates().first));
+            copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->get_rf_coordinates().second));
+            copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().first));
+            copy_to(bytes.data() + 15, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().second));
             
             // saving to file
-            saveFile.write(bytes.data(), bytes.size());
+            save_file.write(bytes.data(), bytes.size());
             
             // changing the previoud timestamp
-            previousTimestamp = timestamp;
+            previous_timestamp = timestamp;
         }
-		
-		template <typename T>
-		static void copy_to(char* target, T t) {
-		    *reinterpret_cast<T*>(target) = t;
-		}
 		
     protected:
     	// ----- IMPLEMENTATION VARIABLES -----
-        std::ofstream        saveFile;
-        double               previousTimestamp;
+        std::ofstream        save_file;
+        double               previous_timestamp;
     };
 }

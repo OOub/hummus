@@ -1,6 +1,6 @@
 local qt = require 'qt'
 
-solution 'hummus' 
+solution 'hummus'
     configurations {'Release', 'Debug'}
     location 'build'
 
@@ -18,52 +18,38 @@ solution 'hummus'
    				description = 'Compiles without Qt'
 			}
 
-
-            if _OPTIONS['tbb'] then
-                with_tbb = true
-            end
-
 			if _OPTIONS['no-qt'] then
    				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
    			else
    				with_qt = true
 			end
 
-			-- All files in source
+			-- All files in source, third_party and applications
         	files {'source/**.hpp',
-        		'source/addons/**.hpp', 
-        		'source/dependencies/**.hpp',
-                'source/dependencies/flatbuffers/**.h', 
-        		'source/GUI/qt/**.hpp',
-        		'source/GUI/puffin/**.hpp', 
-        		'source/learningRules/**.hpp', 
-        		'source/neurons/**.hpp', 
-        		'source/synapticKernels/**.hpp', 
-        		'source/networkExtensions/**.hpp', 
-        		'source/randomDistributions/**.hpp', 
-        		'applications/' .. name .. '.cpp'
+                 'third_party/**.hpp',
+        		     'applications/' .. name .. '.cpp'
         	}
 
 			if with_qt then
 				-- Qt-dependent files
-				files(qt.moc({'source/GUI/qt/inputViewer.hpp', 
-							  'source/GUI/qt/outputViewer.hpp', 
-					          'source/GUI/qt/dynamicsViewer.hpp'
-					          }, 
-							  'build/moc'))
+				files(qt.moc({'source/GUI/inputViewer.hpp',
+							        'source/GUI/outputViewer.hpp',
+					            'source/GUI/dynamicsViewer.hpp'
+					           },
+						  'build/moc'))
 
 	            includedirs(qt.includedirs())
 	            libdirs(qt.libdirs())
 	            links(qt.links())
 	            buildoptions(qt.buildoptions())
 	            linkoptions(qt.linkoptions())
-	        end
+      end
 
 	        -- Declare the configurations
 	        configuration 'Release'
 	            targetdir 'build/release'
 	            defines {'NDEBUG'}
-	            flags {'OptimizeSpeed'}
+	            flags {'OptimizeSpeed','FloatFast'}
 
 	        configuration 'Debug'
 	            targetdir 'build/debug'
@@ -72,25 +58,16 @@ solution 'hummus'
 
 	        configuration 'linux or macosx'
             	includedirs {'/usr/local/include'}
-	        	libdirs {'/usr/local/lib'}
+	        	  libdirs {'/usr/local/lib'}
 
 	        -- Linux specific settings
 	        configuration 'linux'
-                if with_tbb then
-	        	    links {'pthread', 'tbb'}
-                    defines {"TBB"}
-                else
-                    links {'pthread'}
-                end
+                links {'pthread'}
 	            buildoptions {'-std=c++11'}
 	           	linkoptions {'-std=c++11'}
 
 	        -- Mac OS X specific settings
 	        configuration 'macosx'
-                if with_tbb then
-	        	    links {'tbb'}
-                    defines { "TBB" }
-                end
 	            buildoptions {'-std=c++11'}
 	           	linkoptions {'-std=c++11'}
 end

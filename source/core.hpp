@@ -31,11 +31,8 @@
 #include <queue>
 
 // external Dependencies
-#ifdef TBB
-#include "tbb/tbb.h"
-#endif
-
-#include "dependencies/json.hpp"
+#include "../third_party/json.hpp"
+#include "../third_party/sepia.hpp"
 
 // random distributions
 #include "randomDistributions/lognormal.hpp"
@@ -54,7 +51,7 @@
 #include "synapse.hpp"
 #include "synapses/exponential.hpp"
 #include "synapses/dirac.hpp"
-#include "synapses/pulse.hpp"
+#include "synapses/square.hpp"
 
 namespace hummus {
     // make_unique creates a unique_ptr.
@@ -63,26 +60,18 @@ namespace hummus {
         return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
     };
     
-    // synapse models enum for readability
-    enum class synapseModel {
-        dirac,
-        pulse,
-        exponential
-    };
-    
     // used for the event-based mode only in order to predict spike times with dynamic currents
-    enum class spikeType {
+    enum class spike_type {
         initial,
         generated,
-        inhibitory,
-        endOfIntegration,
+        end_of_integration,
         prediction,
         decision,
         none
     };
     
     // parameters for the decision-making layer
-    struct decisionHeuristics {
+    struct decision_heuristics {
         int                         layer_number;
         int                         spike_history_size;
         float                       rejection_threshold; // percentage (0.6 = 60% for a maximum of 1)
@@ -92,17 +81,17 @@ namespace hummus {
     // the equivalent of feature maps
 	struct sublayer {
 		std::vector<std::size_t>    neurons;
-		int                         ID;
+		int                         id;
 	};
 	
     // structure organising neurons into layers and sublayers for easier access
 	struct layer {
 		std::vector<sublayer>       sublayers;
         std::vector<std::size_t>    neurons;
-		int                         ID;
+		int                         id;
 		int                         width;
 		int                         height;
-        int                         kernelSize;
+        int                         kernel_size;
         int                         stride;
         bool                        do_not_propagate;
 	};
@@ -110,8 +99,8 @@ namespace hummus {
     // spike - propagated between synapses
     struct spike {
         double        timestamp;
-        Synapse*      propagationSynapse;
-        spikeType     type;
+        Synapse*      propagation_synapse;
+        spike_type    type;
         // provides the logic for the priority queue
         bool operator<(const spike& s) const {
             return timestamp > s.timestamp;
@@ -129,27 +118,27 @@ namespace hummus {
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=3, float _conductance=200,
                float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
-                neuronID(_neuronID),
-                layerID(_layerID),
-                sublayerID(_sublayerID),
-                rfCoordinates(_rfCoordinates),
-                xyCoordinates(_xyCoordinates),
+                neuron_id(_neuronID),
+                layer_id(_layerID),
+                sublayer_id(_sublayerID),
+                rf_coordinates(_rfCoordinates),
+                xy_coordinates(_xyCoordinates),
                 threshold(_threshold), //mV
                 potential(_restingPotential), //mV
                 conductance(_conductance), // pF
-                leakageConductance(_leakageConductance), // nS
-                membraneTimeConstant(_conductance/_leakageConductance), // ms
+                leakage_conductance(_leakageConductance), // nS
+                membrane_time_constant(_conductance/_leakageConductance), // ms
                 current(0), // pA
-                refractoryPeriod(_refractoryPeriod), //ms
-                restingPotential(_restingPotential), //mV
+                refractory_period(_refractoryPeriod), //ms
+                resting_potential(_restingPotential), //mV
                 trace(0),
-                traceTimeConstant(_traceTimeConstant),
-                previousSpikeTime(0),
-                previousInputTime(0),
-                classLabel(_classLabel),
-                neuronType(0) {
+                trace_time_constant(_traceTimeConstant),
+                previous_spike_time(0),
+                previous_input_time(0),
+                class_label(_classLabel),
+                neuron_type(0) {
                     // error handling
-                    if (membraneTimeConstant <= 0) {
+                    if (membrane_time_constant <= 0) {
                         throw std::logic_error("The potential decay cannot less than or equal to 0");
                     }
                 }
@@ -161,34 +150,34 @@ namespace hummus {
 		virtual void initialisation(Network* network) {}
 		
 		// asynchronous update method
-		virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) = 0;
+		virtual void update(double timestamp, Synapse* s, Network* network, spike_type type) = 0;
         
 		// synchronous update method
-		virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep, spikeType type) {
+		virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) {
 			update(timestamp, s, network, type);
 		}
         
         // reset a neuron to its initial status
-        virtual void resetNeuron(Network* network, bool clearAddons=true) {
-            previousSpikeTime = 0;
-            potential = restingPotential;
+        virtual void reset_neuron(Network* network, bool clearAddons=true) {
+            previous_spike_time = 0;
+            potential = resting_potential;
             trace = 0;
             if (clearAddons) {
-                relevantAddons.clear();
+                relevant_addons.clear();
             }
         }
         
         // write neuron parameters in a JSON format
-        virtual void toJson(nlohmann::json& output) {}
+        virtual void to_json(nlohmann::json& output) {}
         
         // adds a synapse that connects two Neurons together
         template <typename T, typename... Args>
-        Synapse* makeSynapse(Neuron* postNeuron, int probability, float weight, float delay, synapseType type, Args&&... args) {
+        Synapse* make_synapse(Neuron* postNeuron, int probability, float weight, float delay, Args&&... args) {
             if (postNeuron) {
-                if (connectionProbability(probability)) {
-                    axonTerminals.emplace_back(new T{postNeuron->neuronID, neuronID, weight, delay, type, static_cast<float>(std::forward<Args>(args))...});
-                    postNeuron->getDendriticTree().emplace_back(axonTerminals.back().get());
-                    return axonTerminals.back().get();
+                if (connection_probability(probability)) {
+                    axon_terminals.emplace_back(new T{postNeuron->neuron_id, neuron_id, weight, delay, static_cast<float>(std::forward<Args>(args))...});
+                    postNeuron->get_dendritic_tree().emplace_back(axon_terminals.back().get());
+                    return axon_terminals.back().get();
                 } else {
                     return nullptr;
                 }
@@ -199,183 +188,183 @@ namespace hummus {
 		
         // initialise the initial synapse when a neuron receives an input event
         template <typename T, typename... Args>
-        spike receiveExternalInput(double timestamp, Args&&... args) {
-            if (!initialSynapse) {
-                initialSynapse.reset(new T(std::forward<Args>(args)...));
+        spike receive_external_input(double timestamp, Args&&... args) {
+            if (!initial_synapse) {
+                initial_synapse.reset(new T(std::forward<Args>(args)...));
             }
-            return spike{timestamp, initialSynapse.get(), spikeType::initial};
+            return spike{timestamp, initial_synapse.get(), spike_type::initial};
         }
 		
         // utility function that returns true or false depending on a probability percentage
-        static bool connectionProbability(int probability) {
+        static bool connection_probability(int probability) {
             std::random_device device;
-            std::mt19937 randomEngine(device());
+            std::mt19937 random_engine(device());
             std::bernoulli_distribution dist(probability/100.);
-            return dist(randomEngine);
+            return dist(random_engine);
         }
         
 		// ----- SETTERS AND GETTERS -----        
-		int getNeuronID() const {
-            return neuronID;
+		int get_neuron_id() const {
+            return neuron_id;
         }
 		
-        int getLayerID() const {
-            return layerID;
+        int get_layer_id() const {
+            return layer_id;
         }
         
-        int getSublayerID() const {
-            return sublayerID;
+        int get_sublayer_id() const {
+            return sublayer_id;
         }
         
-        std::pair<int, int> getRfCoordinates() const {
-            return rfCoordinates;
+        std::pair<int, int> get_rf_coordinates() const {
+            return rf_coordinates;
         }
         
-        void setRfCoordinates(int row, int col) {
-            rfCoordinates.first = row;
-            rfCoordinates.second = col;
+        void set_rf_coordinates(int row, int col) {
+            rf_coordinates.first = row;
+            rf_coordinates.second = col;
         }
         
-        std::pair<float, float> getXYCoordinates() const {
-            return xyCoordinates;
+        std::pair<float, float> get_xy_coordinates() const {
+            return xy_coordinates;
         }
         
-        void setXYCoordinates(float X, float Y) {
-            xyCoordinates.first = X;
-            xyCoordinates.second = Y;
+        void set_xy_coordinates(float X, float Y) {
+            xy_coordinates.first = X;
+            xy_coordinates.second = Y;
         }
         
-        std::vector<Synapse*>& getDendriticTree() {
-            return dendriticTree;
+        std::vector<Synapse*>& get_dendritic_tree() {
+            return dendritic_tree;
         }
         
-        std::vector<std::unique_ptr<Synapse>>& getAxonTerminals() {
-            return axonTerminals;
+        std::vector<std::unique_ptr<Synapse>>& get_axon_terminals() {
+            return axon_terminals;
         }
         
-        std::unique_ptr<Synapse>& getInitialSynapse() {
-            return initialSynapse;
+        std::unique_ptr<Synapse>& get_initial_synapse() {
+            return initial_synapse;
         }
         
-        float setPotential(float newPotential) {
-            return potential = newPotential;
+        float set_potential(float new_potential) {
+            return potential = new_potential;
         }
         
-        float getPotential() const {
+        float get_potential() const {
             return potential;
         }
         
-        float getRestingPotential() const {
-            return restingPotential;
+        float get_resting_potential() const {
+            return resting_potential;
         }
         
-        void setRestingPotential(float newE_l) {
-            restingPotential = newE_l;
+        void set_resting_potential(float newE_l) {
+            resting_potential = newE_l;
         }
         
-        float getThreshold() const {
+        float get_threshold() const {
             return threshold;
         }
         
-        float setThreshold(float _threshold) {
+        float set_threshold(float _threshold) {
             return threshold = _threshold;
         }
         
-        float getCurrent() const {
+        float get_current() const {
             return current;
         }
-        void setCurrent(float newCurrent) {
+        void set_current(float newCurrent) {
             current = newCurrent;
         }
         
-        float getTrace() const {
+        float get_trace() const {
             return trace;
         }
         
-        void setTrace(float newtrace) {
+        void set_trace(float newtrace) {
             trace = newtrace;
         }
         
-        float getTraceTimeConstant() const {
-            return traceTimeConstant;
+        float get_trace_time_constant() const {
+            return trace_time_constant;
         }
         
-        void setTraceTimeConstant(float newConstant) {
-            traceTimeConstant = newConstant;
+        void set_trace_time_constant(float new_constant) {
+            trace_time_constant = new_constant;
         }
         
-        double getPreviousSpikeTime() const {
-            return previousSpikeTime;
+        double get_previous_spike_time() const {
+            return previous_spike_time;
         }
         
-        double getPreviousInputTime() const {
-            return previousInputTime;
+        double get_previous_input_time() const {
+            return previous_input_time;
         }
         
-        int getType() const {
-            return neuronType;
+        int get_type() const {
+            return neuron_type;
         }
         
-        std::vector<Addon*>& getRelevantAddons() {
-            return relevantAddons;
+        std::vector<Addon*>& get_relevant_addons() {
+            return relevant_addons;
         }
         
-        void addRelevantAddon(Addon* newAddon) {
-            relevantAddons.emplace_back(newAddon);
+        void add_relevant_addon(Addon* new_addon) {
+            relevant_addons.emplace_back(new_addon);
         }
 		
-        float getConductance() const {
+        float get_conductance() const {
             return conductance;
         }
         
-        void setConductance(float k) {
+        void set_conductance(float k) {
             conductance = k;
         }
         
-        void setLeakageConductance(float k) {
-            leakageConductance = k;
+        void set_leakage_conductance(float k) {
+            leakage_conductance = k;
         }
         
-        float getMembraneTimeConstant() const {
-            return membraneTimeConstant;
+        float get_membrane_time_constant() const {
+            return membrane_time_constant;
         }
         
-        void setMembraneTimeConstant(float newConstant) {
-            membraneTimeConstant = newConstant;
+        void set_membrane_time_constant(float new_constant) {
+            membrane_time_constant = new_constant;
         }
         
-        void setRefractoryPeriod(float newRefractoryPeriod) {
-            refractoryPeriod = newRefractoryPeriod;
+        void set_refractory_period(float new_refractory_period) {
+            refractory_period = new_refractory_period;
         }
         
-        std::deque<std::string>& getDecisionQueue() {
+        std::deque<std::string>& get_decision_queue() {
             return decision_queue;
         }
         
-        std::string getClassLabel() const {
-            return classLabel;
+        std::string get_class_label() const {
+            return class_label;
         }
         
-        void setClassLabel(std::string newLabel) {
-            classLabel = newLabel;
+        void set_class_label(std::string new_label) {
+            class_label = new_label;
         }
         
     protected:
         
         // loops through any learning rules and activates them
-        virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
+        virtual void request_learning(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network){}
         
         // ----- NEURON SPATIAL PARAMETERS -----
-        int                                        neuronID;
-        int                                        layerID;
-        int                                        sublayerID;
-        std::pair<int, int>                        rfCoordinates;
-        std::pair<float, float>                    xyCoordinates;
+        int                                        neuron_id;
+        int                                        layer_id;
+        int                                        sublayer_id;
+        std::pair<int, int>                        rf_coordinates;
+        std::pair<float, float>                    xy_coordinates;
         
         // ----- SYNAPSES OF THE NEURON -----
-        std::vector<Synapse*>                      dendriticTree;
-        std::vector<std::unique_ptr<Synapse>>      axonTerminals;
-        std::unique_ptr<Synapse>                   initialSynapse;
+        std::vector<Synapse*>                      dendritic_tree;
+        std::vector<std::unique_ptr<Synapse>>      axon_terminals;
+        std::unique_ptr<Synapse>                   initial_synapse;
         
         // ----- DYNAMIC VARIABLES -----
         float                                      current;
@@ -384,20 +373,20 @@ namespace hummus {
         
         // ----- FIXED PARAMETERS -----
         float                                      threshold;
-        float                                      restingPotential;
-        float                                      traceTimeConstant;
+        float                                      resting_potential;
+        float                                      trace_time_constant;
         float                                      conductance;
-        float                                      leakageConductance;
-        float                                      membraneTimeConstant;
-        float                                      refractoryPeriod;
+        float                                      leakage_conductance;
+        float                                      membrane_time_constant;
+        float                                      refractory_period;
         
         // ----- IMPLEMENTATION PARAMETERS -----
-        std::vector<Addon*>                        relevantAddons;
-        double                                     previousSpikeTime;
-        double                                     previousInputTime;
-        int                                        neuronType;
+        std::vector<Addon*>                        relevant_addons;
+        double                                     previous_spike_time;
+        double                                     previous_input_time;
+        int                                        neuron_type;
         std::deque<std::string>                    decision_queue;
-        std::string                                classLabel;
+        std::string                                class_label;
     };
 	
     class Network {
@@ -406,16 +395,16 @@ namespace hummus {
 		
 		// ----- CONSTRUCTOR AND DESTRUCTOR ------
         Network() :
-                learningStatus(true),
+                learning_status(true),
                 asynchronous(false),
                 decision_making(false),
-                learningOffSignal(-1),
+                learning_off_signal(-1),
                 verbose(0),
                 decision_pre_ts(0),
-                maxDelay(0) {
+                max_delay(0) {
                     // seeding and initialising random engine with a Mersenne Twister pseudo-random generator
                     std::random_device device;
-                    randomEngine = std::mt19937(device());
+                    random_engine = std::mt19937(device());
                 }
 		
         // ----- NETWORK IMPORT EXPORT METHODS -----
@@ -433,15 +422,15 @@ namespace hummus {
                 jsonNetwork["layers"].push_back({
                     {"width", l.width},
                     {"height",l.height},
-                    {"sublayerNumber",l.sublayers.size()},
-                    {"neuronNumber",l.neurons.size()},
-                    {"neuronType",neurons[l.neurons[0]]->getType()},
+                    {"sublayer_number",l.sublayers.size()},
+                    {"neuron_number",l.neurons.size()},
+                    {"neuron_type",neurons[l.neurons[0]]->get_type()},
                 });
             }
 			
             // saving the important information needed from the neurons
             for (auto& n: neurons) {
-                n->toJson(jsonNetwork["neurons"]);
+                n->to_json(jsonNetwork["neurons"]);
             }
             
             std::ofstream output_file(filename.append(".json"));
@@ -452,7 +441,7 @@ namespace hummus {
 		
         // adds one dimensional neurons
         template <typename T, typename... Args>
-        layer makeLayer(int _numberOfNeurons, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_layer(int _numberOfNeurons, std::vector<Addon*> _addons, Args&&... args) {
             
             if (_numberOfNeurons < 0) {
                 throw std::logic_error("the number of neurons selected is wrong");
@@ -461,20 +450,20 @@ namespace hummus {
             unsigned long shift = 0;
             
             // find the layer ID
-            int layerID = 0;
+            int layer_id = 0;
             if (!layers.empty()) {
 				
                 for (auto& l: layers) {
                     shift += l.neurons.size();
                 }
 				
-                layerID = layers.back().ID+1;
+                layer_id = layers.back().id+1;
             }
 
             // building a layer of one dimensional sublayers
             std::vector<std::size_t> neuronsInLayer;
             for (auto k=0+shift; k<_numberOfNeurons+shift; k++) {
-                neurons.emplace_back(make_unique<T>(static_cast<int>(k), layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), std::forward<Args>(args)...));
+                neurons.emplace_back(make_unique<T>(static_cast<int>(k), layer_id, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
             }
             
@@ -484,33 +473,32 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1, false});
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layer_id, -1, -1, -1, -1, false});
             return layers.back();
         }
         
         // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer
         template <typename T, typename... Args>
-        layer makeDecision(std::string trainingLabelFilename, int _spike_history_size, float _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
-            DataParser dataParser;
-            trainingLabels = dataParser.readLabels(trainingLabelFilename);
+        layer make_decision(std::deque<label> _trainingLabels, int _spike_history_size, float _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
+            training_labels = _trainingLabels;
             decision_making = true;
             // do not let the last layer propagate to the decision-making layer during the training phase
             layers.back().do_not_propagate = true;
             
             // add the unique classes to the classes_map
-            for (auto& label: trainingLabels) {
+            for (auto& label: training_labels) {
                 classes_map.insert({label.name, 0});
             }
             
             int shift = 0;
             
             // find the layer ID
-            int layerID = 0;
+            int layer_id = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += static_cast<int>(l.neurons.size());
                 }
-                layerID = layers.back().ID+1;
+                layer_id = layers.back().id+1;
             } else {
                 throw std::logic_error("the decision layer can only be on the last layer");
             }
@@ -520,7 +508,7 @@ namespace hummus {
             
             int i=0;
             for (auto it: classes_map) {
-                neurons.emplace_back(make_unique<T>(i+shift, layerID, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), it.first, std::forward<Args>(args)...));
+                neurons.emplace_back(make_unique<T>(i+shift, layer_id, 0, std::pair<int, int>(0, 0), std::pair<int, int>(-1, -1), it.first, std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
                 ++i;
             }
@@ -531,29 +519,37 @@ namespace hummus {
             }
             
             // saving the decision parameters
-            decision.layer_number = layerID;
+            decision.layer_number = layer_id;
             decision.spike_history_size = _spike_history_size;
             decision.rejection_threshold = _rejection_threshold;
             decision.timer = _timer;
             
             // building layer structure
-            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layerID, -1, -1, -1, -1, false});
+            layers.emplace_back(layer{{sublayer{neuronsInLayer, 0}}, neuronsInLayer, layer_id, -1, -1, -1, -1, false});
             return layers.back();
+        }
+        
+        // overload for the makeDecision function that takes in a path to a text label file with the format: label_name timestamp
+        template <typename T, typename... Args>
+        layer make_decision(std::string trainingLabelFilename, int _spike_history_size, float _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
+            DataParser dataParser;
+            auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
+            return make_decision<T>(training_labels, _spike_history_size, _rejection_threshold, _timer, _addons, std::forward<Args>(args)...);
         }
         
         // adds neurons arranged in circles of various radii
         template <typename T, typename... Args>
-        layer makeCircle(int _numberOfNeurons, std::vector<float> _radii, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_circle(int _numberOfNeurons, std::vector<float> _radii, std::vector<Addon*> _addons, Args&&... args) {
             
             unsigned long shift = 0;
             
             // find the layer ID
-            int layerID = 0;
+            int layer_id = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += l.neurons.size();
                 }
-                layerID = layers.back().ID+1;
+                layer_id = layers.back().id+1;
             }
             
             // building a layer of two dimensional sublayers
@@ -565,7 +561,7 @@ namespace hummus {
                 for (auto k=0+shift; k<_numberOfNeurons+shift; k++) {
                     float u = _radii[i] * std::cos(2*M_PI*(k-shift)/_numberOfNeurons);
                     float v = _radii[i] * std::sin(2*M_PI*(k-shift)/_numberOfNeurons);
-                    neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<float, float>(u, v), std::forward<Args>(args)...));
+                    neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layer_id, i, std::pair<int, int>(0, 0), std::pair<float, float>(u, v), std::forward<Args>(args)...));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
                 }
@@ -581,13 +577,13 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, -1, -1, -1, -1, false});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, -1, -1, -1, -1, false});
             return layers.back();
         }
         
         // adds a 2 dimensional grid of neurons
         template <typename T, typename... Args>
-        layer makeGrid(int gridW, int gridH, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_grid(int gridW, int gridH, int _sublayerNumber, std::vector<Addon*> _addons, Args&&... args) {
             
             // find number of neurons to build
             int numberOfNeurons = gridW * gridH;
@@ -595,12 +591,12 @@ namespace hummus {
             unsigned long shift = 0;
             
             // find the layer ID
-            int layerID = 0;
+            int layer_id = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += l.neurons.size();
                 }
-                layerID = layers.back().ID+1;
+                layer_id = layers.back().id+1;
             }
             
             // building a layer of two dimensional sublayers
@@ -611,7 +607,7 @@ namespace hummus {
                 std::vector<std::size_t> neuronsInSublayer;
                 int x = 0; int y = 0;
                 for (auto k=0+shift; k<numberOfNeurons+shift; k++) {
-                    neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), std::forward<Args>(args)...));
+                    neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layer_id, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), std::forward<Args>(args)...));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
                     
@@ -633,13 +629,13 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, gridW, gridH, -1, -1, false});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, gridW, gridH, -1, -1, false});
             return layers.back();
         }
         
         // overloading the makeGrid function to automatically generate a 2D layer according to the previous layer size
         template <typename T, typename... Args>
-        layer makeGrid(layer presynapticLayer, int _sublayerNumber, int _kernelSize, int _stride, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_grid(layer presynapticLayer, int _sublayerNumber, int _kernelSize, int _stride, std::vector<Addon*> _addons, Args&&... args) {
             // finding the number of receptive fields
             int newWidth = std::ceil((presynapticLayer.width - _kernelSize + 1) / static_cast<float>(_stride));
             int newHeight = std::ceil((presynapticLayer.height - _kernelSize + 1) / static_cast<float>(_stride));
@@ -664,12 +660,12 @@ namespace hummus {
             unsigned long shift = 0;
             
             // find the layer ID
-            int layerID = 0;
+            int layer_id = 0;
             if (!layers.empty()) {
                 for (auto& l: layers) {
                     shift += l.neurons.size();
                 }
-                layerID = layers.back().ID+1;
+                layer_id = layers.back().id+1;
             }
             
             // building a layer of two dimensional sublayers
@@ -680,7 +676,7 @@ namespace hummus {
                 std::vector<std::size_t> neuronsInSublayer;
                 int x = 0; int y = 0;
                 for (auto k=0+shift; k<numberOfNeurons+shift; k++) {
-                    neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layerID, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), std::forward<Args>(args)...));
+                    neurons.emplace_back(make_unique<T>(static_cast<int>(k)+counter, layer_id, i, std::pair<int, int>(0, 0), std::pair<int, int>(x, y), std::forward<Args>(args)...));
                     neuronsInSublayer.emplace_back(neurons.size()-1);
                     neuronsInLayer.emplace_back(neurons.size()-1);
                     
@@ -702,13 +698,13 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layerID, newWidth, newHeight, _kernelSize, _stride, false});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, newWidth, newHeight, _kernelSize, _stride, false});
             return layers.back();
         }
         
         // creates a layer that is a subsampled version of the previous layer, to the nearest divisible grid size
         template <typename T, typename... Args>
-        layer makeSubsampledGrid(layer presynapticLayer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_subsampled_grid(layer presynapticLayer, std::vector<Addon*> _addons, Args&&... args) {
             // find lowest common divisor
             int lcd = 1;
             for (auto i = 2; i <= presynapticLayer.width && i <= presynapticLayer.height; i++) {
@@ -726,23 +722,23 @@ namespace hummus {
                 std::cout << "subsampling by a factor of " << lcd << std::endl;
             }
             
-            return makeGrid<T>(presynapticLayer.width/lcd, presynapticLayer.height/lcd, static_cast<int>(presynapticLayer.sublayers.size()), _addons, std::forward<Args>(args)...);
+            return make_grid<T>(presynapticLayer.width/lcd, presynapticLayer.height/lcd, static_cast<int>(presynapticLayer.sublayers.size()), _addons, std::forward<Args>(args)...);
         }
         
 		// ----- LAYER CONNECTION METHODS -----
         
         // connecting a layer that is a convolution of the previous layer, depending on the layer kernel size and the stride. Last set of paramaters are to characterize the synapses. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays. Furthermore, you can select the number of synapses per pair of presynaptic and postsynaptic neurons (the arborescence)
         template <typename T, typename F, typename... Args>
-        void convolution(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, synapseType type, Args&&... args) {
+        void convolution(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             // error handling
-            if (postsynapticLayer.kernelSize == -1 || postsynapticLayer.stride == -1) {
+            if (postsynapticLayer.kernel_size == -1 || postsynapticLayer.stride == -1) {
                 throw std::logic_error("cannot connect the layers in a convolutional manner as the layers were not built with that in mind (no kernel or stride in the grid layer to define receptive fields");
             }
             
             // find how many neurons there are before the pre and postsynaptic layers
             int layershift = 0;
             if (!layers.empty()) {
-                for (auto i=0; i<presynapticLayer.ID; i++) {
+                for (auto i=0; i<presynapticLayer.id; i++) {
                     layershift += layers[i].neurons.size();
                 }
             }
@@ -751,11 +747,11 @@ namespace hummus {
             
             // finding range to calculate a moore neighborhood
             float range;
-            if (postsynapticLayer.kernelSize % 2 == 0) {
-                range = postsynapticLayer.kernelSize - std::ceil(postsynapticLayer.kernelSize / static_cast<float>(2)) - 0.5;
+            if (postsynapticLayer.kernel_size % 2 == 0) {
+                range = postsynapticLayer.kernel_size - std::ceil(postsynapticLayer.kernel_size / static_cast<float>(2)) - 0.5;
             }
             else {
-                range = postsynapticLayer.kernelSize - std::ceil(postsynapticLayer.kernelSize / static_cast<float>(2));
+                range = postsynapticLayer.kernel_size - std::ceil(postsynapticLayer.kernel_size / static_cast<float>(2));
             }
             
             // number of neurons surrounding the center
@@ -767,7 +763,7 @@ namespace hummus {
                 for (auto& preSub: presynapticLayer.sublayers) {
                     
                     // initialising window on the first center coordinates
-                    std::pair<float, float> centerCoordinates((postsynapticLayer.kernelSize-1)/static_cast<float>(2), (postsynapticLayer.kernelSize-1)/static_cast<float>(2));
+                    std::pair<float, float> centerCoordinates((postsynapticLayer.kernel_size-1)/static_cast<float>(2), (postsynapticLayer.kernel_size-1)/static_cast<float>(2));
                     
                     // number of neurons = number of receptive fields in the presynaptic Layer
                     int row = 0; int col = 0;
@@ -775,32 +771,32 @@ namespace hummus {
                         
                         // finding the coordinates for the presynaptic neurons in each receptive field
                         for (auto i=0; i<mooreNeighbors; i++) {
-                            int x = centerCoordinates.first + ((i % postsynapticLayer.kernelSize) - range);
-                            int y = centerCoordinates.second + ((i / postsynapticLayer.kernelSize) - range);
+                            int x = centerCoordinates.first + ((i % postsynapticLayer.kernel_size) - range);
+                            int y = centerCoordinates.second + ((i / postsynapticLayer.kernel_size) - range);
                             
                             // 2D to 1D mapping to get the index from x y coordinates
                             int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
                             
                             // changing the neuron's receptive field coordinates from the default
-                            neurons[idx]->setRfCoordinates(row, col);
+                            neurons[idx]->set_rf_coordinates(row, col);
                             
                             // connecting neurons from the presynaptic layer to the convolutional one, depedning on the number of synapses
                             for (auto i=0; i<number_of_synapses; i++) {
                                 // calculating weights and delays according to the provided distribution
-                                const std::pair<float, float> weight_delay = lambdaFunction(x, y, convSub.ID);
+                                const std::pair<float, float> weight_delay = lambdaFunction(x, y, convSub.id);
                                 
-                                // creatign a synapse between the neurons
-                                neurons[idx]->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, type, std::forward<Args>(args)...);
+                                // creating a synapse between the neurons
+                                neurons[idx]->make_synapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
                                 
                                 // to shift the network runtime by the maximum delay in the clock mode
-                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                max_delay = std::max(static_cast<float>(max_delay), weight_delay.second);
                             }
                         }
                         
                         // finding the coordinates for the center of each receptive field
                         centerCoordinates.first += postsynapticLayer.stride;
                         if (centerCoordinates.first >= presynapticLayer.width - trimmedColumns) {
-                            centerCoordinates.first = (postsynapticLayer.kernelSize-1)/static_cast<float>(2);
+                            centerCoordinates.first = (postsynapticLayer.kernel_size-1)/static_cast<float>(2);
                             centerCoordinates.second += postsynapticLayer.stride;
                         }
                         
@@ -818,16 +814,16 @@ namespace hummus {
         
         // connecting a subsampled layer to its previous layer. Last set of paramaters are to characterize the synapses. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void pooling(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, synapseType type, Args&&... args) {
+        void pooling(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             // error handling
-            if (postsynapticLayer.ID - presynapticLayer.ID > 1) {
+            if (postsynapticLayer.id - presynapticLayer.id > 1) {
                 throw std::logic_error("the layers aren't immediately following each other");
             }
             
             // find how many neurons there are before the pre and postsynaptic layers
             int layershift = 0;
             if (!layers.empty()) {
-                for (auto i=0; i<presynapticLayer.ID; i++) {
+                for (auto i=0; i<presynapticLayer.id; i++) {
                     layershift += layers[i].neurons.size();
                 }
             }
@@ -850,7 +846,7 @@ namespace hummus {
             for (auto& poolSub: postsynapticLayer.sublayers) {
                 int sublayershift = 0;
                 for (auto& preSub: presynapticLayer.sublayers) {
-                    if (poolSub.ID == preSub.ID) {
+                    if (poolSub.id == preSub.id) {
                         
                         // initialising window on the first center coordinates
                         std::pair<float, float> centerCoordinates((lcd-1)/static_cast<float>(2), (lcd-1)/static_cast<float>(2));
@@ -869,17 +865,17 @@ namespace hummus {
                                 int idx = (x + presynapticLayer.width * y) + layershift + sublayershift;
                                 
                                 // changing the neuron's receptive field coordinates from the default
-                                neurons[idx]->setRfCoordinates(row, col);
+                                neurons[idx]->set_rf_coordinates(row, col);
                                 
                                 for (auto i=0; i<number_of_synapses; i++) {
                                     // calculating weights and delays according to the provided distribution
-                                    const std::pair<float, float> weight_delay = lambdaFunction(x, y, poolSub.ID);
+                                    const std::pair<float, float> weight_delay = lambdaFunction(x, y, poolSub.id);
                                     
                                     // connecting neurons from the presynaptic layer to the convolutional one
-                                    neurons[idx]->makeSynapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, type, std::forward<Args>(args)...);
+                                    neurons[idx]->make_synapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
                                     
                                     // to shift the network runtime by the maximum delay in the clock mode
-                                    maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                    max_delay = std::max(static_cast<float>(max_delay), weight_delay.second);
                                 }
                             }
                             
@@ -905,7 +901,7 @@ namespace hummus {
         
         // interconnecting a layer (feedforward, feedback and self-excitation) with randomised weights and delays. lambdaFunction: Takes in one of the classes inside the randomDistributions folder to define a distribution for the weights.
         template <typename T, typename F, typename... Args>
-        void reservoir(layer reservoirLayer, int number_of_synapses, F&& lambdaFunction, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, synapseType type, Args&&... args) {
+        void reservoir(layer reservoirLayer, int number_of_synapses, F&& lambdaFunction, int feedforwardProbability, int feedbackProbability, int selfExcitationProbability, Args&&... args) {
             // connecting the reservoir
             for (auto pre: reservoirLayer.neurons) {
                 for (auto post: reservoirLayer.neurons) {
@@ -915,13 +911,13 @@ namespace hummus {
                         
                         // self-excitation probability
                         if (pre == post) {
-                            neurons[pre]->makeSynapse<T>(neurons[post].get(), selfExcitationProbability, weight_delay.first, weight_delay.first, type, std::forward<Args>(args)...);
+                            neurons[pre]->make_synapse<T>(neurons[post].get(), selfExcitationProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
                         } else {
                             // feedforward probability
-                            neurons[pre]->makeSynapse<T>(neurons[post].get(), feedforwardProbability, weight_delay.first, weight_delay.first, type, std::forward<Args>(args)...);
+                            neurons[pre]->make_synapse<T>(neurons[post].get(), feedforwardProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
                             
                             // feedback probability
-                            neurons[post]->makeSynapse<T>(neurons[pre].get(), feedbackProbability, weight_delay.first, weight_delay.first, type, std::forward<Args>(args)...);
+                            neurons[post]->make_synapse<T>(neurons[pre].get(), feedbackProbability, weight_delay.first, weight_delay.first, std::forward<Args>(args)...);
                         }
                     }
                 }
@@ -930,7 +926,7 @@ namespace hummus {
         
 		// connecting two layers according to a weight matrix vector of vectors and a delays matrix vector of vectors (columns for input and rows for output)
         template <typename T, typename... Args>
-        void connectivityMatrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<float>> weights, std::vector<std::vector<float>> delays, synapseType type, Args&&... args) {
+        void connectivity_matrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<float>> weights, std::vector<std::vector<float>> delays, Args&&... args) {
             
             // error handling
             if (weights.size() != delays.size() && weights[0].size() != delays[0].size()) {
@@ -954,12 +950,12 @@ namespace hummus {
                             
                             if (weights[preCounter][postCounter] != 0) {
                                 for (auto i=0; i<number_of_synapses; i++) {
-                                    neurons[preNeuron]->makeSynapse<T>(neurons[postNeuron].get(), 100, weights[preCounter][postCounter], delays[preCounter][postCounter], type, std::forward<Args>(args)...);
+                                    neurons[preNeuron]->make_synapse<T>(neurons[postNeuron].get(), 100, weights[preCounter][postCounter], delays[preCounter][postCounter], std::forward<Args>(args)...);
                                 }
                             }
                             
                             // to shift the network runtime by the maximum delay in the clock mode
-                            maxDelay = std::max(static_cast<float>(maxDelay), delays[preCounter][postCounter]);
+                            max_delay = std::max(static_cast<float>(max_delay), delays[preCounter][postCounter]);
                             
                             // looping through the rows of the weight matrix
                             postCounter += 1;
@@ -973,7 +969,7 @@ namespace hummus {
         
         // one to one connections between layers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void oneToOne(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, synapseType type, Args&&... args) {
+        void one_to_one(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             // error handling
             if (presynapticLayer.neurons.size() != postsynapticLayer.neurons.size() && presynapticLayer.width == postsynapticLayer.width && presynapticLayer.height == postsynapticLayer.height) {
                 throw std::logic_error("The presynaptic and postsynaptic layers do not have the same number of neurons. Cannot do a one-to-one connection");
@@ -985,11 +981,11 @@ namespace hummus {
                         for (auto postNeuronIdx=0; postNeuronIdx<postsynapticLayer.sublayers[postSubIdx].neurons.size(); postNeuronIdx++) {
                             if (preNeuronIdx == postNeuronIdx) {
                                 for (auto i=0; i<number_of_synapses; i++) {
-                                    const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->getXYCoordinates().second, postsynapticLayer.sublayers[postSubIdx].ID);
-                                    neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]]->makeSynapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), probability, weight_delay.first, weight_delay.second, type,  std::forward<Args>(args)...);
+                                    const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_rf_coordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_xy_coordinates().second, postsynapticLayer.sublayers[postSubIdx].id);
+                                    neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]]->make_synapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
 
                                     // to shift the network runtime by the maximum delay in the clock mode
-                                    maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                    max_delay = std::max(static_cast<float>(max_delay), weight_delay.second);
                                 }
                             }
                         }
@@ -1000,17 +996,17 @@ namespace hummus {
         
         // all to all connection between layers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T, typename F, typename... Args>
-        void allToAll(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, synapseType type, Args&&... args) {
+        void all_to_all(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             for (auto& preSub: presynapticLayer.sublayers) {
                 for (auto& preNeuron: preSub.neurons) {
                     for (auto& postSub: postsynapticLayer.sublayers) {
                         for (auto& postNeuron: postSub.neurons) {
                             for (auto i=0; i<number_of_synapses; i++) {
-                                const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->getXYCoordinates().first, neurons[postNeuron]->getXYCoordinates().second, postSub.ID);
-                                neurons[preNeuron]->makeSynapse<T>(neurons[postNeuron].get(), probability, weight_delay.first, weight_delay.second, type, std::forward<Args>(args)...);
+                                const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->get_rf_coordinates().first, neurons[postNeuron]->get_xy_coordinates().second, postSub.id);
+                                neurons[preNeuron]->make_synapse<T>(neurons[postNeuron].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
                                 
                                 // to shift the network runtime by the maximum delay in the clock mode
-                                maxDelay = std::max(static_cast<float>(maxDelay), weight_delay.second);
+                                max_delay = std::max(static_cast<float>(max_delay), weight_delay.second);
                             }
                         }
                     }
@@ -1020,7 +1016,7 @@ namespace hummus {
 
         // interconnecting a layer with soft winner-takes-all synapses, using negative weights
         template <typename T, typename F, typename... Args>
-        void lateralInhibition(layer l, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
+        void lateral_inhibition(layer l, int number_of_synapses, F&& lambdaFunction, int probability, Args&&... args) {
             for (auto& sub: l.sublayers) {
                 // intra-sublayer soft WTA
                 for (auto& preNeurons: sub.neurons) {
@@ -1028,7 +1024,7 @@ namespace hummus {
                         if (preNeurons != postNeurons) {
                             for (auto i=0; i<number_of_synapses; i++) {
                                 const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
-                                neurons[preNeurons]->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, synapseType::inhibitory, std::forward<Args>(args)...);
+                                neurons[preNeurons]->make_synapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                             }
                         }
                     }
@@ -1036,13 +1032,13 @@ namespace hummus {
                 
                 // inter-sublayer soft WTA
                 for (auto& subToInhibit: l.sublayers) {
-                    if (sub.ID != subToInhibit.ID) {
+                    if (sub.id != subToInhibit.id) {
                         for (auto& preNeurons: sub.neurons) {
                             for (auto& postNeurons: subToInhibit.neurons) {
-                                if (neurons[preNeurons]->getRfCoordinates() == neurons[postNeurons]->getRfCoordinates()) {
+                                if (neurons[preNeurons]->get_rf_coordinates() == neurons[postNeurons]->get_rf_coordinates()) {
                                     for (auto i=0; i<number_of_synapses; i++) {
                                         const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
-                                        neurons[preNeurons]->makeSynapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, synapseType::inhibitory, std::forward<Args>(args)...);
+                                        neurons[preNeurons]->make_synapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                                     }
                                 }
                             }
@@ -1054,29 +1050,72 @@ namespace hummus {
         
         // ----- PUBLIC NETWORK METHODS -----
         // adds a spike to the priority queue
-        void injectSpike(spike s) {
+        void inject_spike(spike s) {
             spike_queue.emplace(s);
         }
         
         // overloaded method - creates a spike and adds it to the spike_queue priority queue
-        void injectSpike(int neuronIndex, double timestamp) {
-            spike_queue.emplace(neurons[neuronIndex]->receiveExternalInput<Dirac>(timestamp, neuronIndex, -1, 1, 0, synapseType::excitatory));
+        void inject_spike(int neuronIndex, double timestamp) {
+            spike_queue.emplace(neurons[neuronIndex]->receive_external_input<Dirac>(timestamp, neuronIndex, -1, 1, 0));
+        }
+        
+        
+        // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
+        void inject_predicted_spike(spike s, spike_type stype) {
+            // remove old spike
+            std::remove_if(predicted_spikes.begin(), predicted_spikes.end(),[&](spike oldSpike) {
+                return oldSpike.propagation_synapse == s.propagation_synapse;
+            });
+            
+            // change type of new spike
+            s.type = stype;
+            
+            // insert the new spike in the correct place
+            predicted_spikes.insert(
+                std::upper_bound(predicted_spikes.begin(), predicted_spikes.end(), s, [](spike one, spike two){return one.timestamp < two.timestamp;}),
+                s);
+        }
+        
+        // add spikes from an input vector to the network
+        void inject_input(std::vector<input>* data) {
+            // error handling
+            if (neurons.empty()) {
+                throw std::logic_error("add neurons before injecting spikes");
+            }
+            
+            for (auto& event: *data) {
+                for (auto& n: layers[0].neurons) {
+                    // one dimensional data
+                    if (event.x == -1) {
+                        if (neurons[n]->get_neuron_id() == event.neuron_id) {
+                            inject_spike(static_cast<int>(n), event.timestamp);
+                            break;
+                        }
+                    // two dimensional data (with or without polarity is the same because polarity is unused)
+                    } else {
+                        if (neurons[n]->get_rf_coordinates().first == event.x && neurons[n]->get_xy_coordinates().second == event.y) {
+                            inject_spike(static_cast<int>(n), event.timestamp);
+                            break;
+                        }
+                    }
+                }
+            }
         }
         
         // add a poissonian spike train to the initial spike vector
-        void injectPoissonSpikes(int neuronIndex, double timestamp, float rate, float timestep, float duration) {
+        void poisson_spike_generator(int neuronIndex, double timestamp, float rate, float timestep, float duration) {
             // calculating number of spikes
             int spike_number = std::floor(duration/timestep);
             
             // initialising the random engine
             std::random_device                     device;
-            std::mt19937                           randomEngine(device());
+            std::mt19937                           random_engine(device());
             std::uniform_real_distribution<double> distribution(0.0,1.0);
             
             std::vector<double> inter_spike_intervals;
             // generating uniformly distributed random numbers
             for (auto i = 0; i < spike_number; ++i) {
-                inter_spike_intervals.emplace_back((- std::log(distribution(randomEngine)) / rate) * 1000);
+                inter_spike_intervals.emplace_back((- std::log(distribution(random_engine)) / rate) * 1000);
             }
             
             // computing spike times from inter-spike intervals
@@ -1089,74 +1128,21 @@ namespace hummus {
             
             // injecting into the initial spike vector
             for (auto& spike_time: spike_times) {
-                spike_queue.emplace(neurons[neuronIndex]->receiveExternalInput<Dirac>(spike_time, neuronIndex, -1, 1, 0, synapseType::excitatory));
+                spike_queue.emplace(neurons[neuronIndex]->receive_external_input<Dirac>(spike_time, neuronIndex, -1, 1, 0));
             }
         }
         
-        
-        // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
-        void injectPredictedSpike(spike s, spikeType stype) {
-            // remove old spike
-            std::remove_if(predictedSpikes.begin(), predictedSpikes.end(),[&](spike oldSpike) {
-                return oldSpike.propagationSynapse == s.propagationSynapse;
-            });
-            
-            // change type of new spike
-            s.type = stype;
-            
-            // insert the new spike in the correct place
-            predictedSpikes.insert(
-                std::upper_bound(predictedSpikes.begin(), predictedSpikes.end(), s, [](spike one, spike two){return one.timestamp < two.timestamp;}),
-                s);
-        }
-        
-        // add spikes from file to the network
-        void injectSpikeFromData(std::vector<input>* data) {
-            // error handling
-            if (neurons.empty()) {
-                throw std::logic_error("add neurons before injecting spikes");
-            }
-            
-            for (auto& event: *data) {
-                for (auto& n: layers[0].neurons) {
-                    // 1D or 2D data not split into sublayers
-                    if (event.polarity == -1) {
-                        // one dimensional data
-                        if (event.x == -1) {
-                            if (neurons[n]->getNeuronID() == event.neuronID) {
-                                injectSpike(static_cast<int>(n), event.timestamp);
-                                break;
-                            }
-                        // two dimensional data
-                        } else {
-                            if (neurons[n]->getXYCoordinates().first == event.x && neurons[n]->getXYCoordinates().second == event.y) {
-                                injectSpike(static_cast<int>(n), event.timestamp);
-                                break;
-                            }
-                        }
-                        
-                    // 2D data split into sublayers (polarity)
-                    } else if (event.polarity == neurons[n]->getSublayerID()) {
-                        if (neurons[n]->getXYCoordinates().first == event.x && neurons[n]->getXYCoordinates().second == event.y) {
-                            injectSpike(static_cast<int>(n), event.timestamp);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
         // turn off learning
-        void turnOffLearning() {
-            learningStatus = false;
+        void turn_off_learning() {
+            learning_status = false;
         }
         
         // overloaded function - turn off learning at a specified timestamp
-        void turnOffLearning(double timestamp) {
-            learningOffSignal = timestamp;
+        void turn_off_learning(double timestamp) {
+            learning_off_signal = timestamp;
         }
         
-        // running through the network asynchronously if timestep = 0 and synchronously otherwise
+        // running through the network asynchronously if timestep = 0 and synchronously otherwise. This method does not take any data in and just runs the network as is. the only way to add spikes is through the injectSpike / poissonSpikeGenerator or injectSpikesFromData methods
         void run(double _runtime, double _timestep=0, bool classification=false) {
             // error handling
             if (_timestep < 0) {
@@ -1180,14 +1166,14 @@ namespace hummus {
             }
 
             for (auto& addon: addons) {
-                addon->onStart(this);
+                addon->on_start(this);
             }
 			
             if (classification) {
                 std::cout << "classification is true. This instance will assume a training run has already been done, and will try to initialise the Decision-Making if it was initialised)" << std::endl;
                 
-                if (thAddon) {
-                    thAddon->reset();
+                if (th_addon) {
+                    th_addon->reset();
                 }
                 
                 // can now propagate through all layers in case a decision-making layer is present
@@ -1196,11 +1182,11 @@ namespace hummus {
                 }
                 
                 // during a classification run, labels the neurons if a decision-making layer was used
-                prepareDecisionMaking();
+                prepare_decision_making();
             }
                 
             std::mutex sync;
-            if (thAddon) {
+            if (th_addon) {
                 sync.lock();
             }
 
@@ -1209,12 +1195,11 @@ namespace hummus {
                 sync.unlock();
  
                 std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-
                     
                 if (_timestep == 0) {
-                    eventRunHelper(_runtime, _timestep, classification);
+                    event_run_helper(_runtime, _timestep, classification);
                 } else {
-                    clockRunHelper(_runtime, _timestep, classification);
+                    clock_run_helper(_runtime, _timestep, classification);
                 }
                 
                 std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
@@ -1224,12 +1209,12 @@ namespace hummus {
                 }
                     
                 for (auto& addon: addons) {
-                    addon->onCompleted(this);
+                    addon->on_completed(this);
                 }
             });
 
-            if (thAddon) {
-                thAddon->begin(this, &sync);
+            if (th_addon) {
+                th_addon->begin(this, &sync);
             }
             
             spikeManager.join();
@@ -1238,8 +1223,8 @@ namespace hummus {
             reset();
         }
 
-        // running through the network asynchronously if timestep = 0 and synchronously otherwise. This overloaded method takes in a training and an optional testing dataset instead of a runtime
-        void run(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr) {
+        // running through the network asynchronously if timestep = 0 and synchronously otherwise. This method takes in a vector of inputs from the read_txt_data method
+        void run_data(std::vector<input>* trainingData, float _timestep=0, std::vector<input>* testData=nullptr) {
             // the shift variable adds some time to the runtime - to fully visualise current dynamics
             int shift = 20;
             
@@ -1251,16 +1236,16 @@ namespace hummus {
                 n->initialisation(this);
             }
 			
-            if (learningOffSignal == -1) {
-                learningOffSignal = trainingData->back().timestamp+maxDelay+shift;
+            if (learning_off_signal == -1) {
+                learning_off_signal = trainingData->back().timestamp+max_delay+shift;
             }
 			
             for (auto& addon: addons) {
-                addon->onStart(this);
+                addon->on_start(this);
             }
 
             std::mutex sync;
-            if (thAddon) {
+            if (th_addon) {
                 sync.lock();
             }
             
@@ -1269,20 +1254,70 @@ namespace hummus {
                 sync.unlock();
                 
                 // importing training data and running the network through the data
-                train(_timestep, trainingData, shift);
+                inject_input(trainingData);
                 
-                // importing test data and running the network through the data
+                std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+                if (verbose != 0) {
+                    std::cout << "Training the network..." << std::endl;
+                }
+                
+                if (_timestep == 0) {
+                    event_run_helper(trainingData->back().timestamp+max_delay+shift, _timestep, false);
+                } else {
+                    clock_run_helper(trainingData->back().timestamp+max_delay+shift, _timestep, false);
+                }
+                
+                std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
+                if (verbose != 0) {
+                    std::cout << "it took " << elapsed_seconds.count() << "s for the training phase." << std::endl;
+                }
+                
+                // importing test data and running it through the network for classification
                 if (testData) {
-                    predict(_timestep, testData, shift);
+                    // can now propagate through all layers in case a decision-making layer is present
+                    for (auto& layer: layers) {
+                        layer.do_not_propagate = false;
+                    }
+                    
+                    learning_status = false;
+                    for (auto& n: neurons) {
+                        n->reset_neuron(this, false);
+                    }
+                    
+                    prepare_decision_making();
+                    
+                    inject_input(testData);
+                    
+                    for (auto& addon: addons) {
+                        addon->on_predict(this);
+                    }
+                    
+                    if (th_addon) {
+                        th_addon->reset();
+                    }
+                    
+                    if (verbose != 0) {
+                        std::cout << "Running classification based on a trained network..." << std::endl;
+                    }
+                    
+                    if (_timestep == 0) {
+                        event_run_helper(testData->back().timestamp+max_delay+shift, _timestep, true);
+                    } else {
+                        clock_run_helper(testData->back().timestamp+max_delay+shift, _timestep, true);
+                    }
+                    
+                    if (verbose != 0) {
+                        std::cout << "Done." << std::endl;
+                    }
                 }
 
                 for (auto& addon: addons) {
-                    addon->onCompleted(this);
+                    addon->on_completed(this);
                 }
             });
 
-            if (thAddon) {
-                thAddon->begin(this, &sync);
+            if (th_addon) {
+                th_addon->begin(this, &sync);
             }
             
             spikeManager.join();
@@ -1290,78 +1325,88 @@ namespace hummus {
             // resetting network and clearing addons initialised for this particular run
             reset();
         }
-
+        
+        // runs the network with data from a .es file
+        void run_es() {
+            
+        }
+        
+        // runs the network with a database of .es files provided by one of the database generators from the dataParser module
+        void run_database() {
+            
+        }
+        
         // reset the network back to the initial conditions without changing the network build
         void reset() {
-            learningStatus = true;
-            learningOffSignal = -1;
+            learning_status = true;
+            learning_off_signal = -1;
             
             for (auto& n: neurons) {
-                n->resetNeuron(this);
+                n->reset_neuron(this);
             }
         }
         
         // initialises an addon that needs to run on the main thread
         template <typename T, typename... Args>
-        T& makeGUI(Args&&... args) {
-            thAddon.reset(new T(std::forward<Args>(args)...));
-            return static_cast<T&>(*thAddon);
+        T& make_gui(Args&&... args) {
+            th_addon.reset(new T(std::forward<Args>(args)...));
+            return static_cast<T&>(*th_addon);
         }
         
         // initialises an addon and adds it to the addons vector. returns a reference to the add-on
         template <typename T, typename... Args>
-        T& makeAddon(Args&&... args) {
+        T& make_addon(Args&&... args) {
             addons.emplace_back(new T(std::forward<Args>(args)...));
             return static_cast<T&>(*addons.back());
         }
         
         // ----- SETTERS AND GETTERS -----
 		
-        std::vector<std::unique_ptr<Neuron>>& getNeurons() {
+        std::vector<std::unique_ptr<Neuron>>& get_neurons() {
             return neurons;
         }
 
-        std::vector<layer>& getLayers() {
+        std::vector<layer>& get_layers() {
             return layers;
         }
         
-        std::deque<std::unique_ptr<Addon>>& getAddons() {
+        std::vector<std::unique_ptr<Addon>>& get_addons() {
             return addons;
         }
         
-        std::unique_ptr<MainThreadAddon>& getMainThreadAddon() {
-            return thAddon;
+        std::unique_ptr<MainThreadAddon>& get_main_thread_addon() {
+            return th_addon;
         }
 
-        void setMainThreadAddon(MainThreadAddon* newThAddon) {
-            thAddon.reset(newThAddon);
+        void set_main_thread_addon(MainThreadAddon* new_thAddon) {
+            th_addon.reset(new_thAddon);
         }
 
-        bool getLearningStatus() const {
-            return learningStatus;
+        bool get_learning_status() const {
+            return learning_status;
         }
         
-        double getLearningOffSignal() const {
-            return learningOffSignal;
+        double get_learning_off_signal() const {
+            return learning_off_signal;
         }
         
-        std::string getCurrentLabel() const {
-            return currentLabel;
+        std::string get_current_label() const {
+            return current_label;
         }
         
-        bool getDecisionMaking() {
+        bool get_decision_making() {
             return decision_making;
         }
         
-        bool getNetworkType() const {
+        bool get_network_type() const {
             return asynchronous;
         }
         
-        int getVerbose() const {
+        int get_verbose() const {
             return verbose;
         }
 		
-        decisionHeuristics& getDecisionParameters() {
+        decision_heuristics& getDecisionParameters() {
             return decision;
         }
         
@@ -1378,86 +1423,64 @@ namespace hummus {
 
         // -----PROTECTED NETWORK METHODS -----
         
-        // importing training data and running the network through the data
-        void train(double timestep, std::vector<input>* trainingData, int shift) {
-            injectSpikeFromData(trainingData);
-            
-            std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-            if (verbose != 0) {
-                std::cout << "Training the network..." << std::endl;
-            }
-            
-            if (timestep == 0) {
-                eventRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
-            } else {
-                clockRunHelper(trainingData->back().timestamp+maxDelay+shift, timestep, false);
-            }
-            
-            std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
-            if (verbose != 0) {
-                std::cout << "it took " << elapsed_seconds.count() << "s for the training phase." << std::endl;
-            }
-        }
-
-        // importing test data and running it through the network for classification
-        void predict(double timestep, std::vector<input>* testData, int shift) {
-            
-            // can now propagate through all layers in case a decision-making layer is present
-            for (auto& layer: layers) {
-                layer.do_not_propagate = false;
-            }
-            
-            learningStatus = false;
-            for (auto& n: neurons) {
-                n->resetNeuron(this, false);
-            }
-
-            prepareDecisionMaking();
-            
-            injectSpikeFromData(testData);
-			
-            for (auto& addon: addons) {
-				addon->onPredict(this);
-			}
-			
-            if (thAddon) {
-                thAddon->reset();
-            }
-            
-            if (verbose != 0) {
-                std::cout << "Running classification based on a trained network..." << std::endl;
-            }
-            
-            if (timestep == 0) {
-                eventRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
-            } else {
-                clockRunHelper(testData->back().timestamp+maxDelay+shift, timestep, true);
-            }
-            
-            if (verbose != 0) {
-                std::cout << "Done." << std::endl;
-            }
-        }
-        
-        
         // helper function that runs the network when event-mode is selected
-        void eventRunHelper(double runtime, double timestep, bool classification=false) {
+        void event_run_helper(double runtime, double timestep, bool classification=false) {
+            // lambda function to update neuron status asynchronously
+            auto requestUpdate = [&](spike s, bool classification) {
+                if (!classification) {
+                    if (!training_labels.empty()) {
+                        if (training_labels.front().onset <= s.timestamp) {
+                            current_label = training_labels.front().name;
+                            training_labels.pop_front();
+                        }
+                    }
+                    
+                    if (learning_off_signal != -1) {
+                        if (learning_status==true && s.timestamp >= learning_off_signal) {
+                            if (verbose != 0) {
+                                std::cout << "learning turned off at t=" << s.timestamp << std::endl;
+                            }
+                            learning_status = false;
+                        }
+                    }
+                } else {
+                    if (decision_making) {
+                        if (s.timestamp - decision_pre_ts >= decision.timer) {
+                            // make all the decision neurons fire
+                            for (auto& n: layers[decision.layer_number].neurons) {
+                                // generate a decision spike if the neuron is connected to anything
+                                if (!neurons[n]->get_dendritic_tree().empty()) {
+                                    neurons[n]->update(s.timestamp, nullptr, this, spike_type::decision);
+                                } else {
+                                    if (verbose == 2) {
+                                        std::cout << "No neurons have specialised for the decision neuron with the label " << neurons[n]->get_class_label() << std::endl;
+                                    }
+                                }
+                            }
+                            // saving previous timestamp
+                            decision_pre_ts = s.timestamp;
+                        }
+                    }
+                }
+                neurons[s.propagation_synapse->get_postsynaptic_neuron_id()]->update(s.timestamp, s.propagation_synapse, this, s.type);
+            };
+            
             if (!neurons.empty()) {
-                while (!spike_queue.empty() || !predictedSpikes.empty()) {
-                    if (!spike_queue.empty() && predictedSpikes.empty()) {
+                while (!spike_queue.empty() || !predicted_spikes.empty()) {
+                    if (!spike_queue.empty() && predicted_spikes.empty()) {
                         requestUpdate(spike_queue.top(), classification);
                         spike_queue.pop();
-                    } else if (!predictedSpikes.empty() && spike_queue.empty()) {
-                        requestUpdate(predictedSpikes.front(), classification);
-                        predictedSpikes.pop_front();
-                    } else if (!predictedSpikes.empty() && !spike_queue.empty()) {
-                        if (spike_queue.top().timestamp < predictedSpikes.front().timestamp) {
+                    } else if (!predicted_spikes.empty() && spike_queue.empty()) {
+                        requestUpdate(predicted_spikes.front(), classification);
+                        predicted_spikes.pop_front();
+                    } else if (!predicted_spikes.empty() && !spike_queue.empty()) {
+                        if (spike_queue.top().timestamp < predicted_spikes.front().timestamp) {
                             requestUpdate(spike_queue.top(), classification);
                             spike_queue.pop();
-                        } else if (predictedSpikes.front().timestamp < spike_queue.top().timestamp) {
-                            requestUpdate(predictedSpikes.front(), classification);
-                            predictedSpikes.pop_front();
-                        } else if (predictedSpikes.front().timestamp == spike_queue.top().timestamp) {
+                        } else if (predicted_spikes.front().timestamp < spike_queue.top().timestamp) {
+                            requestUpdate(predicted_spikes.front(), classification);
+                            predicted_spikes.pop_front();
+                        } else if (predicted_spikes.front().timestamp == spike_queue.top().timestamp) {
                             requestUpdate(spike_queue.top(), classification);
                             spike_queue.pop();
                         }
@@ -1468,72 +1491,32 @@ namespace hummus {
             }
         }
         
-        // update neuron status asynchronously
-        void requestUpdate(spike s, bool classification=false) {
-            if (!classification) {
-                if (!trainingLabels.empty()) {
-                    if (trainingLabels.front().onset <= s.timestamp) {
-                        currentLabel = trainingLabels.front().name;
-                        trainingLabels.pop_front();
-                    }
-                }
-                
-                if (learningOffSignal != -1) {
-                    if (learningStatus==true && s.timestamp >= learningOffSignal) {
-                        if (verbose != 0) {
-                            std::cout << "learning turned off at t=" << s.timestamp << std::endl;
-                        }
-                        learningStatus = false;
-                    }
-                }
-            } else {
-                if (decision_making) {
-                    if (s.timestamp - decision_pre_ts >= decision.timer) {
-                        // make all the decision neurons fire
-                        for (auto& n: layers[decision.layer_number].neurons) {
-                            // generate a decision spike if the neuron is connected to anything
-                            if (!neurons[n]->getDendriticTree().empty()) {
-                                neurons[n]->update(s.timestamp, nullptr, this, spikeType::decision);
-                            } else {
-                                if (verbose == 2) {
-                                    std::cout << "No neurons have specialised for the decision neuron with the label " << neurons[n]->getClassLabel() << std::endl;
-                                }
-                            }
-                        }
-                        // saving previous timestamp
-                        decision_pre_ts = s.timestamp;
-                    }
-                }
-            }
-            neurons[s.propagationSynapse->getPostsynapticNeuronID()]->update(s.timestamp, s.propagationSynapse, this, s.type);
-        }
-        
         // helper function that runs the network when clock-mode is selected
-        void clockRunHelper(double runtime, double timestep, bool classification=false) {
+        void clock_run_helper(double runtime, double timestep, bool classification=false) {
             if (!neurons.empty()) {
-
+                
                 // creating vector of the same size as neurons
                 std::vector<bool> neuronStatus(neurons.size(), false);
-
+                
                 // loop over the full runtime
                 for (double i=0; i<runtime; i+=timestep) {
                     // for cross-validation / test phase
                     if (!classification) {
                         // get the current training label if a set of labels are provided
-                        if (!trainingLabels.empty()) {
-                            if (trainingLabels.front().onset <= i) {
-                                currentLabel = trainingLabels.front().name;
-                                trainingLabels.pop_front();
+                        if (!training_labels.empty()) {
+                            if (training_labels.front().onset <= i) {
+                                current_label = training_labels.front().name;
+                                training_labels.pop_front();
                             }
                         }
 
                         // turn off learning for classification
-                        if (learningOffSignal != -1) {
-                            if (learningStatus==true && i >= learningOffSignal) {
+                        if (learning_off_signal != -1) {
+                            if (learning_status==true && i >= learning_off_signal) {
                                 if (verbose != 0) {
                                     std::cout << "learning turned off at t=" << i << std::endl;
                                 }
-                                learningStatus = false;
+                                learning_status = false;
                             }
                         }
                     } else {
@@ -1542,11 +1525,11 @@ namespace hummus {
                                 // make all the decision neurons fire
                                 for (auto& n: layers[decision.layer_number].neurons) {
                                     // generate a decision spike if the neuron is connected to anything
-                                    if (!neurons[n]->getDendriticTree().empty()) {
-                                        neurons[n]->update(i, nullptr, this, spikeType::decision);
+                                    if (!neurons[n]->get_dendritic_tree().empty()) {
+                                        neurons[n]->update(i, nullptr, this, spike_type::decision);
                                     } else {
                                         if (verbose == 2) {
-                                            std::cout << "No neurons have specialised for the decision neuron with the label " << neurons[n]->getClassLabel() << std::endl;
+                                            std::cout << "No neurons have specialised for the decision neuron with the label " << neurons[n]->get_class_label() << std::endl;
                                         }
                                     }
                                 }
@@ -1559,8 +1542,8 @@ namespace hummus {
 
                     while (!spike_queue.empty() && spike_queue.top().timestamp <= i) {
                         // access first element and update corresponding neuron
-                        auto index = spike_queue.top().propagationSynapse->getPostsynapticNeuronID();
-                        neurons[index]->updateSync(i, spike_queue.top().propagationSynapse, this, timestep, spike_queue.top().type);
+                        auto index = spike_queue.top().propagation_synapse->get_postsynaptic_neuron_id();
+                        neurons[index]->update_sync(i, spike_queue.top().propagation_synapse, this, timestep, spike_queue.top().type);
                         neuronStatus[index] = true;
 
                         // remove first element
@@ -1573,11 +1556,11 @@ namespace hummus {
                             neuronStatus[idx] = false;
                         } else {
                             // only update neurons if the previous layer is propagating
-                            if (neurons[idx]->getLayerID() == 0) {
-                                neurons[idx]->updateSync(i, nullptr, this, timestep, spikeType::none);
+                            if (neurons[idx]->get_layer_id() == 0) {
+                                neurons[idx]->update_sync(i, nullptr, this, timestep, spike_type::none);
                             } else {
-                                if (!layers[neurons[idx]->getLayerID()-1].do_not_propagate) {
-                                    neurons[idx]->updateSync(i, nullptr, this, timestep, spikeType::none);
+                                if (!layers[neurons[idx]->get_layer_id()-1].do_not_propagate) {
+                                    neurons[idx]->update_sync(i, nullptr, this, timestep, spike_type::none);
                                 }
                             }
                         }
@@ -1589,7 +1572,7 @@ namespace hummus {
         }
 		
         // method used to label and set the weights for the neurons connecting to the decision-making layer
-        void prepareDecisionMaking() {
+        void prepare_decision_making() {
             if (decision_making) {
 
                 if (verbose == 1) {
@@ -1598,21 +1581,21 @@ namespace hummus {
                 
                 // clearing synapses in case user accidentally created them on decision-making neurons earlier
                 for (auto& decision_n: layers[decision.layer_number].neurons) {
-                    neurons[decision_n]->getAxonTerminals().clear();
-                    neurons[decision_n]->getDendriticTree().clear();
+                    neurons[decision_n]->get_axon_terminals().clear();
+                    neurons[decision_n]->get_dendritic_tree().clear();
                 }
                 
                 // loop through last layer before DM
                 for (auto& pre_decision_n: layers[decision.layer_number-1].neurons) {
                     auto& neuron_to_label = neurons[pre_decision_n];
-                    if (!neuron_to_label->getDecisionQueue().empty()) {
+                    if (!neuron_to_label->get_decision_queue().empty()) {
                         // resetting the unordered map values to 0 for every neuron
                         for (auto& label: classes_map) {
                             label.second = 0;
                         }
                         
                         // loop through the decision_queue of a neuron and find the number of spikes per label
-                        for (auto& label: neuron_to_label->getDecisionQueue()) {
+                        for (auto& label: neuron_to_label->get_decision_queue()) {
                             ++classes_map[label];
                         }
                         
@@ -1623,14 +1606,14 @@ namespace hummus {
                                                                                     });
                         
                         // assign label to neuron if element larger than the rejection threshold
-                        if (max_label.second / neuron_to_label->getDecisionQueue().size() >= decision.rejection_threshold) {
-                            neuron_to_label->setClassLabel(max_label.first);
+                        if (max_label.second / neuron_to_label->get_decision_queue().size() >= decision.rejection_threshold) {
+                            neuron_to_label->set_class_label(max_label.first);
                         }
                         
                         for (auto& decision_n: layers[decision.layer_number].neurons) {
                             // connect the neuron to its corresponding decision making neuron if they have the same label
-                            if (!max_label.first.compare(neurons[decision_n]->getClassLabel())) {
-                                neuron_to_label->makeSynapse<Dirac>(neurons[decision_n].get(), 100, 1, 0, synapseType::excitatory);
+                            if (!max_label.first.compare(neurons[decision_n]->get_class_label())) {
+                                neuron_to_label->make_synapse<Dirac>(neurons[decision_n].get(), 100, 1, 0, synapseType::excitatory);
                             }
                         }
                     }
@@ -1641,21 +1624,21 @@ namespace hummus {
 		// ----- IMPLEMENTATION VARIABLES -----
         int                                                 verbose;
         std::priority_queue<spike>                          spike_queue;
-        std::deque<spike>                                   predictedSpikes;
+        std::deque<spike>                                   predicted_spikes;
         std::vector<layer>                                  layers;
 		std::vector<std::unique_ptr<Neuron>>                neurons;
-        std::deque<std::unique_ptr<Addon>>                  addons;
-        std::unique_ptr<MainThreadAddon>                    thAddon;
-		std::deque<label>                                   trainingLabels;
+        std::vector<std::unique_ptr<Addon>>                 addons;
+        std::unique_ptr<MainThreadAddon>                    th_addon;
+		std::deque<label>                                   training_labels;
         bool                                                decision_making;
         std::unordered_map<std::string, int>                classes_map;
-        std::string                                         currentLabel;
-		bool                                                learningStatus;
-		double                                              learningOffSignal;
-        int                                                 maxDelay;
+        std::string                                         current_label;
+		bool                                                learning_status;
+		double                                              learning_off_signal;
+        int                                                 max_delay;
         bool                                                asynchronous;
-        std::mt19937                                        randomEngine;
-        decisionHeuristics                                  decision;
+        std::mt19937                                        random_engine;
+        decision_heuristics                                 decision;
         double                                              decision_pre_ts;
     };
 }

@@ -1,5 +1,5 @@
 /*
- * jsonParser.cpp
+ * json_parser.cpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -14,44 +14,23 @@
 
 #include "../source/builder.hpp"
 #include "../source/core.hpp"
-#include "../source/randomDistributions/normal.hpp"
-#include "../source/GUI/qt/qtDisplay.hpp"
-
-#include "../source/neurons/parrot.hpp"
-#include "../source/neurons/decisionMaking.hpp"
-#include "../source/neurons/LIF.hpp"
-
-#include "../source/addons/spikeLogger.hpp"
-#include "../source/addons/potentialLogger.hpp"
-#include "../source/addons/classificationLogger.hpp"
-#include "../source/addons/myelinPlasticityLogger.hpp"
-#include "../source/addons/analysis.hpp"
-
-#include "../source/learningRules/myelinPlasticity.hpp"
-#include "../source/learningRules/rewardModulatedSTDP.hpp"
-#include "../source/learningRules/stdp.hpp"
-
-#include "../source/synapses/exponential.hpp"
-#include "../source/synapses/dirac.hpp"
-#include "../source/synapses/pulse.hpp"
-
-#include "../source/dependencies/json.hpp"
+#include "../source/GUI/display.hpp"
 
 int main(int argc, char** argv) {
     hummus::Network network;
-    auto& display = network.makeGUI<hummus::QtDisplay>();
+    auto& display = network.make_gui<hummus::Display>();
     
     hummus::Builder bob(&network);
     bob.import("../../data/testSave.json");
     
     //  ----- INJECTING SPIKES -----
-    network.injectSpike(0, 10);
-    network.injectSpike(0, 11);
-    network.injectSpike(0, 30);
+    network.inject_spike(0, 10);
+    network.inject_spike(0, 11);
+    network.inject_spike(0, 30);
     
     //  ----- DISPLAY SETTINGS -----
-    display.setTimeWindow(100);
-    display.trackNeuron(1);
+    display.set_time_window(100);
+    display.track_neuron(2);
     
     network.run(100, 0.1);
     

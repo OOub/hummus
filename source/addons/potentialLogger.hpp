@@ -18,21 +18,22 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include "../core.hpp"
-#include "spikeLogger.hpp"
-#include "../dataParser.hpp"
-
 namespace hummus {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
     class PotentialLogger : public Addon {
         
     public:
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         // constructor to log all neurons of a layer
         PotentialLogger(std::string filename, bool logLearning=true) :
-                saveFile(filename, std::ios::out | std::ios::binary),
-                logEverything(logLearning),
-                previousTimestamp(0) {
-            if (!saveFile.good()) {
+                save_file(filename, std::ios::out | std::ios::binary),
+                log_everything(logLearning),
+                previous_timestamp(0) {
+            if (!save_file.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
         }
@@ -50,103 +51,103 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-        void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            if (logEverything) {
+        void incoming_spike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            if (log_everything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
-                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
-                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
+                copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+                copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                 
                 // saving to file
-                saveFile.write(bytes.data(), bytes.size());
+                save_file.write(bytes.data(), bytes.size());
                 
                 // changing the previous timestamp
-                previousTimestamp = timestamp;
+                previous_timestamp = timestamp;
             } else {
                 // logging only after learning is stopped
-                if (!network->getLearningStatus()) {
+                if (!network->get_learning_status()) {
                     // defining what to save and constraining it so that file size doesn't blow up
                     std::array<char, 8> bytes;
-                    SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(network->getNeurons()[s->getPostsynapticNeuronID()]->getPotential() * 100));
-                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(s->getPostsynapticNeuronID()));
+                    copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                    copy_to(bytes.data() + 4, static_cast<int16_t>(network->get_neurons()[s->get_postsynaptic_neuron_id()]->get_potential() * 100));
+                    copy_to(bytes.data() + 6, static_cast<int16_t>(s->get_postsynaptic_neuron_id()));
                     
                     // saving to file
-                    saveFile.write(bytes.data(), bytes.size());
+                    save_file.write(bytes.data(), bytes.size());
                     
                     // changing the previous timestamp
-                    previousTimestamp = timestamp;
+                    previous_timestamp = timestamp;
                 }
             }
         }
         
-        void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            if (logEverything) {
+        void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            if (log_everything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
-                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
-                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
+                copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+                copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                 
                 // saving to file
-                saveFile.write(bytes.data(), bytes.size());
+                save_file.write(bytes.data(), bytes.size());
                 
                 // changing the previous timestamp
-                previousTimestamp = timestamp;
+                previous_timestamp = timestamp;
             } else {
                 // logging only after learning is stopped
-                if (!network->getLearningStatus()) {
+                if (!network->get_learning_status()) {
                     // defining what to save and constraining it so that file size doesn't blow up
                     std::array<char, 8> bytes;
-                    SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
-                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
+                    copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                    copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+                    copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                     
                     // saving to file
-                    saveFile.write(bytes.data(), bytes.size());
+                    save_file.write(bytes.data(), bytes.size());
                     
                     // changing the previous timestamp
-                    previousTimestamp = timestamp;
+                    previous_timestamp = timestamp;
                 }
             }
         }
         
         void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
-            if (logEverything) {
+            if (log_everything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;
-                SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
-                SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
+                copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+                copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                 
                 // saving to file
-                saveFile.write(bytes.data(), bytes.size());
+                save_file.write(bytes.data(), bytes.size());
                 
                 // changing the previous timestamp
-                previousTimestamp = timestamp;
+                previous_timestamp = timestamp;
             } else {
                 // logging only after learning is stopped
-                if (!network->getLearningStatus()) {
+                if (!network->get_learning_status()) {
                     // defining what to save and constraining it so that file size doesn't blow up
                     std::array<char, 8> bytes;
-                    SpikeLogger::copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previousTimestamp) * 100));
-                    SpikeLogger::copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->getPotential() * 100));
-                    SpikeLogger::copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->getNeuronID()));
+                    copy_to(bytes.data() + 0, static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                    copy_to(bytes.data() + 4, static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+                    copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                     
                     // saving to file
-                    saveFile.write(bytes.data(), bytes.size());
+                    save_file.write(bytes.data(), bytes.size());
                     
                     // changing the previous timestamp
-                    previousTimestamp = timestamp;
+                    previous_timestamp = timestamp;
                 }
             }
         }
 
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
-        std::ofstream        saveFile;
-        bool                 logEverything;
-        double               previousTimestamp;
+        std::ofstream        save_file;
+        bool                 log_everything;
+        double               previous_timestamp;
 	};
 }

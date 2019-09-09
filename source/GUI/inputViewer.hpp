@@ -28,12 +28,11 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-#include "../../core.hpp"
-
 Q_DECLARE_METATYPE(QtCharts::QAbstractSeries *)
 Q_DECLARE_METATYPE(QtCharts::QValueAxis *)
 
 namespace hummus {
+    
     class InputViewer : public QObject {
         
     Q_OBJECT
@@ -57,15 +56,15 @@ namespace hummus {
         virtual ~InputViewer(){}
 		
     	// ----- PUBLIC INPUTVIEWER METHODS -----
-		void handleData(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) {
+		void handle_data(double timestamp, int presynapticNeuronID, int postsynapticNeuronID, int postsynapticSublayerID) {
             maxX = timestamp;
-            if (s && s->getPresynapticNeuronID() == -1) {
-                if (postsynapticNeuron->getSublayerID() == sublayerTracker) {
+            if (presynapticNeuronID == -1) {
+                if (postsynapticSublayerID == sublayerTracker) {
     
                     while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
                     if (!isClosed) {
-                        points.append(QPointF(timestamp, postsynapticNeuron->getNeuronID()));
-                        maxY = std::max(static_cast<float>(maxY), static_cast<float>(postsynapticNeuron->getNeuronID()));
+                        points.append(QPointF(timestamp, postsynapticNeuronID));
+                        maxY = std::max(static_cast<float>(maxY), static_cast<float>(postsynapticNeuronID));
                     } else {
                         points.clear();
                     }
@@ -74,20 +73,20 @@ namespace hummus {
             }
         }
 		
-		void handleTimestep(double timestamp) {
+		void handle_timestep(double timestamp) {
 			maxX = timestamp;
         }
 		
 		// ----- SETTERS -----
-        void setTimeWindow(double newWindow) {
+        void set_time_window(double newWindow) {
             timeWindow = newWindow;
         }
 		
-        void setYLookup(std::vector<int> newLookup) {
+        void set_y_lookup(std::vector<int> newLookup) {
 		    yLookupTable = newLookup;
 		}
 		
-		void useHardwareAcceleration(bool accelerate) {
+		void hardware_acceleration(bool accelerate) {
             openGL = accelerate;
         }
         
@@ -99,7 +98,7 @@ namespace hummus {
     public slots:
 		
     	// ----- QT-RELATED METHODS -----
-    	void changeSublayer(int newSublayer) {
+    	void change_sublayer(int newSublayer) {
 			sublayerTracker = newSublayer;
 			
 			if (newSublayer > 0) {

@@ -1,5 +1,5 @@
 /*
- * stdpPotentiation.cpp
+ * stdp_test.cpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -14,26 +14,20 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/randomDistributions/normal.hpp"
-#include "../source/GUI/qt/qtDisplay.hpp"
+#include "../source/GUI/display.hpp"
 #include "../source/learningRules/stdp.hpp"
-#include "../source/learningRules/timeInvariantSTDP.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
-#include "../source/learningRules/rewardModulatedSTDP.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/LIF.hpp"
-#include "../source/neurons/decisionMaking.hpp"
-#include "../source/synapses/exponential.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 
-	auto trainingData = dataParser.readData("../../data/stdpTest.txt");
+	auto trainingData = dataParser.read_txt_data("../../data/stdpTest.txt");
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
-    auto& display = network.makeGUI<hummus::QtDisplay>();
+    auto& display = network.make_gui<hummus::Display>();
 
     //  ----- NETWORK PARAMETERS -----
     float conductance = 200;
@@ -44,23 +38,23 @@ int main(int argc, char** argv) {
     float weight = 1./10;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
-    auto& stdp = network.makeAddon<hummus::STDP>();
+    auto& stdp = network.make_addon<hummus::STDP>();
 
 	//  ----- CREATING THE NETWORK -----
-    auto input = network.makeLayer<hummus::Parrot>(inputNeurons, {});
-    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&stdp}, refractoryPeriod, conductance, leakageConductance, false, true);
+    auto input = network.make_layer<hummus::Parrot>(inputNeurons, {});
+    auto output = network.make_layer<hummus::LIF>(layer1Neurons, {&stdp}, refractoryPeriod, conductance, leakageConductance, false, true);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 0, 0), 100, hummus::synapseType::excitatory);
+    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 0, 0), 100);
 
     //  ----- DISPLAY SETTINGS -----
-  	display.setTimeWindow(100);
-  	display.trackNeuron(10);
-  	display.trackLayer(1);
-    display.plotCurrents(true);
+  	display.set_time_window(100);
+  	display.track_neuron(10);
+  	display.track_layer(1);
+    display.plot_currents(true);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0.1);
+    network.run_data(&trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

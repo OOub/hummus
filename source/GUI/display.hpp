@@ -1,5 +1,5 @@
 /*
- * qtDisplay.hpp
+ * display.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -22,18 +22,22 @@
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
 
-#include "../../core.hpp"
 #include "inputViewer.hpp"
 #include "outputViewer.hpp"
 #include "dynamicsViewer.hpp"
 
 namespace hummus {
-    class QtDisplay : public MainThreadAddon {
+    
+    class Synapse;
+    class Neuron;
+    class Network;
+    
+    class Display : public MainThreadAddon {
         
     public:
 
     	// ----- CONSTRUCTOR AND DESTRUCTOR-----
-        QtDisplay() :
+        Display() :
                 neuronToTrack(-1),
                 inputSublayerToTrack(0),
                 outputLayerToTrack(1),
@@ -73,71 +77,71 @@ namespace hummus {
             dynamics_viewer = window->findChild<DynamicsViewer*>("dynamicsViewer");
         }
         
-        virtual ~QtDisplay(){}
+        virtual ~Display(){}
         
     	// ----- PUBLIC DISPLAY METHODS -----
-		void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-			dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+		void incoming_spike(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
+            dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
 		}
 
-        void neuronFired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-			input_viewer->handleData(timestamp, s, postsynapticNeuron, network);
-			output_viewer->handleData(timestamp, s, postsynapticNeuron, network);
-			dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+        void neuron_fired(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
+            input_viewer->handle_data(timestamp, s->get_presynaptic_neuron_id(), postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_sublayer_id());
+			output_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_layer_id(), postsynaptic_neuron->get_sublayer_id());
+            dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
 		}
 
-		void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
-			input_viewer->handleTimestep(timestamp);
-			output_viewer->handleTimestep(timestamp);
-			dynamics_viewer->handleTimestep(timestamp, postsynapticNeuron, network);
+		void timestep(double timestamp, Neuron* postsynaptic_neuron, Network* network) override {
+            input_viewer->handle_timestep(timestamp);
+            output_viewer->handle_timestep(timestamp);
+            dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
 		}
 
-        void statusUpdate(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            input_viewer->handleTimestep(timestamp);
-            output_viewer->handleTimestep(timestamp);
-            dynamics_viewer->handleData(timestamp, s, postsynapticNeuron, network);
+        void status_update(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
+            input_viewer->handle_timestep(timestamp);
+            output_viewer->handle_timestep(timestamp);
+            dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
         }
         
 		void begin(Network* network, std::mutex* sync) override {
             // finding the number of layers in the network
-            int numberOfLayers = static_cast<int>(network->getLayers().size());
+            int numberOfLayers = static_cast<int>(network->get_layers().size());
 
             // number of sublayers in each layer
             std::vector<int> sublayerInLayers;
-            for (auto& l: network->getLayers()) {
+            for (auto& l: network->get_layers()) {
                 sublayerInLayers.emplace_back(l.sublayers.size());
             }
 
             // number of neurons in each layer
             std::vector<int> neuronsInLayers;
-            for (auto& l: network->getLayers()) {
+            for (auto& l: network->get_layers()) {
                 neuronsInLayers.emplace_back(l.neurons.size());
             }
 
             // number of neurons in each sublayer
             std::vector<std::vector<int>> neuronsInSublayers(numberOfLayers);
             int idx = 0;
-            for (auto& l: network->getLayers()) {
+            for (auto& l: network->get_layers()) {
                 for (auto& s: l.sublayers) {
                     neuronsInSublayers[idx].emplace_back(s.neurons.size());
                 }
                 idx += 1;
             }
 
-            int neuronNumber = static_cast<int>(network->getNeurons().size());
+            int neuronNumber = static_cast<int>(network->get_neurons().size());
             
             engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
             engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
             engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
 
-            input_viewer->setYLookup(neuronsInSublayers[0]);
-            output_viewer->setEngine(engine);
-            output_viewer->setYLookup(neuronsInSublayers, neuronsInLayers);
+            input_viewer->set_y_lookup(neuronsInSublayers[0]);
+            output_viewer->set_engine(engine);
+            output_viewer->set_y_lookup(neuronsInSublayers, neuronsInLayers);
 
-            input_viewer->changeSublayer(inputSublayerToTrack);
-            output_viewer->changeLayer(outputLayerToTrack);
-            output_viewer->changeSublayer(outputSublayerToTrack);
-            dynamics_viewer->trackNeuron(neuronToTrack);
+            input_viewer->change_sublayer(inputSublayerToTrack);
+            output_viewer->change_layer(outputLayerToTrack);
+            output_viewer->change_sublayer(outputSublayerToTrack);
+            dynamics_viewer->track_neuron(neuronToTrack);
 			
             sync->unlock();
 
@@ -151,37 +155,37 @@ namespace hummus {
         }
         
 		// ----- SETTERS -----
-		void useHardwareAcceleration(bool accelerate) {
-            input_viewer->useHardwareAcceleration(accelerate);
-            output_viewer->useHardwareAcceleration(accelerate);
-            dynamics_viewer->useHardwareAcceleration(accelerate);
+		void hardware_acceleration(bool accelerate) {
+            input_viewer->hardware_acceleration(accelerate);
+            output_viewer->hardware_acceleration(accelerate);
+            dynamics_viewer->hardware_acceleration(accelerate);
         }
 
-		void trackLayer(int layerToTrack) {
+		void track_layer(int layerToTrack) {
 			outputLayerToTrack = layerToTrack;
 		}
 		
-		void trackInputSublayer(int sublayerToTrack) {
+		void track_input_sublayer(int sublayerToTrack) {
 			inputSublayerToTrack = sublayerToTrack;
 		}
 		
-		void trackOutputSublayer(int sublayerToTrack) {
+		void track_output_sublayer(int sublayerToTrack) {
 			outputSublayerToTrack = sublayerToTrack;
 		}
 		
-        void trackNeuron(int _neuronToTrack) {
+        void track_neuron(int _neuronToTrack) {
         	neuronToTrack = _neuronToTrack;
         }
 
-		void setTimeWindow(double newWindow) {
-            input_viewer->setTimeWindow(newWindow);
-            output_viewer->setTimeWindow(newWindow);
-            dynamics_viewer->setTimeWindow(newWindow);
+		void set_time_window(double newWindow) {
+            input_viewer->set_time_window(newWindow);
+            output_viewer->set_time_window(newWindow);
+            dynamics_viewer->set_time_window(newWindow);
         }
 		
-        void plotCurrents(bool current_plot=true) {
+        void plot_currents(bool current_plot=true) {
             engine->rootContext()->setContextProperty("displayCurrents", current_plot);
-            dynamics_viewer->plotCurrents(current_plot);
+            dynamics_viewer->plot_currents(current_plot);
         }
         
     protected:

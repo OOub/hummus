@@ -8,8 +8,6 @@
  *
  * Information: The stdp learning rule has to be on a postsynaptic layer because it automatically detects the presynaptic layer.
  * Adapted From: Galluppi, F., Lagorce, X., Stromatias, E., Pfeiffer, M., Plana, L. A., Furber, S. B., & Benosman, R. B. (2015). A framework for plasticity implementation on the SpiNNaker neural architecture. Frontiers in Neuroscience, 8. doi:10.3389/fnins.2014.00429
- *
- * LEARNING RULE TYPE 1 (in JSON SAVE FILE)
  */
 
 #pragma once
@@ -27,8 +25,10 @@ namespace hummus {
                 A_plus(_A_plus),
                 A_minus(_A_minus),
                 tau_plus(_tau_plus),
-                preLayer(-1),
-                tau_minus(_tau_minus) {}
+                pre_layer(-1),
+                tau_minus(_tau_minus) {
+            do_not_automatically_include = true;
+        }
 		
 		// ----- PUBLIC METHODS -----
         // select one neuron to track by its index
@@ -41,50 +41,52 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-		virtual void onStart(Network* network) override {
-			for (auto& n: network->getNeurons()) {
-				for (auto& addon: n->getRelevantAddons()) {
-					if (addon == this) {
-						if (n->getLayerID() > 0) {
-                            postLayer = n->getLayerID();
-                            // making sure we don't add learning on a parallel layer
-                            for (auto& dendrite: n->getDendriticTree()) {
-                                auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
-                                auto& d_postsynapticNeuron = network->getNeurons()[dendrite->getPostsynapticNeuronID()];
-                                if (d_presynapticNeuron->getLayerID() < d_postsynapticNeuron->getLayerID()) {
-                                    // finding the closest presynaptic layer without overly relying on layerIDs
-                                    preLayer = std::max(d_presynapticNeuron->getLayerID(), preLayer);
+		virtual void on_start(Network* network) override {
+            if (!neuron_mask.empty()) {
+                for (auto& n: network->get_neurons()) {
+                    for (auto& addon: n->get_relevant_addons()) {
+                        if (addon == this) {
+                            if (n->get_layer_id() > 0) {
+                                post_layer = n->get_layer_id();
+                                // making sure we don't add learning on a parallel layer
+                                for (auto& dendrite: n->get_dendritic_tree()) {
+                                    auto& d_presynapticNeuron = network->get_neurons()[dendrite->get_presynaptic_neuron_id()];
+                                    auto& d_postsynapticNeuron = network->get_neurons()[dendrite->get_postsynaptic_neuron_id()];
+                                    if (d_presynapticNeuron->get_layer_id() < d_postsynapticNeuron->get_layer_id()) {
+                                        // finding the closest presynaptic layer without overly relying on layerIDs
+                                        pre_layer = std::max(d_presynapticNeuron->get_layer_id(), pre_layer);
+                                    }
                                 }
                             }
-						}
-					}
-				}
-			}
-			
-			for (auto& n: network->getLayers()[preLayer].neurons) {
-                network->getNeurons()[n]->addRelevantAddon(this);
-			}
+                        }
+                    }
+                }
+                
+                for (auto& n: network->get_layers()[pre_layer].neurons) {
+                    network->get_neurons()[n]->add_relevant_addon(this);
+                }
+            }
 		}
 		
 		virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             // LTD whenever a neuron from the presynaptic layer spikes
-            if (postsynapticNeuron->getLayerID() == preLayer) {
-                for (auto& axonTerminal: postsynapticNeuron->getAxonTerminals()) {
-                    auto& at_postsynapticNeuron = network->getNeurons()[axonTerminal->getPostsynapticNeuronID()];
+            if (postsynapticNeuron->get_layer_id() == pre_layer) {
+                for (auto& axonTerminal: postsynapticNeuron->get_axon_terminals()) {
+                    auto& at_postsynapticNeuron = network->get_neurons()[axonTerminal->get_postsynaptic_neuron_id()];
                     
                     // if a postsynapticNeuron fired, the deltaT (presynaptic time - postsynaptic time) should be positive
                     // ignoring inhibitory synapses
-                    if (axonTerminal->getType() == synapseType::excitatory && axonTerminal->getWeight() <= 1 && at_postsynapticNeuron->getTrace() > 0.1) {
-                        float postTrace = (- A_minus * std::exp(-(timestamp - at_postsynapticNeuron->getPreviousSpikeTime())/tau_minus)) * axonTerminal->getWeight() * (1 - axonTerminal->getWeight());
+                    if (axonTerminal->get_type() == synapseType::excitatory && axonTerminal->get_weight() <= 1 && at_postsynapticNeuron->get_trace() > 0.1) {
+                        float postTrace = (- A_minus * std::exp(-(timestamp - at_postsynapticNeuron->get_previous_spike_time())/tau_minus)) * axonTerminal->get_weight() * (1 - axonTerminal->get_weight());
                         
-                        axonTerminal->setWeight(postTrace);
+                        axonTerminal->set_weight(postTrace);
                         
-                        if (network->getVerbose() >= 1) {
+                        if (network->get_verbose() >= 1) {
                             std::cout << "LTD weight change " << postTrace << std::endl;
                         }
 						
-                    } else if (axonTerminal->getWeight() > 1) {
-                        if (network->getVerbose() >= 1) {
+                    } else if (axonTerminal->get_weight() > 1) {
+                        if (network->get_verbose() >= 1) {
                             std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
                         }
                     }
@@ -92,21 +94,21 @@ namespace hummus {
             }
 			
 			// LTP whenever a neuron from the postsynaptic layer spikes
-			else if (postsynapticNeuron->getLayerID() == postLayer) {
-				for (auto& dendrite: postsynapticNeuron->getDendriticTree()) {
-                    auto& d_presynapticNeuron = network->getNeurons()[dendrite->getPresynapticNeuronID()];
+			else if (postsynapticNeuron->get_layer_id() == post_layer) {
+                for (auto& dendrite: postsynapticNeuron->get_dendritic_tree()) {
+                    auto& d_presynapticNeuron = network->get_neurons()[dendrite->get_presynaptic_neuron_id()];
 					// if a presynapticNeuron already fired, the deltaT (presynaptic time - postsynaptic time) should be negative
                     // ignoring inhibitory synapses
-					if (dendrite->getType() == synapseType::excitatory && dendrite->getWeight() <= 1 && d_presynapticNeuron->getTrace() > 0.1) {
-						float preTrace = (A_plus * std::exp((d_presynapticNeuron->getPreviousSpikeTime() - timestamp)/tau_plus)) * dendrite->getWeight() * (1 - dendrite->getWeight());
-                        dendrite->setWeight(preTrace);
+                    if (dendrite->get_type() == synapseType::excitatory && dendrite->get_weight() <= 1 && d_presynapticNeuron->get_trace() > 0.1) {
+                        float preTrace = (A_plus * std::exp((d_presynapticNeuron->get_previous_spike_time() - timestamp)/tau_plus)) * dendrite->get_weight() * (1 - dendrite->get_weight());
+                        dendrite->set_weight(preTrace);
                         
-                        if (network->getVerbose() >= 1) {
+                        if (network->get_verbose() >= 1) {
                             std::cout << "LTP weight change " << preTrace << std::endl;
                         }
 						
-                    } else if (dendrite->getWeight() > 1) {
-                        if (network->getVerbose() >= 1) {
+                    } else if (dendrite->get_weight() > 1) {
+                        if (network->get_verbose() >= 1) {
                             std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
                         }
                     }
@@ -117,8 +119,8 @@ namespace hummus {
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-		int                  preLayer;
-		int                  postLayer;
+		int                  pre_layer;
+		int                  post_layer;
 		float                A_plus;
 		float                A_minus;
 		float                tau_plus;
