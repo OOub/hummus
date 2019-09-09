@@ -18,19 +18,19 @@
 
 int main(int argc, char** argv) {
     hummus::Network network;
-    auto& display = network.makeGUI<hummus::Display>();
+    auto& display = network.make_gui<hummus::Display>();
     
     hummus::Builder bob(&network);
     bob.import("../../data/testSave.json");
     
     //  ----- INJECTING SPIKES -----
-    network.injectSpike(0, 10);
-    network.injectSpike(0, 11);
-    network.injectSpike(0, 30);
+    network.inject_spike(0, 10);
+    network.inject_spike(0, 11);
+    network.inject_spike(0, 30);
     
     //  ----- DISPLAY SETTINGS -----
-    display.setTimeWindow(100);
-    display.trackNeuron(1);
+    display.set_time_window(100);
+    display.track_neuron(2);
     
     network.run(100, 0.1);
     

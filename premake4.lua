@@ -1,6 +1,6 @@
 local qt = require 'qt'
 
-solution 'hummus' 
+solution 'hummus'
     configurations {'Release', 'Debug'}
     location 'build'
 
@@ -26,30 +26,24 @@ solution 'hummus'
 
 			-- All files in source, third_party and applications
         	files {'source/**.hpp',
-        		'source/addons/**.hpp', 
-        		'source/GUI/**.hpp',
-        		'source/learningRules/**.hpp', 
-        		'source/neurons/**.hpp', 
-        		'source/synapticKernels/**.hpp', 
-        		'source/randomDistributions/**.hpp',
-                'third_party/**.hpp',
-        		'applications/' .. name .. '.cpp'
+                 'third_party/**.hpp',
+        		     'applications/' .. name .. '.cpp'
         	}
 
 			if with_qt then
 				-- Qt-dependent files
-				files(qt.moc({'source/GUI/inputViewer.hpp', 
-							  'source/GUI/outputViewer.hpp', 
-					          'source/GUI/dynamicsViewer.hpp'
-					          }, 
-							  'build/moc'))
+				files(qt.moc({'source/GUI/inputViewer.hpp',
+							        'source/GUI/outputViewer.hpp',
+					            'source/GUI/dynamicsViewer.hpp'
+					           },
+						  'build/moc'))
 
 	            includedirs(qt.includedirs())
 	            libdirs(qt.libdirs())
 	            links(qt.links())
 	            buildoptions(qt.buildoptions())
 	            linkoptions(qt.linkoptions())
-	        end
+      end
 
 	        -- Declare the configurations
 	        configuration 'Release'
@@ -64,15 +58,11 @@ solution 'hummus'
 
 	        configuration 'linux or macosx'
             	includedirs {'/usr/local/include'}
-	        	libdirs {'/usr/local/lib'}
+	        	  libdirs {'/usr/local/lib'}
 
 	        -- Linux specific settings
 	        configuration 'linux'
-                if with_tbb then
-	        	    links {'pthread'}
-                else
-                    links {'pthread'}
-                end
+                links {'pthread'}
 	            buildoptions {'-std=c++11'}
 	           	linkoptions {'-std=c++11'}
 

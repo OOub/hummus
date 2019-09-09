@@ -20,30 +20,30 @@
 
 int main(int argc, char** argv) {
     hummus::Network network;
-    network.makeAddon<hummus::MyelinPlasticityLogger>("rates_mpLog.bin");
+    network.make_addon<hummus::MyelinPlasticityLogger>("rates_mpLog.bin");
 
-    auto& display = network.makeGUI<hummus::Display>();
-    auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
+    auto& display = network.make_gui<hummus::Display>();
+    auto& mp = network.make_addon<hummus::MyelinPlasticity>();
 
-    auto input = network.makeLayer<hummus::LIF>(4, {}, 0, 200, 10, false, false);
-    auto output = network.makeLayer<hummus::LIF>(1, {&mp}, 3, 200, 10, false, false);
+    auto input = network.make_layer<hummus::LIF>(4, {}, 0, 200, 10, false, false);
+    auto output = network.make_layer<hummus::LIF>(1, {&mp}, 3, 200, 10, false, false);
 
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100);
-    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
+    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100);
+    network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     int repetitions = 500;
     int time_between_spikes = 100;
     int runtime = repetitions*time_between_spikes+10;
 
     for (auto i=0; i<repetitions; i++) {
-        network.injectSpike(0, 10+time_between_spikes*i);
-        network.injectSpike(1, 15+time_between_spikes*i);
-        network.injectSpike(2, 20+time_between_spikes*i);
+        network.inject_spike(0, 10+time_between_spikes*i);
+        network.inject_spike(1, 15+time_between_spikes*i);
+        network.inject_spike(2, 20+time_between_spikes*i);
     }
 
-    display.setTimeWindow(1100);
-    display.trackNeuron(4);
-    display.plotCurrents(true);
+    display.set_time_window(1100);
+    display.track_neuron(4);
+    display.plot_currents(true);
 
     network.verbosity(2);
     network.run(runtime, 0.1);

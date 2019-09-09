@@ -3,159 +3,151 @@
         "layers": [
             {
                 "height": -1,
-                "neuronNumber": 1,
-                "neuronType": 0,
-                "sublayerNumber": 1,
+                "neuron_number": 1,
+                "neuron_type": 0,
+                "sublayer_number": 1,
                 "width": -1
             },
             {
                 "height": -1,
-                "neuronNumber": 2,
-                "neuronType": 1,
-                "sublayerNumber": 1,
+                "neuron_number": 2,
+                "neuron_type": 1,
+                "sublayer_number": 1,
                 "width": -1
             }
         ],
         "neurons": [
             {
-                "Type": 0,
-                "XYCoordinates": [
-                    -1.0,
-                    -1.0
-                ],
-                "axonalSynapses": [
+                "axonal_synapses": [
                     {
-                        "delay": 2.087702751159668,
+                        "delay": 0.9251677989959717,
                         "json_id": 1,
-                        "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 0,
+                        "postsynaptic_neuron": 1,
+                        "synapse_time_constant": 18.0,
                         "weight": 0.5
                     },
                     {
-                        "delay": 0.9398466944694519,
+                        "delay": 2.232823133468628,
                         "json_id": 1,
-                        "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 0,
+                        "postsynaptic_neuron": 2,
+                        "synapse_time_constant": 18.0,
                         "weight": 0.5
                     }
                 ],
-                "dendriticSynapses": [],
-                "layerID": 0,
-                "receptiveFieldCoordinates": [
+                "dendritic_synapses": [],
+                "layer_id": 0,
+                "refractory_period": 0.0,
+                "resting_potential": -70.0,
+                "rf_coordinates": [
                     0,
                     0
                 ],
-                "refractoryPeriod": 0.0,
-                "restingPotential": -70.0,
-                "sublayerID": 0,
+                "sublayer_id": 0,
                 "threshold": -50.0,
-                "traceTimeConstant": 20.0
-            },
-            {
-                "Type": 1,
-                "XYCoordinates": [
+                "trace_time_constant": 20.0,
+                "type": 0,
+                "xy_coordinates": [
                     -1.0,
                     -1.0
-                ],
-                "axonalSynapses": [
+                ]
+            },
+            {
+                "axonal_synapses": [
                     {
-                        "delay": 1.2429190874099731,
+                        "delay": 0.0,
                         "json_id": 1,
-                        "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 1,
+                        "postsynaptic_neuron": 2,
+                        "synapse_time_constant": 18.0,
                         "weight": -1.0
                     }
                 ],
-                "burstingActivity": false,
+                "bursting_activity": false,
                 "conductance": 200.0,
-                "decayHomeostasis": 20.0,
-                "dendriticSynapses": [
+                "decay_homeostasis": 20.0,
+                "dendritic_synapses": [
                     {
-                        "delay": 2.087702751159668,
+                        "delay": 0.9251677989959717,
                         "json_id": 1,
-                        "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 0,
+                        "postsynaptic_neuron": 1,
+                        "synapse_time_constant": 18.0,
                         "weight": 0.5
                     },
                     {
-                        "delay": 0.9686081409454346,
+                        "delay": 0.4658288061618805,
                         "json_id": 1,
-                        "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 1,
+                        "postsynaptic_neuron": 1,
+                        "synapse_time_constant": 18.0,
                         "weight": -1.0
                     }
                 ],
                 "homeostasis": false,
-                "homeostasisBeta": 0.10000000149011612,
-                "layerID": 1,
-                "leakageConductance": 10.0,
-                "receptiveFieldCoordinates": [
+                "homeostasis_beta": 0.10000000149011612,
+                "layer_id": 1,
+                "leakage_conductance": 10.0,
+                "refractory_period": 3.0,
+                "resting_potential": -70.0,
+                "resting_threshold": -50.0,
+                "rf_coordinates": [
                     0,
                     0
                 ],
-                "refractoryPeriod": 3.0,
-                "restingPotential": -70.0,
-                "restingThreshold": -50.0,
-                "sublayerID": 0,
+                "sublayer_id": 0,
                 "threshold": -50.0,
-                "traceTimeConstant": 20.0
-            },
-            {
-                "Type": 1,
-                "XYCoordinates": [
+                "trace_time_constant": 20.0,
+                "type": 1,
+                "xy_coordinates": [
                     -1.0,
                     -1.0
-                ],
-                "axonalSynapses": [
+                ]
+            },
+            {
+                "axonal_synapses": [
                     {
-                        "delay": 0.9686081409454346,
+                        "delay": 0.4658288061618805,
                         "json_id": 1,
-                        "postsynapticNeuron": 1,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 1,
+                        "postsynaptic_neuron": 1,
+                        "synapse_time_constant": 18.0,
                         "weight": -1.0
                     }
                 ],
-                "burstingActivity": false,
+                "bursting_activity": false,
                 "conductance": 200.0,
-                "decayHomeostasis": 20.0,
-                "dendriticSynapses": [
+                "decay_homeostasis": 20.0,
+                "dendritic_synapses": [
                     {
-                        "delay": 0.9398466944694519,
+                        "delay": 2.232823133468628,
                         "json_id": 1,
-                        "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 0,
+                        "postsynaptic_neuron": 2,
+                        "synapse_time_constant": 18.0,
                         "weight": 0.5
                     },
                     {
-                        "delay": 1.2429190874099731,
+                        "delay": 0.0,
                         "json_id": 1,
-                        "postsynapticNeuron": 2,
-                        "synapseTimeConstant": 18.0,
-                        "synapse_type": 1,
+                        "postsynaptic_neuron": 2,
+                        "synapse_time_constant": 18.0,
                         "weight": -1.0
                     }
                 ],
                 "homeostasis": false,
-                "homeostasisBeta": 0.10000000149011612,
-                "layerID": 1,
-                "leakageConductance": 10.0,
-                "receptiveFieldCoordinates": [
+                "homeostasis_beta": 0.10000000149011612,
+                "layer_id": 1,
+                "leakage_conductance": 10.0,
+                "refractory_period": 3.0,
+                "resting_potential": -70.0,
+                "resting_threshold": -50.0,
+                "rf_coordinates": [
                     0,
                     0
                 ],
-                "refractoryPeriod": 3.0,
-                "restingPotential": -70.0,
-                "restingThreshold": -50.0,
-                "sublayerID": 0,
+                "sublayer_id": 0,
                 "threshold": -50.0,
-                "traceTimeConstant": 20.0
+                "trace_time_constant": 20.0,
+                "type": 1,
+                "xy_coordinates": [
+                    -1.0,
+                    -1.0
+                ]
             }
         ]
     }

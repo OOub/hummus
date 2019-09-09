@@ -34,7 +34,7 @@ namespace hummus {
 	
 	struct input {
 		double timestamp;
-        double neuronID;
+        double neuron_id;
 		double x;
 		double y;
         double polarity;
@@ -46,15 +46,15 @@ namespace hummus {
     	// ----- CONSTRUCTOR -----
         DataParser() {
             std::random_device device;
-            randomEngine = std::mt19937(device());
+            random_engine = std::mt19937(device());
             gaussian = std::normal_distribution<>(0.0, 1.0);
         };
         
         // saves the files from the N-MNIST database - formatted to eventstream format - into a vector of strings
         // The N-MNIST database needs to have the same structure as the original folder. For example: ~/N-MNIST/Train/0
-        std::pair<std::vector<std::string>, std::vector<label>> importNmnist(std::string directory_path, int sample_percentage=100) {
+        std::pair<std::vector<std::string>, std::deque<label>> generate_nmnist_database(std::string directory_path, int sample_percentage=100) {
             std::vector<std::string> database;
-            std::vector<label> labels;
+            std::deque<label> labels;
             
             fs::path current_dir(directory_path);
             // save all files containing the .es extension in the database vector
@@ -79,55 +79,55 @@ namespace hummus {
             // get the number of samples from the percentage
             if (sample_percentage < 100) {
                 size_t number_of_samples = static_cast<size_t>(std::ceil(database.size() * sample_percentage / 100));
-                return std::make_pair(std::vector<std::string>(database.begin(), database.begin()+number_of_samples), std::vector<label>(labels.begin(), labels.begin()+number_of_samples));
+                return std::make_pair(std::vector<std::string>(database.begin(), database.begin()+number_of_samples), std::deque<label>(labels.begin(), labels.begin()+number_of_samples));
             } else {
                 return std::make_pair(database, labels);
             }
         }
         
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity (timestamp, X, Y, P)
-        std::vector<input> readTextData(std::string filename, double shift_timestamps=0, bool timeJitter=false, int additiveNoise=0) {
-            dataFile.open(filename);
+        std::vector<input> read_txt_data(std::string filename, double shift_timestamps=0, bool time_jitter=false, int additive_noise=0) {
+            data_file.open(filename);
             
-            if (dataFile.good()) {
+            if (data_file.good()) {
 				std::vector<input> data;
 				std::string line;
-				int dataType = 0;
-				double neuronCounter = 0;
+				int data_type = 0;
+				double neuron_counter = 0;
                 
                 double maxID=0; double maxX=0; double maxY=0; double maxPolarity=0;
                 
-				while (std::getline(dataFile, line)) {
+                while (std::getline(data_file, line)) {
                 	std::vector<std::string> fields;
                 	split(fields, line, " ,");
                 	// 1D data
                 	if (fields.size() == 2) {
-                		dataType = 0;
+                		data_type = 0;
 						data.emplace_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1, -1});
                         maxID = std::max(maxID, std::stod(fields[1]));
                     // 2D Data
 					} else if (fields.size() == 3) {
-                		dataType = 1;
-                		data.emplace_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), -1});
+                		data_type = 1;
+                		data.emplace_back(input{std::stod(fields[0]), neuron_counter, std::stod(fields[1]), std::stod(fields[2]), -1});
                         maxX = std::max(maxX, std::stod(fields[1]));
                         maxY = std::max(maxY, std::stod(fields[2]));
                         
-                		neuronCounter++;
+                		neuron_counter++;
 					} else if (fields.size() == 4) {
-                        dataType = 2;
-                        data.emplace_back(input{std::stod(fields[0]), neuronCounter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
+                        data_type = 2;
+                        data.emplace_back(input{std::stod(fields[0]), neuron_counter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
                         maxX = std::max(maxX, std::stod(fields[1]));
                         maxY = std::max(maxY, std::stod(fields[2]));
                         maxPolarity = std::max(maxPolarity, std::stod(fields[3]));
-                        neuronCounter++;
+                        neuron_counter++;
                     }
                 }
-                dataFile.close();
+                data_file.close();
                 
                 // adding gaussian time jitter + shiting the timestamp
-                if (timeJitter) {
+                if (time_jitter) {
                     for (auto& datum: data) {
-                        datum.timestamp += gaussian(randomEngine);
+                        datum.timestamp += gaussian(random_engine);
                     }
                 }
                 
@@ -139,7 +139,7 @@ namespace hummus {
                 }
                 
                 // additive noise
-                if (additiveNoise > 0) {
+                if (additive_noise > 0) {
                     // finding maximum timestamp
                     auto it = std::max_element(data.begin(), data.end(), [&](input a, input b){ return a.timestamp < b.timestamp; });
                     double maxTimestamp = data[std::distance(data.begin(), it)].timestamp;
@@ -148,30 +148,30 @@ namespace hummus {
                     std::uniform_int_distribution<> uniformTimestamp(0, maxTimestamp);
                     
                     // finding the number of spontaneous spikes to add to the data
-                    int additiveSpikes = std::round(data.size() * additiveNoise / 100.);
+                    int additiveSpikes = std::round(data.size() * additive_noise / 100.);
                     
                     // one-dimensional data
-                    if (dataType == 0) {
+                    if (data_type == 0) {
                         std::uniform_int_distribution<> uniformID(0, maxID);
                         
                         for (auto i=0; i<additiveSpikes; i++) {
-                            data.emplace_back(input{static_cast<double>(uniformTimestamp(randomEngine)), static_cast<double>(uniformID(randomEngine)), -1, -1, -1});
+                            data.emplace_back(input{static_cast<double>(uniformTimestamp(random_engine)), static_cast<double>(uniformID(random_engine)), -1, -1, -1});
                         }
                     // two-dimensional data
-                    } else if (dataType == 1){
+                    } else if (data_type == 1){
                         std::uniform_int_distribution<> uniformX(0, maxX);
                         std::uniform_int_distribution<> uniformY(0, maxY);
                         
                         for (auto i=0; i<additiveSpikes; i++) {
-                            data.emplace_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), -1});
+                            data.emplace_back(input{static_cast<double>(uniformTimestamp(random_engine)), 0, static_cast<double>(uniformX(random_engine)), static_cast<double>(uniformY(random_engine)), -1});
                         }
-                    } else if (dataType == 2){
+                    } else if (data_type == 2){
                         std::uniform_int_distribution<> uniformX(0, maxX);
                         std::uniform_int_distribution<> uniformY(0, maxY);
                         std::uniform_int_distribution<> uniformPolarity(0, maxPolarity);
                         
                         for (auto i=0; i<additiveSpikes; i++) {
-                            data.emplace_back(input{static_cast<double>(uniformTimestamp(randomEngine)), 0, static_cast<double>(uniformX(randomEngine)), static_cast<double>(uniformY(randomEngine)), static_cast<double>(uniformPolarity(randomEngine))});
+                            data.emplace_back(input{static_cast<double>(uniformTimestamp(random_engine)), 0, static_cast<double>(uniformX(random_engine)), static_cast<double>(uniformY(random_engine)), static_cast<double>(uniformPolarity(random_engine))});
                         }
                     }
                 }
@@ -188,14 +188,14 @@ namespace hummus {
         }
 		
         // read a weight matrix file delimited by a space or a comma, where the inputs are the columns and the outputs are the rows
-        std::vector<std::vector<float>> readConnectivityMatrix(std::string filename) {
-            dataFile.open(filename);
+        std::vector<std::vector<float>> read_connectivity_matrix(std::string filename) {
+            data_file.open(filename);
             
-            if (dataFile.good()) {
+            if (data_file.good()) {
                 std::string line;
                 std::vector<std::vector<float>> data;
                 
-                while (std::getline(dataFile, line)) {
+                while (std::getline(data_file, line)) {
                     std::vector<std::string> fields;
                     split(fields, line, " ,");
                     
@@ -209,30 +209,30 @@ namespace hummus {
                     // filling vector of vectors to build 2D weight matrix
                     data.emplace_back(postSynapticWeights);
                 }
-                dataFile.close();
+                data_file.close();
                 return data;
             } else {
                 throw std::runtime_error(filename.append(" could not be opened. Please check that the path is set correctly: if your path for data input is relative to the executable location, please use cd release && ./applicationName instead of ./release/applicationName"));
             }
         }
         
-		std::deque<label> readLabels(std::string labels = "") {
+		std::deque<label> read_txt_labels(std::string labels = "") {
 			if (labels.empty()) {
 				throw std::logic_error("no files were passed to the readLabels() function. There is nothing to do.");
 			} else {
-				dataFile.open(labels);
-				if (dataFile.good()) {
+				data_file.open(labels);
+				if (data_file.good()) {
 					std::deque<label> dataLabels;
 					std::string line;
 					
-					while (std::getline(dataFile, line)) {
+					while (std::getline(data_file, line)) {
 						std::vector<std::string> fields;
 						split(fields, line, " ,");
 						if (fields.size() == 2) {
 							dataLabels.emplace_back(label{fields[0], std::stod(fields[1])});
 						}
 					}
-					dataFile.close();
+					data_file.close();
 					
 					return dataLabels;
 				} else {
@@ -266,8 +266,8 @@ namespace hummus {
     protected:
         
     	// ----- IMPLEMENTATION VARIABLES -----
-        std::ifstream                   dataFile;
-        std::mt19937                    randomEngine;
+        std::ifstream                   data_file;
+        std::mt19937                    random_engine;
         std::normal_distribution<>      gaussian;
 	};
 }

@@ -23,36 +23,33 @@
 
 int main(int argc, char** argv) {
     
-    hummus::DataParser parser;
-    auto train_data = parser.importNmnist("/Users/omaroubari/Downloads/N-MNIST/Train", 10);
-    
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
     
     //  ----- INITIALISING ADD-ONS -----
-    network.makeAddon<hummus::SpikeLogger>("spikeLog.bin");
+    network.make_addon<hummus::SpikeLogger>("spikeLog.bin");
 
     // ----- INITIALISING GUI -----
-    auto& display = network.makeGUI<hummus::Display>();
+    auto& display = network.make_gui<hummus::Display>();
     
     //  ----- CREATING THE NETWORK -----
     // creating layers of neurons
-    auto input = network.makeLayer<hummus::Parrot>(1, {});
-    auto output = network.makeLayer<hummus::LIF>(2, {}, 3, 200, 10, false, false);
+    auto input = network.make_layer<hummus::Parrot>(1, {});
+    auto output = network.make_layer<hummus::LIF>(2, {}, 3, 200, 10, false, false);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 1, 0.5), 100);
-    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
+    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(1./2, 0, 1, 0.5), 100);
+    network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     //  ----- INJECTING SPIKES -----
-    network.injectSpike(0, 10);
-    network.injectSpike(0, 12);
-    network.injectSpike(0, 30);
+    network.inject_spike(0, 10);
+    network.inject_spike(0, 12);
+    network.inject_spike(0, 30);
 
     //  ----- DISPLAY SETTINGS -----
-    display.setTimeWindow(100);
-    display.trackNeuron(1);
-    display.plotCurrents();
+    display.set_time_window(100);
+    display.track_neuron(1);
+    display.plot_currents();
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);

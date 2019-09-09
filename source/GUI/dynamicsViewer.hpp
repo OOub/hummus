@@ -54,7 +54,7 @@ namespace hummus {
         virtual ~DynamicsViewer(){}
 		
     	// ----- PUBLIC DYNAMICSVIEWER METHODS -----
-		void handleData(double timestamp, int postsynapticNeuronID, float _potential, float _current, float _threshold) {
+		void handle_data(double timestamp, int postsynapticNeuronID, float _potential, float _current, float _threshold) {
 			if (postsynapticNeuronID == neuronTracker) {
                 while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
 				if (!isClosed) {
@@ -83,19 +83,19 @@ namespace hummus {
 		}
 		
 		// ----- SETTERS -----
-		void setTimeWindow(double newWindow) {
+		void set_time_window(double newWindow) {
             timeWindow = newWindow;
         }
 		
-		void useHardwareAcceleration(bool accelerate) {
+		void hardware_acceleration(bool accelerate) {
             openGL = accelerate;
         }
 		
-        void trackNeuron(int neuronToTrack) {
+        void track_neuron(int neuronToTrack) {
             neuronTracker = neuronToTrack;
         }
 		
-        void plotCurrents(bool _current_plot) {
+        void plot_currents(bool _current_plot) {
             current_plot = _current_plot;
         }
         
@@ -109,7 +109,7 @@ namespace hummus {
     public slots:
 		
         // ----- QT-RELATED METHODS -----
-        void changeTrackedNeuron(int newNeuron) {
+        void change_tracked_neuron(int newNeuron) {
             if (neuronTracker != newNeuron) {
                 neuronTracker = newNeuron;
                 minY = -70;

@@ -32,7 +32,9 @@ namespace hummus {
                 alpha_plus(_alpha_plus),
                 alpha_minus(_alpha_minus),
                 beta_plus(_beta_plus),
-                beta_minus(_beta_minus) {}
+                beta_minus(_beta_minus) {
+            do_not_automatically_include = true;
+        }
 		
 		// ----- PUBLIC METHODS -----
         // select one neuron to track by its index
@@ -47,11 +49,11 @@ namespace hummus {
         
         virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             // error handling
-            if (time_constant == postsynapticNeuron->getMembraneTimeConstant()) {
+            if (time_constant == postsynapticNeuron->get_membrane_time_constant()) {
                 throw std::logic_error("the myelin plasticity time constant cannot be equal to the neuron's membrane time constant");
             }
             
-            if (network->getVerbose() >= 1) {
+            if (network->get_verbose() >= 1) {
                 std::cout << "New learning epoch at t=" << timestamp << std::endl;
             }
             
@@ -62,97 +64,97 @@ namespace hummus {
             float weight_normaliser = 0;
             
             // saving relevant synapses and their spike times
-            for (auto& input: postsynapticNeuron->getDendriticTree()) {
-                if (input->getType() == synapseType::excitatory) {
+            for (auto& input: postsynapticNeuron->get_dendritic_tree()) {
+                if (input->get_type() == synapseType::excitatory) {
                     // easy access to the input neuron
-                    auto& inputNeuron = network->getNeurons()[input->getPresynapticNeuronID()];
+                    auto& inputNeuron = network->get_neurons()[input->get_presynaptic_neuron_id()];
                     
                     // arrival time of the input spike
-                    double spike_arrival_time = input->getPreviousInputTime();
+                    double spike_arrival_time = input->get_previous_input_time();
                     
                     // learning window
                     float gaussian_window = gaussian_distribution(spike_arrival_time, timestamp, learning_window);
                     
                     // taking the input neurons that were active within a gaussian learning window
-                    if (inputNeuron->getTrace() > 0 && gaussian_window >= 0.01) {
+                    if (inputNeuron->get_trace() > 0 && gaussian_window >= 0.01) {
                         accepted_synapses.emplace_back(input);
                         
                         // increasing the threshold if the trace is too high
-                        if (inputNeuron->getTrace() >= 1) {
-                            auto updated_threshold = inputNeuron->getThreshold() + 2;
-                            inputNeuron->setThreshold(updated_threshold);
+                        if (inputNeuron->get_trace() >= 1) {
+                            auto updated_threshold = inputNeuron->get_threshold() + 2;
+                            inputNeuron->set_threshold(updated_threshold);
                         }
                         
                         // calculating the time difference
-                        double time_difference = postsynapticNeuron->getPreviousInputTime() - spike_arrival_time;
+                        double time_difference = postsynapticNeuron->get_previous_input_time() - spike_arrival_time;
                         
                         // saving information for the corresponding logger
                         time_differences.emplace_back(time_difference);
                         
                         // change delay according to the time difference
                         float delta_delay = 0;
-                        delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->getMembraneTimeConstant())) * postsynapticNeuron->getCurrent() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->getMembraneTimeConstant()));
-                        input->setDelay(delta_delay);
+                        delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->get_membrane_time_constant())) * postsynapticNeuron->get_current() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->get_membrane_time_constant()));
+                        input->set_delay(delta_delay);
                         
                         // long-term potentiation on weights
-                        float delta_weight = (alpha_plus * std::exp(- time_difference * beta_plus * input->getWeight())) * input->getWeight() * (1 - input->getWeight());
-                        input->setWeight(delta_weight);
+                        float delta_weight = (alpha_plus * std::exp(- time_difference * beta_plus * input->get_weight())) * input->get_weight() * (1 - input->get_weight());
+                        input->set_weight(delta_weight);
 
-                        weight_normaliser += input->getWeight();
+                        weight_normaliser += input->get_weight();
                         
-                        if (network->getVerbose() >= 1) {
-                            std::cout << " inside learning window " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->getDelay() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
+                        if (network->get_verbose() >= 1) {
+                            std::cout << " inside learning window " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->get_delay() << " weight change: " << delta_weight << " weight " << input->get_weight() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << std::endl;
                         }
                         
                     // taking the input neurons that are outside the learning window
-                    } else if (inputNeuron->getTrace() > 0 && gaussian_window < 0.01){
+                    } else if (inputNeuron->get_trace() > 0 && gaussian_window < 0.01){
                         // decreasing the threshold if the trace is too high
-                        if (inputNeuron->getThreshold() > -55) {
-                            auto updated_threshold = inputNeuron->getThreshold() - 2;
-                            inputNeuron->setThreshold(updated_threshold);
+                        if (inputNeuron->get_threshold() > -55) {
+                            auto updated_threshold = inputNeuron->get_threshold() - 2;
+                            inputNeuron->set_threshold(updated_threshold);
                         }
 
                         // long-term potentiation on weights
-                        float delta_weight = (alpha_plus * std::exp(- beta_plus * input->getWeight())) * input->getWeight() * (1 - input->getWeight());
-                        input->setWeight(delta_weight);
+                        float delta_weight = (alpha_plus * std::exp(- beta_plus * input->get_weight())) * input->get_weight() * (1 - input->get_weight());
+                        input->set_weight(delta_weight);
 
-                        weight_normaliser += input->getWeight();
+                        weight_normaliser += input->get_weight();
 
-                        if (network->getVerbose() >= 1) {
-                            std::cout << " outside learning window " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
+                        if (network->get_verbose() >= 1) {
+                            std::cout << " outside learning window " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " weight change: " << delta_weight << " weight " << input->get_weight() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << std::endl;
                         }
                     // taking the input neurons that didn't fire
                     } else {
                         // long-term depression on weights
-                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->getWeight()))) * input->getWeight() * (1 - input->getWeight());
-                        input->setWeight(delta_weight);
+                        float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->get_weight()))) * input->get_weight() * (1 - input->get_weight());
+                        input->set_weight(delta_weight);
 
-                        if (network->getVerbose() >= 1) {
-                            std::cout << " never fired " << spike_arrival_time << " " << input->getPresynapticNeuronID() << " " << input->getPostsynapticNeuronID() << " weight change: " << delta_weight << " weight " << input->getWeight() << " trace " << inputNeuron->getTrace() << " threshold " << inputNeuron->getThreshold() << std::endl;
+                        if (network->get_verbose() >= 1) {
+                            std::cout << " never fired " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " weight change: " << delta_weight << " weight " << input->get_weight() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << std::endl;
                         }
                     }
                     
                     // resetting trace for the input neuron
-                    inputNeuron->setTrace(0);
+                    inputNeuron->set_trace(0);
                 }
             }
             
-            for (auto& input: postsynapticNeuron->getDendriticTree()) {
-                if (input->getType() == synapseType::excitatory && weight_normaliser > 0) {
+            for (auto& input: postsynapticNeuron->get_dendritic_tree()) {
+                if (input->get_type() == synapseType::excitatory && weight_normaliser > 0) {
                     // normalising synaptic weights only when pattern has more than 1 neuron responding
-                    input->setWeight(input->getWeight()/ weight_normaliser, false);
+                    input->set_weight(input->get_weight()/ weight_normaliser, false);
 
                     // printing the weights
-                    if (network->getVerbose() >= 1) {
-                        std::cout << input->getPresynapticNeuronID() << "->" << input->getPostsynapticNeuronID() << " weight: " << input->getWeight() << std::endl;
+                    if (network->get_verbose() >= 1) {
+                        std::cout << input->get_presynaptic_neuron_id() << "->" << input->get_postsynaptic_neuron_id() << " weight: " << input->get_weight() << std::endl;
                     }
                 }
             }
         
             // saving into the neuron's logger if the logger exists
-            for (auto& addon: postsynapticNeuron->getRelevantAddons()) {
+            for (auto& addon: postsynapticNeuron->get_relevant_addons()) {
                 if (MyelinPlasticityLogger* myelinLogger = dynamic_cast<MyelinPlasticityLogger*>(addon)) {
-                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelinPlasticityEvent(timestamp, postsynapticNeuron, network, time_differences, accepted_synapses);
+                    dynamic_cast<MyelinPlasticityLogger*>(addon)->myelin_plasticity_event(timestamp, postsynapticNeuron, network, time_differences, accepted_synapses);
                 }
             }
         }

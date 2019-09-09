@@ -125,7 +125,7 @@ ApplicationWindow {
 				anchors.leftMargin: 5
 
 				onEditingFinished: {
-					inputViewer.changeSublayer(value)
+					inputViewer.change_sublayer(value)
 				}
 			}
 
@@ -264,7 +264,7 @@ ApplicationWindow {
 				anchors.left: layerLegend.right
 				anchors.leftMargin: 5
 				onEditingFinished: {
-					outputViewer.changeLayer(value)
+					outputViewer.change_layer(value)
 				}
 			}
 
@@ -282,7 +282,7 @@ ApplicationWindow {
 				anchors.left: sublayerLegend.right
 				anchors.leftMargin: 5
 				onEditingFinished: {
-					outputViewer.changeSublayer(value)
+					outputViewer.change_sublayer(value)
 				}
 			}
 
@@ -424,7 +424,7 @@ ApplicationWindow {
 				anchors.left: neuronLegend.right
 				anchors.leftMargin: 5
 				onEditingFinished: {
-					dynamicsViewer.changeTrackedNeuron(value)
+					dynamicsViewer.change_tracked_neuron(value)
 				}
 			}
 

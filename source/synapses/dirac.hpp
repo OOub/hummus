@@ -24,16 +24,16 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitudeScaling=50, float _externalCurrent=100, float gaussianStandardDeviation=0) :
-                Synapse(_target_neuron, _parent_neuron, _weight, _delay, _externalCurrent),
-                amplitudeScaling(_amplitudeScaling) {
+		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitude_scaling=50, float _external_current=150, float _gaussian_std_dev=0) :
+                Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current),
+                amplitude_scaling(_amplitude_scaling) {
 		
-			gaussianStdDev = gaussianStandardDeviation;
+            gaussian_std_dev = _gaussian_std_dev;
 			
 			// initialising a normal distribution
 			std::random_device device;
-            randomEngine = std::mt19937(device());
-            normalDistribution = std::normal_distribution<>(0, gaussianStandardDeviation);
+            random_engine = std::mt19937(device());
+            normal_distribution = std::normal_distribution<>(0, _gaussian_std_dev);
             
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
@@ -47,31 +47,31 @@ namespace hummus {
 		
 		// ----- PUBLIC METHODS -----
         virtual float update(double timestamp) override {
-            synapticCurrent = 0;
-            return synapticCurrent;
+            synaptic_current = 0;
+            return synaptic_current;
         }
         
-		virtual void receiveSpike(double timestamp) override {
+		virtual void receive_spike(double timestamp) override {
             // saving timestamp
-            previousInputTime = timestamp;
-            synapticCurrent = amplitudeScaling * weight * (externalCurrent+normalDistribution(randomEngine));
+            previous_input_time = timestamp;
+            synaptic_current = amplitude_scaling * weight * (external_current+normal_distribution(random_engine));
 		}
         
-		virtual void toJson(nlohmann::json& output) override {
+		virtual void to_json(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({
             	{"json_id", json_id},
                 {"weight", weight},
                 {"delay", delay},
-                {"postsynapticNeuron", postsynaptic_neuron},
-            	{"amplitudeScaling", amplitudeScaling},
+                {"postsynaptic_neuron", postsynaptic_neuron},
+            	{"amplitude_scaling", amplitude_scaling},
             });
 		}
 		
 	protected:
-		double                     amplitudeScaling;
-		std::mt19937               randomEngine;
-		std::normal_distribution<> normalDistribution;
+		double                     amplitude_scaling;
+		std::mt19937               random_engine;
+		std::normal_distribution<> normal_distribution;
         int                        json_synapse_type;
 	};
 }

@@ -23,44 +23,44 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 
-    auto trainingData = dataParser.readTextData("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", true, 0);
+    auto trainingData = dataParser.read_txt_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", true, 0);
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
 
-    auto& display = network.makeGUI<hummus::Display>();
-    network.makeAddon<hummus::SpikeLogger>("1D_spikeLog.bin");
-    network.makeAddon<hummus::MyelinPlasticityLogger>("1D_mpLog.bin");
+    auto& display = network.make_gui<hummus::Display>();
+    network.make_addon<hummus::SpikeLogger>("1D_spikeLog.bin");
+    network.make_addon<hummus::MyelinPlasticityLogger>("1D_mpLog.bin");
 
     //  ----- NETWORK PARAMETERS -----
 	float conductance = 200;
     float leakageConductance = 10;
-    int inputNeurons = 10;
-    int layer1Neurons = 4;
+    int   inputNeurons = 10;
+    int   layer1Neurons = 4;
 
 	bool burst = false;
 	bool homeostasis = true;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto& mp = network.makeAddon<hummus::MyelinPlasticity>();
+	auto& mp = network.make_addon<hummus::MyelinPlasticity>();
 
     //  ----- CREATING THE NETWORK -----
-    auto input = network.makeLayer<hummus::Parrot>(inputNeurons, {});
-    auto output = network.makeLayer<hummus::LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, homeostasis, burst, 20);
+    auto input = network.make_layer<hummus::Parrot>(inputNeurons, {});
+    auto output = network.make_layer<hummus::LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, homeostasis, burst, 20);
 
 	//  ----- CONNECTING THE NETWORK -----
-    network.allToAll<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
-    network.lateralInhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
+    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
+    network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     //  ----- DISPLAY SETTINGS -----
-	display.setTimeWindow(5000);
-	display.trackNeuron(11);
+	display.set_time_window(5000);
+	display.track_neuron(11);
 
-    network.turnOffLearning(80000);
+    network.turn_off_learning(80000);
     network.verbosity(0);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run(&trainingData, 0.1);
+    network.run_data(&trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

@@ -34,149 +34,149 @@ namespace hummus {
 		// ----- PUBLIC INPUT NEURON METHODS -----
         virtual void initialisation(Network* network) override {
             // searching for addons that are relevant to this neuron. if addons do not have a mask they are automatically relevant / not filtered out
-            for (auto& addon: network->getAddons()) {
-                if (addon->getNeuronMask().empty()) {
-                    addRelevantAddon(addon.get());
+            for (auto& addon: network->get_addons()) {
+                if (addon->get_mask().empty() && !addon->no_automatic_include()) {
+                    add_relevant_addon(addon.get());
                 } else {
-                    auto it = std::find(addon->getNeuronMask().begin(), addon->getNeuronMask().end(), static_cast<size_t>(neuronID));
-                    if (it != addon->getNeuronMask().end()) {
-                        addRelevantAddon(addon.get());
+                    auto it = std::find(addon->get_mask().begin(), addon->get_mask().end(), static_cast<size_t>(neuron_id));
+                    if (it != addon->get_mask().end()) {
+                        add_relevant_addon(addon.get());
                     }
                 }
             }
         }
         
-		virtual void update(double timestamp, Synapse* s, Network* network, spikeType type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, spike_type type) override {
             
             // checking if the neuron is in a refractory period
-            if (timestamp - previousSpikeTime >= refractoryPeriod) {
+            if (timestamp - previous_spike_time >= refractory_period) {
                 active = true;
             }
             
             // trace decay
-            trace *= std::exp(-(timestamp - previousSpikeTime)/traceTimeConstant);
+            trace *= std::exp(-(timestamp - previous_spike_time)/trace_time_constant);
             
             // instantly making the input neuron fire at every input spike
             if (active) {
                 potential = threshold;
                 trace += 1;
                 
-                if (network->getVerbose() == 2) {
-                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
+                if (network->get_verbose() == 2) {
+                    std::cout << "t=" << timestamp << " " << neuron_id << " w=" << s->get_weight() << " d=" << s->get_delay() << " --> INPUT" << std::endl;
                 }
                 
-                for (auto& addon: relevantAddons) {
-                    addon->neuronFired(timestamp, s, this, network);
+                for (auto& addon: relevant_addons) {
+                    addon->neuron_fired(timestamp, s, this, network);
                 }
                 
-                if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
+                if (network->get_main_thread_addon()) {
+                    network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
                 }
                 
-                if (!network->getLayers()[layerID].do_not_propagate) {
-                    for (auto& axonTerminal : axonTerminals) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                if (!network->get_layers()[layer_id].do_not_propagate) {
+                    for (auto& axonTerminal : axon_terminals) {
+                        network->inject_spike(spike{timestamp + axonTerminal->get_delay(), axonTerminal.get(), spike_type::generated});
                     }
                 }
                 
-                requestLearning(timestamp, s, this, network);
-                previousSpikeTime = timestamp;
-                potential = restingPotential;
+                request_learning(timestamp, s, this, network);
+                previous_spike_time = timestamp;
+                potential = resting_potential;
                 active = false;
                 
-                if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->statusUpdate(timestamp, s, this, network);
+                if (network->get_main_thread_addon()) {
+                    network->get_main_thread_addon()->status_update(timestamp, s, this, network);
                 }
             }
 		}
         
-        virtual void updateSync(double timestamp, Synapse* s, Network* network, double timestep, spikeType type) override {
+        virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
             
-            if (timestamp != 0 && timestamp - previousSpikeTime == 0) {
+            if (timestamp != 0 && timestamp - previous_spike_time == 0) {
                 timestep = 0;
             }
             
             // checking if the neuron is in a refractory period
-            if (timestamp - previousSpikeTime >= refractoryPeriod) {
+            if (timestamp - previous_spike_time >= refractory_period) {
                 active = true;
             }
             
             // trace decay
-            trace *= std::exp(-timestep/traceTimeConstant);
+            trace *= std::exp(-timestep/trace_time_constant);
             
             if (s && active) {
                 potential = threshold;
                 trace += 1;
-                if (network->getVerbose() == 2) {
-                    std::cout << "t=" << timestamp << " " << neuronID << " w=" << s->getWeight() << " d=" << s->getDelay() << " --> INPUT" << std::endl;
+                if (network->get_verbose() == 2) {
+                    std::cout << "t=" << timestamp << " " << neuron_id << " w=" << s->get_weight() << " d=" << s->get_delay() << " --> INPUT" << std::endl;
                 }
                 
-                for (auto& addon: relevantAddons) {
-                    addon->neuronFired(timestamp, s, this, network);
+                for (auto& addon: relevant_addons) {
+                    addon->neuron_fired(timestamp, s, this, network);
                 }
                 
-                if (network->getMainThreadAddon()) {
-                    network->getMainThreadAddon()->neuronFired(timestamp, s, this, network);
+                if (network->get_main_thread_addon()) {
+                    network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
                 }
                 
-                if (!network->getLayers()[layerID].do_not_propagate) {
-                    for (auto& axonTerminal : axonTerminals) {
-                        network->injectSpike(spike{timestamp + axonTerminal->getDelay(), axonTerminal.get(), spikeType::generated});
+                if (!network->get_layers()[layer_id].do_not_propagate) {
+                    for (auto& axonTerminal : axon_terminals) {
+                        network->inject_spike(spike{timestamp + axonTerminal->get_delay(), axonTerminal.get(), spike_type::generated});
                     }
                 }
                 
-                requestLearning(timestamp, s, this, network);
-                previousSpikeTime = timestamp;
-                potential = restingPotential;
+                request_learning(timestamp, s, this, network);
+                previous_spike_time = timestamp;
+                potential = resting_potential;
                 active = false;
             } else {
                 if (timestep > 0) {
-                    for (auto& addon: relevantAddons) {
+                    for (auto& addon: relevant_addons) {
                         addon->timestep(timestamp, this, network);
                     }
-                    if (network->getMainThreadAddon()) {
-                        network->getMainThreadAddon()->timestep(timestamp, this, network);
+                    if (network->get_main_thread_addon()) {
+                        network->get_main_thread_addon()->timestep(timestamp, this, network);
                     }
                 }
             }
         }
         
         // write neuron parameters in a JSON format
-        virtual void toJson(nlohmann::json& output) override{
+        virtual void to_json(nlohmann::json& output) override{
             // general neuron parameters
             output.push_back({
-                {"Type",neuronType},
-                {"layerID",layerID},
-                {"sublayerID", sublayerID},
-                {"receptiveFieldCoordinates", rfCoordinates},
-                {"XYCoordinates", xyCoordinates},
-                {"traceTimeConstant", traceTimeConstant},
+                {"type",neuron_type},
+                {"layer_id",layer_id},
+                {"sublayer_id", sublayer_id},
+                {"rf_coordinates", rf_coordinates},
+                {"xy_coordinates", xy_coordinates},
+                {"trace_time_constant", trace_time_constant},
                 {"threshold", threshold},
-                {"restingPotential", restingPotential},
-                {"refractoryPeriod", refractoryPeriod},
-                {"dendriticSynapses", nlohmann::json::array()},
-                {"axonalSynapses", nlohmann::json::array()},
+                {"resting_potential", resting_potential},
+                {"refractory_period", refractory_period},
+                {"dendritic_synapses", nlohmann::json::array()},
+                {"axonal_synapses", nlohmann::json::array()},
             });
             
             // dendritic synapses (preSynapse)
-            auto& dendriticSynapses = output.back()["dendriticSynapses"];
-            for (auto& dendrite: dendriticTree) {
-                dendrite->toJson(dendriticSynapses);
+            auto& dendriticSynapses = output.back()["dendritic_synapses"];
+            for (auto& dendrite: dendritic_tree) {
+                dendrite->to_json(dendriticSynapses);
             }
             
             // axonal synapses (postSynapse)
-            auto& axonalSynapses = output.back()["axonalSynapses"];
-            for (auto& axonTerminal: axonTerminals) {
-                axonTerminal->toJson(axonalSynapses);
+            auto& axonalSynapses = output.back()["axonal_synapses"];
+            for (auto& axonTerminal: axon_terminals) {
+                axonTerminal->to_json(axonalSynapses);
             }
         }
         
     protected:
         
         // loops through any learning rules and activates them
-        virtual void requestLearning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            if (network->getLearningStatus()) {
-                for (auto& addon: relevantAddons) {
+        virtual void request_learning(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            if (network->get_learning_status()) {
+                for (auto& addon: relevant_addons) {
                     addon->learn(timestamp, s, postsynapticNeuron, network);
                 }
             }

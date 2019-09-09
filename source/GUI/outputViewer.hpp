@@ -53,7 +53,7 @@ namespace hummus {
         virtual ~OutputViewer(){}
 		
     	// ----- PUBLIC OUTPUTVIEWER METHODS -----		
-		void handleData(double timestamp, int postsynapticNeuronID, int postsynapticLayerID, int postsynapticSublayerID) {
+		void handle_data(double timestamp, int postsynapticNeuronID, int postsynapticLayerID, int postsynapticSublayerID) {
             input = timestamp;
 			if (postsynapticLayerID == layerTracker) {
 				if (postsynapticSublayerID == sublayerTracker) {
@@ -69,24 +69,24 @@ namespace hummus {
 			}
         }
 		
-		void handleTimestep(double timestamp) {
+		void handle_timestep(double timestamp) {
 			input = timestamp;
         }
 		
 		// ----- SETTERS -----
-		void setEngine(QQmlApplicationEngine* _engine) {
+		void set_engine(QQmlApplicationEngine* _engine) {
 			engine = _engine;
 		}
 		
-		void setTimeWindow(float newWindow) {
+		void set_time_window(float newWindow) {
             timeWindow = newWindow;
         }
 		
-		void useHardwareAcceleration(bool accelerate) {
+		void hardware_acceleration(bool accelerate) {
             openGL = accelerate;
         }
 		
-		void setYLookup(std::vector<std::vector<int>> newLookup, std::vector<int> _neuronsInLayers) {
+		void set_y_lookup(std::vector<std::vector<int>> newLookup, std::vector<int> _neuronsInLayers) {
 		    yLookupTable = newLookup;
 		    neuronsInLayers = _neuronsInLayers;
 		}
@@ -99,7 +99,7 @@ namespace hummus {
     public slots:
 		
     	// ----- QT-RELATED METHODS -----
-		void changeLayer(int newLayer) {
+		void change_layer(int newLayer) {
 			layerTracker = newLayer;
 			sublayerTracker = 0;
             engine->rootContext()->setContextProperty("sublayers", static_cast<int>(yLookupTable[layerTracker].size()-1));
@@ -109,7 +109,7 @@ namespace hummus {
 			maxY = minY+1;
 		}
 		
-		void changeSublayer(int newSublayer) {
+		void change_sublayer(int newSublayer) {
 			sublayerTracker = newSublayer;
 			int previousLayerNeurons = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.begin()+layerTracker, 0);
 			int previousSublayerNeurons = std::accumulate(yLookupTable[layerTracker].begin(), yLookupTable[layerTracker].begin()+sublayerTracker, 0);

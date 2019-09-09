@@ -32,20 +32,20 @@ namespace hummus {
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         // constructor to log all neurons of a layer
         WeightMaps(std::string filename, std::string _trainingLabels, std::string _testLabels="") :
-                saveFile(filename, std::ios::out | std::ios::binary),
-        		trainingLabels({}),
-        		testString(_testLabels),
-        		testLabels({}),
+                save_file(filename, std::ios::out | std::ios::binary),
+        		training_labels({}),
+        		test_string(_testLabels),
+        		test_labels({}),
         		train(true) {
 					
 			// opening a new binary file to save data in
-            if (!saveFile.good()) {
+            if (!save_file.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
 			
 			// reading labels
-			trainingLabels = parser.readLabels(_trainingLabels);
-			trainingLabels.pop_front(); // remove first element which point to the start of the first pattern
+			training_labels = parser.read_txt_labels(_trainingLabels);
+			training_labels.pop_front(); // remove first element which point to the start of the first pattern
         }
         
         virtual ~WeightMaps(){}
@@ -61,109 +61,109 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
 		
-		void onPredict(Network* network) override {
-			if (!testString.empty()) {
+		void on_predict(Network* network) override {
+			if (!test_string.empty()) {
 				train = false;
-				testLabels = parser.readLabels(testString);
-				testLabels.pop_front(); // remove first element which point to the start of the first pattern
+				test_labels = parser.read_txt_labels(test_string);
+				test_labels.pop_front(); // remove first element which point to the start of the first pattern
 				
 				for (auto& n: neuron_mask) {
-                    const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
+                    const int16_t bitSize = 5+1*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
                     std::vector<char> bytes(bitSize);
 	
                     copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
                     copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-                    copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                    copy_to(bytes.data() + 4, static_cast<int8_t>(network->get_neurons()[n]->get_sublayer_id()));
                     
                     int count = 5;
-                    for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
-                        SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
+                    for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
+                        copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->get_weight()*100));
                         count += 1;
                     }
 				
                     // saving to file
-                    saveFile.write(bytes.data(), bytes.size());
+                    save_file.write(bytes.data(), bytes.size());
                 }
 			
 			} else {
-				if (network->getVerbose() != 0) {
+                if (network->get_verbose() != 0) {
 					std::cout << "test data was fed into the network but a corresponding test label .txt file was not provided to the weight maps constructor. Weight maps for the test dataset won't be saved" << std::endl;
 				}
 			}
 		}
 		
-		void onCompleted(Network* network) override {
+		void on_completed(Network* network) override {
 			for (auto& n: neuron_mask) {
-				const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
+                const int16_t bitSize = 5+1*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
 				std::vector<char> bytes(bitSize);
 	
 				copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
 				copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-				copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+				copy_to(bytes.data() + 4, static_cast<int8_t>(network->get_neurons()[n]->get_sublayer_id()));
                 
 				int count = 5;
-				for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
-					SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
+                for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
+                    copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->get_weight()*100));
 					count += 1;
 				}
 				
 				// saving to file
-				saveFile.write(bytes.data(), bytes.size());
+				save_file.write(bytes.data(), bytes.size());
 			}
 		}
 		
-        void incomingSpike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+        void incoming_spike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (train) {
-                if (!trainingLabels.empty() && timestamp >= trainingLabels.front().onset) {
+                if (!training_labels.empty() && timestamp >= training_labels.front().onset) {
                     for (auto& n: neuron_mask) {
-                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
+                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
                         std::vector<char> bytes(bitSize);
                         
                         copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
                         copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-                        copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                        copy_to(bytes.data() + 4, static_cast<int8_t>(network->get_neurons()[n]->get_sublayer_id()));
                         
                         int count = 5;
-                        for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
-                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
+                        for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
+                            copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->get_weight()*100));
                             count += 1;
                         }
                         
                         // saving to file
-                        saveFile.write(bytes.data(), bytes.size());
+                        save_file.write(bytes.data(), bytes.size());
                     }
-                    trainingLabels.pop_front();
+                    training_labels.pop_front();
                 }
             } else {
-                if (!testLabels.empty() && timestamp >= testLabels.front().onset) {
+                if (!test_labels.empty() && timestamp >= test_labels.front().onset) {
                     for (auto& n: neuron_mask) {
-                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->getNeurons()[n]->getDendriticTree().size());
+                        const int16_t bitSize = 5+1*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
                         std::vector<char> bytes(bitSize);
                         
                         copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
                         copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-                        copy_to(bytes.data() + 4, static_cast<int8_t>(network->getNeurons()[n]->getSublayerID()));
+                        copy_to(bytes.data() + 4, static_cast<int8_t>(network->get_neurons()[n]->get_sublayer_id()));
                         
                         int count = 5;
-                        for (auto& dendrite: network->getNeurons()[n]->getDendriticTree()) {
-                            SpikeLogger::copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->getWeight()*100));
+                        for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
+                            copy_to(bytes.data() + count, static_cast<int8_t>(dendrite->get_weight()*100));
                             count += 1;
                         }
                         
                         // saving to file
-                        saveFile.write(bytes.data(), bytes.size());
+                        save_file.write(bytes.data(), bytes.size());
                     }
-                    testLabels.pop_front();
+                    test_labels.pop_front();
                 }
             }
         }
 		
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
-		std::ofstream        saveFile;
-        std::deque<label>    trainingLabels;
-        std::deque<label>    testLabels;
-        std::string          testString;
+		std::ofstream        save_file;
+        std::deque<label>    training_labels;
+        std::deque<label>    test_labels;
+        std::string          test_string;
         bool                 train;
         DataParser           parser;
 	};

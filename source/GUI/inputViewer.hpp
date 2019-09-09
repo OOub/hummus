@@ -56,7 +56,7 @@ namespace hummus {
         virtual ~InputViewer(){}
 		
     	// ----- PUBLIC INPUTVIEWER METHODS -----
-		void handleData(double timestamp, int presynapticNeuronID, int postsynapticNeuronID, int postsynapticSublayerID) {
+		void handle_data(double timestamp, int presynapticNeuronID, int postsynapticNeuronID, int postsynapticSublayerID) {
             maxX = timestamp;
             if (presynapticNeuronID == -1) {
                 if (postsynapticSublayerID == sublayerTracker) {
@@ -73,20 +73,20 @@ namespace hummus {
             }
         }
 		
-		void handleTimestep(double timestamp) {
+		void handle_timestep(double timestamp) {
 			maxX = timestamp;
         }
 		
 		// ----- SETTERS -----
-        void setTimeWindow(double newWindow) {
+        void set_time_window(double newWindow) {
             timeWindow = newWindow;
         }
 		
-        void setYLookup(std::vector<int> newLookup) {
+        void set_y_lookup(std::vector<int> newLookup) {
 		    yLookupTable = newLookup;
 		}
 		
-		void useHardwareAcceleration(bool accelerate) {
+		void hardware_acceleration(bool accelerate) {
             openGL = accelerate;
         }
         
@@ -98,7 +98,7 @@ namespace hummus {
     public slots:
 		
     	// ----- QT-RELATED METHODS -----
-    	void changeSublayer(int newSublayer) {
+    	void change_sublayer(int newSublayer) {
 			sublayerTracker = newSublayer;
 			
 			if (newSublayer > 0) {
