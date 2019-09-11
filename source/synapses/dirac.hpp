@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitude_scaling=50, float _external_current=150, float _gaussian_std_dev=0) :
+		Dirac(int _target_neuron, int _parent_neuron, double _weight, double _delay, double _amplitude_scaling=50, double _external_current=150, double _gaussian_std_dev=0) :
                 Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current),
                 amplitude_scaling(_amplitude_scaling) {
 		
@@ -33,27 +33,25 @@ namespace hummus {
 			// initialising a normal distribution
 			std::random_device device;
             random_engine = std::mt19937(device());
-            normal_distribution = std::normal_distribution<>(0, _gaussian_std_dev);
+            normal_distribution = std::normal_distribution<double>(0, _gaussian_std_dev);
             
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
-                type = synapseType::inhibitory;
+                type = synapse_type::inhibitory;
             } else {
-                type = synapseType::excitatory;
+                type = synapse_type::excitatory;
             }
 		}
 		
 		virtual ~Dirac(){}
 		
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp) override {
+        virtual double update(double timestamp, double timestep, bool asynchronous) override {
             synaptic_current = 0;
             return synaptic_current;
         }
         
-		virtual void receive_spike(double timestamp) override {
-            // saving timestamp
-            previous_input_time = timestamp;
+		virtual void receive_spike() override {
             synaptic_current = amplitude_scaling * weight * (external_current+normal_distribution(random_engine));
 		}
         

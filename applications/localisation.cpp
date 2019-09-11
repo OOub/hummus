@@ -83,14 +83,14 @@ int main(int argc, char** argv) {
 
     // run calibration
     network.verbosity(0);
-    network.run_data(&calibration, 0.1);
+    network.run_data(calibration, 0.1);
 
     // assigning labels to direction neurons
 //
 //    // run test
 //    auto test = parser.read_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
 //    network.turn_off_learning();
-//    network.run_data(&test, 0.1);
+//    network.run_data(test, 0.1);
 
     return 0;
 }

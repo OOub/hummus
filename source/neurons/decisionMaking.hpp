@@ -24,13 +24,14 @@ namespace hummus {
 	class DecisionMaking : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=10, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=10, double _conductance=200, double _leakageConductance=10, double _traceTimeConstant=20, double _threshold=-50, double _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
+                run_once(true),
                 inhibition_time(0) {
                     
             // DecisionMaking neuron type = 2 for JSON save
-                    neuron_type = 2;
+            neuron_type = 2;
         }
 		
 		virtual ~DecisionMaking(){}
@@ -50,7 +51,7 @@ namespace hummus {
             }
         }
         
-        virtual void update(double timestamp, Synapse* s, Network* network, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
             // checking if the neuron is in a refractory period
             if (timestamp - inhibition_time >= refractory_period) {
                 active = true;
@@ -58,8 +59,15 @@ namespace hummus {
             
             if (type == spike_type::decision) {
                 if (active && intensity > 0) {
+                    
+                    // compute the inverse of the dendrites tree size only once for performance reasons
+                    if (run_once) {
+                        inv_dendrites_size = 1. / static_cast<double>(dendritic_tree.size());
+                        run_once = false;
+                    }
+                    
                     // function that converts the intensity to a delay
-                    float intensity_to_latency = 10 * 1 - std::exp(- intensity/dendritic_tree.size());
+                    double intensity_to_latency = 10 * std::exp(- 0.1 * intensity * inv_dendrites_size);
                     
                     // make the neuron fire so we can get the decision
                     potential = threshold;
@@ -151,5 +159,7 @@ namespace hummus {
         float    intensity;
         bool     active;
         double   inhibition_time;
+        bool     run_once;
+        double   inv_dendrites_size;
 	};
 }

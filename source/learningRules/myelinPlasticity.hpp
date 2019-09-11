@@ -65,7 +65,7 @@ namespace hummus {
             
             // saving relevant synapses and their spike times
             for (auto& input: postsynapticNeuron->get_dendritic_tree()) {
-                if (input->get_type() == synapseType::excitatory) {
+                if (input->get_type() == synapse_type::excitatory) {
                     // easy access to the input neuron
                     auto& inputNeuron = network->get_neurons()[input->get_presynaptic_neuron_id()];
                     
@@ -94,11 +94,11 @@ namespace hummus {
                         // change delay according to the time difference
                         float delta_delay = 0;
                         delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->get_membrane_time_constant())) * postsynapticNeuron->get_current() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->get_membrane_time_constant()));
-                        input->set_delay(delta_delay);
+                        input->increment_delay(delta_delay);
                         
                         // long-term potentiation on weights
                         float delta_weight = (alpha_plus * std::exp(- time_difference * beta_plus * input->get_weight())) * input->get_weight() * (1 - input->get_weight());
-                        input->set_weight(delta_weight);
+                        input->increment_weight(delta_weight);
 
                         weight_normaliser += input->get_weight();
                         
@@ -116,7 +116,7 @@ namespace hummus {
 
                         // long-term potentiation on weights
                         float delta_weight = (alpha_plus * std::exp(- beta_plus * input->get_weight())) * input->get_weight() * (1 - input->get_weight());
-                        input->set_weight(delta_weight);
+                        input->increment_weight(delta_weight);
 
                         weight_normaliser += input->get_weight();
 
@@ -127,7 +127,7 @@ namespace hummus {
                     } else {
                         // long-term depression on weights
                         float delta_weight = (alpha_minus * std::exp(- beta_minus * (1 - input->get_weight()))) * input->get_weight() * (1 - input->get_weight());
-                        input->set_weight(delta_weight);
+                        input->increment_weight(delta_weight);
 
                         if (network->get_verbose() >= 1) {
                             std::cout << " never fired " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " weight change: " << delta_weight << " weight " << input->get_weight() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << std::endl;
@@ -140,9 +140,9 @@ namespace hummus {
             }
             
             for (auto& input: postsynapticNeuron->get_dendritic_tree()) {
-                if (input->get_type() == synapseType::excitatory && weight_normaliser > 0) {
+                if (input->get_type() == synapse_type::excitatory && weight_normaliser > 0) {
                     // normalising synaptic weights only when pattern has more than 1 neuron responding
-                    input->set_weight(input->get_weight()/ weight_normaliser, false);
+                    input->increment_weight(input->get_weight()/ weight_normaliser);
 
                     // printing the weights
                     if (network->get_verbose() >= 1) {

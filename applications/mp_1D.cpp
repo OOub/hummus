@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     network.verbosity(0);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run_data(&trainingData, 0.1);
+    network.run_data(trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=3, float _conductance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, double _conductance=200, double _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, double _traceTimeConstant=20, double _decayHomeostasis=20, double _homeostasisBeta=0.1, double _threshold=-50, double _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 bursting_activity(_burstingActivity),
@@ -35,10 +35,14 @@ namespace hummus {
                 homeostasis_beta(_homeostasisBeta),
                 active_synapse(nullptr),
                 inhibited(false),
-                inhibition_time(0){
+                inhibition_time(0) {
                     
             // LIF neuron type == 1 (for JSON save)
-                    neuron_type = 1;
+            neuron_type = 1;
+                    
+            inv_trace_tau = 1. / _traceTimeConstant;
+            inv_membrane_tau = 1./ membrane_time_constant;
+            inv_homeostasis_tau = 1. / _decayHomeostasis;
 		}
 		
 		virtual ~LIF(){}
@@ -58,7 +62,7 @@ namespace hummus {
             }
             
             // asynchronous network cannot use exponential synapses
-            if (network->get_network_type()) {
+            if (network->is_asynchronous()) {
                 if (std::any_of(axon_terminals.begin(), axon_terminals.end(), [](std::unique_ptr<Synapse>& synapse) {
                     return dynamic_cast<Exponential*>(synapse.get()) != nullptr;
                 })) {
@@ -67,10 +71,13 @@ namespace hummus {
             }
 		}
         
-        // homeostasis does not work for the event-based neuron because it would complicate spike prediction
-        virtual void update(double timestamp, Synapse* s, Network* network, spike_type type) override {
+        // homeostasis does not work for the event-based neuron because it would complicate spike prediction even more
+        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+            
+            double input_td = timestamp - previous_input_time;
             
             if (type == spike_type::initial || type == spike_type::generated) {
+                
                 // checking if the neuron is inhibited
                 if (inhibited && timestamp - inhibition_time >= refractory_period) {
                     inhibited = false;
@@ -83,41 +90,39 @@ namespace hummus {
 				
                 // updating current of synapses
                 if (type == spike_type::initial) {
-                    current = s->update(timestamp);
+                    current = s->update(timestamp, timestep, network->is_asynchronous());
                 } else {
-                    float total_current = 0;
+                    current = 0;
                     for (auto& synapse: dendritic_tree) {
-                        total_current += synapse->update(timestamp);
+                        current += synapse->update(timestamp, timestep, network->is_asynchronous());
                     }
-                    current = total_current;
                 }
                 
                 // trace decay
-                trace *= std::exp(-(timestamp-previous_input_time)/trace_time_constant);
+                trace -= trace * input_td * inv_trace_tau;
                 
                 // potential decay
-                potential = resting_potential + (potential-resting_potential)*std::exp(-(timestamp-previous_input_time)/membrane_time_constant);
+                potential = resting_potential + (potential-resting_potential)*std::exp(- input_td * inv_membrane_tau);
                 
                 if (network->get_main_thread_addon()) {
-                    network->get_main_thread_addon()->status_update(timestamp, s, this, network);
+                    network->get_main_thread_addon()->status_update(timestamp, this, network);
                 }
                 
                 if (active && !inhibited) {
 					// calculating the potential
-                    potential = resting_potential + current * (1 - std::exp(-(timestamp-previous_input_time)/membrane_time_constant)) + (potential - resting_potential) * std::exp(-(timestamp-previous_input_time)/membrane_time_constant);
+                    potential = resting_potential + current * (1 - std::exp(- input_td * inv_membrane_tau)) + (potential - resting_potential) * std::exp(-input_td * inv_membrane_tau);
 					
                     // sending spike to relevant synapse
-                    s->receive_spike(timestamp);
+                    s->receive_spike();
                     
                     if (type == spike_type::initial) {
                         current = s->get_synaptic_current();
                     } else {
                         // integating synaptic currents from dendritic tree
-                        float total_current = 0;
+                        current = 0;
                         for (auto& synapse: dendritic_tree) {
-                            total_current += synapse->get_synaptic_current();
+                            current += synapse->get_synaptic_current();
                         }
-                        current = total_current;
                     }
                     
                     if (network->get_verbose() == 2) {
@@ -144,27 +149,27 @@ namespace hummus {
                             network->inject_predicted_spike(spike{timestamp + s->get_synapse_time_constant(), s, spike_type::end_of_integration}, spike_type::end_of_integration);
                         }
                     } else {
-                        potential = resting_potential + current * (1 - std::exp(-(timestamp-previous_input_time)/membrane_time_constant)) + (potential - resting_potential);
+                        potential = resting_potential + current * (1 - std::exp(- input_td * inv_membrane_tau)) + (potential - resting_potential);
                     }
                 }
             } else if (type == spike_type::prediction) {
                 if (active && !inhibited) {
-                    potential = resting_potential + current * (1 - std::exp(-(timestamp-previous_input_time)/membrane_time_constant)) + (potential - resting_potential);
+                    potential = resting_potential + current * (1 - std::exp(- input_td * inv_membrane_tau)) + (potential - resting_potential);
                 }
             } else if (type == spike_type::end_of_integration) {
                 if (active && !inhibited) {
-                    potential = resting_potential + current * (1 - std::exp(-s->get_synapse_time_constant()/membrane_time_constant)) + (potential - resting_potential) * std::exp(-s->get_synapse_time_constant()/membrane_time_constant);
+                    potential = resting_potential + current * (1 - std::exp(-s->get_synapse_time_constant() * inv_membrane_tau)) + (potential - resting_potential) * std::exp(-s->get_synapse_time_constant() * inv_membrane_tau);
                 }
             }
         
             if (network->get_main_thread_addon()) {
-                network->get_main_thread_addon()->status_update(timestamp, s, this, network);
+                network->get_main_thread_addon()->status_update(timestamp, this, network);
             }
 
             if (potential >= threshold) {
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (network->get_decision_making() && network->getDecisionParameters().layer_number == layer_id+1) {
-                    if (decision_queue.size() < network->getDecisionParameters().spike_history_size) {
+                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                    if (decision_queue.size() < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
                         decision_queue.pop_front();
@@ -194,19 +199,20 @@ namespace hummus {
                 
                 request_learning(timestamp, s, this, network);
                 
-                previous_spike_time = timestamp;
-                potential = resting_potential;
+                // resetting the current after firing if we don't want the neuron to burst
                 if (!bursting_activity) {
-                    current = 0;
                     for (auto& synapse: dendritic_tree) {
                         synapse->reset();
                     }
                 }
-                active = false;
                 
                 if (network->get_main_thread_addon()) {
-                    network->get_main_thread_addon()->status_update(timestamp, s, this, network);
+                    network->get_main_thread_addon()->status_update(timestamp, this, network);
                 }
+                
+                previous_spike_time = timestamp;
+                potential = resting_potential;
+                active = false;
             }
             
             // updating the timestamp when a synapse was propagating a spike
@@ -216,7 +222,7 @@ namespace hummus {
 		
         virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
             // handling multiple spikes at the same timestamp (to prevent excessive decay)
-            if (timestamp != 0 && timestamp - previous_spike_time == 0) {
+            if (timestamp != 0 && timestamp - previous_input_time == 0) {
                 timestep = 0;
             }
             
@@ -232,91 +238,82 @@ namespace hummus {
             
             // updating current of synapses
             if (type == spike_type::initial) {
-                current = s->update(timestamp);
+                current = s->update(timestamp, timestep, network->is_asynchronous());
             } else {
-                float total_current = 0;
+                current = 0;
                 for (auto& synapse: dendritic_tree) {
-                    total_current += synapse->update(timestamp);
+                    current += synapse->update(timestamp, timestep, network->is_asynchronous());
                 }
-                current = total_current;
             }
             
             // trace decay
-            trace *= std::exp(-timestep/trace_time_constant);
+            trace -= trace * timestep * inv_trace_tau;
             
 			// potential decay
-            potential = resting_potential + (potential-resting_potential)*std::exp(-timestep/membrane_time_constant);
+            potential += (resting_potential - potential) * timestep * inv_membrane_tau;
             
 			// threshold decay
 			if (homeostasis) {
-                threshold = resting_threshold + (threshold-resting_threshold)*std::exp(-timestep/decay_homeostasis);
+                threshold += (resting_threshold - threshold) * timestep * inv_homeostasis_tau;
 			}
                 
 			// neuron inactive during refractory period
 			if (active && !inhibited) {
 				if (s) {
-                                        
+                    
+                    active_synapse = s;
+                    
+                    // updating the timestamp when a synapse was propagating a spike
+                    previous_input_time = timestamp;
+                    s->set_previous_input_time(timestamp);
+                    
 					// updating the threshold
 					if (homeostasis) {
-						threshold += homeostasis_beta/decay_homeostasis;
+						threshold += homeostasis_beta * inv_homeostasis_tau;
 					}
                     
                     // sending spike to relevant synapse
-                    s->receive_spike(timestamp);
+                    s->receive_spike();
                     
                     // integating synaptic currents
                     if (type == spike_type::initial) {
                         current = s->get_synaptic_current();
                     } else {
-                        float total_current = 0;
+                        current = 0;
                         for (auto& synapse: dendritic_tree) {
-                            total_current += synapse->get_synaptic_current();
+                            current += synapse->get_synaptic_current();
                         }
-                        current = total_current;
                     }
-					active_synapse = s;
-                    
-                    // updating the timestamp when a synapse was propagating a spike
-                    previous_input_time = timestamp;
-                    s->set_previous_input_time(timestamp);
                     
                     if (network->get_verbose() == 2) {
                         std::cout << "t=" << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " w=" << s->get_weight() << " d=" << s->get_delay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layer_id << " --> EMITTED" << std::endl;
                     }
                     
                     for (auto& addon: relevant_addons) {
-                        if (potential < threshold) {
-                            addon->incoming_spike(timestamp, s, this, network);
-                        }
+                        addon->incoming_spike(timestamp, s, this, network);
                     }
+                    
                     if (network->get_main_thread_addon()) {
                         network->get_main_thread_addon()->incoming_spike(timestamp, s, this, network);
                     }
 				}
 				
-                potential += current * (1 - std::exp(-timestep/membrane_time_constant));
+                potential += current * (1 - std::exp(-timestep * inv_membrane_tau));
             }
             
-            if (s) {
-                if (network->get_main_thread_addon()) {
-                    network->get_main_thread_addon()->status_update(timestamp, s, this, network);
-                }
-            } else {
-                if (timestep > 0) {
-                    for (auto& addon: relevant_addons) {
-                        addon->timestep(timestamp, this, network);
-                    }
-                    if (network->get_main_thread_addon()) {
-                        network->get_main_thread_addon()->timestep(timestamp, this, network);
-                    }
-                }
+            for (auto& addon: relevant_addons) {
+                addon->status_update(timestamp, this, network);
+            }
+            
+            if (network->get_main_thread_addon()) {
+                network->get_main_thread_addon()->status_update(timestamp, this, network);
             }
 
 			if (potential >= threshold && active_synapse) {
                 
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (network->get_decision_making() && network->getDecisionParameters().layer_number == layer_id+1) {
-                    if (decision_queue.size() < network->getDecisionParameters().spike_history_size) {
+                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                    if (decision_queue.size() < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
                         decision_queue.pop_front();
@@ -328,12 +325,6 @@ namespace hummus {
                 
                 if (network->get_verbose() == 2) {
                     std::cout << "t=" << timestamp << " " << active_synapse->get_presynaptic_neuron_id() << "->" << neuron_id << " w=" << active_synapse->get_weight() << " d=" << active_synapse->get_delay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layer_id << " --> SPIKED" << std::endl;
-                }
-                
-                if (!bursting_activity) {
-                    for (auto& synapse: dendritic_tree) {
-                        synapse->reset();
-                    }
                 }
                 
                 for (auto& addon: relevant_addons) {
@@ -350,19 +341,15 @@ namespace hummus {
                 }
 
                 request_learning(timestamp, active_synapse, this, network);
-
-                previous_spike_time = timestamp;
-                potential = resting_potential;
                 
 				if (!bursting_activity) {
-                    current = 0;
                     for (auto& synapse: dendritic_tree) {
-                        if (synapse->get_weight() > 0) {
-                            synapse->reset();
-                        }
+                        synapse->reset();
                     }
 				}
                 
+                previous_spike_time = timestamp;
+                potential = resting_potential;
 				active = false;
 			}
 		}
@@ -437,15 +424,15 @@ namespace hummus {
             homeostasis = new_bool;
         }
         
-        void set_resting_threshold(float new_thres) {
+        void set_resting_threshold(double new_thres) {
             resting_threshold = new_thres;
         }
         
-        void set_decay_homeostasis(float new_DH) {
+        void set_decay_homeostasis(double new_DH) {
             decay_homeostasis = new_DH;
         }
         
-        void set_homeostasis_beta(float new_HB) {
+        void set_homeostasis_beta(double new_HB) {
             homeostasis_beta = new_HB;
         }
         
@@ -453,11 +440,9 @@ namespace hummus {
 		
         // loops through any learning rules and activates them
         virtual void request_learning(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
-            if (network->get_learning_status()) {
-                if (!relevant_addons.empty()) {
-                    for (auto& addon: relevant_addons) {
-                        addon->learn(timestamp, s, postsynaptic_neuron, network);
-                    }
+            if (network->get_learning_status() && !relevant_addons.empty()) {
+                for (auto& addon: relevant_addons) {
+                    addon->learn(timestamp, s, postsynaptic_neuron, network);
                 }
             }
         }
@@ -468,9 +453,14 @@ namespace hummus {
 		double                       inhibition_time;
 		bool                         bursting_activity;
 		bool                         homeostasis;
-		float                        resting_threshold;
-		float                        decay_homeostasis;
-		float                        homeostasis_beta;
+		double                       resting_threshold;
+		double                       decay_homeostasis;
+		double                       homeostasis_beta;
 		Synapse*                     active_synapse;
+        
+        // Parameters for performance improvement
+        double                       inv_trace_tau;
+        double                       inv_membrane_tau;
+        double                       inv_homeostasis_tau;
 	};
 }

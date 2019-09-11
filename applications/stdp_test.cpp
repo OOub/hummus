@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     display.plot_currents(true);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run_data(&trainingData, 0.1);
+    network.run_data(trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

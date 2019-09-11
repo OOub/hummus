@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     
     /// Running the network
     network.verbosity(2);
-    network.run_data(&trainingData, 0.5, &testData);
+    network.run_data(trainingData, 0.5, testData);
     
     /// Measuring Classification Accuracy
     results.accuracy();

@@ -20,16 +20,16 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Cauchy(float weight_location=1, float weight_scale=0, float delay_location=0, float delay_scale=0) {
+        Cauchy(double weight_location=1, double weight_scale=0, double delay_location=0, double delay_scale=0) {
 
             // randomising weights and delays
             std::random_device device;
             random_engine = std::mt19937(device());
-            delay_random = std::cauchy_distribution<>(delay_location, delay_scale);
-            weight_random = std::cauchy_distribution<>(weight_location, weight_scale);
+            delay_random = std::cauchy_distribution<double>(delay_location, delay_scale);
+            weight_random = std::cauchy_distribution<double>(weight_location, weight_scale);
         }
 		
-        std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
+        std::pair<double, double> operator()(int x, int y, int depth) {
 			return std::make_pair(weight_random(random_engine), std::abs(delay_random(random_engine)));
         }
         

@@ -113,7 +113,7 @@ namespace hummus {
             }
         }
         
-        void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
+        void status_update(double timestamp, Neuron* postsynapticNeuron, Network* network) override {
             if (log_everything) {
                 // defining what to save and constraining it so that file size doesn't blow up
                 std::array<char, 8> bytes;

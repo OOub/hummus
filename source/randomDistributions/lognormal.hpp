@@ -20,16 +20,16 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LogNormal(float weight_mu=1, float weight_sigma=0, float delay_mu=0, float delay_sigma=0) {
+        LogNormal(double weight_mu=1, double weight_sigma=0, double delay_mu=0, double delay_sigma=0) {
 
             // randomising weights and delays
             std::random_device device;
             random_engine = std::mt19937(device());
-            delay_random = std::lognormal_distribution<>(delay_mu, delay_sigma);
-            weight_random = std::lognormal_distribution<>(weight_mu, weight_sigma);
+            delay_random = std::lognormal_distribution<double>(delay_mu, delay_sigma);
+            weight_random = std::lognormal_distribution<double>(weight_mu, weight_sigma);
         }
 		
-        std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
+        std::pair<double, double> operator()(int x, int y, int depth) {
 			return std::make_pair(weight_random(random_engine), delay_random(random_engine));
         }
         

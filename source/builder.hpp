@@ -93,22 +93,22 @@ namespace hummus {
                         auto& dendriticSynapse = input.back()["neurons"][n->get_neuron_id()]["dendritic_synapses"];
                         if (dendriticSynapse.is_array() && !dendriticSynapse.empty()) {
                             for (auto i=0; i<dendriticSynapse.size(); i++) {
-                                float weight = 0;
+                                double weight = 0;
                                 if (dendriticSynapse[i]["weight"].is_number()) {
-                                    weight = dendriticSynapse[i]["weight"].get<float>();
+                                    weight = dendriticSynapse[i]["weight"].get<double>();
                                 } else {
                                     throw std::logic_error("dendritic synapse weight incorrectly formatted");
                                 }
 
-                                float delay = 0;
+                                double delay = 0;
                                 if (dendriticSynapse[i]["delay"].is_number()) {
-                                    delay = dendriticSynapse[i]["delay"].get<float>();
+                                    delay = dendriticSynapse[i]["delay"].get<double>();
                                 } else {
                                     throw std::logic_error("dendritic synapse weight incorrectly formatted");
                                 }
 
-                                n->get_dendritic_tree()[i]->set_weight(weight, false);
-                                n->get_dendritic_tree()[i]->set_delay(delay, false);
+                                n->get_dendritic_tree()[i]->set_weight(weight);
+                                n->get_dendritic_tree()[i]->set_delay(delay);
                             }
                         }
                     }
@@ -137,31 +137,31 @@ namespace hummus {
             }
             
             if (input["trace_time_constant"].is_number()) {
-                n->set_trace_time_constant(input["trace_time_constant"].get<float>());
+                n->set_trace_time_constant(input["trace_time_constant"].get<double>());
             }
             
             if (input["resting_potential"].is_number()) {
-                n->set_resting_potential(input["resting_potential"].get<float>());
+                n->set_resting_potential(input["resting_potential"].get<double>());
             }
             
             if (input["threshold"].is_number()) {
-                n->set_threshold(input["threshold"].get<float>());
+                n->set_threshold(input["threshold"].get<double>());
             }
             
             if (input["refractory_period"].is_number()) {
-                n->set_refractory_period(input["refractory_period"].get<float>());
+                n->set_refractory_period(input["refractory_period"].get<int>());
             }
             
             if (input["membrane_time_constant"].is_number()) {
-                n->set_membrane_time_constant(input["membrane_time_constant"].get<float>());
+                n->set_membrane_time_constant(input["membrane_time_constant"].get<double>());
             }
             
             if (input["conductance"].is_number()) {
-                n->set_conductance(input["conductance"].get<float>());
+                n->set_conductance(input["conductance"].get<double>());
             }
             
             if (input["leakage_conductance"].is_number()) {
-                n->set_leakage_conductance(input["leakage_conductance"].get<float>());
+                n->set_leakage_conductance(input["leakage_conductance"].get<double>());
             }
             
             if (input["class_label"].is_string()) {
@@ -185,29 +185,29 @@ namespace hummus {
             if (axonalSynapse.is_array() && !axonalSynapse.empty()) {
 
                 for (auto i=0; i<axonalSynapse.size(); i++) {
-                    float weight = 0;
+                    double weight = 0;
                     if (axonalSynapse[i]["weight"].is_number()) {
-                        weight = axonalSynapse[i]["weight"].get<float>();
+                        weight = axonalSynapse[i]["weight"].get<double>();
                     } else {
                         throw std::logic_error("axonal synapse weight incorrectly formatted");
                     }
 
-                    float delay = 0;
+                    double delay = 0;
                     if (axonalSynapse[i]["delay"].is_number()) {
-                        delay = axonalSynapse[i]["delay"].get<float>();
+                        delay = axonalSynapse[i]["delay"].get<double>();
                     } else {
                         throw std::logic_error("axonal synapse weight incorrectly formatted");
                     }
                     
                     if (axonalSynapse[i]["postsynaptic_neuron"].is_number()) {
-                        float synapseTimeConstant = 0;
+                        double synapseTimeConstant = 0;
                         int json_id = axonalSynapse[i]["json_id"].get<int>();
                         
                         switch (json_id) {
                             case 0: {
-                                float amplitudeScaling = 0;
+                                double amplitudeScaling = 0;
                                 if (axonalSynapse[i]["amplitude_scaling"].is_number()) {
-                                    amplitudeScaling = axonalSynapse[i]["amplitude_scaling"].get<float>();
+                                    amplitudeScaling = axonalSynapse[i]["amplitude_scaling"].get<double>();
                                 } else {
                                     throw std::logic_error("dirac synapse amplitude scaling incorrectly formatted");
                                 }
@@ -217,7 +217,7 @@ namespace hummus {
                                 break;
                             } case 1: {
                                 if (axonalSynapse[i]["synapse_time_constant"].is_number()) {
-                                    synapseTimeConstant = axonalSynapse[i]["synapse_time_constant"].get<float>();
+                                    synapseTimeConstant = axonalSynapse[i]["synapse_time_constant"].get<double>();
                                 } else {
                                     throw std::logic_error("exponential synaptic time constant incorrectly formatted");
                                 }
@@ -227,7 +227,7 @@ namespace hummus {
                                 break;
                             } case 2:
                                 if (axonalSynapse[i]["synapse_time_constant"].is_number()) {
-                                    synapseTimeConstant = axonalSynapse[i]["synapse_time_constant"].get<float>();
+                                    synapseTimeConstant = axonalSynapse[i]["synapse_time_constant"].get<double>();
                                 } else {
                                     throw std::logic_error("pulse synaptic time constant incorrectly formatted");
                                 }
@@ -283,7 +283,7 @@ namespace hummus {
             }
 
             if (input["decay_homeostasis"].is_number()) {
-                dynamic_cast<T*>(n)->set_decay_homeostasis(input["decay_homeostasis"].get<float>());
+                dynamic_cast<T*>(n)->set_decay_homeostasis(input["decay_homeostasis"].get<double>());
             }
 
             if (input["homeostasis"].is_boolean()) {
@@ -291,11 +291,11 @@ namespace hummus {
             }
             
             if (input["homeostasis_beta"].is_number()) {
-                dynamic_cast<T*>(n)->set_homeostasis_beta(input["homeostasis_beta"].get<float>());
+                dynamic_cast<T*>(n)->set_homeostasis_beta(input["homeostasis_beta"].get<double>());
             }
 
             if (input["resting_threshold"].is_number()) {
-                dynamic_cast<T*>(n)->set_resting_threshold(input["resting_threshold"].get<float>());
+                dynamic_cast<T*>(n)->set_resting_threshold(input["resting_threshold"].get<double>());
             }
         }
         

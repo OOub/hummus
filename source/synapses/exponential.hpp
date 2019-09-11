@@ -24,10 +24,12 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=18, float _external_current=400, float _gaussian_std_dev=0) :
+		Exponential(int _target_neuron, int _parent_neuron, double _weight, double _delay, double _synapse_time_constant=5, double _external_current=150, double _gaussian_std_dev=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current) {
 				
 			synapse_time_constant = _synapse_time_constant;
+            inv_s_tau = 1./synapse_time_constant;
+                    
             gaussian_std_dev = _gaussian_std_dev;
 			json_id = 1;
 			
@@ -39,29 +41,30 @@ namespace hummus {
 			// initialising a normal distribution
             std::random_device device;
             random_engine = std::mt19937(device());
-            normal_distribution = std::normal_distribution<>(0, _gaussian_std_dev);
+            normal_distribution = std::normal_distribution<double>(0, _gaussian_std_dev);
                     
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
-                type = synapseType::inhibitory;
+                type = synapse_type::inhibitory;
             } else {
-                type = synapseType::excitatory;
+                type = synapse_type::excitatory;
             }
 		}
 		
 		virtual ~Exponential(){}
 		
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp) override {
-            // exponentially decay the current
-            synaptic_current = synaptic_current * std::exp(-(timestamp - previous_input_time)/synapse_time_constant);
+        virtual double update(double timestamp, double timestep, bool asynchronous) override {
+            // decay the current
+            if (asynchronous) {
+                synaptic_current -= synaptic_current * (timestamp - previous_input_time) * inv_s_tau;
+            } else {
+                synaptic_current -= synaptic_current * timestep * inv_s_tau;
+            }
             return synaptic_current;
         }
         
-		virtual void receive_spike(double timestamp) override {
-            // saving timestamp
-            previous_input_time = timestamp;
-            
+		virtual void receive_spike() override {
             // increase the synaptic current in response to an incoming spike
             synaptic_current += weight * (external_current+normal_distribution(random_engine));
 		}
@@ -78,6 +81,7 @@ namespace hummus {
 		}
 		
 	protected:
+        double                     inv_s_tau;
 		std::mt19937               random_engine;
 		std::normal_distribution<> normal_distribution;
 	};

@@ -15,7 +15,7 @@
 
 namespace hummus {
     // synapse models enum for readability
-    enum class synapseType {
+    enum class synapse_type {
         excitatory,
         inhibitory
     };
@@ -24,7 +24,7 @@ namespace hummus {
     public:
         
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, float _external_current=100) :
+        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay, double _external_current=100) :
                 presynaptic_neuron(_presynaptic_neuron),
                 postsynaptic_neuron(_postsynaptic_neuron),
                 weight(_weight),
@@ -36,19 +36,17 @@ namespace hummus {
                 json_id(0),
                 kernel_id(0),
                 synaptic_efficacy(1),
-                synapse_time_constant(0) {
-                    
-                }
+                synapse_time_constant(0) {}
         
         virtual ~Synapse(){}
         
         // ----- PUBLIC SYNAPSE METHODS -----
         
         // pure virtual method that updates the current value in the absence of a spike
-        virtual float update(double timestamp) = 0;
+        virtual double update(double timestamp, double timestep, bool asynchronous) = 0;
         
         // pure virtual method that outputs an updated current value upon receiving a spike
-        virtual void receive_spike(double timestamp) = 0;
+        virtual void receive_spike() = 0;
         
         // write synapse parameters in a JSON format
         virtual void to_json(nlohmann::json& output) {}
@@ -59,7 +57,7 @@ namespace hummus {
         }
         
         // ----- SETTERS AND GETTERS -----
-        synapseType get_type() const {
+        synapse_type get_type() const {
             return type;
         }
         
@@ -79,7 +77,7 @@ namespace hummus {
             previous_input_time = new_time;
         }
         
-        const float get_synapse_time_constant() const {
+        const double get_synapse_time_constant() const {
             return synapse_time_constant;
         }
         
@@ -91,72 +89,55 @@ namespace hummus {
             return postsynaptic_neuron;
         }
         
-        float get_weight() const {
+        double get_weight() const {
             return weight;
         }
         
-        void set_weight(float new_weight, bool increment=true) {
-            if (increment) {
-                if (weight > 0) {
-                    weight += new_weight;
-                    // prevent weights from being negative
-                    if (weight < 0) {
-                        weight = 0;
-                    }
-                }
-            } else {
-                weight = new_weight;
-            }
+        void set_weight(double new_weight) {
+            weight = new_weight;
         }
         
-        float get_delay() const {
+        void increment_weight(double delta_weight) {
+            weight += delta_weight;
+        }
+        
+        double get_delay() const {
             return delay;
         }
         
-        void set_delay(float new_delay, bool increment=true) {
-            if (increment) {
-                if (delay > 0) {
-                    delay += new_delay;
-                    // prevent delays from being negative
-                    if (delay < 0) {
-                        delay = 0;
-                    }
-                }
-            } else {
-                delay = new_delay;
-                // prevent delays from being negative
-                if (delay < 0) {
-                    delay = 0;
-                    std::cout << "negative delay set to 0" << std::endl;
-                }
-            }
+        void set_delay(double new_delay) {
+            delay = new_delay;
         }
         
-        float get_synaptic_efficacy() const {
+        void increment_delay(double delta_delay) {
+            delay += delta_delay;
+        }
+        
+        double get_synaptic_efficacy() const {
             return synaptic_efficacy;
         }
         
-        void set_synaptic_efficacy(float new_efficacy, bool increment=true) {
-            if (increment) {
-                synaptic_efficacy += new_efficacy;
-            } else{
-                synaptic_efficacy = new_efficacy;
-            }
+        void set_synaptic_efficacy(double new_efficacy) {
+            synaptic_efficacy = new_efficacy;
+        }
+        
+        void increment_synaptic_efficacy(double delta_efficacy) {
+            synaptic_efficacy += delta_efficacy;
         }
         
     protected:
         int                        presynaptic_neuron;
         int                        postsynaptic_neuron;
-        float                      weight;
-        float                      delay;
-        float                      synaptic_current;
-        double                     previous_input_time;
+        double                     weight;
+        double                     delay;
+        double                     synaptic_current;
+        int                        previous_input_time;
+        double                     gaussian_std_dev;
+        double                     synapse_time_constant;
+        double                     external_current;
+        double                     synaptic_efficacy;
+        synapse_type               type;
         int                        kernel_id;
-        float                      gaussian_std_dev;
-        float                      synapse_time_constant;
-        float                      external_current;
-        float                      synaptic_efficacy;
-        synapseType                type;
         int                        json_id;
     };
 }

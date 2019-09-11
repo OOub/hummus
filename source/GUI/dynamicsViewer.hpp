@@ -38,53 +38,53 @@ namespace hummus {
         // ----- CONSTRUCTOR AND DESTRUCTOR
         DynamicsViewer(QObject *parent = 0) :
                 QObject(parent),
-                timeWindow(100),
+                time_window(100),
                 openGL(true),
-                isClosed(false),
-                maxX(0),
-                minY(20),
-                maxY(-70),
+                is_closed(false),
+                max_x(0),
+                min_y(20),
+                max_y(-70),
                 min_y_right(0),
                 max_y_right(1),
                 current_plot(false),
-                neuronTracker(-1) {
-            atomicGuard.clear(std::memory_order_release);
+                neuron_tracker(-1) {
+            atomic_guard.clear(std::memory_order_release);
         }
         
         virtual ~DynamicsViewer(){}
 		
     	// ----- PUBLIC DYNAMICSVIEWER METHODS -----
-		void handle_data(double timestamp, int postsynapticNeuronID, float _potential, float _current, float _threshold) {
-			if (postsynapticNeuronID == neuronTracker) {
-                while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-				if (!isClosed) {
+		void handle_data(double timestamp, int postsynapticNeuronID, double _potential, double _current, double _threshold) {
+			if (postsynapticNeuronID == neuron_tracker) {
+                while (atomic_guard.test_and_set(std::memory_order_acquire)) {}
+				if (!is_closed) {
                     // saving data points to plot
                     if (current_plot) {
-                        currentPoints.append(QPointF(timestamp,_current));
+                        current_points.append(QPointF(timestamp,_current));
                     }
 					points.append(QPointF(timestamp, _potential));
-					thresPoints.append(QPointF(timestamp, _threshold));
+					thres_points.append(QPointF(timestamp, _threshold));
                     // membrane potential axis
-					minY = std::min(minY, static_cast<float>(_potential));
-					maxY = std::max(maxY, static_cast<float>(_potential));
+					min_y = std::min(min_y, _potential);
+					max_y = std::max(max_y, _potential);
                     // injected current axis
-                    min_y_right = std::min(min_y_right, static_cast<float>(_current));
-                    max_y_right = std::max(max_y_right, static_cast<float>(_current));
+                    min_y_right = std::min(min_y_right, _current);
+                    max_y_right = std::max(max_y_right, _current);
 				} else {
 					points.clear();
-                    thresPoints.clear();
-                    currentPoints.clear();
+                    thres_points.clear();
+                    current_points.clear();
 				}
-				atomicGuard.clear(std::memory_order_release);
+				atomic_guard.clear(std::memory_order_release);
 			}
             
             // time axis
-            maxX = timestamp;
+            max_x = timestamp;
 		}
 		
 		// ----- SETTERS -----
-		void set_time_window(double newWindow) {
-            timeWindow = newWindow;
+		void set_time_window(double new_window) {
+            time_window = new_window;
         }
 		
 		void hardware_acceleration(bool accelerate) {
@@ -92,7 +92,7 @@ namespace hummus {
         }
 		
         void track_neuron(int neuronToTrack) {
-            neuronTracker = neuronToTrack;
+            neuron_tracker = neuronToTrack;
         }
 		
         void plot_currents(bool _current_plot) {
@@ -101,77 +101,77 @@ namespace hummus {
         
         void reset() {
             points.clear();
-            thresPoints.clear();
-            currentPoints.clear();
+            thres_points.clear();
+            current_points.clear();
         }
         
     Q_SIGNALS:
     public slots:
 		
         // ----- QT-RELATED METHODS -----
-        void change_tracked_neuron(int newNeuron) {
-            if (neuronTracker != newNeuron) {
-                neuronTracker = newNeuron;
-                minY = -70;
-                maxY = -50;
+        void change_tracked_neuron(int new_neuron) {
+            if (neuron_tracker != new_neuron) {
+                neuron_tracker = new_neuron;
+                min_y = -70;
+                max_y = -50;
                 min_y_right = 0;
                 max_y_right = 1;
             }
         }
     
         void disable() {
-            while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
-            isClosed = true;
-            atomicGuard.clear(std::memory_order_release);
+            while (atomic_guard.test_and_set(std::memory_order_acquire)) {}
+            is_closed = true;
+            atomic_guard.clear(std::memory_order_release);
         }
     
         void update(QtCharts::QValueAxis *axisX, QtCharts::QValueAxis *axisY, QtCharts::QAbstractSeries *series,  int seriesType) {
-            if (!isClosed) {
+            if (!is_closed) {
                 if (series) {
-                    while (atomicGuard.test_and_set(std::memory_order_acquire)) {}
+                    while (atomic_guard.test_and_set(std::memory_order_acquire)) {}
                     if (openGL) {
                         series->setUseOpenGL(true);
                     }
 					
                     switch (seriesType) {
                         case 0:
-                            axisX->setRange(maxX - timeWindow, maxX+1);
+                            axisX->setRange(max_x - time_window, max_x+1);
                             if (!points.isEmpty()) {
-                                auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - timeWindow, [](double timestamp, const QPointF& point) {
+                                auto firstToKeep = std::upper_bound(points.begin(), points.end(), points.back().x() - time_window, [](double timestamp, const QPointF& point) {
                                     return timestamp < point.x();
                                 });
                                 points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
                     
                                 static_cast<QtCharts::QXYSeries *>(series)->replace(points);
-                                axisY->setRange(minY-1,maxY+1);
+                                axisY->setRange(min_y-1,max_y+1);
                             }
                             break;
                         case 1:
-                            if (!thresPoints.isEmpty()) {
-                                auto firstToKeep = std::upper_bound(thresPoints.begin(), thresPoints.end(), thresPoints.back().x() - timeWindow, [](double timestamp, const QPointF& thresPoints) {
-                                    return timestamp < thresPoints.x();
+                            if (!thres_points.isEmpty()) {
+                                auto firstToKeep = std::upper_bound(thres_points.begin(), thres_points.end(), thres_points.back().x() - time_window, [](double timestamp, const QPointF& thres_points) {
+                                    return timestamp < thres_points.x();
                                 });
-                                thresPoints.remove(0, static_cast<int>(std::distance(thresPoints.begin(), firstToKeep)));
+                                thres_points.remove(0, static_cast<int>(std::distance(thres_points.begin(), firstToKeep)));
                     
-                                static_cast<QtCharts::QXYSeries *>(series)->replace(thresPoints);
+                                static_cast<QtCharts::QXYSeries *>(series)->replace(thres_points);
                             }
                             break;
                         case 2:
                             if (current_plot) {
-                                if (!currentPoints.isEmpty()) {
-                                    auto firstToKeep = std::upper_bound(currentPoints.begin(), currentPoints.end(), currentPoints.back().x() - timeWindow, [](double timestamp, const QPointF& currentPoints) {
-                                        return timestamp < currentPoints.x();
+                                if (!current_points.isEmpty()) {
+                                    auto firstToKeep = std::upper_bound(current_points.begin(), current_points.end(), current_points.back().x() - time_window, [](double timestamp, const QPointF& current_points) {
+                                        return timestamp < current_points.x();
                                     });
-                                    currentPoints.remove(0, static_cast<int>(std::distance(currentPoints.begin(), firstToKeep)));
+                                    current_points.remove(0, static_cast<int>(std::distance(current_points.begin(), firstToKeep)));
                                     
-                                    static_cast<QtCharts::QXYSeries *>(series)->replace(currentPoints);
+                                    static_cast<QtCharts::QXYSeries *>(series)->replace(current_points);
                                     axisY->setRange(min_y_right-1,max_y_right+1);
                                 }
                                 break;
                             }
                     }
 					
-                    atomicGuard.clear(std::memory_order_release);
+                    atomic_guard.clear(std::memory_order_release);
                 }
             }
         }
@@ -179,19 +179,19 @@ namespace hummus {
     protected:
 		
         // ----- IMPLEMENTATION VARIABLES -----
-        bool                  isClosed;
+        bool                  is_closed;
         bool                  openGL;
-        double                timeWindow;
+        double                time_window;
         QVector<QPointF>      points;
-        QVector<QPointF>      thresPoints;
-        QVector<QPointF>      currentPoints;
-        double                maxX;
-        float                 minY;
-        float                 maxY;
-        float                 min_y_right;
-        float                 max_y_right;
-        std::atomic_flag      atomicGuard;
-        int                   neuronTracker;
+        QVector<QPointF>      thres_points;
+        QVector<QPointF>      current_points;
+        double                max_x;
+        double                min_y;
+        double                max_y;
+        double                min_y_right;
+        double                max_y_right;
+        std::atomic_flag      atomic_guard;
+        int                   neuron_tracker;
         bool                  current_plot;
     };
 }
