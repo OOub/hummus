@@ -24,7 +24,7 @@ namespace hummus {
     public:
         
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay, double _external_current=100) :
+        Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, float _external_current=100) :
                 presynaptic_neuron(_presynaptic_neuron),
                 postsynaptic_neuron(_postsynaptic_neuron),
                 weight(_weight),
@@ -43,7 +43,7 @@ namespace hummus {
         // ----- PUBLIC SYNAPSE METHODS -----
         
         // pure virtual method that updates the current value in the absence of a spike
-        virtual double update(double timestamp, double timestep, bool asynchronous) = 0;
+        virtual float update(double timestamp, float timestep, bool asynchronous) = 0;
         
         // pure virtual method that outputs an updated current value upon receiving a spike
         virtual void receive_spike() = 0;
@@ -77,7 +77,7 @@ namespace hummus {
             previous_input_time = new_time;
         }
         
-        const double get_synapse_time_constant() const {
+        const float get_synapse_time_constant() const {
             return synapse_time_constant;
         }
         
@@ -89,53 +89,65 @@ namespace hummus {
             return postsynaptic_neuron;
         }
         
-        double get_weight() const {
+        float get_weight() const {
             return weight;
         }
         
-        void set_weight(double new_weight) {
+        void set_weight(float new_weight) {
             weight = new_weight;
         }
         
-        void increment_weight(double delta_weight) {
-            weight += delta_weight;
+        void increment_weight(float delta_weight) {
+            if (weight > 0) {
+                weight += delta_weight;
+                // prevent weights from being negative
+                if (weight < 0) {
+                    weight = 0;
+                }
+            }
         }
         
-        double get_delay() const {
+        float get_delay() const {
             return delay;
         }
         
-        void set_delay(double new_delay) {
+        void set_delay(float new_delay) {
             delay = new_delay;
         }
         
-        void increment_delay(double delta_delay) {
-            delay += delta_delay;
+        void increment_delay(float delta_delay) {
+            if (delay > 0) {
+                delay += delta_delay;
+                // prevent delays from being negative
+                if (delay < 0) {
+                    delay = 0;
+                }
+            }
         }
         
-        double get_synaptic_efficacy() const {
+        float get_synaptic_efficacy() const {
             return synaptic_efficacy;
         }
         
-        void set_synaptic_efficacy(double new_efficacy) {
+        void set_synaptic_efficacy(float new_efficacy) {
             synaptic_efficacy = new_efficacy;
         }
         
-        void increment_synaptic_efficacy(double delta_efficacy) {
+        void increment_synaptic_efficacy(float delta_efficacy) {
             synaptic_efficacy += delta_efficacy;
         }
         
     protected:
         int                        presynaptic_neuron;
         int                        postsynaptic_neuron;
-        double                     weight;
-        double                     delay;
-        double                     synaptic_current;
+        float                      weight;
+        float                      delay;
+        float                      synaptic_current;
         int                        previous_input_time;
-        double                     gaussian_std_dev;
-        double                     synapse_time_constant;
-        double                     external_current;
-        double                     synaptic_efficacy;
+        float                      gaussian_std_dev;
+        float                      synapse_time_constant;
+        float                      external_current;
+        float                      synaptic_efficacy;
         synapse_type               type;
         int                        kernel_id;
         int                        json_id;

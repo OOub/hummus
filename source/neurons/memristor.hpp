@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Memristor(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, double _conductance=200, double _leakageConductance=10, double _traceTimeConstant=20, double _threshold=-50, double _restingPotential=-70, std::string _classLabel="") :
+        Memristor(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
                     
             // Memristor neuron type == 3 (for JSON save)
@@ -49,7 +49,7 @@ namespace hummus {
             }
         }
         
-        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
 		}
         
         // write neuron parameters in a JSON format

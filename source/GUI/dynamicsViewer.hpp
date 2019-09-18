@@ -54,7 +54,7 @@ namespace hummus {
         virtual ~DynamicsViewer(){}
 		
     	// ----- PUBLIC DYNAMICSVIEWER METHODS -----
-		void handle_data(double timestamp, int postsynapticNeuronID, double _potential, double _current, double _threshold) {
+		void handle_data(double timestamp, int postsynapticNeuronID, float _potential, float _current, float _threshold) {
 			if (postsynapticNeuronID == neuron_tracker) {
                 while (atomic_guard.test_and_set(std::memory_order_acquire)) {}
 				if (!is_closed) {
@@ -62,6 +62,7 @@ namespace hummus {
                     if (current_plot) {
                         current_points.append(QPointF(timestamp,_current));
                     }
+                    
 					points.append(QPointF(timestamp, _potential));
 					thres_points.append(QPointF(timestamp, _threshold));
                     // membrane potential axis
@@ -186,10 +187,10 @@ namespace hummus {
         QVector<QPointF>      thres_points;
         QVector<QPointF>      current_points;
         double                max_x;
-        double                min_y;
-        double                max_y;
-        double                min_y_right;
-        double                max_y_right;
+        float                 min_y;
+        float                 max_y;
+        float                 min_y_right;
+        float                 max_y_right;
         std::atomic_flag      atomic_guard;
         int                   neuron_tracker;
         bool                  current_plot;

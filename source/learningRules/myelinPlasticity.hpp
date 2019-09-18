@@ -57,7 +57,7 @@ namespace hummus {
                 std::cout << "New learning epoch at t=" << timestamp << std::endl;
             }
             
-            std::vector<double> time_differences;
+            std::vector<float> time_differences;
             std::vector<Synapse*> accepted_synapses;
             
             // weight normaliser
@@ -86,7 +86,7 @@ namespace hummus {
                         }
                         
                         // calculating the time difference
-                        double time_difference = postsynapticNeuron->get_previous_input_time() - spike_arrival_time;
+                        float time_difference = static_cast<float>(postsynapticNeuron->get_previous_input_time() - spike_arrival_time);
                         
                         // saving information for the corresponding logger
                         time_differences.emplace_back(time_difference);
@@ -101,7 +101,7 @@ namespace hummus {
                         input->increment_weight(delta_weight);
 
                         weight_normaliser += input->get_weight();
-                        
+
                         if (network->get_verbose() >= 1) {
                             std::cout << " inside learning window " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->get_delay() << " weight change: " << delta_weight << " weight " << input->get_weight() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << std::endl;
                         }
@@ -139,10 +139,11 @@ namespace hummus {
                 }
             }
             
+            float inv_w_normaliser = 1./weight_normaliser;
             for (auto& input: postsynapticNeuron->get_dendritic_tree()) {
                 if (input->get_type() == synapse_type::excitatory && weight_normaliser > 0) {
                     // normalising synaptic weights only when pattern has more than 1 neuron responding
-                    input->increment_weight(input->get_weight()/ weight_normaliser);
+                    input->set_weight(input->get_weight() * inv_w_normaliser);
 
                     // printing the weights
                     if (network->get_verbose() >= 1) {

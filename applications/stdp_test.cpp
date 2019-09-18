@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 	float refractoryPeriod = 30;
     int inputNeurons = 10;
     int layer1Neurons = 1;
-    float weight = 1./10;
+    float weight = 0.1f;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
     auto& stdp = network.make_addon<hummus::STDP>();
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     display.plot_currents(true);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run_data(trainingData, 0.1);
+    network.run_data(trainingData, 0.1f);
 
     //  ----- EXITING APPLICATION -----
     return 0;

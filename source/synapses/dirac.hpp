@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _target_neuron, int _parent_neuron, double _weight, double _delay, double _amplitude_scaling=50, double _external_current=150, double _gaussian_std_dev=0) :
+		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitude_scaling=50, float _external_current=150, float _gaussian_std_dev=0) :
                 Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current),
                 amplitude_scaling(_amplitude_scaling) {
 		
@@ -33,7 +33,7 @@ namespace hummus {
 			// initialising a normal distribution
 			std::random_device device;
             random_engine = std::mt19937(device());
-            normal_distribution = std::normal_distribution<double>(0, _gaussian_std_dev);
+            normal_distribution = std::normal_distribution<float>(0, _gaussian_std_dev);
             
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
@@ -46,7 +46,7 @@ namespace hummus {
 		virtual ~Dirac(){}
 		
 		// ----- PUBLIC METHODS -----
-        virtual double update(double timestamp, double timestep, bool asynchronous) override {
+        virtual float update(double timestamp, float timestep, bool asynchronous) override {
             synaptic_current = 0;
             return synaptic_current;
         }
@@ -67,9 +67,9 @@ namespace hummus {
 		}
 		
 	protected:
-		double                     amplitude_scaling;
-		std::mt19937               random_engine;
-		std::normal_distribution<> normal_distribution;
-        int                        json_synapse_type;
+		float                           amplitude_scaling;
+		std::mt19937                    random_engine;
+		std::normal_distribution<float> normal_distribution;
+        int                             json_synapse_type;
 	};
 }

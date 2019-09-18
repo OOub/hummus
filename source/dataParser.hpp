@@ -201,22 +201,22 @@ namespace hummus {
         }
 		
         // read a weight matrix file delimited by a space or a comma, where the inputs are the columns and the outputs are the rows
-        std::vector<std::vector<double>> read_connectivity_matrix(std::string filename) {
+        std::vector<std::vector<float>> read_connectivity_matrix(std::string filename) {
             data_file.open(filename);
             
             if (data_file.good()) {
                 std::string line;
-                std::vector<std::vector<double>> data;
+                std::vector<std::vector<float>> data;
                 
                 while (std::getline(data_file, line)) {
                     std::vector<std::string> fields;
                     split(fields, line, " ,");
                     
-                    std::vector<double> postsynaptic_weights;
+                    std::vector<float> postsynaptic_weights;
                     
-                    // filling temporary vector by each field of the line read, then convert the field to double
+                    // filling temporary vector by each field of the line read, then convert the field to float
                     for (auto& f: fields) {
-                        postsynaptic_weights.emplace_back(std::stod(f));
+                        postsynaptic_weights.emplace_back(std::stof(f));
                     }
                     
                     // filling vector of vectors to build 2D weight matrix

@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, double _weight, double _delay, double _synapse_time_constant=5, double _external_current=150, double _gaussian_std_dev=0) :
+		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=10, float _external_current=200, float _gaussian_std_dev=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current) {
 				
 			synapse_time_constant = _synapse_time_constant;
@@ -41,7 +41,7 @@ namespace hummus {
 			// initialising a normal distribution
             std::random_device device;
             random_engine = std::mt19937(device());
-            normal_distribution = std::normal_distribution<double>(0, _gaussian_std_dev);
+            normal_distribution = std::normal_distribution<float>(0, _gaussian_std_dev);
                     
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
@@ -54,7 +54,7 @@ namespace hummus {
 		virtual ~Exponential(){}
 		
 		// ----- PUBLIC METHODS -----
-        virtual double update(double timestamp, double timestep, bool asynchronous) override {
+        virtual float update(double timestamp, float timestep, bool asynchronous) override {
             // decay the current
             if (asynchronous) {
                 synaptic_current -= synaptic_current * (timestamp - previous_input_time) * inv_s_tau;
@@ -81,8 +81,8 @@ namespace hummus {
 		}
 		
 	protected:
-        double                     inv_s_tau;
-		std::mt19937               random_engine;
-		std::normal_distribution<> normal_distribution;
+        float                           inv_s_tau;
+		std::mt19937                    random_engine;
+		std::normal_distribution<float> normal_distribution;
 	};
 }

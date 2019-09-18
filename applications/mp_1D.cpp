@@ -33,13 +33,12 @@ int main(int argc, char** argv) {
     network.make_addon<hummus::MyelinPlasticityLogger>("1D_mpLog.bin");
 
     //  ----- NETWORK PARAMETERS -----
-	float conductance = 200;
+	float conductance        = 200;
     float leakageConductance = 10;
-    int   inputNeurons = 10;
-    int   layer1Neurons = 4;
-
-	bool burst = false;
-	bool homeostasis = true;
+    int inputNeurons         = 10;
+    int layer1Neurons        = 4;
+	bool burst               = false;
+	bool homeostasis         = false;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
 	auto& mp = network.make_addon<hummus::MyelinPlasticity>();
@@ -49,18 +48,18 @@ int main(int argc, char** argv) {
     auto output = network.make_layer<hummus::LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, homeostasis, burst, 20);
 
 	//  ----- CONNECTING THE NETWORK -----
-    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
+    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.1f, 0, 5, 3), 100);
     network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     //  ----- DISPLAY SETTINGS -----
-	display.set_time_window(5000);
-	display.track_neuron(11);
+    display.set_time_window(5000);
+    display.track_neuron(11);
 
     network.turn_off_learning(80000);
     network.verbosity(0);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run_data(trainingData, 0.1);
+    network.run_data(trainingData, 0.1f);
 
     //  ----- EXITING APPLICATION -----
     return 0;

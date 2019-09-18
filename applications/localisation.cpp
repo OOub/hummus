@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     auto direction = network.make_layer<hummus::LIF>(16, {&mp}, 0, direction_conductance, direction_leakage_conductance, direction_homeostasis, direction_burst, direction_trace_time_constant);
 
     // connecting input layer with the direction neurons
-    network.all_to_all<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
+    network.all_to_all<hummus::Exponential>(input, direction, 1, hummus::Normal(0.125f, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
     network.lateral_inhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     // neuron mask for loggers
@@ -83,14 +83,14 @@ int main(int argc, char** argv) {
 
     // run calibration
     network.verbosity(0);
-    network.run_data(calibration, 0.1);
+    network.run_data(calibration, 0.1f);
 
     // assigning labels to direction neurons
 //
 //    // run test
 //    auto test = parser.read_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
 //    network.turn_off_learning();
-//    network.run_data(test, 0.1);
+//    network.run_data(test, 0.1f);
 
     return 0;
 }

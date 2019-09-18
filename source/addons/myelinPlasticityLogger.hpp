@@ -49,7 +49,7 @@ namespace hummus {
             neuron_mask.insert(neuron_mask.end(), neuronIdx.begin(), neuronIdx.end());
         }
         
-        void myelin_plasticity_event(double timestamp, Neuron* postsynapticNeuron, Network* network, const std::vector<double>& timeDifferences, const std::vector<Synapse*>& modifiedSynapses) {
+        void myelin_plasticity_event(double timestamp, Neuron* postsynapticNeuron, Network* network, const std::vector<float>& timeDifferences, const std::vector<Synapse*>& modifiedSynapses) {
             
             // defining what to save and constraining it so that file size doesn't blow up
             const int16_t bitSize = 8+4*timeDifferences.size()+5*modifiedSynapses.size();
@@ -70,7 +70,7 @@ namespace hummus {
             // saving to file
             save_file.write(bytes.data(), bytes.size());
             
-            // changing the previoud timestamp
+            // changing the previous timestamp
             previous_timestamp = timestamp;
         }
         

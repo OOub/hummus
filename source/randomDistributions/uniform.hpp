@@ -20,7 +20,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Uniform(double weight_lower_limit=0, double weight_upper_limit=1, double delay_lower_limit=0, double delay_upper_limit=0, bool _int_type=true) :
+        Uniform(float weight_lower_limit=0, float weight_upper_limit=1, float delay_lower_limit=0, float delay_upper_limit=0, bool _int_type=true) :
         		int_type(_int_type) {
 			
 			// error handling
@@ -33,16 +33,16 @@ namespace hummus {
             random_engine = std::mt19937(device());
 			
 			if (int_type) {
-                int_delay_random = std::uniform_int_distribution<double>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
-                int_weight_random = std::uniform_int_distribution<double>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
+                int_delay_random = std::uniform_int_distribution<float>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
+                int_weight_random = std::uniform_int_distribution<float>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
 			} else {
-                real_delay_random = std::uniform_real_distribution<double>(delay_lower_limit, delay_upper_limit);
-                real_weight_random = std::uniform_real_distribution<double>(weight_lower_limit, weight_upper_limit);
+                real_delay_random = std::uniform_real_distribution<float>(delay_lower_limit, delay_upper_limit);
+                real_weight_random = std::uniform_real_distribution<float>(weight_lower_limit, weight_upper_limit);
 			}
         }
 		
 		
-        std::pair<double, double> operator()(int x, int y, int depth) {
+        std::pair<float, float> operator()(int x, int y, int depth) {
         	if (int_type) {
 				return std::make_pair(real_weight_random(random_engine), real_delay_random(random_engine));
 			} else {
@@ -53,12 +53,12 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                           random_engine;
-        std::uniform_int_distribution<double>  int_delay_random;
-		std::uniform_real_distribution<double> real_delay_random;
-        std::uniform_int_distribution<double>  int_weight_random;
-		std::uniform_real_distribution<double> real_weight_random;
-		bool                                   int_type;
+        std::mt19937                          random_engine;
+        std::uniform_int_distribution<float>  int_delay_random;
+		std::uniform_real_distribution<float> real_delay_random;
+        std::uniform_int_distribution<float>  int_weight_random;
+		std::uniform_real_distribution<float> real_weight_random;
+		bool                                  int_type;
 	};
 }
 

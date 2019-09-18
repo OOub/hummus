@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
 
     for (auto i=0; i<repetitions; i++) {
         network.inject_spike(0, 10+time_between_spikes*i);
+//        network.inject_spike(0, 12+time_between_spikes*i);
         network.inject_spike(1, 15+time_between_spikes*i);
         network.inject_spike(2, 20+time_between_spikes*i);
     }
@@ -46,7 +47,7 @@ int main(int argc, char** argv) {
     display.plot_currents(true);
 
     network.verbosity(2);
-    network.run(runtime, 0.1);
+    network.run(runtime, 0.1f);
 
     return 0;
 }

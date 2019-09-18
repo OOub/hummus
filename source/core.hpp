@@ -79,7 +79,7 @@ namespace hummus {
         int                         layer_number;
         int                         spike_history_size;
         int                         rejection_threshold;
-        double                      timer;
+        double                      timer; // selects how often a decision neuron fires. In the case of running with es files this parameter is unused
     };
     
     // the equivalent of feature maps
@@ -154,10 +154,10 @@ namespace hummus {
 		virtual void initialisation(Network* network) {}
 		
 		// asynchronous update method
-		virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) = 0;
+		virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) = 0;
         
 		// synchronous update method
-		virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) {
+		virtual void update_sync(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) {
 			update(timestamp, s, network, timestep, type);
 		}
         
@@ -176,10 +176,10 @@ namespace hummus {
         
         // adds a synapse that connects two Neurons together
         template <typename T, typename... Args>
-        Synapse* make_synapse(Neuron* postNeuron, int probability, double weight, double delay, Args&&... args) {
+        Synapse* make_synapse(Neuron* postNeuron, int probability, float weight, float delay, Args&&... args) {
             if (postNeuron) {
                 if (connection_probability(probability)) {
-                    axon_terminals.emplace_back(new T{postNeuron->neuron_id, neuron_id, weight, delay, static_cast<double>(std::forward<Args>(args))...});
+                    axon_terminals.emplace_back(new T{postNeuron->neuron_id, neuron_id, weight, delay, static_cast<float>(std::forward<Args>(args))...});
                     postNeuron->get_dendritic_tree().emplace_back(axon_terminals.back().get());
                     return axon_terminals.back().get();
                 } else {
@@ -250,50 +250,50 @@ namespace hummus {
             return initial_synapse;
         }
         
-        double set_potential(double new_potential) {
+        float set_potential(float new_potential) {
             return potential = new_potential;
         }
         
-        double get_potential() const {
+        float get_potential() const {
             return potential;
         }
         
-        double get_resting_potential() const {
+        float get_resting_potential() const {
             return resting_potential;
         }
         
-        void set_resting_potential(double newE_l) {
+        void set_resting_potential(float newE_l) {
             resting_potential = newE_l;
         }
         
-        double get_threshold() const {
+        float get_threshold() const {
             return threshold;
         }
         
-        double set_threshold(double _threshold) {
+        float set_threshold(float _threshold) {
             return threshold = _threshold;
         }
         
-        double get_current() const {
+        float get_current() const {
             return current;
         }
-        void set_current(double newCurrent) {
+        void set_current(float newCurrent) {
             current = newCurrent;
         }
         
-        double get_trace() const {
+        float get_trace() const {
             return trace;
         }
         
-        void set_trace(double newtrace) {
+        void set_trace(float newtrace) {
             trace = newtrace;
         }
         
-        double get_trace_time_constant() const {
+        float get_trace_time_constant() const {
             return trace_time_constant;
         }
         
-        void set_trace_time_constant(double new_constant) {
+        void set_trace_time_constant(float new_constant) {
             trace_time_constant = new_constant;
         }
         
@@ -317,7 +317,7 @@ namespace hummus {
             relevant_addons.emplace_back(new_addon);
         }
 		
-        double get_conductance() const {
+        float get_conductance() const {
             return conductance;
         }
         
@@ -329,11 +329,11 @@ namespace hummus {
             leakage_conductance = k;
         }
         
-        double get_membrane_time_constant() const {
+        float get_membrane_time_constant() const {
             return membrane_time_constant;
         }
         
-        void set_membrane_time_constant(double new_constant) {
+        void set_membrane_time_constant(float new_constant) {
             membrane_time_constant = new_constant;
         }
         
@@ -371,17 +371,17 @@ namespace hummus {
         std::unique_ptr<Synapse>                   initial_synapse;
         
         // ----- DYNAMIC VARIABLES -----
-        double                                     current;
-        double                                     potential;
-        double                                     trace;
+        float                                     current;
+        float                                     potential;
+        float                                     trace;
         
         // ----- FIXED PARAMETERS -----
-        double                                     threshold;
-        double                                     resting_potential;
-        double                                     trace_time_constant;
-        double                                     conductance;
-        double                                     leakage_conductance;
-        double                                     membrane_time_constant;
+        float                                     threshold;
+        float                                     resting_potential;
+        float                                     trace_time_constant;
+        float                                     conductance;
+        float                                     leakage_conductance;
+        float                                     membrane_time_constant;
         int                                        refractory_period;
         
         // ----- IMPLEMENTATION PARAMETERS -----
@@ -543,7 +543,7 @@ namespace hummus {
         
         // adds neurons arranged in circles of various radii
         template <typename T, typename... Args>
-        layer make_circle(int _numberOfNeurons, std::vector<double> _radii, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_circle(int _numberOfNeurons, std::vector<float> _radii, std::vector<Addon*> _addons, Args&&... args) {
             int shift = 0;
             
             // find the layer ID
@@ -559,7 +559,7 @@ namespace hummus {
             int counter = 0;
             std::vector<sublayer> sublayers;
             std::vector<std::size_t> neuronsInLayer;
-            double inv_number_neurons = 1. / _numberOfNeurons;
+            float inv_number_neurons = 1. / _numberOfNeurons;
             for (int i=0; i<_radii.size(); i++) {
                 std::vector<std::size_t> neuronsInSublayer;
                 for (int k=0+shift; k<_numberOfNeurons+shift; k++) {
@@ -642,7 +642,7 @@ namespace hummus {
         template <typename T, typename... Args>
         layer make_grid(layer presynapticLayer, int _sublayerNumber, int _kernelSize, int _stride, std::vector<Addon*> _addons, Args&&... args) {
             // finding the number of receptive fields
-            double inv_stride = 1./static_cast<double>(_stride);
+            float inv_stride = 1./static_cast<float>(_stride);
             int newWidth = std::ceil((presynapticLayer.width - _kernelSize + 1) * inv_stride);
             int newHeight = std::ceil((presynapticLayer.height - _kernelSize + 1) * inv_stride);
             
@@ -769,7 +769,7 @@ namespace hummus {
                 for (auto& preSub: presynapticLayer.sublayers) {
                     
                     // initialising window on the first center coordinates
-                    std::pair<double, double> centerCoordinates((postsynapticLayer.kernel_size-1) * 0.5, (postsynapticLayer.kernel_size-1) * 0.5);
+                    std::pair<float, float> centerCoordinates((postsynapticLayer.kernel_size-1) * 0.5, (postsynapticLayer.kernel_size-1) * 0.5);
                     
                     // number of neurons = number of receptive fields in the presynaptic Layer
                     int row = 0; int col = 0;
@@ -789,7 +789,7 @@ namespace hummus {
                             // connecting neurons from the presynaptic layer to the convolutional one, depedning on the number of synapses
                             for (auto i=0; i<number_of_synapses; i++) {
                                 // calculating weights and delays according to the provided distribution
-                                const std::pair<double, double> weight_delay = lambdaFunction(x, y, convSub.id);
+                                const std::pair<float, float> weight_delay = lambdaFunction(x, y, convSub.id);
                                 
                                 // creating a synapse between the neurons
                                 neurons[idx]->make_synapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
@@ -855,7 +855,7 @@ namespace hummus {
                     if (poolSub.id == preSub.id) {
                         
                         // initialising window on the first center coordinates
-                        std::pair<double, double> centerCoordinates((lcd-1) * 0.5, (lcd-1) * 0.5);
+                        std::pair<float, float> centerCoordinates((lcd-1) * 0.5, (lcd-1) * 0.5);
                         
                         // number of neurons = number of receptive fields in the presynaptic Layer
                         int row = 0; int col = 0;
@@ -875,7 +875,7 @@ namespace hummus {
                                 
                                 for (auto i=0; i<number_of_synapses; i++) {
                                     // calculating weights and delays according to the provided distribution
-                                    const std::pair<double, double> weight_delay = lambdaFunction(x, y, poolSub.id);
+                                    const std::pair<float, float> weight_delay = lambdaFunction(x, y, poolSub.id);
                                     
                                     // connecting neurons from the presynaptic layer to the convolutional one
                                     neurons[idx]->make_synapse<T>(neurons[n].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
@@ -913,7 +913,7 @@ namespace hummus {
                 for (auto post: reservoirLayer.neurons) {
                     for (auto i=0; i<number_of_synapses; i++) {
                         // calculating weights and delays according to the provided distribution
-                        const std::pair<double, double> weight_delay = lambdaFunction(0, 0, 0);
+                        const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
                         
                         // self-excitation probability
                         if (pre == post) {
@@ -932,7 +932,7 @@ namespace hummus {
         
 		// connecting two layers according to a weight matrix vector of vectors and a delays matrix vector of vectors (columns for input and rows for output)
         template <typename T, typename... Args>
-        void connectivity_matrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<double>> weights, std::vector<std::vector<double>> delays, Args&&... args) {
+        void connectivity_matrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<float>> weights, std::vector<std::vector<float>> delays, Args&&... args) {
             
             // error handling
             if (weights.size() != delays.size() && weights[0].size() != delays[0].size()) {
@@ -987,7 +987,7 @@ namespace hummus {
                         for (auto postNeuronIdx=0; postNeuronIdx<postsynapticLayer.sublayers[postSubIdx].neurons.size(); postNeuronIdx++) {
                             if (preNeuronIdx == postNeuronIdx) {
                                 for (auto i=0; i<number_of_synapses; i++) {
-                                    const std::pair<double, double> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_rf_coordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_xy_coordinates().second, postsynapticLayer.sublayers[postSubIdx].id);
+                                    const std::pair<float, float> weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_rf_coordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_xy_coordinates().second, postsynapticLayer.sublayers[postSubIdx].id);
                                     neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]]->make_synapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
 
                                     // to shift the network runtime by the maximum delay in the clock mode
@@ -1008,7 +1008,7 @@ namespace hummus {
                     for (auto& postSub: postsynapticLayer.sublayers) {
                         for (auto& postNeuron: postSub.neurons) {
                             for (auto i=0; i<number_of_synapses; i++) {
-                                const std::pair<double, double> weight_delay = lambdaFunction(neurons[postNeuron]->get_rf_coordinates().first, neurons[postNeuron]->get_xy_coordinates().second, postSub.id);
+                                const std::pair<float, float> weight_delay = lambdaFunction(neurons[postNeuron]->get_rf_coordinates().first, neurons[postNeuron]->get_xy_coordinates().second, postSub.id);
                                 neurons[preNeuron]->make_synapse<T>(neurons[postNeuron].get(), probability, weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
                                 
                                 // to shift the network runtime by the maximum delay in the clock mode
@@ -1029,7 +1029,7 @@ namespace hummus {
                     for (auto& postNeurons: sub.neurons) {
                         if (preNeurons != postNeurons) {
                             for (auto i=0; i<number_of_synapses; i++) {
-                                const std::pair<double, double> weight_delay = lambdaFunction(0, 0, 0);
+                                const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
                                 neurons[preNeurons]->make_synapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                             }
                         }
@@ -1043,7 +1043,7 @@ namespace hummus {
                             for (auto& postNeurons: subToInhibit.neurons) {
                                 if (neurons[preNeurons]->get_rf_coordinates() == neurons[postNeurons]->get_rf_coordinates()) {
                                     for (auto i=0; i<number_of_synapses; i++) {
-                                        const std::pair<double, double> weight_delay = lambdaFunction(0, 0, 0);
+                                        const std::pair<float, float> weight_delay = lambdaFunction(0, 0, 0);
                                         neurons[preNeurons]->make_synapse<T>(neurons[postNeurons].get(), probability, -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                                     }
                                 }
@@ -1107,29 +1107,29 @@ namespace hummus {
         }
         
         // add a poissonian spike train to the initial spike vector
-        void poisson_spike_generator(int neuronIndex, double timestamp, double rate, double timestep, double duration) {
+        void poisson_spike_generator(int neuronIndex, double timestamp, float rate, float timestep, float duration) {
             // calculating number of spikes
             int spike_number = std::floor(duration/timestep);
             
             // initialising the random engine
             std::random_device                     device;
             std::mt19937                           random_engine(device());
-            std::uniform_real_distribution<double> distribution(0.0,1.0);
+            std::uniform_real_distribution<float> distribution(0.0,1.0);
             
-            std::vector<double> inter_spike_intervals;
-            double inv_rate = 1. / rate;
+            std::vector<float> inter_spike_intervals;
+            float inv_rate = 1. / rate;
             // generating uniformly distributed random numbers
             for (auto i = 0; i < spike_number; ++i) {
                 inter_spike_intervals.emplace_back((- std::log(distribution(random_engine)) * inv_rate) * 1000);
             }
             
             // computing spike times from inter-spike intervals
-            std::vector<double> spike_times(inter_spike_intervals.size(), 0.0);
+            std::vector<float> spike_times(inter_spike_intervals.size(), 0.0);
             spike_times[0] = inter_spike_intervals[0];
             for (auto i=1; i<spike_times.size(); i++) {
                 spike_times[i] = spike_times[i-1] + inter_spike_intervals[i];
             }
-            std::transform(spike_times.begin(), spike_times.end(), spike_times.begin(), [&](double& st){return st*0.001+timestamp;});
+            std::transform(spike_times.begin(), spike_times.end(), spike_times.begin(), [&](float& st){return st*0.001+timestamp;});
             
             // injecting into the initial spike vector
             for (auto& spike_time: spike_times) {
@@ -1148,7 +1148,7 @@ namespace hummus {
         }
         
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This method does not take any data in and just runs the network as is. the only way to add spikes is through the injectSpike / poissonSpikeGenerator or injectSpikesFromData methods
-        void run(double _runtime, double _timestep=0, bool classification=false) {
+        void run(double _runtime, float _timestep=0, bool classification=false) {
             // error handling
             if (_timestep < 0) {
                 throw std::logic_error("the timestep cannot be negative");
@@ -1228,7 +1228,7 @@ namespace hummus {
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This method takes in a vector of inputs from the read_txt_data method
-        void run_data(const std::vector<event>& trainingData, double _timestep=0, const std::vector<event>& testData={}) {
+        void run_data(const std::vector<event>& trainingData, float _timestep=0, const std::vector<event>& testData={}) {
             
             if (_timestep == 0) {
                 asynchronous = true;
@@ -1327,7 +1327,7 @@ namespace hummus {
         }
         
         // running asynchronously through one .es file - relies on the sepia header
-        void run_es(const std::string filename, bool classification=false) {
+        void run_es(const std::string filename, bool classification=false, uint64_t threshold_t=UINT64_MAX) {
             asynchronous = true;
             
             for (auto& n: neurons) {
@@ -1363,11 +1363,6 @@ namespace hummus {
                 sync.lock();
                 sync.unlock();
                 
-                // error handling
-                if (layers.empty()) {
-                    throw std::logic_error("add a layer of neurons before injecting events in the network");
-                }
-                
                 std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
                 
                 auto header = sepia::read_header(sepia::filename_to_ifstream(filename));
@@ -1376,15 +1371,23 @@ namespace hummus {
                     sepia::join_observable<sepia::type::dvs>(
                                                              sepia::filename_to_ifstream(filename),
                                                              [&](sepia::dvs_event event) {
-                                                                 es_run_helper(static_cast<double>(event.t), event.x, event.y, classification);
+                                                                 // stopping the event collection beyond a certain temporal threshold
+                                                                 if (event.t > threshold_t) {
+                                                                     throw sepia::end_of_file();
+                                                                 }
+                                                                 es_run_helper(static_cast<double>(event.t), event.x, event.y);
                                                              });
                 } else if (header.event_stream_type == sepia::type::atis) {
                     sepia::join_observable<sepia::type::atis>(
                                                               sepia::filename_to_ifstream(filename),
                                                               [&](sepia::atis_event event) {
+                                                                  // stopping the event collection beyond a certain temporal threshold
+                                                                  if (event.t > threshold_t) {
+                                                                      throw sepia::end_of_file();
+                                                                  }
                                                                   // filtering out gray level events
                                                                   if (!event.is_threshold_crossing) {
-                                                                      es_run_helper(static_cast<double>(event.t), event.x, event.y, classification);
+                                                                      es_run_helper(static_cast<double>(event.t), event.x, event.y);
                                                                   }
                                                               });
                 } else {
@@ -1412,7 +1415,7 @@ namespace hummus {
         }
         
         // running asynchronously through a database of .es files - relies on the sepia header
-        void run_database(const std::vector<std::string>& training_database, const std::vector<std::string>& testing_database={}) {
+        void run_database(const std::vector<std::string>& training_database, const std::vector<std::string>& testing_database={}, uint64_t threshold_t=UINT64_MAX) {
             asynchronous = true;
             
             std::atomic_bool running(true);
@@ -1434,42 +1437,54 @@ namespace hummus {
                 sync.lock();
                 sync.unlock();
                 
-                // error handling
-                if (layers.empty()) {
-                    throw std::logic_error("add a layer of neurons before injecting events in the network");
-                }
-                
                 std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
                 if (verbose != 0) {
                     std::cout << "Running training instance..." << std::endl;
                 }
                 
                 // loop through each .es file in the training database
+                auto it = 0;
                 for (auto filename : training_database) {
+                    
                     if (!running.load(std::memory_order_relaxed)) {
                         break;
                     }
                     auto header = sepia::read_header(sepia::filename_to_ifstream(filename));
-    
+                    
+                    // get the current label for the database - one label per pattern
+                    if (!training_labels.empty()) {
+                        current_label = training_labels[it].name;
+                        training_labels.pop_front();
+                    }
+                    
                     if (header.event_stream_type == sepia::type::dvs) {
                         sepia::join_observable<sepia::type::dvs>(
                                                                  sepia::filename_to_ifstream(filename),
                                                                  [&](sepia::dvs_event event) {
-                                                                     es_run_helper(static_cast<double>(event.t), event.x, event.y, false);
+                                                                     // stopping the event collection beyond a certain temporal threshold
+                                                                     if (event.t > threshold_t) {
+                                                                         throw sepia::end_of_file();
+                                                                     }
+                                                                     es_run_helper(static_cast<double>(event.t), event.x, event.y);
                                                                  });
                     } else if (header.event_stream_type == sepia::type::atis) {
                         sepia::join_observable<sepia::type::atis>(
                                                                   sepia::filename_to_ifstream(filename),
                                                                   [&](sepia::atis_event event) {
+                                                                      // stopping the event collection beyond a certain temporal threshold
+                                                                      if (event.t > threshold_t) {
+                                                                          throw sepia::end_of_file();
+                                                                      }
                                                                       // filtering out gray level events
                                                                       if (!event.is_threshold_crossing) {
-                                                                          es_run_helper(static_cast<double>(event.t), event.x, event.y, false);
+                                                                          es_run_helper(static_cast<double>(event.t), event.x, event.y);
                                                                       }
                                                                   });
                     } else {
                         // throw error
                         throw std::logic_error("unknown header type");
                     }
+                    it++;
                 }
                 
                 std::chrono::duration<float> elapsed_seconds = std::chrono::system_clock::now()-start;
@@ -1508,13 +1523,15 @@ namespace hummus {
                         if (!running.load(std::memory_order_relaxed)) {
                             break;
                         }
+                
                         auto header = sepia::read_header(sepia::filename_to_ifstream(filename));
-                        
+                        double final_t = 0;
                         if (header.event_stream_type == sepia::type::dvs) {
                             sepia::join_observable<sepia::type::dvs>(
                                                                      sepia::filename_to_ifstream(filename),
                                                                      [&](sepia::dvs_event event) {
-                                                                         es_run_helper(static_cast<double>(event.t), event.x, event.y, true);
+                                                                         final_t = static_cast<double>(event.t);
+                                                                         es_run_helper(static_cast<double>(event.t), event.x, event.y);
                                                                      });
                         } else if (header.event_stream_type == sepia::type::atis) {
                             sepia::join_observable<sepia::type::atis>(
@@ -1522,12 +1539,28 @@ namespace hummus {
                                                                       [&](sepia::atis_event event) {
                                                                           // filtering out gray level events
                                                                           if (!event.is_threshold_crossing) {
-                                                                              es_run_helper(static_cast<double>(event.t), event.x, event.y, true);
+                                                                              final_t = static_cast<double>(event.t);
+                                                                              es_run_helper(static_cast<double>(event.t), event.x, event.y);
                                                                           }
                                                                       });
                         } else {
                             // throw error
                             throw std::logic_error("unknown header type");
+                        }
+                        
+                        // fire decisionMaking neurons at the end of every pattern
+                        if (decision_making) {
+                            // make all the decision neurons fire
+                            for (auto& n: layers[decision.layer_number].neurons) {
+                                // generate a decision spike if the neuron is connected to anything
+                                if (!neurons[n]->get_dendritic_tree().empty()) {
+                                    neurons[n]->update(final_t, nullptr, this, 0, spike_type::decision);
+                                } else {
+                                    if (verbose == 2) {
+                                        std::cout << "No neurons have specialised for the decision neuron with the label " << neurons[n]->get_class_label() << std::endl;
+                                    }
+                                }
+                            }
                         }
                     }
                     
@@ -1641,10 +1674,66 @@ namespace hummus {
         // -----PROTECTED NETWORK METHODS -----
         
         // helper method that handles the events output by the sepia::make_observable method
-        void es_run_helper(double t, int x, int y, bool classification=false) {
-            // find the corresponding input neuron according to X and Y
-            // inject into spike_queue if timestamp > than the first spike_queue or predicted_spikes element
-            // else directly inject into the neurons (convert into spike)
+        void es_run_helper(double t, int x, int y) {
+            // 1. find neuron idx 2D to 1D mapping and the equivalent initial synapse
+            int idx = (x + layers[0].width * y);
+            
+            if (spike_queue.empty() && predicted_spikes.empty()) {
+                // update the input neuron related to the join_observable event
+                spike s = neurons.at(idx)->receive_external_input<Dirac>(t, idx, -1, 1, 0);
+                neurons[idx]->update(t, s.propagation_synapse, this, 0, s.type);
+            } else {
+                while (!spike_queue.empty() || !predicted_spikes.empty()) {
+                    if (!spike_queue.empty() && predicted_spikes.empty()) {
+                        auto& s = spike_queue.top();
+                        if (s.timestamp > t) {
+                            break;
+                        } else {
+                            neurons[s.propagation_synapse->get_postsynaptic_neuron_id()]->update(s.timestamp, s.propagation_synapse, this, 0, s.type);
+                            spike_queue.pop();
+                        }
+                    } else if (!predicted_spikes.empty() && spike_queue.empty()) {
+                        auto& s = predicted_spikes.front();
+                        if (s.timestamp > t) {
+                            break;
+                        } else {
+                            neurons[s.propagation_synapse->get_postsynaptic_neuron_id()]->update(s.timestamp, s.propagation_synapse, this, 0, s.type);
+                            predicted_spikes.pop_front();
+                        }
+                    } else if (!predicted_spikes.empty() && !spike_queue.empty()) {
+                        if (spike_queue.top().timestamp < predicted_spikes.front().timestamp) {
+                            auto& s = spike_queue.top();
+                            if (s.timestamp > t) {
+                                break;
+                            } else {
+                                neurons[s.propagation_synapse->get_postsynaptic_neuron_id()]->update(s.timestamp, s.propagation_synapse, this, 0, s.type);
+                                spike_queue.pop();
+                            }
+                        } else if (predicted_spikes.front().timestamp < spike_queue.top().timestamp) {
+                            auto& s = predicted_spikes.front();
+                            if (s.timestamp > t) {
+                                break;
+                            } else {
+                                neurons[s.propagation_synapse->get_postsynaptic_neuron_id()]->update(s.timestamp, s.propagation_synapse, this, 0, s.type);
+                                predicted_spikes.pop_front();
+                            }
+                        } else {
+                            auto& s1 = spike_queue.top();
+                            auto& s2 = predicted_spikes.front();
+
+                            if (s1.timestamp > t || s2.timestamp > t) {
+                                break;
+                            } else {
+                                neurons[s1.propagation_synapse->get_postsynaptic_neuron_id()]->update(s1.timestamp, s1.propagation_synapse, this, 0, s1.type);
+                                spike_queue.pop();
+                                
+                                neurons[s2.propagation_synapse->get_postsynaptic_neuron_id()]->update(s2.timestamp, s2.propagation_synapse, this, 0, s2.type);
+                                predicted_spikes.pop_front();
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         // helper method that runs the network when event-mode is selected (timestep = 0)
@@ -1704,9 +1793,12 @@ namespace hummus {
                         } else if (predicted_spikes.front().timestamp < spike_queue.top().timestamp) {
                             requestUpdate(predicted_spikes.front(), classification);
                             predicted_spikes.pop_front();
-                        } else if (predicted_spikes.front().timestamp == spike_queue.top().timestamp) {
+                        } else {
                             requestUpdate(spike_queue.top(), classification);
                             spike_queue.pop();
+                            
+                            requestUpdate(predicted_spikes.front(), classification);
+                            predicted_spikes.pop_front();
                         }
                     }
                 }
@@ -1716,7 +1808,7 @@ namespace hummus {
         }
         
         // helper function that runs the network when clock-mode is selected (timestep > 0)
-        void sync_run_helper(double runtime, double timestep, bool classification=false) {
+        void sync_run_helper(double runtime, float timestep, bool classification=false) {
             if (!neurons.empty()) {
                 
                 // creating vector of the same size as neurons
@@ -1860,7 +1952,7 @@ namespace hummus {
         std::string                                         current_label;
 		bool                                                learning_status;
 		double                                              learning_off_signal;
-        double                                              max_delay;
+        float                                               max_delay;
         bool                                                asynchronous;
         std::mt19937                                        random_engine;
         decision_heuristics                                 decision;

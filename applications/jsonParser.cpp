@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     display.set_time_window(100);
     display.track_neuron(2);
     
-    network.run(100, 0.1);
+    network.run(100, 0.1f);
     
     return 0;
 }

@@ -73,11 +73,12 @@ namespace hummus {
             if (postsynapticNeuron->get_layer_id() == pre_layer) {
                 for (auto& axonTerminal: postsynapticNeuron->get_axon_terminals()) {
                     auto& at_postsynapticNeuron = network->get_neurons()[axonTerminal->get_postsynaptic_neuron_id()];
+                    float dt = static_cast<float>(timestamp - at_postsynapticNeuron->get_previous_spike_time());
                     
                     // if a postsynapticNeuron fired, the deltaT (presynaptic time - postsynaptic time) should be positive
                     // ignoring inhibitory synapses
                     if (axonTerminal->get_type() == synapse_type::excitatory && axonTerminal->get_weight() <= 1 && at_postsynapticNeuron->get_trace() > 0.1) {
-                        float postTrace = (- A_minus * std::exp(-(timestamp - at_postsynapticNeuron->get_previous_spike_time())/tau_minus)) * axonTerminal->get_weight() * (1 - axonTerminal->get_weight());
+                        float postTrace = (- A_minus * std::exp(-dt/tau_minus)) * axonTerminal->get_weight() * (1 - axonTerminal->get_weight());
                         
                         axonTerminal->increment_weight(postTrace);
                         
@@ -97,10 +98,11 @@ namespace hummus {
 			else if (postsynapticNeuron->get_layer_id() == post_layer) {
                 for (auto& dendrite: postsynapticNeuron->get_dendritic_tree()) {
                     auto& d_presynapticNeuron = network->get_neurons()[dendrite->get_presynaptic_neuron_id()];
+                    float dt = static_cast<float>(d_presynapticNeuron->get_previous_spike_time() - timestamp);
 					// if a presynapticNeuron already fired, the deltaT (presynaptic time - postsynaptic time) should be negative
                     // ignoring inhibitory synapses
                     if (dendrite->get_type() == synapse_type::excitatory && dendrite->get_weight() <= 1 && d_presynapticNeuron->get_trace() > 0.1) {
-                        float preTrace = (A_plus * std::exp((d_presynapticNeuron->get_previous_spike_time() - timestamp)/tau_plus)) * dendrite->get_weight() * (1 - dendrite->get_weight());
+                        float preTrace = (A_plus * std::exp(dt/tau_plus)) * dendrite->get_weight() * (1 - dendrite->get_weight());
                         dendrite->increment_weight(preTrace);
                         
                         if (network->get_verbose() >= 1) {

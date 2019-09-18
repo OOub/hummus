@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, double _conductance=200, double _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, double _traceTimeConstant=20, double _decayHomeostasis=20, double _homeostasisBeta=0.1, double _threshold=-50, double _restingPotential=-70, std::string _classLabel="") :
+        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _conductance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 bursting_activity(_burstingActivity),
@@ -72,9 +72,9 @@ namespace hummus {
 		}
         
         // homeostasis does not work for the event-based neuron because it would complicate spike prediction even more
-        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
-            double input_td = timestamp - previous_input_time;
+            float input_td = timestamp - previous_input_time;
             
             if (type == spike_type::initial || type == spike_type::generated) {
                 
@@ -84,7 +84,7 @@ namespace hummus {
                 }
                 
                 // checking if the neuron is in a refractory period
-                if (timestamp - previous_spike_time >= refractory_period) {
+                if (static_cast<float>(timestamp - previous_spike_time) >= refractory_period) {
                     active = true;
                 }
 				
@@ -92,17 +92,29 @@ namespace hummus {
                 if (type == spike_type::initial) {
                     current = s->update(timestamp, timestep, network->is_asynchronous());
                 } else {
-                    current = 0;
+#ifdef TBB
+                    bool is_asynchronous = network->is_asynchronous();
+                    std::vector<float> synaptic_current(dendritic_tree.size());
+                    tbb::parallel_for(size_t(0), synaptic_current.size(), [&](size_t i) {
+                        synaptic_current[i] = dendritic_tree[i]->update(timestamp, timestep, is_asynchronous);
+                    });
+                    current = std::accumulate(synaptic_current.begin(), synaptic_current.end(), 0);
+#else
+                    float total_current = 0;
                     for (auto& synapse: dendritic_tree) {
-                        current += synapse->update(timestamp, timestep, network->is_asynchronous());
+                        total_current += synapse->update(timestamp, timestep, network->is_asynchronous());
                     }
+                    current = total_current;
+#endif
                 }
+                
+                float exp_input_mem_tau = std::exp(- input_td * inv_membrane_tau);
                 
                 // trace decay
                 trace -= trace * input_td * inv_trace_tau;
                 
                 // potential decay
-                potential = resting_potential + (potential-resting_potential)*std::exp(- input_td * inv_membrane_tau);
+                potential = resting_potential + (potential-resting_potential) * exp_input_mem_tau;
                 
                 if (network->get_main_thread_addon()) {
                     network->get_main_thread_addon()->status_update(timestamp, this, network);
@@ -110,7 +122,7 @@ namespace hummus {
                 
                 if (active && !inhibited) {
 					// calculating the potential
-                    potential = resting_potential + current * (1 - std::exp(- input_td * inv_membrane_tau)) + (potential - resting_potential) * std::exp(-input_td * inv_membrane_tau);
+                    potential = resting_potential + current * (1 - exp_input_mem_tau) + (potential - resting_potential) * exp_input_mem_tau;
 					
                     // sending spike to relevant synapse
                     s->receive_spike();
@@ -119,10 +131,19 @@ namespace hummus {
                         current = s->get_synaptic_current();
                     } else {
                         // integating synaptic currents from dendritic tree
-                        current = 0;
+#ifdef TBB
+                        std::vector<float> synaptic_current(dendritic_tree.size());
+                        tbb::parallel_for(size_t(0), synaptic_current.size(), [&](size_t i) {
+                            synaptic_current[i] = dendritic_tree[i]->get_synaptic_current();
+                        });
+                        current = std::accumulate(synaptic_current.begin(), synaptic_current.end(), 0);
+#else
+                        float total_current = 0;
                         for (auto& synapse: dendritic_tree) {
-                            current += synapse->get_synaptic_current();
+                            total_current += synapse->get_synaptic_current();
                         }
+                        current = total_current;
+#endif
                     }
                     
                     if (network->get_verbose() == 2) {
@@ -141,7 +162,7 @@ namespace hummus {
 					
                     if (s->get_weight() >= 0) {
                         // calculating time at which potential = threshold
-                        double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + resting_potential + current) + std::log( current - potential + resting_potential)) + timestamp;
+                        double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + resting_potential + current) + std::log( current - potential + resting_potential)) + static_cast<float>(timestamp);
                         
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->get_synapse_time_constant()) {
                             network->inject_predicted_spike(spike{predictedTimestamp, s, spike_type::prediction}, spike_type::prediction);
@@ -149,7 +170,7 @@ namespace hummus {
                             network->inject_predicted_spike(spike{timestamp + s->get_synapse_time_constant(), s, spike_type::end_of_integration}, spike_type::end_of_integration);
                         }
                     } else {
-                        potential = resting_potential + current * (1 - std::exp(- input_td * inv_membrane_tau)) + (potential - resting_potential);
+                        potential = resting_potential + current * (1 - exp_input_mem_tau) + (potential - resting_potential);
                     }
                 }
             } else if (type == spike_type::prediction) {
@@ -158,7 +179,8 @@ namespace hummus {
                 }
             } else if (type == spike_type::end_of_integration) {
                 if (active && !inhibited) {
-                    potential = resting_potential + current * (1 - std::exp(-s->get_synapse_time_constant() * inv_membrane_tau)) + (potential - resting_potential) * std::exp(-s->get_synapse_time_constant() * inv_membrane_tau);
+                    float exp_s_tau_mem_tau = std::exp(-s->get_synapse_time_constant() * inv_membrane_tau);
+                    potential = resting_potential + current * (1 - exp_s_tau_mem_tau) + (potential - resting_potential) * exp_s_tau_mem_tau;
                 }
             }
         
@@ -220,7 +242,8 @@ namespace hummus {
             s->set_previous_input_time(timestamp);
 		}
 		
-        virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+        virtual void update_sync(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
+            
             // handling multiple spikes at the same timestamp (to prevent excessive decay)
             if (timestamp != 0 && timestamp - previous_input_time == 0) {
                 timestep = 0;
@@ -240,10 +263,20 @@ namespace hummus {
             if (type == spike_type::initial) {
                 current = s->update(timestamp, timestep, network->is_asynchronous());
             } else {
-                current = 0;
+#ifdef TBB
+                bool is_asynchronous = network->is_asynchronous();
+                std::vector<float> synaptic_current(dendritic_tree.size());
+                tbb::parallel_for(size_t(0), synaptic_current.size(), [&](size_t i) {
+                    synaptic_current[i] = dendritic_tree[i]->update(timestamp, timestep, is_asynchronous);
+                });
+                current = std::accumulate(synaptic_current.begin(), synaptic_current.end(), 0);
+#else
+                float total_current = 0;
                 for (auto& synapse: dendritic_tree) {
-                    current += synapse->update(timestamp, timestep, network->is_asynchronous());
+                    total_current += synapse->update(timestamp, timestep, network->is_asynchronous());
                 }
+                current = total_current;
+#endif
             }
             
             // trace decay
@@ -279,10 +312,19 @@ namespace hummus {
                     if (type == spike_type::initial) {
                         current = s->get_synaptic_current();
                     } else {
-                        current = 0;
+#ifdef TBB
+                        std::vector<float> synaptic_current(dendritic_tree.size());
+                        tbb::parallel_for(size_t(0), synaptic_current.size(), [&](size_t i) {
+                            synaptic_current[i] = dendritic_tree[i]->get_synaptic_current();
+                        });
+                        current = std::accumulate(synaptic_current.begin(), synaptic_current.end(), 0);
+#else
+                        float total_current = 0;
                         for (auto& synapse: dendritic_tree) {
-                            current += synapse->get_synaptic_current();
+                            total_current += synapse->get_synaptic_current();
                         }
+                        current = total_current;
+#endif
                     }
                     
                     if (network->get_verbose() == 2) {
@@ -424,15 +466,15 @@ namespace hummus {
             homeostasis = new_bool;
         }
         
-        void set_resting_threshold(double new_thres) {
+        void set_resting_threshold(float new_thres) {
             resting_threshold = new_thres;
         }
         
-        void set_decay_homeostasis(double new_DH) {
+        void set_decay_homeostasis(float new_DH) {
             decay_homeostasis = new_DH;
         }
         
-        void set_homeostasis_beta(double new_HB) {
+        void set_homeostasis_beta(float new_HB) {
             homeostasis_beta = new_HB;
         }
         
