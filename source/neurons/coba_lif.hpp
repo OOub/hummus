@@ -1,12 +1,12 @@
 /*
- * memristor.hpp
+ * coba_lif.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 11/09/2019
  *
- * Information: Neron model compatible with the specifications of the memristor from the ULPEC project
+ * Information: conductance-based LIF neuron (gIF4 neuron model)
  *
  * NEURON TYPE 3 (in JSON SAVE FILE)
  */
@@ -21,18 +21,18 @@ namespace hummus {
     class Neuron;
     class Network;
     
-	class Memristor : public Neuron {
+	class COBA_LIF : public Neuron {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Memristor(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+        COBA_LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
                     
             // Memristor neuron type == 3 (for JSON save)
             neuron_type = 3;
         }
 		
-		virtual ~Memristor(){}
+		virtual ~COBA_LIF(){}
 		
 		// ----- PUBLIC INPUT NEURON METHODS -----
         virtual void initialisation(Network* network) override {

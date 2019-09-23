@@ -15,7 +15,7 @@
 #include "../source/GUI/display.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/decisionMaking.hpp"
-#include "../source/neurons/LIF.hpp"
+#include "../source/neurons/cuba_lif.hpp"
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/learningRules/stdp.hpp"
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     
     //  ----- CREATING THE NETWORK -----
     auto input = network.make_grid<hummus::Parrot>(34, 34, 1, {});
-    auto output = network.make_layer<hummus::LIF>(2, {}, 3, 200, 10, false, false);
+    auto output = network.make_layer<hummus::CUBA_LIF>(2, {}, 3, 200, 10, false, false);
 
     //  ----- CONNECTING THE NETWORK -----
     network.all_to_all<hummus::Square>(input, output, 1, hummus::Normal(0.5f, 0, 1, 0.5f), 100);

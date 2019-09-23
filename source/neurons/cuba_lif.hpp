@@ -1,12 +1,12 @@
 /*
- * LIF.hpp
+ * CUBA_LIF.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 21/01/2019
  *
- * Information: leaky integrate and fire (LIF) neuron model with current dynamics.
+ * Information: current-based leaky integrate and fire (LIF) neuron model
  *
  * NEURON TYPE 1 (in JSON SAVE FILE)
  */
@@ -21,11 +21,11 @@ namespace hummus {
     class Neuron;
     class Network;
     
-	class LIF : public Neuron {
+	class CUBA_LIF : public Neuron {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+        CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _capacitance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 bursting_activity(_burstingActivity),
@@ -45,7 +45,7 @@ namespace hummus {
             inv_homeostasis_tau = 1. / _decayHomeostasis;
 		}
 		
-		virtual ~LIF(){}
+		virtual ~CUBA_LIF(){}
 		
 		// ----- PUBLIC LIF METHODS -----        
 		virtual void initialisation(Network* network) override {

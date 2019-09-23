@@ -55,7 +55,7 @@ namespace hummus {
 		void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (network->get_decision_making()) {
                 // logging only after learning is stopped and restrict only to the decision-making layer
-                if (!network->get_learning_status() && postsynapticNeuron->get_layer_id() == network->getDecisionParameters().layer_number) {
+                if (!network->get_learning_status() && postsynapticNeuron->get_layer_id() == network->get_decision_parameters().layer_number) {
                     classified_spikes.emplace_back(std::make_pair(timestamp, postsynapticNeuron));
                 }
             } else {

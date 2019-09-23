@@ -15,7 +15,7 @@
 
 #include "neurons/parrot.hpp"
 #include "neurons/decisionMaking.hpp"
-#include "neurons/LIF.hpp"
+#include "neurons/cuba_lif.hpp"
 
 #include "synapses/exponential.hpp"
 #include "synapses/dirac.hpp"
@@ -62,9 +62,9 @@ namespace hummus {
                                 case 0: {
                                     layer_helper<Parrot>(layer[i]);
                                     break;
-                                // creating LIF layer
+                                // creating CUBA_LIF layer
                                 } case 1: {
-                                    layer_helper<LIF>(layer[i]);
+                                    layer_helper<CUBA_LIF>(layer[i]);
                                     break;
                                 // creating DecisionMaking layer
                                 } case 2: {
@@ -73,7 +73,7 @@ namespace hummus {
                                 }
                             }
                         } else {
-                            throw std::logic_error("neuronType should be a number. 0 for InputNeuron, 1 for LIF, 2 for IF, 3 for DecisionMakingNeuron");
+                            throw std::logic_error("neuronType should be a number. 0 for Parrot, 1 for CUBA_LIF, w for DecisionMaking");
                         }
                     }
                 } else {
@@ -172,9 +172,9 @@ namespace hummus {
             if (input["type"].is_number()) {
                 int type = input["type"].get<int>();
                 switch (type) {
-                    // LIF neuron
+                    // CUBA_LIF neuron
                     case 1: {
-                        capture_LIF_parameters<LIF>(input, n);
+                        capture_CUBA_LIF_parameters<CUBA_LIF>(input, n);
                         break;
                     } 
                 }
@@ -275,9 +275,9 @@ namespace hummus {
             }
         }
         
-        // parameters specific for the LIF parent class
+        // parameters specific for the CUBA_LIF parent class
         template<typename T>
-        void capture_LIF_parameters(nlohmann::json& input, Neuron* n) {
+        void capture_CUBA_LIF_parameters(nlohmann::json& input, Neuron* n) {
             if (input["bursting_activity"].is_boolean()) {
                 dynamic_cast<T*>(n)->set_bursting_activity(input["bursting_activity"].get<bool>());
             }

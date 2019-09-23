@@ -16,7 +16,7 @@
 #include "../source/addons/spikeLogger.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/parrot.hpp"
-#include "../source/neurons/LIF.hpp"
+#include "../source/neurons/cuba_lif.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 
 int main(int argc, char** argv) {
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
     //  ----- CREATING THE NETWORK -----
     auto input = network.make_layer<hummus::Parrot>(inputNeurons, {});
-    auto output = network.make_layer<hummus::LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, homeostasis, burst, 20);
+    auto output = network.make_layer<hummus::CUBA_LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, homeostasis, burst, 20);
 
 	//  ----- CONNECTING THE NETWORK -----
     network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.1f, 0, 5, 3), 100);
