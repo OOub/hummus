@@ -14,6 +14,7 @@
 #pragma once
 
 #include "../../third_party/json.hpp"
+#include <iomanip>
 
 namespace hummus {
     
@@ -25,9 +26,11 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<float, float> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+        Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
-                active(true) {}
+                active(true) {
+            inv_trace_tau = 1. / _traceTimeConstant;
+        }
 		
 		virtual ~Parrot(){}
 		
@@ -46,67 +49,25 @@ namespace hummus {
             }
         }
         
-        virtual void update(double timestamp, Synapse* s, Network* network, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
+            
+            if (network->is_asynchronous()) {
+                timestep = timestamp - previous_spike_time;
+            }
             
             // checking if the neuron is in a refractory period
-            if (timestamp - previous_spike_time >= refractory_period) {
+            if (timestep >= refractory_period) {
                 active = true;
             }
             
             // trace decay
-            trace *= std::exp(-(timestamp - previous_spike_time)/trace_time_constant);
+            trace -= trace * timestep * inv_trace_tau;
             
             // instantly making the input neuron fire at every input spike
-            if (active) {
-                potential = threshold;
-                trace += 1;
-                
-                if (network->get_verbose() == 2) {
-                    std::cout << "t=" << timestamp << " " << neuron_id << " w=" << s->get_weight() << " d=" << s->get_delay() << " --> INPUT" << std::endl;
-                }
-                
-                for (auto& addon: relevant_addons) {
-                    addon->neuron_fired(timestamp, s, this, network);
-                }
-                
-                if (network->get_main_thread_addon()) {
-                    network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
-                }
-                
-                if (!network->get_layers()[layer_id].do_not_propagate) {
-                    for (auto& axonTerminal : axon_terminals) {
-                        network->inject_spike(spike{timestamp + axonTerminal->get_delay(), axonTerminal.get(), spike_type::generated});
-                    }
-                }
-                
-                request_learning(timestamp, s, this, network);
-                previous_spike_time = timestamp;
-                potential = resting_potential;
-                active = false;
-                
-                if (network->get_main_thread_addon()) {
-                    network->get_main_thread_addon()->status_update(timestamp, s, this, network);
-                }
-            }
-		}
-        
-        virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
-            
-            if (timestamp != 0 && timestamp - previous_spike_time == 0) {
-                timestep = 0;
-            }
-            
-            // checking if the neuron is in a refractory period
-            if (timestamp - previous_spike_time >= refractory_period) {
-                active = true;
-            }
-            
-            // trace decay
-            trace *= std::exp(-timestep/trace_time_constant);
-            
             if (s && active) {
                 potential = threshold;
                 trace += 1;
+                
                 if (network->get_verbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuron_id << " w=" << s->get_weight() << " d=" << s->get_delay() << " --> INPUT" << std::endl;
                 }
@@ -126,20 +87,32 @@ namespace hummus {
                 }
                 
                 request_learning(timestamp, s, this, network);
+                
+                if (network->get_main_thread_addon()) {
+                    network->get_main_thread_addon()->status_update(timestamp, this, network);
+                }
+                
+                for (auto& addon: relevant_addons) {
+                    addon->status_update(timestamp, this, network);
+                }
+                
                 previous_spike_time = timestamp;
                 potential = resting_potential;
                 active = false;
+                
             } else {
-                if (timestep > 0) {
-                    for (auto& addon: relevant_addons) {
-                        addon->timestep(timestamp, this, network);
-                    }
+                // if the network is not asynchronous and we're on a different timestamp (handling spikes that fire at the same time)
+                if (!network->is_asynchronous() && timestep > 0) {
                     if (network->get_main_thread_addon()) {
-                        network->get_main_thread_addon()->timestep(timestamp, this, network);
+                        network->get_main_thread_addon()->status_update(timestamp, this, network);
+                    }
+                    
+                    for (auto& addon: relevant_addons) {
+                        addon->status_update(timestamp, this, network);
                     }
                 }
             }
-        }
+		}
         
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) override{
@@ -182,7 +155,8 @@ namespace hummus {
             }
         }
         
-        // ----- INPUT NEURON PARAMETERS -----
-        bool  active;
+        // ----- PARROT PARAMETERS -----
+        float  inv_trace_tau;
+        bool    active;
 	};
 }

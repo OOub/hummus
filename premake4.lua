@@ -5,69 +5,87 @@ solution 'hummus'
     location 'build'
 
     for index, file in pairs(os.matchfiles('applications/*.cpp')) do
-    	local name = path.getbasename(file)
-    	project(name)
-    		-- General settings
-    		kind 'ConsoleApp'
-    		language 'C++'
-        	location 'build'
+        local name = path.getbasename(file)
+    	  project(name)
+        		-- General settings
+        		kind 'ConsoleApp'
+        		language 'C++'
+            location 'build'
 
-        	-- Build Options
-        	newoption {
-   				trigger     = 'no-qt',
-   				description = 'Compiles without Qt'
-			}
+            -- Build Options
+            newoption {
+       			    trigger     = 'no-qt',
+                description = 'Compiles without Qt'
+    			  }
 
-			if _OPTIONS['no-qt'] then
-   				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
-   			else
-   				with_qt = true
-			end
+            newoption {
+       			    trigger     = 'tbb',
+                description = 'Compiles with tbb'
+    			  }
 
-			-- All files in source, third_party and applications
-        	files {'source/**.hpp',
-                 'third_party/**.hpp',
-        		     'applications/' .. name .. '.cpp'
-        	}
+            if _OPTIONS['tbb'] then
+                with_tbb = true
+            end
 
-			if with_qt then
-				-- Qt-dependent files
-				files(qt.moc({'source/GUI/inputViewer.hpp',
-							        'source/GUI/outputViewer.hpp',
-					            'source/GUI/dynamicsViewer.hpp'
-					           },
-						  'build/moc'))
+      			if _OPTIONS['no-qt'] then
+         				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
+         			else
+         				with_qt = true
+      			end
 
-	            includedirs(qt.includedirs())
-	            libdirs(qt.libdirs())
-	            links(qt.links())
-	            buildoptions(qt.buildoptions())
-	            linkoptions(qt.linkoptions())
-      end
+      			-- All files in source, third_party and applications
+          	files {'source/**.hpp',
+                   'third_party/**.hpp',
+          		     'applications/' .. name .. '.cpp'
+          	}
 
-	        -- Declare the configurations
-	        configuration 'Release'
-	            targetdir 'build/release'
-	            defines {'NDEBUG'}
-	            flags {'OptimizeSpeed','FloatFast'}
+      			if with_qt then
+        				-- Qt-dependent files
+        				files(qt.moc({'source/GUI/inputViewer.hpp',
+        							        'source/GUI/outputViewer.hpp',
+        					            'source/GUI/dynamicsViewer.hpp'
+        					           },
+        						  'build/moc'))
 
-	        configuration 'Debug'
-	            targetdir 'build/debug'
-	            defines {'DEBUG'}
-	            flags {'Symbols'}
+                includedirs(qt.includedirs())
+                libdirs(qt.libdirs())
+                links(qt.links())
+                buildoptions(qt.buildoptions())
+                linkoptions(qt.linkoptions())
+            end
 
-	        configuration 'linux or macosx'
-            	includedirs {'/usr/local/include'}
-	        	  libdirs {'/usr/local/lib'}
+            -- Declare the configurations
+            configuration 'Release'
+                targetdir 'build/release'
+                defines {'NDEBUG'}
+                flags {'OptimizeSpeed'}
 
-	        -- Linux specific settings
-	        configuration 'linux'
-                links {'pthread'}
-	            buildoptions {'-std=c++11'}
-	           	linkoptions {'-std=c++11'}
+            configuration 'Debug'
+                targetdir 'build/debug'
+                defines {'DEBUG'}
+                flags {'Symbols'}
 
-	        -- Mac OS X specific settings
-	        configuration 'macosx'
-	            buildoptions {'-std=c++11'}
-	           	linkoptions {'-std=c++11'}
+            configuration 'linux or macosx'
+              	includedirs {'/usr/local/include'}
+            	  libdirs {'/usr/local/lib'}
+
+            -- Linux specific settings
+            configuration 'linux'
+                if with_tbb then
+                    links {'pthread', 'tbb'}
+                    defines {"TBB"}
+                else
+                    links {'pthread'}
+                end
+                buildoptions {'-std=c++11'}
+               	linkoptions {'-std=c++11'}
+
+            -- Mac OS X specific settings
+            configuration 'macosx'
+                if with_tbb then
+	        	        links {'tbb'}
+                    defines { "TBB" }
+                end
+                buildoptions {'-std=c++11'}
+               	linkoptions {'-std=c++11'}
 end

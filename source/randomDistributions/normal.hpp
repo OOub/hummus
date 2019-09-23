@@ -32,16 +32,16 @@ namespace hummus {
             // randomising weights and delays
             std::random_device device;
             random_engine = std::mt19937(device());
-            delay_random = std::normal_distribution<>(delay_mu, delay_sigma);
-            weight_random = std::normal_distribution<>(weight_mu, weight_sigma);
+            delay_random = std::normal_distribution<float>(delay_mu, delay_sigma);
+            weight_random = std::normal_distribution<float>(weight_mu, weight_sigma);
         }
 		
-        std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
+        std::pair<float, float> operator()(int x, int y, int depth) {
             return std::make_pair(truncate(weight_random(random_engine), weight_lower_limit, weight_upper_limit), truncate(delay_random(random_engine), delay_lower_limit, delay_upper_limit));
         }
 		
         // truncated normal distribution
-        double truncate(double x, double a, double b) {
+        float truncate(float x, float a, float b) {
             if (x >= a && x <= b) {
                 return x;
             } else {
@@ -53,17 +53,17 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937               random_engine;
-        std::normal_distribution<> delay_random;
-        std::normal_distribution<> weight_random;
-        double                     weight_mu;
-        double                     weight_sigma;
-        double                     weight_lower_limit;
-        double                     weight_upper_limit;
-        double                     delay_mu;
-        double                     delay_sigma;
-        double                     delay_lower_limit;
-        double                     delay_upper_limit;
+        std::mt19937                    random_engine;
+        std::normal_distribution<float> delay_random;
+        std::normal_distribution<float> weight_random;
+        float                           weight_mu;
+        float                           weight_sigma;
+        float                           weight_lower_limit;
+        float                           weight_upper_limit;
+        float                           delay_mu;
+        float                           delay_sigma;
+        float                           delay_lower_limit;
+        float                           delay_upper_limit;
 	};
 }
 

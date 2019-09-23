@@ -90,17 +90,11 @@ namespace hummus {
             dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
 		}
 
-		void timestep(double timestamp, Neuron* postsynaptic_neuron, Network* network) override {
-            input_viewer->handle_timestep(timestamp);
-            output_viewer->handle_timestep(timestamp);
+		void status_update(double timestamp, Neuron* postsynaptic_neuron, Network* network) override {
+            input_viewer->handle_update(timestamp);
+            output_viewer->handle_update(timestamp);
             dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
 		}
-
-        void status_update(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
-            input_viewer->handle_timestep(timestamp);
-            output_viewer->handle_timestep(timestamp);
-            dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
-        }
         
 		void begin(Network* network, std::mutex* sync) override {
             // finding the number of layers in the network
@@ -155,7 +149,7 @@ namespace hummus {
         }
         
 		// ----- SETTERS -----
-		void hardware_acceleration(bool accelerate) {
+		void hardware_acceleration(bool accelerate=true) {
             input_viewer->hardware_acceleration(accelerate);
             output_viewer->hardware_acceleration(accelerate);
             dynamics_viewer->hardware_acceleration(accelerate);
@@ -173,14 +167,14 @@ namespace hummus {
 			outputSublayerToTrack = sublayerToTrack;
 		}
 		
-        void track_neuron(int _neuronToTrack) {
-        	neuronToTrack = _neuronToTrack;
+        void track_neuron(int _neuron_to_track) {
+        	neuronToTrack = _neuron_to_track;
         }
 
-		void set_time_window(double newWindow) {
-            input_viewer->set_time_window(newWindow);
-            output_viewer->set_time_window(newWindow);
-            dynamics_viewer->set_time_window(newWindow);
+		void set_time_window(double new_window) {
+            input_viewer->set_time_window(new_window);
+            output_viewer->set_time_window(new_window);
+            dynamics_viewer->set_time_window(new_window);
         }
 		
         void plot_currents(bool current_plot=true) {

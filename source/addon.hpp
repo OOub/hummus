@@ -43,8 +43,8 @@ namespace hummus {
         // message that is activated whenever a neuron emits a spike
 		virtual void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){}
         
-        // message that is activated on every timestep on the synchronous network only. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
-		virtual void timestep(double timestamp, Neuron* postsynapticNeuron, Network* network){}
+        // message that is activated to update the status of the network. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
+		virtual void status_update(double timestamp, Neuron* postsynapticNeuron, Network* network){}
         
         // message that is activated whenever a neuron wants to learn
         virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){};

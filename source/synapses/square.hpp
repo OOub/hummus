@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Square(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=5, float _external_current=150, float _gaussian_std_dev=0) :
+		Square(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=10, float _external_current=100, float _gaussian_std_dev=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current) {
 			
             synapse_time_constant = _synapse_time_constant;
@@ -39,28 +39,26 @@ namespace hummus {
             // initialising a normal distribution
 			std::random_device device;
             random_engine = std::mt19937(device());
-            normal_distribution = std::normal_distribution<>(0, _gaussian_std_dev);
+            normal_distribution = std::normal_distribution<float>(0, _gaussian_std_dev);
 
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
-                type = synapseType::inhibitory;
+                type = synapse_type::inhibitory;
             } else {
-                type = synapseType::excitatory;
+                type = synapse_type::excitatory;
             }
 		}
 		virtual ~Square(){}
 		
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp) override {
+        virtual float update(double timestamp, float timestep, bool asynchronous) override {
             if (timestamp - previous_input_time > synapse_time_constant) {
                 synaptic_current = 0;
             }
             return synaptic_current;
         }
         
-		virtual void receive_spike(double timestamp) override {
-            // saving timestamp
-            previous_input_time = timestamp;
+		virtual void receive_spike() override {
             synaptic_current += weight * (external_current+normal_distribution(random_engine));
 		}
         
@@ -76,7 +74,7 @@ namespace hummus {
 		}
 		
 	protected:
-		std::mt19937               random_engine;
-		std::normal_distribution<> normal_distribution;
+		std::mt19937                    random_engine;
+		std::normal_distribution<float> normal_distribution;
 	};
 }

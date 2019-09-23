@@ -15,7 +15,7 @@
 
 namespace hummus {
     // synapse models enum for readability
-    enum class synapseType {
+    enum class synapse_type {
         excitatory,
         inhibitory
     };
@@ -36,19 +36,17 @@ namespace hummus {
                 json_id(0),
                 kernel_id(0),
                 synaptic_efficacy(1),
-                synapse_time_constant(0) {
-                    
-                }
+                synapse_time_constant(0) {}
         
         virtual ~Synapse(){}
         
         // ----- PUBLIC SYNAPSE METHODS -----
         
         // pure virtual method that updates the current value in the absence of a spike
-        virtual float update(double timestamp) = 0;
+        virtual float update(double timestamp, float timestep, bool asynchronous) = 0;
         
         // pure virtual method that outputs an updated current value upon receiving a spike
-        virtual void receive_spike(double timestamp) = 0;
+        virtual void receive_spike() = 0;
         
         // write synapse parameters in a JSON format
         virtual void to_json(nlohmann::json& output) {}
@@ -59,7 +57,7 @@ namespace hummus {
         }
         
         // ----- SETTERS AND GETTERS -----
-        synapseType get_type() const {
+        synapse_type get_type() const {
             return type;
         }
         
@@ -95,17 +93,17 @@ namespace hummus {
             return weight;
         }
         
-        void set_weight(float new_weight, bool increment=true) {
-            if (increment) {
-                if (weight > 0) {
-                    weight += new_weight;
-                    // prevent weights from being negative
-                    if (weight < 0) {
-                        weight = 0;
-                    }
+        void set_weight(float new_weight) {
+            weight = new_weight;
+        }
+        
+        void increment_weight(float delta_weight) {
+            if (weight > 0) {
+                weight += delta_weight;
+                // prevent weights from being negative
+                if (weight < 0) {
+                    weight = 0;
                 }
-            } else {
-                weight = new_weight;
             }
         }
         
@@ -113,21 +111,16 @@ namespace hummus {
             return delay;
         }
         
-        void set_delay(float new_delay, bool increment=true) {
-            if (increment) {
-                if (delay > 0) {
-                    delay += new_delay;
-                    // prevent delays from being negative
-                    if (delay < 0) {
-                        delay = 0;
-                    }
-                }
-            } else {
-                delay = new_delay;
+        void set_delay(float new_delay) {
+            delay = new_delay;
+        }
+        
+        void increment_delay(float delta_delay) {
+            if (delay > 0) {
+                delay += delta_delay;
                 // prevent delays from being negative
                 if (delay < 0) {
                     delay = 0;
-                    std::cout << "negative delay set to 0" << std::endl;
                 }
             }
         }
@@ -136,12 +129,12 @@ namespace hummus {
             return synaptic_efficacy;
         }
         
-        void set_synaptic_efficacy(float new_efficacy, bool increment=true) {
-            if (increment) {
-                synaptic_efficacy += new_efficacy;
-            } else{
-                synaptic_efficacy = new_efficacy;
-            }
+        void set_synaptic_efficacy(float new_efficacy) {
+            synaptic_efficacy = new_efficacy;
+        }
+        
+        void increment_synaptic_efficacy(float delta_efficacy) {
+            synaptic_efficacy += delta_efficacy;
         }
         
     protected:
@@ -151,12 +144,12 @@ namespace hummus {
         float                      delay;
         float                      synaptic_current;
         double                     previous_input_time;
-        int                        kernel_id;
         float                      gaussian_std_dev;
         float                      synapse_time_constant;
         float                      external_current;
         float                      synaptic_efficacy;
-        synapseType                type;
+        synapse_type               type;
+        int                        kernel_id;
         int                        json_id;
     };
 }

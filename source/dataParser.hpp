@@ -29,15 +29,14 @@ namespace hummus {
     
 	struct label {
 		std::string name;
-		double onset;
+		double      onset;
 	};
 	
-	struct input {
-		double timestamp;
-        double neuron_id;
-		double x;
-		double y;
-        double polarity;
+	struct event {
+		double   timestamp;
+        int      neuron_id;
+		int      x;
+		int      y;
 	};
 	
 	class DataParser {
@@ -50,9 +49,38 @@ namespace hummus {
             gaussian = std::normal_distribution<>(0.0, 1.0);
         };
         
-        // saves the files from the N-MNIST database - formatted to eventstream format - into a vector of strings
-        // The N-MNIST database needs to have the same structure as the original folder. For example: ~/N-MNIST/Train/0
-        std::pair<std::vector<std::string>, std::deque<label>> generate_nmnist_database(std::string directory_path, int sample_percentage=100) {
+        // saves the files from a database of files formatted to eventstream format into a vector of strings
+        std::vector<std::string> generate_database(const std::string directory_path, int sample_percentage=100) {
+            std::vector<std::string> database;
+            fs::path current_dir(directory_path);
+            // save all files containing the .es extension in the database vector
+            for (auto &file : fs::recursive_directory_iterator(current_dir)) {
+                if (file.path().extension() == ".es") {
+                    database.emplace_back(file.path());
+                }
+            }
+            
+            // shuffle the database vector
+            std::random_device r;
+            std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
+            
+            // create a random engine
+            std::mt19937 random_engine(seed);
+            
+            std::shuffle(begin(database), end(database), random_engine);
+            
+            // get the number of samples from the percentage
+            if (sample_percentage < 100) {
+                size_t number_of_samples = static_cast<size_t>(std::ceil(database.size() * sample_percentage / 100));
+                return std::vector<std::string>(database.begin(), database.begin()+number_of_samples);
+            } else {
+                return database;
+            }
+        }
+        
+        // saves the files from the N-MNIST database - formatted to eventstream format - into a a pair of vector: a vector of strings for the full paths to files, and a vector of labels
+        // The N-MNIST database needs to have the same structure as the original folder otherwise the labels will be messed up. For example: ~/N-MNIST/Train/0
+        std::pair<std::vector<std::string>, std::deque<label>> generate_nmnist_database(const std::string directory_path, int sample_percentage=100) {
             std::vector<std::string> database;
             std::deque<label> labels;
             
@@ -70,11 +98,11 @@ namespace hummus {
             std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
             
             // create two random engines with the same state
-            std::mt19937 eng1(seed);
-            auto eng2 = eng1;
+            std::mt19937 random_engine1(seed);
+            auto random_engine2 = random_engine1;
             
-            std::shuffle(begin(database), end(database), eng1);
-            std::shuffle(begin(labels), end(labels), eng2);
+            std::shuffle(begin(database), end(database), random_engine1);
+            std::shuffle(begin(labels), end(labels), random_engine2);
             
             // get the number of samples from the percentage
             if (sample_percentage < 100) {
@@ -86,41 +114,34 @@ namespace hummus {
         }
         
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity (timestamp, X, Y, P)
-        std::vector<input> read_txt_data(std::string filename, double shift_timestamps=0, bool time_jitter=false, int additive_noise=0) {
+        std::vector<event> read_txt_data(std::string filename, double shift_timestamps=0, bool time_jitter=false, int additive_noise=0) {
             data_file.open(filename);
             
             if (data_file.good()) {
-				std::vector<input> data;
+				std::vector<event> data;
 				std::string line;
-				int data_type = 0;
-				double neuron_counter = 0;
-                
-                double maxID=0; double maxX=0; double maxY=0; double maxPolarity=0;
+				bool one_dimentional = false;
+				int neuron_counter = 0;
+                int max_id=0;
+                int max_x=0;
+                int max_y=0;
                 
                 while (std::getline(data_file, line)) {
                 	std::vector<std::string> fields;
                 	split(fields, line, " ,");
                 	// 1D data
                 	if (fields.size() == 2) {
-                		data_type = 0;
-						data.emplace_back(input{std::stod(fields[0]), std::stod(fields[1]), -1, -1, -1});
-                        maxID = std::max(maxID, std::stod(fields[1]));
+						data.emplace_back(event{std::stod(fields[0]), std::stoi(fields[1]), -1, -1});
+                        max_id = std::max(max_id, std::stoi(fields[1]));
                     // 2D Data
 					} else if (fields.size() == 3) {
-                		data_type = 1;
-                		data.emplace_back(input{std::stod(fields[0]), neuron_counter, std::stod(fields[1]), std::stod(fields[2]), -1});
-                        maxX = std::max(maxX, std::stod(fields[1]));
-                        maxY = std::max(maxY, std::stod(fields[2]));
+                		one_dimentional = true;
+                		data.emplace_back(event{std::stod(fields[0]), neuron_counter, std::stoi(fields[1]), std::stoi(fields[2])});
+                        max_x = std::max(max_x, std::stoi(fields[1]));
+                        max_y = std::max(max_y, std::stoi(fields[2]));
                         
                 		neuron_counter++;
-					} else if (fields.size() == 4) {
-                        data_type = 2;
-                        data.emplace_back(input{std::stod(fields[0]), neuron_counter, std::stod(fields[1]), std::stod(fields[2]), std::stod(fields[3])});
-                        maxX = std::max(maxX, std::stod(fields[1]));
-                        maxY = std::max(maxY, std::stod(fields[2]));
-                        maxPolarity = std::max(maxPolarity, std::stod(fields[3]));
-                        neuron_counter++;
-                    }
+					}
                 }
                 data_file.close();
                 
@@ -141,43 +162,35 @@ namespace hummus {
                 // additive noise
                 if (additive_noise > 0) {
                     // finding maximum timestamp
-                    auto it = std::max_element(data.begin(), data.end(), [&](input a, input b){ return a.timestamp < b.timestamp; });
-                    double maxTimestamp = data[std::distance(data.begin(), it)].timestamp;
+                    auto it = std::max_element(data.begin(), data.end(), [&](event a, event b){ return a.timestamp < b.timestamp; });
+                    double max_timestamp = data[std::distance(data.begin(), it)].timestamp;
                     
                     // uniform int distribution for the timestamps of spontaneous spikes
-                    std::uniform_int_distribution<> uniformTimestamp(0, maxTimestamp);
+                    std::uniform_int_distribution<double> uniform_timestamp(0, max_timestamp);
                     
                     // finding the number of spontaneous spikes to add to the data
-                    int additiveSpikes = std::round(data.size() * additive_noise / 100.);
+                    int additive_spikes = std::round(data.size() * additive_noise / 100.);
                     
                     // one-dimensional data
-                    if (data_type == 0) {
-                        std::uniform_int_distribution<> uniformID(0, maxID);
+                    if (one_dimentional) {
+                        std::uniform_int_distribution<> uniform_id(0, max_id);
                         
-                        for (auto i=0; i<additiveSpikes; i++) {
-                            data.emplace_back(input{static_cast<double>(uniformTimestamp(random_engine)), static_cast<double>(uniformID(random_engine)), -1, -1, -1});
+                        for (auto i=0; i<additive_spikes; i++) {
+                            data.emplace_back(event{uniform_timestamp(random_engine), uniform_id(random_engine), UINT16_MAX, UINT16_MAX});
                         }
                     // two-dimensional data
-                    } else if (data_type == 1){
-                        std::uniform_int_distribution<> uniformX(0, maxX);
-                        std::uniform_int_distribution<> uniformY(0, maxY);
+                    } else {
+                        std::uniform_int_distribution<> uniform_x(0, max_x);
+                        std::uniform_int_distribution<> uniform_y(0, max_y);
                         
-                        for (auto i=0; i<additiveSpikes; i++) {
-                            data.emplace_back(input{static_cast<double>(uniformTimestamp(random_engine)), 0, static_cast<double>(uniformX(random_engine)), static_cast<double>(uniformY(random_engine)), -1});
-                        }
-                    } else if (data_type == 2){
-                        std::uniform_int_distribution<> uniformX(0, maxX);
-                        std::uniform_int_distribution<> uniformY(0, maxY);
-                        std::uniform_int_distribution<> uniformPolarity(0, maxPolarity);
-                        
-                        for (auto i=0; i<additiveSpikes; i++) {
-                            data.emplace_back(input{static_cast<double>(uniformTimestamp(random_engine)), 0, static_cast<double>(uniformX(random_engine)), static_cast<double>(uniformY(random_engine)), static_cast<double>(uniformPolarity(random_engine))});
+                        for (auto i=0; i<additive_spikes; i++) {
+                            data.emplace_back(event{uniform_timestamp(random_engine), 0, uniform_x(random_engine), uniform_y(random_engine)});
                         }
                     }
                 }
                 
                 // sorting data according to timestamps
-				std::sort(data.begin(), data.end(), [](input a, input b) {
+				std::sort(data.begin(), data.end(), [](event a, event b) {
 					return a.timestamp < b.timestamp;
 				});
 				
@@ -199,15 +212,15 @@ namespace hummus {
                     std::vector<std::string> fields;
                     split(fields, line, " ,");
                     
-                    std::vector<float> postSynapticWeights;
+                    std::vector<float> postsynaptic_weights;
                     
-                    // filling temporary vector by each field of the line read, then convert the field to double
+                    // filling temporary vector by each field of the line read, then convert the field to float
                     for (auto& f: fields) {
-                        postSynapticWeights.emplace_back(std::stod(f));
+                        postsynaptic_weights.emplace_back(std::stof(f));
                     }
                     
                     // filling vector of vectors to build 2D weight matrix
-                    data.emplace_back(postSynapticWeights);
+                    data.emplace_back(postsynaptic_weights);
                 }
                 data_file.close();
                 return data;

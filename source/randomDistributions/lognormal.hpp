@@ -25,11 +25,11 @@ namespace hummus {
             // randomising weights and delays
             std::random_device device;
             random_engine = std::mt19937(device());
-            delay_random = std::lognormal_distribution<>(delay_mu, delay_sigma);
-            weight_random = std::lognormal_distribution<>(weight_mu, weight_sigma);
+            delay_random = std::lognormal_distribution<float>(delay_mu, delay_sigma);
+            weight_random = std::lognormal_distribution<float>(weight_mu, weight_sigma);
         }
 		
-        std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
+        std::pair<float, float> operator()(int x, int y, int depth) {
 			return std::make_pair(weight_random(random_engine), delay_random(random_engine));
         }
         
@@ -37,8 +37,8 @@ namespace hummus {
         
         // ----- IMPLEMENTATION VARIABLES -----
         std::mt19937                  random_engine;
-        std::lognormal_distribution<> delay_random;
-        std::lognormal_distribution<> weight_random;
+        std::lognormal_distribution<float> delay_random;
+        std::lognormal_distribution<float> weight_random;
 	};
 }
 

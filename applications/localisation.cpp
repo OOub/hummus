@@ -14,7 +14,7 @@
 #include <iostream>
 
 #include "../source/core.hpp"
-#include "../source/neurons/LIF.hpp"
+#include "../source/neurons/cuba_lif.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/GUI/display.hpp"
 #include "../source/addons/potentialLogger.hpp"
@@ -48,10 +48,10 @@ int main(int argc, char** argv) {
     /// ----- DIRECTION LAYER -----
 
     // layer that learns the delays
-    auto direction = network.make_layer<hummus::LIF>(16, {&mp}, 0, direction_conductance, direction_leakage_conductance, direction_homeostasis, direction_burst, direction_trace_time_constant);
+    auto direction = network.make_layer<hummus::CUBA_LIF>(16, {&mp}, 0, direction_conductance, direction_leakage_conductance, direction_homeostasis, direction_burst, direction_trace_time_constant);
 
     // connecting input layer with the direction neurons
-    network.all_to_all<hummus::Exponential>(input, direction, 1, hummus::Normal(1./8, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
+    network.all_to_all<hummus::Exponential>(input, direction, 1, hummus::Normal(0.125f, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
     network.lateral_inhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     // neuron mask for loggers
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     /// ----- DISTANCE LAYER -----
 
     // distance neuron
-//    auto distance = network.make_circle<hummus::LIF>(8, {0.3}, {});
+//    auto distance = network.make_circle<hummus::CUBA_LIF>(8, {0.3}, {});
 
     // connecting input layer with the distance neurons
 
@@ -83,14 +83,14 @@ int main(int argc, char** argv) {
 
     // run calibration
     network.verbosity(0);
-    network.run_data(&calibration, 0.1);
+    network.run_data(calibration, 0.1f);
 
     // assigning labels to direction neurons
 //
 //    // run test
 //    auto test = parser.read_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
 //    network.turn_off_learning();
-//    network.run_data(&test, 0.1);
+//    network.run_data(test, 0.1f);
 
     return 0;
 }

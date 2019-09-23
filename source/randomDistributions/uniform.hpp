@@ -16,17 +16,12 @@
 
 namespace hummus {
 	
-	enum class uniform_type {
-		integer,
-		real
-	};
-	
 	class Uniform {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Uniform(float weight_lower_limit=0, float weight_upper_limit=1, float delay_lower_limit=0, float delay_upper_limit=0, uniform_type _int_or_real=uniform_type::integer) :
-        		int_or_real(_int_or_real) {
+        Uniform(float weight_lower_limit=0, float weight_upper_limit=1, float delay_lower_limit=0, float delay_upper_limit=0, bool _int_type=true) :
+        		int_type(_int_type) {
 			
 			// error handling
                     if (delay_lower_limit < 0 || delay_upper_limit < 0) {
@@ -37,18 +32,18 @@ namespace hummus {
             std::random_device device;
             random_engine = std::mt19937(device());
 			
-			if (_int_or_real == uniform_type::integer) {
-                int_delay_random = std::uniform_int_distribution<>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
-                int_weight_random = std::uniform_int_distribution<>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
+			if (int_type) {
+                int_delay_random = std::uniform_int_distribution<float>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
+                int_weight_random = std::uniform_int_distribution<float>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
 			} else {
-                real_delay_random = std::uniform_real_distribution<>(delay_lower_limit, delay_upper_limit);
-                real_weight_random = std::uniform_real_distribution<>(weight_lower_limit, weight_upper_limit);
+                real_delay_random = std::uniform_real_distribution<float>(delay_lower_limit, delay_upper_limit);
+                real_weight_random = std::uniform_real_distribution<float>(weight_lower_limit, weight_upper_limit);
 			}
         }
 		
 		
-        std::pair<float, float> operator()(int16_t x, int16_t y, int16_t depth) {
-        	if (int_or_real == uniform_type::integer) {
+        std::pair<float, float> operator()(int x, int y, int depth) {
+        	if (int_type) {
 				return std::make_pair(real_weight_random(random_engine), real_delay_random(random_engine));
 			} else {
 				return std::make_pair(int_weight_random(random_engine), int_delay_random(random_engine));
@@ -58,12 +53,12 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                     random_engine;
-        std::uniform_int_distribution<>  int_delay_random;
-		std::uniform_real_distribution<> real_delay_random;
-        std::uniform_int_distribution<>  int_weight_random;
-		std::uniform_real_distribution<> real_weight_random;
-		uniform_type                     int_or_real;
+        std::mt19937                          random_engine;
+        std::uniform_int_distribution<float>  int_delay_random;
+		std::uniform_real_distribution<float> real_delay_random;
+        std::uniform_int_distribution<float>  int_weight_random;
+		std::uniform_real_distribution<float> real_weight_random;
+		bool                                  int_type;
 	};
 }
 

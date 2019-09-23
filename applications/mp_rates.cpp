@@ -15,7 +15,7 @@
 #include "../source/GUI/display.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/decisionMaking.hpp"
-#include "../source/neurons/LIF.hpp"
+#include "../source/neurons/cuba_lif.hpp"
 #include "../source/learningRules/myelinPlasticity.hpp"
 
 int main(int argc, char** argv) {
@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
     auto& display = network.make_gui<hummus::Display>();
     auto& mp = network.make_addon<hummus::MyelinPlasticity>();
 
-    auto input = network.make_layer<hummus::LIF>(4, {}, 0, 200, 10, false, false);
-    auto output = network.make_layer<hummus::LIF>(1, {&mp}, 3, 200, 10, false, false);
+    auto input = network.make_layer<hummus::CUBA_LIF>(4, {}, 0, 200, 10, false, false);
+    auto output = network.make_layer<hummus::CUBA_LIF>(1, {&mp}, 3, 200, 10, false, false);
 
     network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100);
     network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
 
     for (auto i=0; i<repetitions; i++) {
         network.inject_spike(0, 10+time_between_spikes*i);
+//        network.inject_spike(0, 12+time_between_spikes*i);
         network.inject_spike(1, 15+time_between_spikes*i);
         network.inject_spike(2, 20+time_between_spikes*i);
     }
@@ -46,7 +47,7 @@ int main(int argc, char** argv) {
     display.plot_currents(true);
 
     network.verbosity(2);
-    network.run(runtime, 0.1);
+    network.run(runtime, 0.1f);
 
     return 0;
 }

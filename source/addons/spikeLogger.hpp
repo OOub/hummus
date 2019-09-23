@@ -98,7 +98,7 @@ namespace hummus {
             // saving to file
             save_file.write(bytes.data(), bytes.size());
             
-            // changing the previoud timestamp
+            // changing the previous timestamp
             previous_timestamp = timestamp;
         }
 		

@@ -17,7 +17,7 @@
 #include "../source/GUI/display.hpp"
 #include "../source/learningRules/stdp.hpp"
 #include "../source/neurons/parrot.hpp"
-#include "../source/neurons/LIF.hpp"
+#include "../source/neurons/cuba_lif.hpp"
 
 int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
@@ -35,14 +35,14 @@ int main(int argc, char** argv) {
 	float refractoryPeriod = 30;
     int inputNeurons = 10;
     int layer1Neurons = 1;
-    float weight = 1./10;
+    float weight = 0.1f;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
     auto& stdp = network.make_addon<hummus::STDP>();
 
 	//  ----- CREATING THE NETWORK -----
     auto input = network.make_layer<hummus::Parrot>(inputNeurons, {});
-    auto output = network.make_layer<hummus::LIF>(layer1Neurons, {&stdp}, refractoryPeriod, conductance, leakageConductance, false, true);
+    auto output = network.make_layer<hummus::CUBA_LIF>(layer1Neurons, {&stdp}, refractoryPeriod, conductance, leakageConductance, false, true);
 
     //  ----- CONNECTING THE NETWORK -----
     network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 0, 0), 100);
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     display.plot_currents(true);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run_data(&trainingData, 0.1);
+    network.run_data(trainingData, 0.1f);
 
     //  ----- EXITING APPLICATION -----
     return 0;
