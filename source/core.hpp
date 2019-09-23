@@ -120,20 +120,19 @@ namespace hummus {
     public:
 		
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, double _conductance=200,
-               double _leakageConductance=10, double _traceTimeConstant=20, double _threshold=-50, double _restingPotential=-70, std::string _classLabel="") :
-                neuron_id(_neuronID),
-                layer_id(_layerID),
-                sublayer_id(_sublayerID),
-                rf_coordinates(_rfCoordinates),
-                xy_coordinates(_xyCoordinates),
+        Neuron(int _neuron_id, int _layer_id, int _sublayer_id, std::pair<int, int> _rf_coordinates, std::pair<int, int> _xy_coordinates, int _refractory_period=3, float _capacitance=200, float _leakage_conductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+                neuron_id(_neuron_id),
+                layer_id(_layer_id),
+                sublayer_id(_sublayer_id),
+                rf_coordinates(_rf_coordinates),
+                xy_coordinates(_xy_coordinates),
                 threshold(_threshold), //mV
                 potential(_restingPotential), //mV
-                conductance(_conductance), // pF
-                leakage_conductance(_leakageConductance), // nS
-                membrane_time_constant(_conductance/_leakageConductance), // ms
+                capacitance(_capacitance), // pF
+                leakage_conductance(_leakage_conductance), // nS
+                membrane_time_constant(_capacitance/_leakage_conductance), // ms
                 current(0), // pA
-                refractory_period(_refractoryPeriod), //ms
+                refractory_period(_refractory_period), //ms
                 resting_potential(_restingPotential), //mV
                 trace(0),
                 trace_time_constant(_traceTimeConstant),
@@ -141,11 +140,11 @@ namespace hummus {
                 previous_input_time(0),
                 class_label(_classLabel),
                 neuron_type(0) {
-                    // error handling
-                    if (membrane_time_constant <= 0) {
-                        throw std::logic_error("The potential decay cannot less than or equal to 0");
-                    }
-                }
+            // error handling
+            if (membrane_time_constant <= 0) {
+                throw std::logic_error("The potential decay cannot less than or equal to 0");
+            }
+        }
     	
 		virtual ~Neuron(){}
 		
@@ -317,12 +316,12 @@ namespace hummus {
             relevant_addons.emplace_back(new_addon);
         }
 		
-        float get_conductance() const {
-            return conductance;
+        float get_capacitance() const {
+            return capacitance;
         }
         
-        void set_conductance(float k) {
-            conductance = k;
+        void set_capacitance(float k) {
+            capacitance = k;
         }
         
         void set_leakage_conductance(float k) {
@@ -379,18 +378,18 @@ namespace hummus {
         float                                     threshold;
         float                                     resting_potential;
         float                                     trace_time_constant;
-        float                                     conductance;
+        float                                     capacitance;
         float                                     leakage_conductance;
         float                                     membrane_time_constant;
-        int                                        refractory_period;
+        int                                       refractory_period;
         
         // ----- IMPLEMENTATION PARAMETERS -----
-        std::vector<Addon*>                        relevant_addons;
-        double                                     previous_spike_time;
-        double                                     previous_input_time;
-        int                                        neuron_type;
-        std::deque<std::string>                    decision_queue;
-        std::string                                class_label;
+        std::vector<Addon*>                       relevant_addons;
+        double                                    previous_spike_time;
+        double                                    previous_input_time;
+        int                                       neuron_type;
+        std::deque<std::string>                   decision_queue;
+        std::string                               class_label;
     };
 	
     class Network {

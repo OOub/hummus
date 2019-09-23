@@ -143,7 +143,7 @@ namespace hummus {
         float                      weight;
         float                      delay;
         float                      synaptic_current;
-        int                        previous_input_time;
+        double                     previous_input_time;
         float                      gaussian_std_dev;
         float                      synapse_time_constant;
         float                      external_current;

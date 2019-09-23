@@ -160,6 +160,6 @@ namespace hummus {
         bool     active;
         double   inhibition_time;
         bool     run_once;
-        float   inv_dendrites_size;
+        float    inv_dendrites_size;
 	};
 }

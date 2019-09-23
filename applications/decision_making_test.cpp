@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     /// creating the layers
     auto pixel_grid = network.make_grid<hummus::LIF>(28, 28, 1, {} , 3, 200, 10, false, false); // input layer
     auto hidden_layer = network.make_layer<hummus::LIF>(10, {&mp}, 3, 200, 10, false, false); // hidden layer
-    auto decision_layer = network.make_decision<hummus::DecisionMaking>("../../data/nmnist_trainingLabel.txt", 10, 0.6f, 2000, {}); // classification layer
+    auto decision_layer = network.make_decision<hummus::DecisionMaking>("../../data/nmnist_trainingLabel.txt", 10, 60, 2000, {}); // classification layer
     
     /// connecting the layers
     network.all_to_all<hummus::Exponential>(pixel_grid, hidden_layer, 1, hummus::Normal(0.08f, 0.02f, 10, 3), 60); // all-to-all connection from the pixel grid to the hidden layer

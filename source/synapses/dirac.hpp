@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitude_scaling=50, float _external_current=150, float _gaussian_std_dev=0) :
+		Dirac(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _amplitude_scaling=50, float _external_current=100, float _gaussian_std_dev=0) :
                 Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current),
                 amplitude_scaling(_amplitude_scaling) {
 		
