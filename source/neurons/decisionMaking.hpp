@@ -24,8 +24,8 @@ namespace hummus {
 	class DecisionMaking : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=10, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
+        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 run_once(true),
                 inhibition_time(0) {
@@ -52,6 +52,7 @@ namespace hummus {
         }
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
+            
             // checking if the neuron is in a refractory period
             if (timestamp - inhibition_time >= refractory_period) {
                 active = true;
@@ -59,49 +60,72 @@ namespace hummus {
             
             if (type == spike_type::decision) {
                 if (active && intensity > 0) {
+//                    // compute the inverse of the dendrites tree size only once for performance reasons
+//                    if (run_once) {
+//                        inv_dendrites_size = 1. / static_cast<float>(dendritic_tree.size());
+//                        run_once = false;
+//                    }
+//
+//                    // function that converts the intensity to a delay
+//                    float intensity_to_latency = 10 * std::exp(- 0.1 * intensity * inv_dendrites_size);
+//
+//                    // make the neuron fire so we can get the decision
+//                    potential = threshold;
+//
+//                    if (network->get_verbose() == 1) {
+//                        std::cout << "t=" << timestamp << " class " << class_label << " --> DECISION" << std::endl;
+//                    }
+//
+//                    for (auto& addon: relevant_addons) {
+//                        addon->neuron_fired(timestamp, s, this, network);
+//                    }
+//
+//                    if (network->get_main_thread_addon()) {
+//                        network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
+//                    }
+//
+//                    // propagating the decision spike
+//                    if (!network->get_layers()[layer_id].do_not_propagate) {
+//                        for (auto& axonTerminal: axon_terminals) {
+//                            network->inject_spike(spike{timestamp + intensity_to_latency, axonTerminal.get(), spike_type::generated});
+//                        }
+//                    }
+//
+//                    // inhibiting the other decision_making neurons
+////                    winner_takes_all(timestamp, network);
                     
-                    // compute the inverse of the dendrites tree size only once for performance reasons
-                    if (run_once) {
-                        inv_dendrites_size = 1. / static_cast<float>(dendritic_tree.size());
-                        run_once = false;
-                    }
-                    
-                    // function that converts the intensity to a delay
-                    float intensity_to_latency = 10 * std::exp(- 0.1 * intensity * inv_dendrites_size);
-                    
-                    // make the neuron fire so we can get the decision
-                    potential = threshold;
-                    
-                    if (network->get_verbose() == 1) {
-                        std::cout << "t=" << timestamp << " class " << class_label << " --> DECISION" << std::endl;
-                    }
-                    
-                    for (auto& addon: relevant_addons) {
-                        addon->neuron_fired(timestamp, s, this, network);
-                    }
-                    
-                    if (network->get_main_thread_addon()) {
-                        network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
-                    }
-                    
-                    // propagating the decision spike
-                    if (!network->get_layers()[layer_id].do_not_propagate) {
-                        for (auto& axonTerminal: axon_terminals) {
-                            network->inject_spike(spike{timestamp + intensity_to_latency, axonTerminal.get(), spike_type::generated});
-                        }
-                    }
-                    
-                    // inhibiting the other decision_making neurons
-                    winner_takes_all(timestamp, network);
+//                    intensity = 0;
                 }
-                
-                intensity = 0;
-                
-            } else if (type != spike_type::none){
-                ++intensity;
+            } else {
+                if (type != spike_type::none && s->get_type() == synapse_type::excitatory){
+                    intensity++;
+                }
             }
         }
         
+//        // reset a neuron to its initial status
+//        virtual void reset_neuron(Network* network, bool clearAddons=true) override {
+//            previous_input_time = 0;
+//            previous_spike_time = 0;
+//            inhibition_time = 0;
+//            intensity = 0;
+//            active = true;
+//            potential = resting_potential;
+//            trace = 0;
+//
+//            for (auto& dendrite: dendritic_tree) {
+//                dendrite->reset();
+//            }
+//
+//            for (auto& axon_terminal: axon_terminals) {
+//                axon_terminal->reset();
+//            }
+//
+//            if (clearAddons) {
+//                relevant_addons.clear();
+//            }
+//        }
+
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) override{
             // general neuron parameters
@@ -109,7 +133,7 @@ namespace hummus {
                 {"type",neuron_type},
                 {"layer_id",layer_id},
                 {"sublayer_id", sublayer_id},
-                {"rf_coordinates", rf_coordinates},
+                {"rf_id", rf_id},
                 {"xy_coordinates", xy_coordinates},
                 {"trace_time_constant", trace_time_constant},
                 {"threshold", threshold},
@@ -140,6 +164,7 @@ namespace hummus {
                 
                 // inhibit all the other neurons in the same layer
                 if (neuron->get_neuron_id() != neuron_id) {
+                    dynamic_cast<DecisionMaking*>(neuron.get())->set_intensity(0);
                     dynamic_cast<DecisionMaking*>(neuron.get())->set_activity(false);
                     dynamic_cast<DecisionMaking*>(neuron.get())->set_inhibition_time(timestamp);
                 }
@@ -155,8 +180,16 @@ namespace hummus {
             inhibition_time = new_time;
         }
         
+        int get_intensity() const {
+            return intensity;
+        }
+        
+        void set_intensity(int new_intensity) {
+            intensity = new_intensity;
+        }
+        
 		// ----- DECISION-MAKING NEURON PARAMETERS -----
-        float    intensity;
+        int      intensity;
         bool     active;
         double   inhibition_time;
         bool     run_once;

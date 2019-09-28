@@ -25,8 +25,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _capacitance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
+        CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true),
                 bursting_activity(_burstingActivity),
                 homeostasis(_homeostasis),
@@ -71,9 +71,9 @@ namespace hummus {
             }
 		}
         
-        // homeostasis does not work for the event-based neuron because it would complicate spike prediction even more
+        // homeostasis does not work for the event-based neuron because it would complicate spike prediction
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
-            
+                        
             float input_td = timestamp - previous_input_time;
             
             if (type == spike_type::initial || type == spike_type::generated) {
@@ -90,11 +90,11 @@ namespace hummus {
 				
                 // updating current of synapses
                 if (type == spike_type::initial) {
-                    current = s->update(timestamp, timestep, network->is_asynchronous());
+                    current = s->update(timestamp);
                 } else {
                     float total_current = 0;
                     for (auto& synapse: dendritic_tree) {
-                        total_current += synapse->update(timestamp, timestep, network->is_asynchronous());
+                        total_current += synapse->update(timestamp);
                     }
                     current = total_current;
                 }
@@ -114,7 +114,7 @@ namespace hummus {
                 if (active && !inhibited) {
 					// calculating the potential
                     potential = resting_potential + current * (1 - exp_input_mem_tau) + (potential - resting_potential) * exp_input_mem_tau;
-					
+                    
                     // sending spike to relevant synapse
                     s->receive_spike();
                     
@@ -146,7 +146,7 @@ namespace hummus {
                     if (s->get_weight() >= 0) {
                         // calculating time at which potential = threshold
                         double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + resting_potential + current) + std::log( current - potential + resting_potential)) + static_cast<float>(timestamp);
-                        
+//                        std::cout << predictedTimestamp << " " << timestamp << " " << timestamp + s->get_synapse_time_constant() << std::endl;
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->get_synapse_time_constant()) {
                             network->inject_predicted_spike(spike{predictedTimestamp, s, spike_type::prediction}, spike_type::prediction);
                         } else {
@@ -170,7 +170,7 @@ namespace hummus {
             if (network->get_main_thread_addon()) {
                 network->get_main_thread_addon()->status_update(timestamp, this, network);
             }
-
+            
             if (potential >= threshold) {
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
                 if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
@@ -182,8 +182,8 @@ namespace hummus {
                     }
                 }
                 
-                trace += 1;
-
+                trace = 1;
+                
                 if (network->get_verbose() == 2) {
                     std::cout << "t=" << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " w=" << s->get_weight() << " d=" << s->get_delay() <<" V=" << potential << " Vth=" << threshold << " layer=" << layer_id << " --> SPIKED" << std::endl;
                 }
@@ -244,11 +244,11 @@ namespace hummus {
             
             // updating current of synapses
             if (type == spike_type::initial) {
-                current = s->update(timestamp, timestep, network->is_asynchronous());
+                current = s->update(timestamp);
             } else {
                 float total_current = 0;
                 for (auto& synapse: dendritic_tree) {
-                    total_current += synapse->update(timestamp, timestep, network->is_asynchronous());
+                    total_current += synapse->update(timestamp);
                 }
                 current = total_current;
             }
@@ -363,7 +363,6 @@ namespace hummus {
 		}
 		
         virtual void reset_neuron(Network* network, bool clearAddons=true) override {
-            // resetting parameters
             previous_input_time = 0;
             previous_spike_time = 0;
             current = 0;
@@ -371,7 +370,15 @@ namespace hummus {
             trace = 0;
             inhibited = false;
             active = true;
-            threshold = resting_threshold;
+            
+            for (auto& dendrite: dendritic_tree) {
+                dendrite->reset();
+            }
+            
+            for (auto& axon_terminal: axon_terminals) {
+                axon_terminal->reset();
+            }
+            
             if (clearAddons) {
                 relevant_addons.clear();
             }
@@ -384,7 +391,7 @@ namespace hummus {
                 {"type",neuron_type},
                 {"layer_id",layer_id},
                 {"sublayer_id", sublayer_id},
-                {"rf_coordinates", rf_coordinates},
+                {"rf_id", rf_id},
                 {"xy_coordinates", xy_coordinates},
                 {"trace_time_constant", trace_time_constant},
                 {"threshold", threshold},

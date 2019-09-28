@@ -14,12 +14,8 @@
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
 #include "../source/neurons/parrot.hpp"
-#include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/cuba_lif.hpp"
-#include "../source/addons/spikeLogger.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
-#include "../source/learningRules/stdp.hpp"
-#include "../source/dataParser.hpp"
+#include "../source/addons/spike_logger.hpp"
 
 int main(int argc, char** argv) {
     
@@ -27,7 +23,7 @@ int main(int argc, char** argv) {
     hummus::Network network;
 
     //  ----- INITIALISING ADD-ONS -----
-    network.make_addon<hummus::SpikeLogger>("spikeLog.bin");
+    network.make_addon<hummus::SpikeLogger>("spike_log.bin");
 
     // ----- INITIALISING GUI -----
     auto& display = network.make_gui<hummus::Display>();
@@ -35,10 +31,10 @@ int main(int argc, char** argv) {
     //  ----- CREATING THE NETWORK -----
     auto input = network.make_layer<hummus::Parrot>(1, {});
     auto output = network.make_layer<hummus::CUBA_LIF>(2, {}, 3, 200, 10, false, false);
-
+    
     //  ----- CONNECTING THE NETWORK -----
-    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.5f, 0, 1, 0.5f), 100);
-    network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
+    network.all_to_all<hummus::Square>(input, output, 1, hummus::Normal(0.5, 0, 1, 0.5), 100);
+    network.lateral_inhibition<hummus::Square>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     //  ----- INJECTING SPIKES -----
     network.inject_spike(0, 10);
@@ -52,10 +48,10 @@ int main(int argc, char** argv) {
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);
-    network.run(100, 0.1f);
+    network.run(100, 0);
 
     //  ----- SAVE THE NETWORK IN A JSON FILE -----
-    network.save("testSave");
+    network.save("test_save");
 
     //  ----- EXITING APPLICATION -----
     return 0;

@@ -26,8 +26,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Parrot(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
+        Parrot(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 active(true) {
             inv_trace_tau = 1. / _traceTimeConstant;
         }
@@ -121,7 +121,7 @@ namespace hummus {
                 {"type",neuron_type},
                 {"layer_id",layer_id},
                 {"sublayer_id", sublayer_id},
-                {"rf_coordinates", rf_coordinates},
+                {"rf_id", rf_id},
                 {"xy_coordinates", xy_coordinates},
                 {"trace_time_constant", trace_time_constant},
                 {"threshold", threshold},
@@ -156,7 +156,7 @@ namespace hummus {
         }
         
         // ----- PARROT PARAMETERS -----
-        float  inv_trace_tau;
+        float   inv_trace_tau;
         bool    active;
 	};
 }

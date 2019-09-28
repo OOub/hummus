@@ -6,7 +6,9 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 11/09/2019
  *
- * Information: conductance-based LIF neuron (gIF4 neuron model)
+ * Information: conductance LIF neuron (gIF4 neuron model)
+ *
+ * Citation: Rudolph-Lilith M., Dubois M., Destexhe A., "Analytical Integrate-and-Fire Neuron Models with Conductance-Based Dynamics and Realistic Postsynaptic Potential Time Course for Event-Driven Simulation Strategies", Neural Computation (2012)
  *
  * NEURON TYPE 3 (in JSON SAVE FILE)
  */
@@ -25,8 +27,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        COBA_LIF(int _neuronID, int _layerID, int _sublayerID, std::pair<int, int> _rfCoordinates,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
-                Neuron(_neuronID, _layerID, _sublayerID, _rfCoordinates, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
+        COBA_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
                     
             // Memristor neuron type == 3 (for JSON save)
             neuron_type = 3;
@@ -59,7 +61,7 @@ namespace hummus {
                 {"type",neuron_type},
                 {"layer_id",layer_id},
                 {"sublayer_id", sublayer_id},
-                {"rf_coordinates", rf_coordinates},
+                {"rf_id", rf_id},
                 {"xy_coordinates", xy_coordinates},
                 {"trace_time_constant", trace_time_constant},
                 {"threshold", threshold},

@@ -1,5 +1,5 @@
 /*
- * potentialLogger.hpp
+ * potential_logger.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.

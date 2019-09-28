@@ -13,13 +13,14 @@
 
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
-#include "../source/addons/spikeLogger.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/addons/spike_logger.hpp"
+#include "../source/learningRules/myelin_plasticity_v1.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/cuba_lif.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 
 int main(int argc, char** argv) {
+    
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 
@@ -41,14 +42,14 @@ int main(int argc, char** argv) {
 	bool homeostasis         = false;
 
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto& mp = network.make_addon<hummus::MyelinPlasticity>();
+	auto& mp = network.make_addon<hummus::MP_1>();
 
     //  ----- CREATING THE NETWORK -----
     auto input = network.make_layer<hummus::Parrot>(inputNeurons, {});
     auto output = network.make_layer<hummus::CUBA_LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, homeostasis, burst, 20);
 
 	//  ----- CONNECTING THE NETWORK -----
-    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.1f, 0, 5, 3), 100);
+    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 5, 3), 100);
     network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
     //  ----- DISPLAY SETTINGS -----
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
     network.verbosity(0);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run_data(trainingData, 0.1f);
+    network.run_data(trainingData, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

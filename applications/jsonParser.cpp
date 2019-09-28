@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     auto& display = network.make_gui<hummus::Display>();
     
     hummus::Builder bob(&network);
-    bob.import("../../data/testSave.json");
+    bob.import("../../data/test_save.json");
     
     //  ----- INJECTING SPIKES -----
     network.inject_spike(0, 10);

@@ -85,7 +85,10 @@ namespace hummus {
 		}
 
         void neuron_fired(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
-            input_viewer->handle_data(timestamp, s->get_presynaptic_neuron_id(), postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_sublayer_id());
+            // so decision-making neurons which do not pass synapses don't crash
+            if (s) {
+                input_viewer->handle_data(timestamp, s->get_presynaptic_neuron_id(), postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_sublayer_id());
+            }
 			output_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_layer_id(), postsynaptic_neuron->get_sublayer_id());
             dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
 		}
@@ -167,6 +170,10 @@ namespace hummus {
 			outputSublayerToTrack = sublayerToTrack;
 		}
 		
+        void track_neuron(size_t _neuron_to_track) {
+            neuronToTrack = static_cast<int>(_neuron_to_track);
+        }
+        
         void track_neuron(int _neuron_to_track) {
         	neuronToTrack = _neuron_to_track;
         }

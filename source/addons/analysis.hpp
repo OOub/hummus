@@ -33,6 +33,13 @@ namespace hummus {
 			}
 		}
 		
+        Analysis(std::deque<label> testLabels) {
+            labels = testLabels;
+            for (auto label: labels) {
+                actual_labels.emplace_back(label.name);
+            }
+        }
+        
         virtual ~Analysis(){}
         
 		// ----- PUBLIC METHODS -----
@@ -45,7 +52,7 @@ namespace hummus {
 					}
 				}
 				
-				double accuracy = (static_cast<double>(correctLabels.size())/actual_labels.size())*100;
+				double accuracy = (static_cast<double>(correctLabels.size())/actual_labels.size())*100.;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
 			} else {
 				throw std::logic_error("there is a problem with the classified and actual labels");

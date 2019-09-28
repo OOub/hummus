@@ -23,7 +23,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Addon() = default;
+        Addon() : do_not_automatically_include(false) {}
 		virtual ~Addon(){}
 		
 		// ----- PUBLIC METHODS -----

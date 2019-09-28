@@ -12,41 +12,49 @@
 #include <iostream>
 
 #include "../source/core.hpp"
+#include "../source/GUI/display.hpp"
 #include "../source/addons/analysis.hpp"
 #include "../source/learningRules/stdp.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/cuba_lif.hpp"
 #include "../source/neurons/decisionMaking.hpp"
+#include "../source/addons/spike_logger.hpp"
 
 int main(int argc, char** argv) {
-
     /// initialisation
     hummus::Network network;
-    auto& mp = network.make_addon<hummus::MyelinPlasticity>();
-    auto& results = network.make_addon<hummus::Analysis>("../../data/nmnist_testLabel.txt");
+    network.make_addon<hummus::SpikeLogger>("spike_log.bin");
     
+    hummus::DataParser parser;
+    auto& display = network.make_gui<hummus::Display>();
+    
+    /// generating N-MNIST training database
+    auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/es_N-MNIST/Train", 1, {"0", "1"});
+    
+    /// generating N-MNIST test database
+    auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/es_N-MNIST/Test", 1, {"0", "1"});
+    
+//    auto& stdp = network.make_addon<hummus::STDP>();
+//    auto& results = network.make_addon<hummus::Analysis>(test_database.second);
+
     /// creating the layers
-    auto pixel_grid = network.make_grid<hummus::CUBA_LIF>(35, 35, 1, {} , 3, 200, 10, false, false); // input layer
-    auto hidden_layer = network.make_layer<hummus::CUBA_LIF>(10, {&mp}, 3, 200, 10, false, false); // hidden layer
-    auto decision_layer = network.make_decision<hummus::DecisionMaking>("../../data/nmnist_trainingLabel.txt", 10, 60, 2000, {}); // classification layer
-    
-    /// connecting the layers
-    network.all_to_all<hummus::Exponential>(pixel_grid, hidden_layer, 1, hummus::Normal(0.08f, 0.02f, 10, 3), 60); // all-to-all connection from the pixel grid to the hidden layer
-    network.lateral_inhibition<hummus::Exponential>(hidden_layer, 1, hummus::Normal(-1, 0, 0, 1), 100, 60); // lateral inhibition within neurons in the hidden layer
-    
-    /// Reading data
-    hummus::DataParser dataParser;
-    auto trainingData = dataParser.read_txt_data("../../data/nmnist_training.txt");
-    auto testData = dataParser.read_txt_data("../../data/nmnist_test.txt", 1000);
-    
+    auto pixel_grid = network.make_grid<hummus::Parrot>(35, 35, 1, {});
+    auto hidden_layer = network.make_layer<hummus::CUBA_LIF>(100, {}, 3000, 20000, 1, false, false, 20000);
+    auto decision_layer = network.make_decision<hummus::DecisionMaking>(training_database.second, 10, 60, 0, {});
+
+    network.all_to_all<hummus::Square>(pixel_grid, hidden_layer, 1, hummus::Normal(0.08, 0.02, 5000, 30), 80, 10000);
+    network.lateral_inhibition<hummus::Square>(hidden_layer, 1, hummus::Normal(-1, 0, 0, 1), 20, 10000);
+        
     /// Running the network
-    network.verbosity(2);
-    network.run_data(trainingData, 0.5f, testData);
+    display.set_time_window(100000);
+    display.track_neuron(1300);
+    
+    network.verbosity(1);
+    network.run_database(training_database.first, test_database.first, 100000);
     
     /// Measuring Classification Accuracy
-    results.accuracy();
+//    results.accuracy();
     
-    //  ----- EXITING APPLICATION -----
+    /// Exiting Application
     return 0;
 }

@@ -17,80 +17,39 @@
 #include "../source/neurons/cuba_lif.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/GUI/display.hpp"
-#include "../source/addons/potentialLogger.hpp"
-#include "../source/addons/myelinPlasticityLogger.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/addons/potential_logger.hpp"
+#include "../source/addons/myelin_plasticity_logger.hpp"
+#include "../source/learningRules/myelin_plasticity_v1.hpp"
 
 int main(int argc, char** argv) {
 
-    /// ----- PARAMETERS -----
-    float direction_conductance         = 200;
-    float direction_leakage_conductance = 10;
-    float direction_trace_time_constant = 20;
-    bool  direction_burst               = false;
-    bool  direction_homeostasis         = true;
-
-    /// ----- INITIALISATION -----
-
-    // initialising the network
+     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
 
-    // initialising the loggers
-    auto& mp_log = network.make_addon<hummus::MyelinPlasticityLogger>("localisation_learning.bin");
-    auto& potential_log = network.make_addon<hummus::PotentialLogger>("localisation_potential.bin");
-
     // delay learning rule
-    auto& mp = network.make_addon<hummus::MyelinPlasticity>();
+    auto& mp = network.make_addon<hummus::MP_1>();
 
-    // input layer with 8 channels for each sensor
-    auto input = network.make_circle<hummus::Parrot>(8, {0.3}, {});
+    //  ----- CREATING THE NETWORK -----
+    auto input = network.make_circle<hummus::Parrot>(8, {0.3}, {}); // input layer with 8 neurons - one per sensor
+    auto direction = network.make_layer<hummus::CUBA_LIF>(16, {&mp}, 0, 200, 10, false, false, 20); // 16 direction neurons - one per direction
 
-    /// ----- DIRECTION LAYER -----
+    //  ----- CONNECTING THE NETWORK -----
+    network.all_to_all<hummus::Square>(input, direction, 1, hummus::Normal(0.125, 0, 5, 3), 100);
+    network.lateral_inhibition<hummus::Square>(direction, 1, hummus::Normal(-1, 0, 0, 1), 100);
 
-    // layer that learns the delays
-    auto direction = network.make_layer<hummus::CUBA_LIF>(16, {&mp}, 0, direction_conductance, direction_leakage_conductance, direction_homeostasis, direction_burst, direction_trace_time_constant);
-
-    // connecting input layer with the direction neurons
-    network.all_to_all<hummus::Exponential>(input, direction, 1, hummus::Normal(0.125f, 0, 5, 3, 0, 1, 0, INFINITY), 100); // fixed weight on [0,1], random delays on [0, inf]
-    network.lateral_inhibition<hummus::Exponential>(direction, 1, hummus::Normal(-1, 0, 0, 1), 100);
-
-    // neuron mask for loggers
-    mp_log.activate_for(direction.neurons[0]);
-    potential_log.activate_for(direction.neurons[0]);
-
-    /// ----- DISTANCE LAYER -----
-
-    // distance neuron
-//    auto distance = network.make_circle<hummus::CUBA_LIF>(8, {0.3}, {});
-
-    // connecting input layer with the distance neurons
-
-    /// ----- USER INTERFACE SETTINGS -----
-
-    // initialising the GUI
+    //  ----- DISPLAY SETTINGS -----
     auto& display = network.make_gui<hummus::Display>();
-
-    // settings
     display.set_time_window(10000);
     display.track_neuron(direction.neurons[0]);
     display.plot_currents(false);
 
-    /// ----- RUNNING CALIBRATION -----
-
-    // reading the calibration data
+    //  ----- RUNNING THE NETWORK -----
     hummus::DataParser parser;
     auto calibration = parser.read_txt_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/calibration_direction_only_100.txt", false);
 
-    // run calibration
+    // run training data
     network.verbosity(0);
-    network.run_data(calibration, 0.1f);
-
-    // assigning labels to direction neurons
-//
-//    // run test
-//    auto test = parser.read_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/test.txt");
-//    network.turn_off_learning();
-//    network.run_data(test, 0.1f);
+    network.run_data(calibration, 0.1);
 
     return 0;
 }
