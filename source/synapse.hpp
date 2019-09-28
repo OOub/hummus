@@ -43,7 +43,7 @@ namespace hummus {
         // ----- PUBLIC SYNAPSE METHODS -----
         
         // pure virtual method that updates the current value in the absence of a spike
-        virtual float update(double timestamp) { return 0; };
+        virtual float update(double timestamp, float timestep) { return 0; };
         
         // pure virtual method that outputs an updated current value upon receiving a spike
         virtual void receive_spike() {};

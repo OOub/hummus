@@ -24,7 +24,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		Square(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=10, float _external_current=50, float _gaussian_std_dev=0) :
+		Square(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=10, float _external_current=70, float _gaussian_std_dev=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current) {
 			
             synapse_time_constant = _synapse_time_constant;
@@ -51,7 +51,7 @@ namespace hummus {
 		virtual ~Square(){}
 		
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp) override {
+        virtual float update(double timestamp, float timestep) override {
             if (timestamp - previous_input_time > synapse_time_constant) {
                 synaptic_current = 0;
             }

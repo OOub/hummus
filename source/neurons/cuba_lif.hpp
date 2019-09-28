@@ -90,11 +90,11 @@ namespace hummus {
 				
                 // updating current of synapses
                 if (type == spike_type::initial) {
-                    current = s->update(timestamp);
+                    current = s->update(timestamp, timestep);
                 } else {
                     float total_current = 0;
                     for (auto& synapse: dendritic_tree) {
-                        total_current += synapse->update(timestamp);
+                        total_current += synapse->update(timestamp, timestep);
                     }
                     current = total_current;
                 }
@@ -244,11 +244,11 @@ namespace hummus {
             
             // updating current of synapses
             if (type == spike_type::initial) {
-                current = s->update(timestamp);
+                current = s->update(timestamp, timestep);
             } else {
                 float total_current = 0;
                 for (auto& synapse: dendritic_tree) {
-                    total_current += synapse->update(timestamp);
+                    total_current += synapse->update(timestamp, timestep);
                 }
                 current = total_current;
             }
