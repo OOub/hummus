@@ -1,12 +1,12 @@
 /*
- * myelinPlasticity.hpp
+ * myelin_plasticity_v2.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 14/01/2019
  *
- * Information: The MyelinPlasticity learning rule compatible only with leaky integrate-and-fire neurons.
+ * Information: The MP_2 learning rule
  */
 
 #pragma once
@@ -15,17 +15,17 @@
 #define _USE_MATH_DEFINES
 
 #include "../addon.hpp"
-#include "../addons/myelinPlasticityLogger.hpp"
+#include "../addons/myelin_plasticity_logger.hpp"
 
 namespace hummus {
     class Synapse;
 	class Neuron;
 	
-	class MyelinPlasticity : public Addon {
+	class MP_2 : public Addon {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        MyelinPlasticity(int _time_constant=10, int _learning_window=20, float _learning_rate=1, float _alpha_plus=0.2, float _alpha_minus=-0.08, float _beta_plus=1, float _beta_minus=0) :
+        MP_2(int _time_constant=10, int _learning_window=20, float _learning_rate=1, float _alpha_plus=0.2, float _alpha_minus=-0.08, float _beta_plus=1, float _beta_minus=0) :
                 time_constant(_time_constant),
                 learning_window(_learning_window),
                 learning_rate(_learning_rate),

@@ -18,7 +18,6 @@
 #include "neurons/cuba_lif.hpp"
 
 #include "synapses/exponential.hpp"
-#include "synapses/dirac.hpp"
 #include "synapses/square.hpp"
 
 #include "../third_party/json.hpp"
@@ -124,10 +123,8 @@ namespace hummus {
         // changes the default parameters of a neuron to correspond to the ones in the JSON network save file
         void neuron_helper(nlohmann::json& input, Neuron* n) {
             // common neuron parameters
-            if (input["rf_coordinates"].is_array() && input["rf_coordinates"].size() == 2) {
-                int row = input["rf_coordinates"][0].get<int>();
-                int col = input["rf_coordinates"][1].get<int>();
-                n->set_rf_coordinates(row, col);
+            if (input["rf_id"].is_number()) {
+                n->set_rf_id(input["rf_id"].get<int>());
             }
             
             if (input["xy_coordinates"].is_array() && input["xy_coordinates"].size() == 2) {
@@ -205,14 +202,7 @@ namespace hummus {
                         
                         switch (json_id) {
                             case 0: {
-                                float amplitudeScaling = 0;
-                                if (axonalSynapse[i]["amplitude_scaling"].is_number()) {
-                                    amplitudeScaling = axonalSynapse[i]["amplitude_scaling"].get<float>();
-                                } else {
-                                    throw std::logic_error("dirac synapse amplitude scaling incorrectly formatted");
-                                }
-                                
-                                n->make_synapse<Dirac>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
+                            n->make_synapse<Synapse>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
                                 
                                 break;
                             } case 1: {
@@ -222,7 +212,7 @@ namespace hummus {
                                     throw std::logic_error("exponential synaptic time constant incorrectly formatted");
                                 }
                                 
-                                n->make_synapse<Exponential>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
+                            n->make_synapse<Exponential>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
                                 
                                 break;
                             } case 2:
@@ -232,7 +222,7 @@ namespace hummus {
                                     throw std::logic_error("pulse synaptic time constant incorrectly formatted");
                                 }
                                 
-                                n->make_synapse<Square>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
+                            n->make_synapse<Square>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, synapseTimeConstant);
                                 
                                 break;
                         }

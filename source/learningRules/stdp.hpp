@@ -82,12 +82,12 @@ namespace hummus {
                         
                         axonTerminal->increment_weight(postTrace);
                         
-                        if (network->get_verbose() >= 1) {
+                        if (network->get_verbose() == 2) {
                             std::cout << "LTD weight change " << postTrace << std::endl;
                         }
 						
                     } else if (axonTerminal->get_weight() > 1) {
-                        if (network->get_verbose() >= 1) {
+                        if (network->get_verbose() == 2) {
                             std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
                         }
                     }
@@ -105,12 +105,12 @@ namespace hummus {
                         float preTrace = (A_plus * std::exp(dt/tau_plus)) * dendrite->get_weight() * (1 - dendrite->get_weight());
                         dendrite->increment_weight(preTrace);
                         
-                        if (network->get_verbose() >= 1) {
+                        if (network->get_verbose() == 2) {
                             std::cout << "LTP weight change " << preTrace << std::endl;
                         }
 						
                     } else if (dendrite->get_weight() > 1) {
-                        if (network->get_verbose() >= 1) {
+                        if (network->get_verbose() == 2) {
                             std::cout << "a synapse has a weight higher than 1, this particular learning rule requires weights to fall within the [0,1] range. The synapse was ignored and will not learn" << std::endl;
                         }
                     }

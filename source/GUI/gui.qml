@@ -6,17 +6,16 @@ R""(
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 16/01/2018
+ * Last Version: 26/09/2019
  *
  * Information: QML file that defines the GUI.
  */
 
-import QtQuick 2.1
-import QtQuick.Controls 2.1
-import QtQuick.Controls 1.4 as OldCtrl
-import QtQuick.Layouts 1.1
-import QtQuick.Window 2.1
-import QtCharts 2.1
+import QtQuick 2.13
+import QtQuick.Controls 2.13
+import QtQuick.Layouts 1.13
+import QtQuick.Window 2.13
+import QtCharts 2.13
 
 import InputViewer 1.0
 import OutputViewer 1.0
@@ -115,16 +114,19 @@ ApplicationWindow {
 			Text {
 				id: sublayerLegend1
 				text: "sublayers"
+				anchors.top: inputRec.top
+				anchors.topMargin: 10
 			}
 
-			OldCtrl.SpinBox {
+			SpinBox {
 				id: sublayerbox1
-				minimumValue: 0
-				maximumValue: inputSublayer
+				from: 0
+				to: inputSublayer
+				scale: 0.7
+				editable: true
 				anchors.left: sublayerLegend1.right
-				anchors.leftMargin: 5
 
-				onEditingFinished: {
+				onValueModified: {
 					inputViewer.change_sublayer(value)
 				}
 			}
@@ -135,7 +137,7 @@ ApplicationWindow {
 				width: parent.width
         height: parent.height - 20
 				anchors.top: inputRec.top
-				anchors.topMargin: 20
+				anchors.topMargin: 35
 
 				ChartView {
 					id: inputChart
@@ -255,15 +257,18 @@ ApplicationWindow {
 			Text {
 				id: layerLegend
 				text: "layer"
+				anchors.top: outputRec.top
+				anchors.topMargin: 10
 			}
 
-			OldCtrl.SpinBox {
+			SpinBox {
 				id: layerbox
-				minimumValue: 1
-				maximumValue: layers
+				from: 1
+				to: layers
+				scale: 0.7
+				editable: true
 				anchors.left: layerLegend.right
-				anchors.leftMargin: 5
-				onEditingFinished: {
+				onValueModified: {
 					outputViewer.change_layer(value)
 				}
 			}
@@ -271,17 +276,20 @@ ApplicationWindow {
 			Text {
 				id: sublayerLegend
 				text: "sublayers"
+				anchors.top: outputRec.top
+				anchors.topMargin: 10
 				anchors.left: layerbox.right
 				anchors.leftMargin: 20
 			}
 
-			OldCtrl.SpinBox {
+			SpinBox {
 				id: sublayerbox
-				minimumValue: 0
-				maximumValue: sublayers
+				from: 0
+				to: sublayers
+				scale: 0.7
+				editable: true
 				anchors.left: sublayerLegend.right
-				anchors.leftMargin: 5
-				onEditingFinished: {
+				onValueModified: {
 					outputViewer.change_sublayer(value)
 				}
 			}
@@ -292,7 +300,7 @@ ApplicationWindow {
 				width: parent.width
         height: parent.height - 20
 				anchors.top: outputRec.top
-				anchors.topMargin: 20
+				anchors.topMargin: 35
 
 				ChartView {
 					id: outputChart
@@ -416,14 +424,18 @@ ApplicationWindow {
 			Text {
 				id: neuronLegend
 				text: "neuron"
+				anchors.top: potentialRec.top
+				anchors.topMargin: 10
 			}
 
-			OldCtrl.SpinBox {
+			SpinBox {
 				id: spinbox
-				maximumValue: numberOfNeurons
+				to: numberOfNeurons
+				scale: 0.7
+				editable: true
+				value: 0
 				anchors.left: neuronLegend.right
-				anchors.leftMargin: 5
-				onEditingFinished: {
+				onValueModified: {
 					dynamicsViewer.change_tracked_neuron(value)
 				}
 			}
@@ -434,7 +446,7 @@ ApplicationWindow {
 				width: parent.width
         height: parent.height - 20
 				anchors.top: potentialRec.top
-				anchors.topMargin: 20
+				anchors.topMargin: 35
 
 				ChartView {
 					id: membraneChart

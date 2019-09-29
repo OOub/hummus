@@ -1,5 +1,5 @@
 /*
- * weightMaps.hpp
+ * weight_maps.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.

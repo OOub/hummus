@@ -54,13 +54,9 @@ namespace hummus {
 		virtual ~Exponential(){}
 		
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp, float timestep, bool asynchronous) override {
+        virtual float update(double timestamp, float timestep) override {
             // decay the current
-            if (asynchronous) {
-                synaptic_current -= synaptic_current * (timestamp - previous_input_time) * inv_s_tau;
-            } else {
-                synaptic_current -= synaptic_current * timestep * inv_s_tau;
-            }
+            synaptic_current -= synaptic_current * timestep * inv_s_tau;
             return synaptic_current;
         }
         

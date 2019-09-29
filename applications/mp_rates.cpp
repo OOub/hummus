@@ -16,14 +16,14 @@
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/cuba_lif.hpp"
-#include "../source/learningRules/myelinPlasticity.hpp"
+#include "../source/learningRules/myelin_plasticity_v2.hpp"
 
 int main(int argc, char** argv) {
     hummus::Network network;
     network.make_addon<hummus::MyelinPlasticityLogger>("rates_mpLog.bin");
 
     auto& display = network.make_gui<hummus::Display>();
-    auto& mp = network.make_addon<hummus::MyelinPlasticity>();
+    auto& mp = network.make_addon<hummus::MP_2>();
 
     auto input = network.make_layer<hummus::CUBA_LIF>(4, {}, 0, 200, 10, false, false);
     auto output = network.make_layer<hummus::CUBA_LIF>(1, {&mp}, 3, 200, 10, false, false);

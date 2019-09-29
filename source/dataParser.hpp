@@ -60,14 +60,13 @@ namespace hummus {
                 }
             }
             
-            // shuffle the database vector
+            // create random engine
             std::random_device r;
             std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
-            
-            // create a random engine
-            std::mt19937 random_engine(seed);
-            
-            std::shuffle(begin(database), end(database), random_engine);
+            std::mt19937 random_engine1(seed);
+
+            // shuffle the database vector
+            std::shuffle(begin(database), end(database), random_engine1);
             
             // get the number of samples from the percentage
             if (sample_percentage < 100) {
@@ -80,7 +79,7 @@ namespace hummus {
         
         // saves the files from the N-MNIST database - formatted to eventstream format - into a a pair of vector: a vector of strings for the full paths to files, and a vector of labels
         // The N-MNIST database needs to have the same structure as the original folder otherwise the labels will be messed up. For example: ~/N-MNIST/Train/0
-        std::pair<std::vector<std::string>, std::deque<label>> generate_nmnist_database(const std::string directory_path, int sample_percentage=100) {
+        std::pair<std::vector<std::string>, std::deque<label>> generate_nmnist_database(const std::string directory_path, int sample_percentage=100, const std::vector<std::string> classes={}) {
             std::vector<std::string> database;
             std::deque<label> labels;
             
@@ -88,8 +87,17 @@ namespace hummus {
             // save all files containing the .es extension in the database vector
             for (auto &file : fs::recursive_directory_iterator(current_dir)) {
                 if (file.path().extension() == ".es") {
-                    labels.emplace_back(label{std::string(1, file.path().parent_path().string().back()), -1});
-                    database.emplace_back(file.path());
+                    // only use specific classes
+                    if (!classes.empty()) {
+                        if (std::find(classes.begin(), classes.end(),std::string(1, file.path().parent_path().string().back()))!=classes.end()) {
+                            labels.emplace_back(label{std::string(1, file.path().parent_path().string().back()), -1});
+                            database.emplace_back(file.path());
+                        }
+                    // use all N-MNIST classes
+                    } else {
+                        labels.emplace_back(label{std::string(1, file.path().parent_path().string().back()), -1});
+                        database.emplace_back(file.path());
+                    }
                 }
             }
             
@@ -101,8 +109,8 @@ namespace hummus {
             std::mt19937 random_engine1(seed);
             auto random_engine2 = random_engine1;
             
-            std::shuffle(begin(database), end(database), random_engine1);
-            std::shuffle(begin(labels), end(labels), random_engine2);
+            std::shuffle(database.begin(), database.end(), random_engine1);
+            std::shuffle(labels.begin(), labels.end(), random_engine2);
             
             // get the number of samples from the percentage
             if (sample_percentage < 100) {

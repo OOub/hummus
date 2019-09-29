@@ -18,15 +18,6 @@ solution 'hummus'
                 description = 'Compiles without Qt'
     			  }
 
-            newoption {
-       			    trigger     = 'tbb',
-                description = 'Compiles with tbb'
-    			  }
-
-            if _OPTIONS['tbb'] then
-                with_tbb = true
-            end
-
       			if _OPTIONS['no-qt'] then
          				print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
          			else
@@ -71,21 +62,12 @@ solution 'hummus'
 
             -- Linux specific settings
             configuration 'linux'
-                if with_tbb then
-                    links {'pthread', 'tbb'}
-                    defines {"TBB"}
-                else
-                    links {'pthread'}
-                end
-                buildoptions {'-std=c++11'}
-               	linkoptions {'-std=c++11'}
+                links {'pthread'}
+                buildoptions {'-std=c++17'}
+               	linkoptions {'-std=c++17'}
 
             -- Mac OS X specific settings
             configuration 'macosx'
-                if with_tbb then
-	        	        links {'tbb'}
-                    defines { "TBB" }
-                end
-                buildoptions {'-std=c++11'}
-               	linkoptions {'-std=c++11'}
+                buildoptions {'-std=c++17'}
+               	linkoptions {'-std=c++17'}
 end
