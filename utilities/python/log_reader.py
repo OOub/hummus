@@ -3,8 +3,8 @@ import struct
 
 def spike_reader(log):
     """
-    Reads files in with a format:
-        SpikeLogger Binary File Specs |
+    Reads files with a format:
+        SpikeLogger Binary File Specs (efficient version only) |
         ------------| --------
         timestamp diff (x100) | byte 0 to 4 (int32)
         delay (x100) | byte 4 to 6 (int16)
@@ -12,26 +12,25 @@ def spike_reader(log):
         potential (x100)| byte 7 to 9 (int16)
         neuron ID | byte 9 to 11 (int16)
         layer ID | byte 11 to 12 (int8)
-        receptive field row index | byte 12 to 13 (int8)
-        receptive field column index | byte 13 to 14 (int8)
-        x coordinate | byte 14 to 15 (int8)
-        y coordinate | byte 15 to 16 (int8)
+        receptive field id| byte 12 to 13 (int8)
+        x coordinate | byte 13 to 14 (int8)
+        y coordinate | byte 14 to 15 (int8)
     """
     with open(log,'rb') as f:
         d=f.read()
         offset=8
         i=0
-        chunk_size=16
+        chunk_size=15
         l=[]
         while ((len(d)-offset)>=(i+1)*chunk_size):
-            l.append(list(struct.unpack('=ihb2h5b',d[i*chunk_size+offset:(i+1)*chunk_size+offset])))
+            l.append(list(struct.unpack('=ihb2h4b',d[i*chunk_size+offset:(i+1)*chunk_size+offset])))
             i+=1
     return l
 
 def regression_spike_parser(logname, p=28, layer=-1, N=-1):
     log=np.array(spike_reader(logname))
     tstmps = sorted(list(set(log[:,0])))
-    
+
     t2i = { t:i for i,t in enumerate(tstmps)}
     T=len(tstmps)
 
@@ -45,7 +44,7 @@ def regression_spike_parser(logname, p=28, layer=-1, N=-1):
 
 def potential_reader(log):
     """
-    Reads files in with a fromat:
+    Reads files with a format:
         PotentialLogger Binary File Specs |
         ------------| --------
         timestamp diff (x100) | byte 0 to 4 (int32)
@@ -70,7 +69,7 @@ def regression_potential_parser(logname, p=28,layer=-1,N=-1,ds=0):
         log[:,0]=log[:,0]//ds
     tstmps = np.arange(np.min(log[:,0]),np.max(log[:,0])+1)
     t2i = { t:i for i,t in enumerate(tstmps)}
-    
+
     T=len(tstmps)
 
     minID = p**2
