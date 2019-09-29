@@ -27,7 +27,6 @@ namespace hummus {
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=20, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
-                active(true),
                 bursting_activity(_burstingActivity),
                 homeostasis(_homeostasis),
                 resting_threshold(_threshold),
@@ -146,7 +145,6 @@ namespace hummus {
                     if (s->get_weight() >= 0) {
                         // calculating time at which potential = threshold
                         double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + resting_potential + current) + std::log( current - potential + resting_potential)) + static_cast<float>(timestamp);
-//                        std::cout << predictedTimestamp << " " << timestamp << " " << timestamp + s->get_synapse_time_constant() << std::endl;
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->get_synapse_time_constant()) {
                             network->inject_predicted_spike(spike{predictedTimestamp, s, spike_type::prediction}, spike_type::prediction);
                         } else {
@@ -172,6 +170,7 @@ namespace hummus {
             }
             
             if (potential >= threshold) {
+                
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
                 if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
                     if (decision_queue.size() < network->get_decision_parameters().spike_history_size) {
@@ -196,8 +195,9 @@ namespace hummus {
                     network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
                 }
                 
-                if (!network->get_layers()[layer_id].do_not_propagate) {
-                    for (auto& axonTerminal : axon_terminals) {
+                for (auto& axonTerminal : axon_terminals) {
+                    auto& post_synaptic_layer = network->get_layers()[network->get_neurons()[axonTerminal->get_postsynaptic_neuron_id()]->get_layer_id()];
+                    if (post_synaptic_layer.active) {
                         network->inject_spike(spike{timestamp + axonTerminal->get_delay(), axonTerminal.get(), spike_type::generated});
                     }
                 }
@@ -342,8 +342,9 @@ namespace hummus {
                     network->get_main_thread_addon()->neuron_fired(timestamp, active_synapse, this, network);
 				}
                 
-                if (!network->get_layers()[layer_id].do_not_propagate) {
-                    for (auto& axonTerminal: axon_terminals) {
+                for (auto& axonTerminal : axon_terminals) {
+                    auto& post_synaptic_layer = network->get_layers()[network->get_neurons()[axonTerminal->get_postsynaptic_neuron_id()]->get_layer_id()];
+                    if (post_synaptic_layer.active) {
                         network->inject_spike(spike{timestamp + axonTerminal->get_delay(), axonTerminal.get(), spike_type::generated});
                     }
                 }
@@ -422,10 +423,6 @@ namespace hummus {
         }
         
 		// ----- SETTERS AND GETTERS -----
-		bool get_activity() const {
-			return active;
-		}
-		
 		void set_inhibition(double timestamp, bool inhibition_status) {
 			inhibition_time = timestamp;
 			inhibited = inhibition_status;

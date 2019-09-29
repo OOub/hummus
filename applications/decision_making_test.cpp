@@ -21,39 +21,44 @@
 #include "../source/addons/spike_logger.hpp"
 
 int main(int argc, char** argv) {
+    /// parameters
+    bool use_gui = false;
+    
     /// initialisation
     hummus::Network network;
     network.make_addon<hummus::SpikeLogger>("spike_log.bin");
     
+    if (use_gui) {
+        auto& display = network.make_gui<hummus::Display>();
+        display.set_time_window(100000);
+        display.track_neuron(1228);
+        display.plot_currents();
+    }
+    
     hummus::DataParser parser;
-    auto& display = network.make_gui<hummus::Display>();
     
     /// generating N-MNIST training database
-    auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/es_N-MNIST/Train", 1, {"0", "1"});
+    auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/es_N-MNIST/small_Train", 100, {"0", "1"});
     
     /// generating N-MNIST test database
     auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/es_N-MNIST/Test", 1, {"0", "1"});
     
-//    auto& stdp = network.make_addon<hummus::STDP>();
-//    auto& results = network.make_addon<hummus::Analysis>(test_database.second);
+    auto& stdp = network.make_addon<hummus::STDP>(1, 0.4, 20000, 40000);
+    auto& results = network.make_addon<hummus::Analysis>(test_database.second);
 
     /// creating the layers
     auto pixel_grid = network.make_grid<hummus::Parrot>(35, 35, 1, {});
-    auto hidden_layer = network.make_layer<hummus::CUBA_LIF>(100, {}, 3000, 20000, 1, false, false, 20000);
+    auto hidden_layer = network.make_layer<hummus::CUBA_LIF>(10, {&stdp}, 10000, 20000, 1, false, false, 20000);
     auto decision_layer = network.make_decision<hummus::DecisionMaking>(training_database.second, 10, 60, 0, {});
 
-    network.all_to_all<hummus::Square>(pixel_grid, hidden_layer, 1, hummus::Normal(0.08, 0.02, 5000, 30), 80, 10000);
+    network.all_to_all<hummus::Square>(pixel_grid, hidden_layer, 1, hummus::Normal(0.08, 0.02, 5000, 300), 80, 10000);
     network.lateral_inhibition<hummus::Square>(hidden_layer, 1, hummus::Normal(-1, 0, 0, 1), 20, 10000);
-        
-    /// Running the network
-    display.set_time_window(100000);
-    display.track_neuron(1300);
     
-    network.verbosity(1);
+    network.verbosity(0);
     network.run_database(training_database.first, test_database.first, 100000);
     
     /// Measuring Classification Accuracy
-//    results.accuracy();
+    results.accuracy();
     
     /// Exiting Application
     return 0;

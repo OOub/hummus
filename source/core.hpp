@@ -29,6 +29,7 @@
 #include <mutex>
 #include <deque>
 #include <queue>
+#include <set>
 
 // external Dependencies
 #include "../third_party/json.hpp"
@@ -69,10 +70,9 @@ namespace hummus {
         int                           layer_number;
         int                           spike_history_size;
         int                           rejection_threshold;
-        double                        timer; // selects how often a decision neuron fires. In the case of running with es files this parameter is unused
+        double                        timer; // selects how often a decision neuron fires. for es files: set to 0 if Decision is to be made at the end of the file
     };
     
-
     // receptive_fields
     struct receptive_fields {
         std::vector<std::size_t>      neurons;
@@ -91,11 +91,11 @@ namespace hummus {
 		std::vector<sublayer>         sublayers;
         std::vector<std::size_t>      neurons;
 		int                           id;
-		int                           width;
-		int                           height;
-        int                           kernel_size;
-        int                           stride;
-        bool                          do_not_propagate;
+        bool                          active = true;
+		int                           width = -1;
+		int                           height = -1;
+        int                           kernel_size = -1;
+        int                           stride = -1;
 	};
 
     // spike - propagated between synapses
@@ -137,6 +137,7 @@ namespace hummus {
                 previous_spike_time(0),
                 previous_input_time(0),
                 class_label(_classLabel),
+                active(true),
                 neuron_type(0) {
             // error handling
             if (membrane_time_constant <= 0) {
@@ -178,6 +179,9 @@ namespace hummus {
             }
         }
         
+        // share information - generic getter that can be used for accessing child members from parent
+        virtual int share_information() { return 0; }
+        
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) {}
         
@@ -202,7 +206,11 @@ namespace hummus {
             return spike{timestamp, initial_synapse.get(), spike_type::initial};
         }
         
-		// ----- SETTERS AND GETTERS -----        
+		// ----- SETTERS AND GETTERS -----
+        bool get_activity() const {
+            return active;
+        }
+        
 		int get_neuron_id() const {
             return neuron_id;
         }
@@ -379,6 +387,7 @@ namespace hummus {
         int                                       refractory_period;
         
         // ----- IMPLEMENTATION PARAMETERS -----
+        bool                                      active;
         std::vector<Addon*>                       relevant_addons;
         double                                    previous_spike_time;
         double                                    previous_input_time;
@@ -468,7 +477,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{{sublayer{{}, neuronsInLayer, 0}}, neuronsInLayer, layer_id, -1, -1, -1, -1, false});
+            layers.emplace_back(layer{{sublayer{{}, neuronsInLayer, 0}}, neuronsInLayer, layer_id});
             return layers.back();
         }
         
@@ -477,8 +486,6 @@ namespace hummus {
         layer make_decision(std::deque<label> _trainingLabels, int _spike_history_size, int _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
             training_labels = _trainingLabels;
             decision_making = true;
-            // do not let the last layer propagate to the decision-making layer during the training phase
-            layers.back().do_not_propagate = true;
             
             // add the unique classes to the classes_map
             for (auto& label: training_labels) {
@@ -502,7 +509,7 @@ namespace hummus {
             std::vector<std::size_t> neuronsInLayer;
             
             int i=0;
-            for (auto it: classes_map) {
+            for (const auto& it: classes_map) {
                 neurons.emplace_back(std::make_unique<T>(i+shift, layer_id, 0, 0, std::pair<int, int>(-1, -1), it.first, std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
                 ++i;
@@ -520,7 +527,8 @@ namespace hummus {
             decision.timer = _timer;
             
             // building layer structure
-            layers.emplace_back(layer{{sublayer{{}, neuronsInLayer, 0}}, neuronsInLayer, layer_id, -1, -1, -1, -1, false});
+            layers.emplace_back(layer{{sublayer{{}, neuronsInLayer, 0}}, neuronsInLayer, layer_id, false});
+            
             return layers.back();
         }
         
@@ -573,7 +581,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, -1, -1, -1, -1, false});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id});
             return layers.back();
         }
         
@@ -625,7 +633,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, gridW, gridH, -1, -1, false});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, true, gridW, gridH});
             return layers.back();
         }
         
@@ -695,7 +703,7 @@ namespace hummus {
             }
             
             // building layer structure
-            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, newWidth, newHeight, _kernelSize, _stride, false});
+            layers.emplace_back(layer{sublayers, neuronsInLayer, layer_id, true, newWidth, newHeight, _kernelSize, _stride});
             return layers.back();
         }
         
@@ -1250,9 +1258,9 @@ namespace hummus {
                     th_addon->reset();
                 }
                 
-                // can now propagate through all layers in case a decision-making layer is present
-                for (auto& layer: layers) {
-                    layer.do_not_propagate = false;
+                // can now propagate to decision-making layer if present
+                if (decision_making) {
+                    layers[decision.layer_number].active = true;
                 }
                 
                 // during a classification run, labels the neurons if a decision-making layer was used
@@ -1342,9 +1350,9 @@ namespace hummus {
                 // importing test data and running it through the network for classification
                 if (!testData.empty()) {
                     
-                    // can now propagate through all layers in case a decision-making layer is present
-                    for (auto& layer: layers) {
-                        layer.do_not_propagate = false;
+                    // can now propagate to decision-making layer if present
+                    if (decision_making) {
+                        layers[decision.layer_number].active = true;
                     }
                     
                     learning_status = false;
@@ -1411,9 +1419,9 @@ namespace hummus {
                     th_addon->reset();
                 }
                 
-                // can now propagate through all layers in case a decision-making layer is present
-                for (auto& layer: layers) {
-                    layer.do_not_propagate = false;
+                // can now propagate to decision-making layer if present
+                if (decision_making) {
+                    layers[decision.layer_number].active = true;
                 }
                 
                 // during a classification run, labels the neurons if a decision-making layer was used
@@ -1467,6 +1475,9 @@ namespace hummus {
                     throw std::logic_error("unknown header type");
                 }
                 
+                // going through any leftover spikes after the last event is propagated
+                async_run_helper(&running, false, true);
+                
                 std::chrono::duration<float> elapsed_seconds = std::chrono::system_clock::now()-start;
                 if (verbose != 0) {
                     std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
@@ -1515,7 +1526,11 @@ namespace hummus {
                 // loop through each .es file in the training database
                 auto idx = 0;
                 for (auto filename : training_database) {
-                                        
+                            
+                    if (verbose == 2) {
+                        std::cout << "new pattern" << std::endl;
+                    }
+                    
                     if (!running.load(std::memory_order_relaxed)) {
                         break;
                     }
@@ -1561,6 +1576,10 @@ namespace hummus {
                         // throw error
                         throw std::logic_error("unknown header type");
                     }
+                    
+                    // going through any leftover spikes after the last event is propagated
+                    async_run_helper(&running, false, true);
+                    
                     idx++;
                     
                     reset_network(false);
@@ -1573,9 +1592,9 @@ namespace hummus {
                 
                 if (!testing_database.empty()) {
                     
-                    // can now propagate through all layers in case a decision-making layer is present
-                    for (auto& layer: layers) {
-                        layer.do_not_propagate = false;
+                    // can now propagate to decision-making layer if present
+                    if (decision_making) {
+                        layers[decision.layer_number].active = true;
                     }
                     
                     learning_status = false;
@@ -1598,6 +1617,11 @@ namespace hummus {
                     
                     // loop through each .es file in the testing database
                     for (auto filename : testing_database) {
+                        
+                        if (verbose == 2) {
+                            std::cout << "new pattern" << std::endl;
+                        }
+                        
                         if (!running.load(std::memory_order_relaxed)) {
                             break;
                         }
@@ -1640,16 +1664,17 @@ namespace hummus {
                             throw std::logic_error("unknown header type");
                         }
                         
-//                        // fire decisionMaking neurons at the end of every pattern if timer is set to 0
-//                        if (decision_making && decision.timer == 0) {
-//                            // make all the decision neurons fire
-//                            for (auto& n: layers[decision.layer_number].neurons) {
-//                                // generate a decision spike if the neuron is connected to anything
-//                                if (!neurons[n]->get_dendritic_tree().empty()) {
-//                                    neurons[n]->update(final_t, nullptr, this, 0, spike_type::decision);
-//                                }
-//                            }
-//                        }
+                        // going through any leftover spikes after the last event is propagated
+                        async_run_helper(&running, true, true);
+                        
+                        if (decision_making && decision.timer == 0) {
+                            choose_winner_eof(final_t, 0);
+                        } else if (decision_making && decision.timer > 0) {
+                            // sending an eof signal when a decision timer is used in order to be handle the fact that we can have multiple classifications per pattern
+                            for (auto& addon: addons) {
+                                addon->decision_failed(final_t, this);
+                            }
+                        }
                         
                         reset_network(false);
                     }
@@ -1674,9 +1699,15 @@ namespace hummus {
         }
         
         // reset the network back to the initial conditions without changing the network build
-        void reset_network(bool clear_addons=true) {
+        void reset_network(bool clear_addons=true) {            
+            decision_pre_ts = 0;
+            
             for (auto& n: neurons) {
                 n->reset_neuron(this, clear_addons);
+            }
+            
+            if (th_addon) {
+                th_addon->reset();
             }
         }
         
@@ -1808,58 +1839,37 @@ namespace hummus {
                 spike s = neurons[idx]->receive_external_input<Synapse>(t, idx, -1, 1, 0);
                 neurons[idx]->update(t, s.propagation_synapse, this, 0, s.type);
             }
+            
+            if (decision_making && classification && decision.timer > 0) {
+                choose_winner_online(t, 0);
+            }
         }
         
-//        // helper method that handles the events output by the sepia::make_observable method
-//        void es_run_helper2(double t, int x, int y, bool classification=false) {
-//            if (classification && decision_making && decision.timer > 0) {
-//                if (t - decision_pre_ts >= decision.timer) {
-//                    // make all the decision neurons fire
-//                    for (auto& n: layers[decision.layer_number].neurons) {
-//                        // generate a decision spike if the neuron is connected to anything
-//                        if (!neurons[n]->get_dendritic_tree().empty()) {
-//                            neurons[n]->update(t, nullptr, this, 0, spike_type::decision);
-//                        }
-//                    }
-//                    // saving previous timestamp
-//                    decision_pre_ts = t;
-//                }
-//            }
-//        }
-        
         // helper method that runs the network when event-mode is selected (timestep = 0)
-        void async_run_helper(std::atomic_bool* running, bool classification=false) {
+        void async_run_helper(std::atomic_bool* running, bool classification=false, bool eof=false) {
             // lambda function to update neuron status asynchronously
             auto requestUpdate = [&](spike s, bool classification) {
                 if (!classification) {
-                    if (!training_labels.empty()) {
-                        if (training_labels.front().onset <= s.timestamp) {
-                            current_label = training_labels.front().name;
-                            training_labels.pop_front();
-                        }
-                    }
-                    
-                    if (learning_off_signal != -1) {
-                        if (learning_status==true && s.timestamp >= learning_off_signal) {
-                            if (verbose != 0) {
-                                std::cout << "learning turned off at t=" << s.timestamp << std::endl;
+                    if (!eof) {
+                        if (!training_labels.empty()) {
+                            if (training_labels.front().onset <= s.timestamp) {
+                                current_label = training_labels.front().name;
+                                training_labels.pop_front();
                             }
-                            learning_status = false;
+                        }
+                        
+                        if (learning_off_signal != -1) {
+                            if (learning_status==true && s.timestamp >= learning_off_signal) {
+                                if (verbose != 0) {
+                                    std::cout << "learning turned off at t=" << s.timestamp << std::endl;
+                                }
+                                learning_status = false;
+                            }
                         }
                     }
                 } else {
-                    if (decision_making) {
-                        if (s.timestamp - decision_pre_ts >= decision.timer) {
-                            // make all the decision neurons fire
-                            for (auto& n: layers[decision.layer_number].neurons) {
-                                // generate a decision spike if the neuron is connected to anything
-                                if (!neurons[n]->get_dendritic_tree().empty()) {
-                                    neurons[n]->update(s.timestamp, nullptr, this, 0, spike_type::decision);
-                                }
-                            }
-                            // saving previous timestamp
-                            decision_pre_ts = s.timestamp;
-                        }
+                    if (decision_making && decision.timer > 0) {
+                        choose_winner_online(s.timestamp, 0);
                     }
                 }
                 neurons[s.propagation_synapse->get_postsynaptic_neuron_id()]->update(s.timestamp, s.propagation_synapse, this, 0, s.type);
@@ -1934,18 +1944,7 @@ namespace hummus {
                         }
                     } else {
                         if (decision_making) {
-                            if (i - decision_pre_ts >= decision.timer) {
-                                // make all the decision neurons fire
-                                for (auto& n: layers[decision.layer_number].neurons) {
-                                    // generate a decision spike if the neuron is connected to anything
-                                    if (!neurons[n]->get_dendritic_tree().empty()) {
-                                        neurons[n]->update(i, nullptr, this, timestep, spike_type::decision);
-                                    }
-                                }
-                                
-                                // saving previous timestamp
-                                decision_pre_ts = i;
-                            }
+                            choose_winner_online(i, timestep);
                         }
                     }
 
@@ -1968,7 +1967,7 @@ namespace hummus {
                             if (neurons[idx]->get_layer_id() == 0) {
                                 neurons[idx]->update_sync(i, nullptr, this, timestep, spike_type::none);
                             } else {
-                                if (!layers[neurons[idx]->get_layer_id()-1].do_not_propagate) {
+                                if (layers[neurons[idx]->get_layer_id()].active) {
                                     neurons[idx]->update_sync(i, nullptr, this, timestep, spike_type::none);
                                 }
                             }
@@ -2004,19 +2003,19 @@ namespace hummus {
                         }
                         
                         // loop through the decision_queue of a neuron and find the number of spikes per label
-                        for (auto& label: neuron_to_label->get_decision_queue()) {
-                            classes_map[label]++;
+                        for (auto label: neuron_to_label->get_decision_queue()) {
+                            ++classes_map[label];
                         }
-                        
+                                                
                         // return the element with the maximum number of spikes
                         auto max_label = *std::max_element(classes_map.begin(), classes_map.end(), [](const std::pair<std::string, int> &p1,
                                                                                                       const std::pair<std::string, int> &p2) {
                                                                                         return p1.second < p2.second;
                                                                                     });
                         
-                        // assign label to neuron if element larger than the rejection threshold
+                        // assign label to neuron if element larger than the rejection threshold and does not hold less spikes than the spike_history_size
                         int inv_queue_size = 100 / neuron_to_label->get_decision_queue().size();
-                        if (max_label.second * inv_queue_size >= decision.rejection_threshold) {
+                        if (max_label.second * inv_queue_size >= decision.rejection_threshold && max_label.second >= decision.spike_history_size) {
                             neuron_to_label->set_class_label(max_label.first);
                         }
                         
@@ -2035,6 +2034,59 @@ namespace hummus {
                             std::cout << "WARNING: No neurons have specialised for the decision neuron with the label " << neurons[decision_n]->get_class_label() << std::endl;
                         }
                     }
+                }
+            }
+        }
+        
+        void choose_winner_online(double t, double timestep) {
+            if (t - decision_pre_ts >= decision.timer) {
+                // get intensities from all DecisionMaking neurons
+                int winner_neuron = -1; float previous_intensity = -1.0f;
+                for (auto& n: layers[decision.layer_number].neurons) {
+                    if (!neurons[n]->get_dendritic_tree().empty()) {
+                        float normalised_intensity = static_cast<float>(neurons[n]->share_information()) / neurons[n]->get_dendritic_tree().size();
+                        if (normalised_intensity > previous_intensity && normalised_intensity > 0) {
+                            winner_neuron = static_cast<int>(n);
+                            previous_intensity = normalised_intensity;
+                        }
+                    }
+                }
+
+                // update the best DecisionMaking neuron
+                if (winner_neuron != -1) {
+                    neurons[winner_neuron]->update(t, nullptr, this, timestep, spike_type::decision);
+                } else {
+                    if (verbose >= 1) {
+                        std::cout << "at t=" << t << " No decision could be made" << std::endl;
+                    }
+                }
+                
+                // saving previous timestamp
+                decision_pre_ts = t;
+            }
+        }
+        void choose_winner_eof(double t, double timestep) {
+            // get intensities from all DecisionMaking neurons
+            int winner_neuron = -1; float previous_intensity = -1.0f;
+            for (auto& n: layers[decision.layer_number].neurons) {
+                if (!neurons[n]->get_dendritic_tree().empty()) {
+                    float normalised_intensity = static_cast<float>(neurons[n]->share_information()) / neurons[n]->get_dendritic_tree().size();
+                    if (normalised_intensity > previous_intensity && normalised_intensity > 0) {
+                        winner_neuron = static_cast<int>(n);
+                        previous_intensity = normalised_intensity;
+                    }
+                }
+            }
+
+            // update the best DecisionMaking neuron
+            if (winner_neuron != -1) {
+                neurons[winner_neuron]->update(t, nullptr, this, timestep, spike_type::decision);
+            } else {
+                for (auto& addon: addons) {
+                    addon->decision_failed(t, this);
+                }
+                if (verbose >= 1) {
+                    std::cout << "at t=" << t << " No decision could be made" << std::endl;
                 }
             }
         }

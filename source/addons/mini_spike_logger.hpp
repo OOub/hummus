@@ -55,24 +55,25 @@ namespace hummus {
         }
         
 		void incoming_spike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            
-            // defining what to save and constraining it so that file size doesn't blow up
-            std::array<char, 15> bytes;
-            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previous_timestamp) * 100));
-            copy_to(bytes.data() + 4,  static_cast<int16_t>(s->get_delay()*100));
-            copy_to(bytes.data() + 6,  static_cast<int8_t>(s->get_weight()*100));
-            copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
-            copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
-            copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
-            copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->get_rf_id()));
-            copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().first));
-            copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().second));
-            
-            // saving to file
-			save_file.write(bytes.data(), bytes.size());
-            
-            // changing the previoud timestamp
-            previous_timestamp = timestamp;
+            if (s) {
+                // defining what to save and constraining it so that file size doesn't blow up
+                std::array<char, 15> bytes;
+                copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                copy_to(bytes.data() + 4,  static_cast<int16_t>(s->get_delay()*100));
+                copy_to(bytes.data() + 6,  static_cast<int8_t>(s->get_weight()*100));
+                copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+                copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
+                copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
+                copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->get_rf_id()));
+                copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().first));
+                copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().second));
+                
+                // saving to file
+                save_file.write(bytes.data(), bytes.size());
+                
+                // changing the previoud timestamp
+                previous_timestamp = timestamp;
+            }
         }
 		
         void on_predict(Network* network) override {
@@ -80,24 +81,25 @@ namespace hummus {
         }
         
 		void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
-            
-            // defining what to save and constraining it so that file size doesn't blow up
-            std::array<char, 15> bytes;
-            copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previous_timestamp) * 100));
-            copy_to(bytes.data() + 4,  static_cast<int16_t>(s->get_delay()*100));
-            copy_to(bytes.data() + 6,  static_cast<int8_t>(s->get_weight()*100));
-            copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
-            copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
-            copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
-            copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->get_rf_id()));
-            copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().first));
-            copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().second));
-            
-            // saving to file
-            save_file.write(bytes.data(), bytes.size());
-            
-            // changing the previous timestamp
-            previous_timestamp = timestamp;
+            if (s) {
+                // defining what to save and constraining it so that file size doesn't blow up
+                std::array<char, 15> bytes;
+                copy_to(bytes.data() + 0,  static_cast<int32_t>((timestamp - previous_timestamp) * 100));
+                copy_to(bytes.data() + 4,  static_cast<int16_t>(s->get_delay()*100));
+                copy_to(bytes.data() + 6,  static_cast<int8_t>(s->get_weight()*100));
+                copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
+                copy_to(bytes.data() + 9,  static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
+                copy_to(bytes.data() + 11, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
+                copy_to(bytes.data() + 12, static_cast<int8_t>(postsynapticNeuron->get_rf_id()));
+                copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().first));
+                copy_to(bytes.data() + 14, static_cast<int8_t>(postsynapticNeuron->get_xy_coordinates().second));
+                
+                // saving to file
+                save_file.write(bytes.data(), bytes.size());
+                
+                // changing the previous timestamp
+                previous_timestamp = timestamp;
+            }
         }
 		
     protected:

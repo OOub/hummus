@@ -49,6 +49,9 @@ namespace hummus {
         // message that is activated whenever a neuron wants to learn
         virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){};
         
+        // message that is activated when no decision is made
+        virtual void decision_failed(double timestamp, Network* network){};
+        
         // select which neurons the addon is active on
         virtual void activate_for(size_t neuronIdx){};
         

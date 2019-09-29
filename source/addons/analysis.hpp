@@ -12,6 +12,8 @@
 #pragma once
 
 #include <vector>
+#include <limits>
+#include <algorithm>
 
 #include "../dataParser.hpp"
 
@@ -69,17 +71,94 @@ namespace hummus {
                 throw std::logic_error("the analysis class works only when decision-making neurons are added to the network");
             }
 		}
+        
+        void decision_failed(double timestamp, Network* network) override {
+            classified_spikes.emplace_back(std::make_pair(timestamp, nullptr));
+        }
 		
 		void on_completed(Network* network) override {
-            labels.emplace_back(label{"end", labels.back().onset+10000});
+            // if choose_winner_eof is used
+            if (network->get_decision_parameters().timer == 0) {
+                for (auto& s: classified_spikes) {
+                    if (s.second) {
+                        classified_labels.emplace_back(s.second->get_class_label());
+                    } else {
+                        classified_labels.emplace_back("NaN");
+                    }
+                }
+            // if choose_winner_online is used
+            } else {
+                // if the labels are not timestamped
+                
+                if (labels[0].onset == -1) {
+                    // find all the nullptrs delimiting the eof of each pattern
+                    long previous_idx = 0;
+                    for (auto it = std::find_if(classified_spikes.begin(), classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.second == nullptr;});
+                         it != classified_spikes.end();
+                         it = std::find_if(++it, classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.second == nullptr;}))
+                    {
+                        std::vector<std::string> labels_interval;
+                        if (it != classified_spikes.begin() && it != classified_spikes.end()) {
+                            auto idx = std::distance(classified_spikes.begin(), std::prev(it));
+                            for (auto i = previous_idx; i <= idx; i++) {
+                                labels_interval.emplace_back(classified_spikes[idx].second->get_class_label());
+                            }
+                            previous_idx = std::distance(classified_spikes.begin(), std::next(it));
+                        }
 
-            for (auto i=1; i<labels.size(); i++) {
-                auto it = std::find_if(classified_spikes.begin(), classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;});
-                if (it != classified_spikes.end()) {
-                    auto idx = std::distance(classified_spikes.begin(), it);
-                    classified_labels.emplace_back(classified_spikes[idx].second->get_class_label());
+
+                        if (!labels_interval.empty()) {
+                            // find the most occurring class
+                            std::unordered_map<std::string, int> freq_class;
+                            for (auto& label: labels_interval) {
+                                freq_class[label]++;
+                            }
+
+                            // return the element with the maximum number of spikes
+                            auto max_label = *std::max_element(freq_class.begin(), freq_class.end(), [](const std::pair<std::string, int> &p1,
+                                                                                                        const std::pair<std::string, int> &p2) {
+                                                                                            return p1.second < p2.second;
+                                                                                        });
+                            classified_labels.emplace_back(max_label.first);
+                        } else {
+                            classified_labels.emplace_back("NaN");
+                        }
+                    }
+
                 } else {
-                    classified_labels.emplace_back("NaN");
+                    labels.emplace_back(label{"end", std::numeric_limits<double>::max()});
+
+                    for (auto i=1; i<labels.size(); i++) {
+
+                        std::vector<std::string> labels_interval;
+                        // get all labels between each interval
+                        for (auto it = std::find_if(classified_spikes.begin(), classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;});
+                             it != classified_spikes.end();
+                             it = std::find_if(++it, classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;}))
+                        {
+                            if (it != classified_spikes.end()) {
+                                auto idx = std::distance(classified_spikes.begin(), it);
+                                labels_interval.emplace_back(classified_spikes[idx].second->get_class_label());
+                            }
+                        }
+
+                        if (!labels_interval.empty()) {
+                            // find the most occurring class
+                            std::unordered_map<std::string, int> freq_class;
+                            for (auto& label: labels_interval) {
+                                freq_class[label]++;
+                            }
+
+                            // return the element with the maximum number of spikes
+                            auto max_label = *std::max_element(freq_class.begin(), freq_class.end(), [](const std::pair<std::string, int> &p1,
+                                                                                                        const std::pair<std::string, int> &p2) {
+                                                                                            return p1.second < p2.second;
+                                                                                        });
+                            classified_labels.emplace_back(max_label.first);
+                        } else {
+                            classified_labels.emplace_back("NaN");
+                        }
+                    }
                 }
             }
 		}

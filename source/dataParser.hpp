@@ -60,14 +60,13 @@ namespace hummus {
                 }
             }
             
-            // shuffle the database vector
+            // create random engine
             std::random_device r;
             std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
-            
-            // create a random engine
-            std::mt19937 random_engine(seed);
-            
-            std::shuffle(begin(database), end(database), random_engine);
+            std::mt19937 random_engine1(seed);
+
+            // shuffle the database vector
+            std::shuffle(begin(database), end(database), random_engine1);
             
             // get the number of samples from the percentage
             if (sample_percentage < 100) {
