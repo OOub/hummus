@@ -12,7 +12,6 @@ solution 'hummus'
         		language 'C++'
             location 'build'
 
-            -- Build Options
             newoption {
        			    trigger     = 'no-qt',
                 description = 'Compiles without Qt'

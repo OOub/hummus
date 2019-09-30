@@ -32,9 +32,7 @@ namespace hummus {
                 resting_threshold(_threshold),
                 decay_homeostasis(_decayHomeostasis),
                 homeostasis_beta(_homeostasisBeta),
-                active_synapse(nullptr),
-                inhibited(false),
-                inhibition_time(0) {
+                active_synapse(nullptr) {
                     
             // LIF neuron type == 1 (for JSON save)
             neuron_type = 1;
@@ -77,11 +75,6 @@ namespace hummus {
             
             if (type == spike_type::initial || type == spike_type::generated) {
                 
-                // checking if the neuron is inhibited
-                if (inhibited && timestamp - inhibition_time >= refractory_period) {
-                    inhibited = false;
-                }
-                
                 // checking if the neuron is in a refractory period
                 if (static_cast<float>(timestamp - previous_spike_time) >= refractory_period) {
                     active = true;
@@ -110,7 +103,8 @@ namespace hummus {
                     network->get_main_thread_addon()->status_update(timestamp, this, network);
                 }
                 
-                if (active && !inhibited) {
+                if (active) {
+                    
 					// calculating the potential
                     potential = resting_potential + current * (1 - exp_input_mem_tau) + (potential - resting_potential) * exp_input_mem_tau;
                     
@@ -142,9 +136,9 @@ namespace hummus {
                         network->get_main_thread_addon()->incoming_spike(timestamp, s, this, network);
                     }
 					
-                    if (s->get_weight() >= 0) {
+                    if (current > 0) {
                         // calculating time at which potential = threshold
-                        double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + resting_potential + current) + std::log( current - potential + resting_potential)) + static_cast<float>(timestamp);
+                        double predictedTimestamp = membrane_time_constant * (- std::log( - threshold + resting_potential + current) + std::log( current - potential + resting_potential)) + timestamp;
                         if (predictedTimestamp > timestamp && predictedTimestamp <= timestamp + s->get_synapse_time_constant()) {
                             network->inject_predicted_spike(spike{predictedTimestamp, s, spike_type::prediction}, spike_type::prediction);
                         } else {
@@ -152,14 +146,15 @@ namespace hummus {
                         }
                     } else {
                         potential = resting_potential + current * (1 - exp_input_mem_tau) + (potential - resting_potential);
+                        network->remove_predicted_spike(neuron_id);
                     }
                 }
             } else if (type == spike_type::prediction) {
-                if (active && !inhibited) {
+                if (active) {
                     potential = resting_potential + current * (1 - std::exp(- input_td * inv_membrane_tau)) + (potential - resting_potential);
                 }
             } else if (type == spike_type::end_of_integration) {
-                if (active && !inhibited) {
+                if (active) {
                     float exp_s_tau_mem_tau = std::exp(-s->get_synapse_time_constant() * inv_membrane_tau);
                     potential = resting_potential + current * (1 - exp_s_tau_mem_tau) + (potential - resting_potential) * exp_s_tau_mem_tau;
                 }
@@ -232,11 +227,6 @@ namespace hummus {
                 timestep = 0;
             }
             
-            // checking if the neuron is inhibited
-            if (inhibited && timestamp - inhibition_time >= refractory_period) {
-				inhibited = false;
-			}
-            
             // checking if the neuron is in a refractory period
             if (timestamp - previous_spike_time >= refractory_period) {
                 active = true;
@@ -265,7 +255,7 @@ namespace hummus {
 			}
                 
 			// neuron inactive during refractory period
-			if (active && !inhibited) {
+			if (active) {
 				if (s) {
                     
                     active_synapse = s;
@@ -357,6 +347,7 @@ namespace hummus {
                     }
 				}
                 
+                
                 previous_spike_time = timestamp;
                 potential = resting_potential;
 				active = false;
@@ -369,7 +360,6 @@ namespace hummus {
             current = 0;
             potential = resting_potential;
             trace = 0;
-            inhibited = false;
             active = true;
             
             for (auto& dendrite: dendritic_tree) {
@@ -422,12 +412,7 @@ namespace hummus {
             }
         }
         
-		// ----- SETTERS AND GETTERS -----
-		void set_inhibition(double timestamp, bool inhibition_status) {
-			inhibition_time = timestamp;
-			inhibited = inhibition_status;
-		}
-        
+		// ----- SETTERS AND GETTERS -----        
         void set_bursting_activity(bool new_bool) {
             bursting_activity = new_bool;
         }
@@ -461,8 +446,6 @@ namespace hummus {
         
 		// ----- LIF PARAMETERS -----
 		bool                         active;
-		bool                         inhibited;
-		double                       inhibition_time;
 		bool                         bursting_activity;
 		bool                         homeostasis;
 		double                       resting_threshold;
