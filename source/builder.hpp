@@ -268,6 +268,7 @@ namespace hummus {
         // parameters specific for the CUBA_LIF parent class
         template<typename T>
         void capture_CUBA_LIF_parameters(nlohmann::json& input, Neuron* n) {
+            
             if (input["bursting_activity"].is_boolean()) {
                 dynamic_cast<T*>(n)->set_bursting_activity(input["bursting_activity"].get<bool>());
             }

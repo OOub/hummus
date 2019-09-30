@@ -179,12 +179,6 @@ namespace hummus {
             }
         }
         
-        // share information - generic getter that can be used for accessing child members from parent
-        virtual int share_information() { return 0; }
-        
-        // write neuron parameters in a JSON format
-        virtual void to_json(nlohmann::json& output) {}
-        
         // adds a synapse that connects two Neurons together
         template <typename T, typename... Args>
         Synapse* make_synapse(Neuron* post_neuron, float weight, float delay, Args&&... args) {
@@ -205,6 +199,12 @@ namespace hummus {
             }
             return spike{timestamp, initial_synapse.get(), spike_type::initial};
         }
+        
+        // share information - generic getter that can be used for accessing child members from parent
+        virtual int share_information() { return 0; }
+        
+        // write neuron parameters in a JSON format
+        virtual void to_json(nlohmann::json& output) {}
         
 		// ----- SETTERS AND GETTERS -----
         bool get_activity() const {
@@ -359,6 +359,9 @@ namespace hummus {
         
         // loops through any learning rules and activates them
         virtual void request_learning(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network){}
+        
+        // winner_takes_all implementation
+        virtual void winner_takes_all(double timestamp, Network* network) {}
         
         // ----- NEURON SPATIAL PARAMETERS -----
         int                                        neuron_id;
@@ -1141,14 +1144,25 @@ namespace hummus {
             spike_queue.emplace(neurons.at(neuronIndex)->receive_external_input<Synapse>(timestamp, neuronIndex, -1, 1, 0));
         }
         
+        void remove_predicted_spike(int neuron_id) {
+            // remove old spike
+            predicted_spikes.erase(std::remove_if(
+                                                  predicted_spikes.begin(),
+                                                  predicted_spikes.end(),[&](spike oldSpike) { return oldSpike.propagation_synapse->get_postsynaptic_neuron_id() == neuron_id;}),
+                                   predicted_spikes.end());
+        }
+        
+        void remove_predicted_spike(spike s) {
+            // remove old spike
+            predicted_spikes.erase(std::remove_if(
+                                                  predicted_spikes.begin(),
+                                                  predicted_spikes.end(),[&](spike oldSpike) { return oldSpike.propagation_synapse == s.propagation_synapse; }),
+                                   predicted_spikes.end());
+        }
         
         // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
         void inject_predicted_spike(spike s, spike_type stype) {
-            // remove old spike
-            predicted_spikes.erase(
-                                   std::remove_if(predicted_spikes.begin(), predicted_spikes.end(),[&](spike oldSpike) {
-                return oldSpike.propagation_synapse == s.propagation_synapse;}),
-                                   predicted_spikes.end());
+            remove_predicted_spike(s);
             
             // change type of new spike
             s.type = stype;

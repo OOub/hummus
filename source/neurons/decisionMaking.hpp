@@ -67,9 +67,8 @@ namespace hummus {
                 
                 // reset intensities on all other neurons
                 winner_takes_all(timestamp, network);
-                
                 potential = resting_potential;
-                intensity = 0;
+
             } else {
                 if (type != spike_type::none && s->get_type() == synapse_type::excitatory){
                     ++intensity;
@@ -127,14 +126,10 @@ namespace hummus {
         
     protected:
         
-        void winner_takes_all(double timestamp, Network* network) {
+        void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
                 auto& neuron = network->get_neurons()[n];
-
-                // reset intensities all the other neurons in the same layer
-                if (neuron->get_neuron_id() != neuron_id) {
-                    dynamic_cast<DecisionMaking*>(neuron.get())->set_intensity(0);
-                }
+                dynamic_cast<DecisionMaking*>(neuron.get())->set_intensity(0);
             }
         }
 
