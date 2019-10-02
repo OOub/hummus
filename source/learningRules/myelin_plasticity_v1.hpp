@@ -25,9 +25,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-        MP_1(int _time_constant=10, int _learning_window=20, float _learning_rate=1) :
+        MP_1(int _time_constant=10, float _learning_rate=1) :
                 time_constant(_time_constant),
-                learning_window(_learning_window),
                 learning_rate(_learning_rate) {
             do_not_automatically_include = true;
         }
@@ -65,18 +64,9 @@ namespace hummus {
                     // arrival time of the input spike
                     double spike_arrival_time = input->get_previous_input_time();
                     
-                    // learning window
-                    float gaussian_window = gaussian_distribution(spike_arrival_time, timestamp, learning_window);
-                    
-                    // taking the input neurons that were active within a gaussian learning window
-                    if (inputNeuron->get_trace() > 0 && gaussian_window >= 0.01) {
+                    // taking the input neurons that were active
+                    if (inputNeuron->get_trace() > 0) {
                         accepted_synapses.emplace_back(input);
-                        
-                        // increasing the threshold if the trace is too high
-                        if (inputNeuron->get_trace() >= 1) {
-                            auto updated_threshold = inputNeuron->get_threshold() + 2;
-                            inputNeuron->set_threshold(updated_threshold);
-                        }
                         
                         // calculating the time difference
                         float time_difference = static_cast<float>(postsynapticNeuron->get_previous_input_time() - spike_arrival_time);
@@ -85,13 +75,12 @@ namespace hummus {
                         time_differences.emplace_back(time_difference);
                         
                         // change delay according to the time difference
-                        float delta_delay = 0;
-                        delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->get_membrane_time_constant())) * postsynapticNeuron->get_current() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->get_membrane_time_constant()));
+                        float delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->get_membrane_time_constant())) * postsynapticNeuron->get_current() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->get_membrane_time_constant()));
                         
                         input->increment_delay(delta_delay);
 
                         if (network->get_verbose() >= 1) {
-                            std::cout << " inside learning window " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->get_delay() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << std::endl;
+                            std::cout << " inside learning window " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->get_delay() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << " current: " << postsynapticNeuron->get_current() << " previous input time: "<< postsynapticNeuron->get_previous_input_time() << std::endl;
                         }
                     }
                     
@@ -108,16 +97,10 @@ namespace hummus {
             }
         }
         
-        // gaussian distribution with an amplitude peak of 1
-        inline float gaussian_distribution(float x, float mu, float sigma) {
-            return 12.533 * sigma / 5 * std::exp(- 0.5 * std::pow((x - mu)/sigma, 2)) / (sigma * std::sqrt(2 * M_PI));
-        }
-        
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
         int              time_constant;
-        int              learning_window;
         float            learning_rate;
 	};
 }

@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
 	//  ----- CREATING THE NETWORK -----
     auto input = network.make_layer<hummus::Parrot>(inputNeurons, {});
-    auto output = network.make_layer<hummus::CUBA_LIF>(layer1Neurons, {&stdp}, refractoryPeriod, conductance, leakageConductance, false, true);
+    auto output = network.make_layer<hummus::CUBA_LIF>(layer1Neurons, {&stdp}, refractoryPeriod, conductance, leakageConductance, false, false, true);
 
     //  ----- CONNECTING THE NETWORK -----
     network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(weight, 0, 0, 0), 100);
