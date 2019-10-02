@@ -26,8 +26,8 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Parrot(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
-                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
+        Parrot(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 200, 10, _traceTimeConstant, _threshold, _restingPotential, "") {
             inv_trace_tau = 1. / _traceTimeConstant;
         }
 		
@@ -60,12 +60,15 @@ namespace hummus {
             }
             
             // trace decay
-            trace -= trace * timestep * inv_trace_tau;
+            trace -= timestep * inv_trace_tau;
+            if (trace < 0) {
+                trace = 0;
+            }
             
             // instantly making the input neuron fire at every input spike
             if (s && active) {
                 potential = threshold;
-                trace += 1;
+                trace = 1;
                 
                 if (network->get_verbose() == 2) {
                     std::cout << "t=" << timestamp << " " << neuron_id << " w=" << s->get_weight() << " d=" << s->get_delay() << " --> INPUT" << std::endl;

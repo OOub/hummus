@@ -25,8 +25,8 @@ int main(int argc, char** argv) {
     auto& display = network.make_gui<hummus::Display>();
     auto& mp = network.make_addon<hummus::MP_2>();
 
-    auto input = network.make_layer<hummus::CUBA_LIF>(4, {}, 0, 200, 10, false, false);
-    auto output = network.make_layer<hummus::CUBA_LIF>(1, {&mp}, 3, 200, 10, false, false);
+    auto input = network.make_layer<hummus::CUBA_LIF>(4, {}, 0, 200, 10, false, false, false);
+    auto output = network.make_layer<hummus::CUBA_LIF>(1, {&mp}, 3, 200, 10, false, false, false);
 
     network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(1./3, 0, 5, 3), 100);
     network.lateral_inhibition<hummus::Exponential>(output, 1, hummus::Normal(-1, 0, 0, 1), 100);

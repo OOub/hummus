@@ -24,8 +24,8 @@ namespace hummus {
 	class DecisionMaking : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=0, float _conductance=200, float _leakageConductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _conductance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
+        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 200, 10, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
                     
             // DecisionMaking neuron type = 2 for JSON save
             neuron_type = 2;
@@ -50,7 +50,17 @@ namespace hummus {
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
+            // checking if the neuron is in a refractory period
+            if (timestamp - previous_spike_time >= refractory_period) {
+                active = true;
+            }
+            
             if (type == spike_type::decision) {
+                // checking if the neuron is in a refractory period
+                if (timestamp - previous_spike_time >= refractory_period) {
+                    active = true;
+                }
+                
                 potential = threshold;
                 
                 if (network->get_verbose() >= 1) {
@@ -68,10 +78,14 @@ namespace hummus {
                 // reset intensities on all other neurons
                 winner_takes_all(timestamp, network);
                 potential = resting_potential;
+                previous_spike_time = timestamp;
+                active = false;
 
             } else {
                 if (type != spike_type::none && s->get_type() == synapse_type::excitatory){
-                    ++intensity;
+                    if (active) {
+                        ++intensity;
+                    }
                 }
             }
         }

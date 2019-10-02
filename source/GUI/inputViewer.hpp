@@ -16,7 +16,6 @@
 
 // QT5 and QT Charts Dependency
 #include <QtCore/QObject>
-#include <QtCore/QtMath>
 
 #include <QtQuick/QQuickView>
 #include <QtQuick/QQuickItem>

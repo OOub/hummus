@@ -57,19 +57,19 @@ namespace hummus {
     
     // used for the event-based mode only in order to predict spike times with dynamic currents
     enum class spike_type {
-        initial,
-        generated,
-        end_of_integration,
-        prediction,
-        decision,
-        none
+        initial, // input spikes (real spike)
+        generated, // spikes generates by the network (real spike)
+        end_of_integration, // asynchronous - updating synapses when they become inactive (not a real spike)
+        prediction, // asynchronous - future theoretical spike time (not a real spike)
+        decision, // for decision-making (real spike)
+        none // synchronous - for updates at every clock (not a real spike)
     };
     
     // parameters for the decision-making layer
     struct decision_heuristics {
-        int                           layer_number;
-        int                           spike_history_size;
-        int                           rejection_threshold;
+        int                           layer_number; // decision_making layer id
+        int                           spike_history_size; // how many spikes to take into consideration for the heuristics
+        int                           rejection_threshold; // percentage of spikes that need to belong to the same class in order for a neuron to be labelled
         double                        timer; // selects how often a decision neuron fires. for es files: set to 0 if Decision is to be made at the end of the file
     };
     
@@ -209,6 +209,10 @@ namespace hummus {
 		// ----- SETTERS AND GETTERS -----
         bool get_activity() const {
             return active;
+        }
+        
+        void set_activity(bool a) {
+            active = false;
         }
         
 		int get_neuron_id() const {
@@ -1144,25 +1148,13 @@ namespace hummus {
             spike_queue.emplace(neurons.at(neuronIndex)->receive_external_input<Synapse>(timestamp, neuronIndex, -1, 1, 0));
         }
         
-        void remove_predicted_spike(int neuron_id) {
-            // remove old spike
-            predicted_spikes.erase(std::remove_if(
-                                                  predicted_spikes.begin(),
-                                                  predicted_spikes.end(),[&](spike oldSpike) { return oldSpike.propagation_synapse->get_postsynaptic_neuron_id() == neuron_id;}),
-                                   predicted_spikes.end());
-        }
-        
-        void remove_predicted_spike(spike s) {
+        // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
+        void inject_predicted_spike(spike s, spike_type stype) {
             // remove old spike
             predicted_spikes.erase(std::remove_if(
                                                   predicted_spikes.begin(),
                                                   predicted_spikes.end(),[&](spike oldSpike) { return oldSpike.propagation_synapse == s.propagation_synapse; }),
                                    predicted_spikes.end());
-        }
-        
-        // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
-        void inject_predicted_spike(spike s, spike_type stype) {
-            remove_predicted_spike(s);
             
             // change type of new spike
             s.type = stype;
