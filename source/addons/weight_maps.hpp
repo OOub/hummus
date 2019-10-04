@@ -18,7 +18,7 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include "../dataParser.hpp"
+#include "../data_parser.hpp"
 
 namespace hummus {
     

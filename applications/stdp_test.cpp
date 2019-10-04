@@ -15,7 +15,7 @@
 
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
-#include "../source/learningRules/stdp.hpp"
+#include "../source/learning_rules/stdp.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/cuba_lif.hpp"
 

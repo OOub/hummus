@@ -19,7 +19,7 @@
 #include "../source/GUI/display.hpp"
 #include "../source/addons/potential_logger.hpp"
 #include "../source/addons/myelin_plasticity_logger.hpp"
-#include "../source/learningRules/myelin_plasticity_v1.hpp"
+#include "../source/learning_rules/myelin_plasticity_v1.hpp"
 
 int main(int argc, char** argv) {
 

@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 23/01/2019
  *
- * Information: a synaptic kernel that instantly rises then exponentially decays
+ * Information: a current-based synaptic kernel that instantly rises then exponentially decays
  * json_id 1
  */
 

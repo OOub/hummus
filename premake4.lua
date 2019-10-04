@@ -13,11 +13,22 @@ solution 'hummus'
             location 'build'
 
             newoption {
-       			trigger     = 'no-qt',
+       			trigger     = 'no_qt',
                 description = 'Compiles without Qt'
     		}
 
-  			if _OPTIONS['no-qt'] then
+            newoption {
+       			trigger     = 'no_tbb',
+                description = 'Compiles with tbb'
+    	    }
+
+            if _OPTIONS['no_tbb'] then
+                print(string.char(27) .. '[32m Building without TBB' .. string.char(27) .. '[0m')
+            else
+                with_tbb = true
+            end
+
+  			if _OPTIONS['no_qt'] then
      			print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
      		else
      			with_qt = true
@@ -31,9 +42,9 @@ solution 'hummus'
 
       		if with_qt then
 				-- Qt-dependent files
-				files(qt.moc({'source/GUI/inputViewer.hpp',
-							  'source/GUI/outputViewer.hpp',
-					           'source/GUI/dynamicsViewer.hpp'
+				files(qt.moc({'source/GUI/input_viewer.hpp',
+							  'source/GUI/output_viewer.hpp',
+					           'source/GUI/dynamics_viewer.hpp'
 					         },
 				     'build/moc'))
 
@@ -56,6 +67,10 @@ solution 'hummus'
                 flags {'Symbols'}
 
             configuration 'linux or macosx'
+                if with_tbb then
+                    links {'tbb'}
+                    defines {"TBB"}
+                end
               	includedirs {'/usr/local/include'}
             	libdirs {'/usr/local/lib'}
 
@@ -69,4 +84,4 @@ solution 'hummus'
             configuration 'macosx'
                 buildoptions {'-std=c++17'}
                	linkoptions {'-std=c++17'}
-end
+    end

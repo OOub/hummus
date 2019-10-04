@@ -15,7 +15,7 @@
 #include <limits>
 #include <algorithm>
 
-#include "../dataParser.hpp"
+#include "../data_parser.hpp"
 
 namespace hummus {
     
@@ -45,7 +45,7 @@ namespace hummus {
         virtual ~Analysis(){}
         
 		// ----- PUBLIC METHODS -----
-		void accuracy() {
+		double accuracy() {
 			if (!classified_labels.empty() && classified_labels.size() == actual_labels.size()) {
 				std::vector<std::string> correctLabels;
 				for (auto i=0; i<actual_labels.size(); i++) {

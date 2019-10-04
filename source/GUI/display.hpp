@@ -22,9 +22,9 @@
 #include <QQmlApplicationEngine>
 #include <QtQuick/QQuickView>
 
-#include "inputViewer.hpp"
-#include "outputViewer.hpp"
-#include "dynamicsViewer.hpp"
+#include "input_viewer.hpp"
+#include "output_viewer.hpp"
+#include "dynamics_viewer.hpp"
 
 namespace hummus {
     
@@ -32,7 +32,7 @@ namespace hummus {
     class Neuron;
     class Network;
     
-    class Display : public MainThreadAddon {
+    class Display : public MainAddon {
         
     public:
 

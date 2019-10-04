@@ -14,10 +14,10 @@
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
 #include "../source/addons/analysis.hpp"
-#include "../source/learningRules/stdp.hpp"
+#include "../source/learning_rules/stdp.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/cuba_lif.hpp"
-#include "../source/neurons/decisionMaking.hpp"
+#include "../source/neurons/decision_making.hpp"
 #include "../source/addons/spike_logger.hpp"
 
 int main(int argc, char** argv) {
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     /// creating the layers
     auto pixel_grid = network.make_grid<hummus::Parrot>(35, 35, 1, {});
     auto hidden_layer = network.make_layer<hummus::CUBA_LIF>(10, {&stdp}, 10000, 20000, 1, false, false, false, 20000);
-    auto decision_layer = network.make_decision<hummus::DecisionMaking>(training_database.second, 10, 60, 0, {});
+    auto decision_layer = network.make_decision<hummus::Decision_Making>(training_database.second, 10, 60, 0, {});
 
     network.all_to_all<hummus::Square>(pixel_grid, hidden_layer, 1, hummus::Normal(0.08, 0.02, 5000, 300), 80, 10000);
     network.lateral_inhibition<hummus::Square>(hidden_layer, 1, hummus::Normal(-1, 0, 0, 1), 20, 10000);

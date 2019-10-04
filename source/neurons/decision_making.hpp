@@ -1,5 +1,5 @@
 /*
- * decisionMaking.hpp
+ * decision_making.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -21,7 +21,7 @@ namespace hummus {
     class Neuron;
     class Network;
     
-	class DecisionMaking : public Neuron {
+	class Decision_Making : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         DecisionMaking(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
@@ -31,7 +31,7 @@ namespace hummus {
             neuron_type = 2;
         }
 		
-		virtual ~DecisionMaking(){}
+		virtual ~Decision_Making(){}
 		
         // ----- PUBLIC DECISION MAKING NEURON METHODS -----
         virtual void initialisation(Network* network) override {

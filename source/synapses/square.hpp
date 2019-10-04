@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 23/01/2019
  *
- * Information: a synaptic kernel updating the current according to a square pulse function; the current stays constant for a period of time then resets
+ * Information: a current-based synaptic kernel updating the current according to a square pulse function; the current stays constant for a period of time then resets
  * json_id 2
  */
 
