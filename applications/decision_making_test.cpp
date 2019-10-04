@@ -22,7 +22,7 @@
 
 int main(int argc, char** argv) {
     /// parameters
-    bool use_gui = false;
+    bool use_gui = true;
     
     /// initialisation
     hummus::Network network;
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     
     /// running network
     network.verbosity(0);
-    network.run_database(training_database.first, test_database.first, 100000);
+    network.run_database(training_database.first, test_database.first, 100000, 0, 0);
     
     /// Measuring Classification Accuracy
     results.accuracy();

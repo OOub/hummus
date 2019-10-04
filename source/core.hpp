@@ -1336,7 +1336,7 @@ namespace hummus {
             }
             
             std::atomic_bool running(true);
-            std::thread spikeManager([&running, &sync, trainingData, _timestep, testData, this] {
+            std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
                 
@@ -1413,7 +1413,7 @@ namespace hummus {
         }
         
         // running asynchronously through one .es file - relies on the sepia header
-        void run_es(const std::string filename, bool classification=false, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
+        void run_es(const std::string filename, bool classification=false, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, int polarity=2, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
             asynchronous = true;
             
             for (auto& n: neurons) {
@@ -1463,9 +1463,17 @@ namespace hummus {
                                                                     throw sepia::end_of_file();
                                                                 }
 
-                                                                // temporal crop and spatial crop
-                                                                if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                    es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                // temporal crop and spatial crop and filtering the selected polarity
+                                                                if (polarity == 2) {
+                                                                    if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                        es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                    }
+                                                                } else if (polarity == 0 || polarity == 1) {
+                                                                    if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                        es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                    }
+                                                                } else {
+                                                                    throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                 }
                                                             });
                 } else if (header.event_stream_type == sepia::type::atis) {
@@ -1477,9 +1485,18 @@ namespace hummus {
                                                                       throw sepia::end_of_file();
                                                                   }
                         
-                                                                  // filtering out gray level events, temporal crop and spatial crop
-                                                                  if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                      es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                  if (polarity == 2) {
+                                                                      // filtering out gray level events, the selected polarity, temporal crop and spatial crop
+                                                                      if (!event.is_threshold_crossing && event.polarity == static_cast<int>(polarity) && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                          es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                      }
+                                                                  } else if (polarity == 0 || polarity == 1) {
+                                                                      // filtering out gray level events, the selected polarity, temporal crop and spatial crop
+                                                                      if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                          es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                      }
+                                                                  } else {
+                                                                      throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                   }
                                                               });
                 } else {
@@ -1508,7 +1525,7 @@ namespace hummus {
         }
         
         // running asynchronously through a database of .es files - relies on the sepia header
-        void run_database(const std::vector<std::string>& training_database, const std::vector<std::string>& testing_database={}, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
+        void run_database(const std::vector<std::string>& training_database, const std::vector<std::string>& testing_database={}, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, int polarity=2, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
             
             asynchronous = true;
             
@@ -1526,7 +1543,7 @@ namespace hummus {
             }
             
             std::atomic_bool running(true);
-            auto loop = std::thread([&running, &sync, training_database, testing_database, t_max, t_min, x_max, x_min, y_max, y_min, this]() {
+            auto loop = std::thread([&]() {
                 sync.lock();
                 sync.unlock();
                 
@@ -1563,11 +1580,19 @@ namespace hummus {
                                                                      if (event.t > t_max || !running.load(std::memory_order_relaxed)) {
                                                                          throw sepia::end_of_file();
                                                                      }
-                                                                                                
-                                                                     // temporal crop and spatial crop
-                                                                     if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                        es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
-                                                                    }
+                                                    
+                                                                     // temporal crop and spatial crop and polarity selection
+                                                                     if (polarity == 2) {
+                                                                         if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                            es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                         }
+                                                                     } else if (polarity == 0 || polarity == 1) {
+                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                            es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                         }
+                                                                     } else {
+                                                                         throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
+                                                                     }
                                                                  });
                         
                     } else if (header.event_stream_type == sepia::type::atis) {
@@ -1579,9 +1604,17 @@ namespace hummus {
                                                                           throw sepia::end_of_file();
                                                                       }
                             
-                                                                      // filtering out gray level events, temporal crop and spatial crop
-                                                                      if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                          es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                      // filtering out gray level events, temporal crop and spatial crop and polarity selection
+                                                                      if (polarity == 2) {
+                                                                          if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                          }
+                                                                      } else if (polarity == 0 || polarity == 1) {
+                                                                          if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                          }
+                                                                      } else {
+                                                                          throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                       }
                                                                   });
                     } else {
@@ -1650,10 +1683,19 @@ namespace hummus {
                                                                              throw sepia::end_of_file();
                                                                          }
                                 
-                                                                         // temporal crop and spatial crop
-                                                                         if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                             final_t = static_cast<double>(event.t);
-                                                                             es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                         // temporal crop and spatial crop and polarity selection
+                                                                         if (polarity == 2) {
+                                                                             if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                 final_t = static_cast<double>(event.t);
+                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                             }
+                                                                         } else if (polarity == 0 || polarity == 1) {
+                                                                             if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                 final_t = static_cast<double>(event.t);
+                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                             }
+                                                                         } else {
+                                                                             throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                          }
                                                                      });
                         } else if (header.event_stream_type == sepia::type::atis) {
@@ -1665,10 +1707,19 @@ namespace hummus {
                                                                               throw sepia::end_of_file();
                                                                           }
                                 
-                                                                          // filtering out gray level events, temporal crop and spatial crop
-                                                                          if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                              final_t = static_cast<double>(event.t);
-                                                                              es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                          // filtering out gray level events, temporal crop and spatial crop and polarity selection
+                                                                          if (polarity == 2) {
+                                                                              if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                  final_t = static_cast<double>(event.t);
+                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                              }
+                                                                          } else if (polarity == 0 || polarity == 1) {
+                                                                              if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                  final_t = static_cast<double>(event.t);
+                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                              }
+                                                                          } else {
+                                                                              throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                           }
                                                                       });
                         } else {

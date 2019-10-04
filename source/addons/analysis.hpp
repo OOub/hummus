@@ -56,8 +56,10 @@ namespace hummus {
 				
 				double accuracy = (static_cast<double>(correctLabels.size())/actual_labels.size())*100.;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
+                return accuracy;
 			} else {
-				throw std::logic_error("there is a problem with the classified and actual labels");
+                std::cout << "there is a problem with the classified and actual labels" << std::endl;
+                return -1;
 			}
 		}
 		

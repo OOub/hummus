@@ -24,7 +24,7 @@ namespace hummus {
 	class Decision_Making : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        DecisionMaking(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+        Decision_Making(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 200, 10, _traceTimeConstant, _threshold, _restingPotential, _classLabel) {
                     
             // DecisionMaking neuron type = 2 for JSON save
@@ -143,7 +143,7 @@ namespace hummus {
         void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
                 auto& neuron = network->get_neurons()[n];
-                dynamic_cast<DecisionMaking*>(neuron.get())->set_intensity(0);
+                dynamic_cast<Decision_Making*>(neuron.get())->set_intensity(0);
             }
         }
 
