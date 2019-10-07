@@ -67,6 +67,7 @@ namespace hummus {
         end_of_integration, // asynchronous - updating synapses when they become inactive (not a real spike)
         prediction, // asynchronous - future theoretical spike time (not a real spike)
         decision, // for decision-making (real spike)
+        programming, // ulpec spike for depression (real spike)
         none // synchronous - for updates at every clock (not a real spike)
     };
     
@@ -199,11 +200,11 @@ namespace hummus {
 		
         // initialise the initial synapse when a neuron receives an event
         template <typename T, typename... Args>
-        spike receive_external_input(double timestamp, Args&&... args) {
+        spike receive_external_input(double timestamp, spike_type type, Args&&... args) {
             if (!initial_synapse) {
                 initial_synapse.reset(new T(std::forward<Args>(args)...));
             }
-            return spike{timestamp, initial_synapse.get(), spike_type::initial};
+            return spike{timestamp, initial_synapse.get(), type};
         }
         
         // share information - generic getter that can be used for accessing child members from parent
@@ -1150,8 +1151,8 @@ namespace hummus {
         }
         
         // overloaded method - creates a spike and adds it to the spike_queue priority queue
-        void inject_spike(int neuronIndex, double timestamp) {
-            spike_queue.emplace(neurons.at(neuronIndex)->receive_external_input<Synapse>(timestamp, neuronIndex, -1, 1, 0));
+        void inject_spike(int neuronIndex, double timestamp, spike_type type = spike_type::initial) {
+            spike_queue.emplace(neurons.at(neuronIndex)->receive_external_input<Synapse>(timestamp, type, neuronIndex, -1, 1, 0));
         }
         
         // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
@@ -1172,7 +1173,7 @@ namespace hummus {
         }
         
         // add spikes from an event vector to the network
-        void inject_input(const std::vector<event>& data) {
+        void inject_input(const std::vector<event>& data, spike_type type = spike_type::initial) {
             // error handling
             if (layers.empty()) {
                 throw std::logic_error("add a layer of neurons before injecting spikes");
@@ -1181,7 +1182,7 @@ namespace hummus {
             for (auto& event: data) {
                 // one dimensional data
                 if (event.x == -1) {
-                    inject_spike(event.neuron_id, event.timestamp); // the neuron_id can represent the sublayer so no need to account for it
+                    inject_spike(event.neuron_id, event.timestamp, type); // the neuron_id can represent the sublayer so no need to account for it
                 // two dimensional data
                 } else {
                     // 2D to 1D mapping for the first layer of the network
@@ -1222,7 +1223,7 @@ namespace hummus {
             
             // injecting into the initial spike vector
             for (auto& spike_time: spike_times) {
-                spike_queue.emplace(neurons[neuronIndex]->receive_external_input<Synapse>(spike_time, neuronIndex, -1, 1, 0));
+                spike_queue.emplace(neurons[neuronIndex]->receive_external_input<Synapse>(spike_time, spike_type::initial, neuronIndex, -1, 1, 0));
             }
         }
         
@@ -1864,7 +1865,7 @@ namespace hummus {
             
             // if spike_queue and predicted_spikes are both empty: propagate the event through the correct input neuron
             if (spike_queue.empty() && predicted_spikes.empty()) {
-                spike s = neurons[idx]->receive_external_input<Synapse>(t, idx, -1, 1, 0);
+                spike s = neurons[idx]->receive_external_input<Synapse>(t, spike_type::initial, idx, -1, 1, 0);
                 neurons[idx]->update(t, s.propagation_synapse, this, 0, s.type);
             } else {
                 // propagate all spikes occuring before the event timestamp
@@ -1899,7 +1900,7 @@ namespace hummus {
                 }
                 
                 // propagate the event through the correct input neuron
-                spike s = neurons[idx]->receive_external_input<Synapse>(t, idx, -1, 1, 0);
+                spike s = neurons[idx]->receive_external_input<Synapse>(t, spike_type::initial, idx, -1, 1, 0);
                 neurons[idx]->update(t, s.propagation_synapse, this, 0, s.type);
             }
             
