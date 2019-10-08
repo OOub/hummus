@@ -20,10 +20,7 @@
 #include <algorithm>
 #include <random>
 #include <deque>
-
-#include "../third_party/filesystem.hpp"
-
-namespace fs = ghc::filesystem;
+#include <filesystem>
 
 namespace hummus {
     
@@ -52,9 +49,9 @@ namespace hummus {
         // saves the files from a database of files formatted to eventstream format into a vector of strings
         std::vector<std::string> generate_database(const std::string directory_path, int sample_percentage=100) {
             std::vector<std::string> database;
-            fs::path current_dir(directory_path);
+            std::filesystem::path current_dir(directory_path);
             // save all files containing the .es extension in the database vector
-            for (auto &file : fs::recursive_directory_iterator(current_dir)) {
+            for (auto &file : std::filesystem::recursive_directory_iterator(current_dir)) {
                 if (file.path().extension() == ".es") {
                     database.emplace_back(file.path());
                 }
@@ -83,9 +80,9 @@ namespace hummus {
             std::vector<std::string> database;
             std::deque<label> labels;
             
-            fs::path current_dir(directory_path);
+            std::filesystem::path current_dir(directory_path);
             // save all files containing the .es extension in the database vector
-            for (auto &file : fs::recursive_directory_iterator(current_dir)) {
+            for (auto &file : std::filesystem::recursive_directory_iterator(current_dir)) {
                 if (file.path().extension() == ".es") {
                     // only use specific classes
                     if (!classes.empty()) {
