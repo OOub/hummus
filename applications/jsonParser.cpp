@@ -12,8 +12,8 @@
 #include <string>
 #include <iostream>
 
-#include "../source/builder.hpp"
 #include "../source/core.hpp"
+#include "../source/builder.hpp"
 #include "../source/GUI/display.hpp"
 
 int main(int argc, char** argv) {
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     display.set_time_window(100);
     display.track_neuron(2);
     
-    network.run(100, 0.1f);
+    network.run(100, 0.1);
     
     return 0;
 }

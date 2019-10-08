@@ -2,4 +2,5 @@ Special thanks to the following people for their contribution to the development
 
 Alexandre Marcireau - Guidance and advice on the overall architecture
 Georgios Exarchakis - Python log_reader module
-Laurent Dardelet - Help with the equations behind the event-based LIF neuron
+Laurent Dardelet    - Help with the equations behind the event-based LIF neuron
+Gregor Lenz         - Major contribution to my mental health
