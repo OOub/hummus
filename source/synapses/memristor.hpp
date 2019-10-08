@@ -39,6 +39,8 @@ namespace hummus {
         }
         
 		virtual void receive_spike() override {
+            // 1. calculating current going to the postsynaptic neurons
+            // G_syn x V_syn = i_syn (with V_syn = 1V for active synapses entrance + whatever other spike there is from the post)
 		}
         
 		virtual void to_json(nlohmann::json& output) override {

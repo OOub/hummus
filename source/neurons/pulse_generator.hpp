@@ -51,8 +51,12 @@ namespace hummus {
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             // initial or generated -> inference pulse
+            // 1. decrease in voltage square waveform (1.1V)
+            // 2. end of integration spike on the same neuron after tau_up
             
             // programming -> programming pulse
+            // 1. increase in voltage square waveform (1.1V)
+            // 2. end of integration spike on the same neuron after tau_down
 		}
         
         // write neuron parameters in a JSON format

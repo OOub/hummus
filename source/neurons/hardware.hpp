@@ -50,6 +50,11 @@ namespace hummus {
         }
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
+            // 1. update the synapses
+            // 2. if not none and post is active send the spike to the synapses and get an estimate of the current (taking into consideration i_cancel and the scaling factor K)
+            // 3. calculate potential according to the equation
+            // 4. if threshold = 0 then keep increasing forever without generating spikes
+            // 5. if spikes generated then send 3 spikes to terminals for the double square waveform
 		}
         
         // write neuron parameters in a JSON format
