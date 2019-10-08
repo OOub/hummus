@@ -14,7 +14,6 @@
 #pragma once
 
 #include "../../third_party/json.hpp"
-#include <iomanip>
 
 namespace hummus {
     

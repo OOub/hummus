@@ -14,7 +14,7 @@
 #include "core.hpp"
 
 #include "neurons/parrot.hpp"
-#include "neurons/decisionMaking.hpp"
+#include "neurons/decision_making.hpp"
 #include "neurons/cuba_lif.hpp"
 
 #include "synapses/exponential.hpp"
@@ -65,9 +65,9 @@ namespace hummus {
                                 } case 1: {
                                     layer_helper<CUBA_LIF>(layer[i]);
                                     break;
-                                // creating DecisionMaking layer
+                                // creating Decision_Making layer
                                 } case 2: {
-                                    layer_helper<DecisionMaking>(layer[i]);
+                                    layer_helper<Decision_Making>(layer[i]);
                                     break;
                                 }
                             }

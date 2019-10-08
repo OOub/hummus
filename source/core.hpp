@@ -36,22 +36,27 @@
 #include "../third_party/sepia.hpp"
 
 // random distributions
-#include "randomDistributions/lognormal.hpp"
-#include "randomDistributions/uniform.hpp"
-#include "randomDistributions/normal.hpp"
-#include "randomDistributions/cauchy.hpp"
+#include "random_distributions/lognormal.hpp"
+#include "random_distributions/uniform.hpp"
+#include "random_distributions/normal.hpp"
+#include "random_distributions/cauchy.hpp"
 
 // data parser
-#include "dataParser.hpp"
+#include "data_parser.hpp"
 
 // addons
 #include "addon.hpp"
-#include "mainThreadAddon.hpp"
+#include "main_addon.hpp"
 
 // synapse models
 #include "synapse.hpp"
 #include "synapses/exponential.hpp"
 #include "synapses/square.hpp"
+#include "synapses/memristor.hpp"
+
+#ifdef TBB
+#include "tbb/tbb.h"
+#endif
 
 namespace hummus {
     
@@ -62,6 +67,7 @@ namespace hummus {
         end_of_integration, // asynchronous - updating synapses when they become inactive (not a real spike)
         prediction, // asynchronous - future theoretical spike time (not a real spike)
         decision, // for decision-making (real spike)
+        programming, // ulpec spike for depression (real spike)
         none // synchronous - for updates at every clock (not a real spike)
     };
     
@@ -75,34 +81,35 @@ namespace hummus {
     
     // receptive_fields
     struct receptive_fields {
-        std::vector<std::size_t>      neurons;
-        int                           id;
+        std::vector<std::size_t>      neurons; // neuron indices belonging to the receptive field
+        int                           id; // receptive field ID
     };
 
     // the equivalent of feature maps
 	struct sublayer {
-        std::vector<receptive_fields> receptive_fields;
-		std::vector<std::size_t>      neurons;
-		int                           id;
+        std::vector<receptive_fields> receptive_fields; // receptive fields of a sublayer
+		std::vector<std::size_t>      neurons; // neuron indices belonging to a sublayer
+		int                           id; // sublayer ID
 	};
 	
     // structure organising neurons into layers and sublayers for easier access
 	struct layer {
-		std::vector<sublayer>         sublayers;
-        std::vector<std::size_t>      neurons;
-		int                           id;
-        bool                          active = true;
-		int                           width = -1;
-		int                           height = -1;
-        int                           kernel_size = -1;
-        int                           stride = -1;
+		std::vector<sublayer>         sublayers; // sublayers belonging to layer
+        std::vector<std::size_t>      neurons; // neuron indices belonging to layer
+		int                           id; // layer ID
+        bool                          active = true; // whether or not a layer receives spikes
+		int                           width = -1; // width of the layer (if make_grid is used)
+		int                           height = -1; // height of the layer (if make_grid is used)
+        int                           kernel_size = -1; // size of the kernel (if make_grid is used with a previous layer as input)
+        int                           stride = -1; // stride of the kernel (if make_grid is used with a previous layer as input)
 	};
 
     // spike - propagated between synapses
     struct spike {
-        double        timestamp;
-        Synapse*      propagation_synapse;
-        spike_type    type;
+        double        timestamp; // timestamp of the spike (arbitrary unit but make sure to stay consistent with all the other parameters)
+        Synapse*      propagation_synapse; // which synapse is propagating a spike - for access to pre and post-synaptic neurons to know where to send the spike
+        spike_type    type; // type of spike (to differentiate between real spikes and other spikes used by the network)
+        
         // provides the logic for the priority queue
         bool operator<(const spike& s) const {
             return timestamp > s.timestamp;
@@ -193,11 +200,11 @@ namespace hummus {
 		
         // initialise the initial synapse when a neuron receives an event
         template <typename T, typename... Args>
-        spike receive_external_input(double timestamp, Args&&... args) {
+        spike receive_external_input(double timestamp, spike_type type, Args&&... args) {
             if (!initial_synapse) {
                 initial_synapse.reset(new T(std::forward<Args>(args)...));
             }
-            return spike{timestamp, initial_synapse.get(), spike_type::initial};
+            return spike{timestamp, initial_synapse.get(), type};
         }
         
         // share information - generic getter that can be used for accessing child members from parent
@@ -1144,8 +1151,8 @@ namespace hummus {
         }
         
         // overloaded method - creates a spike and adds it to the spike_queue priority queue
-        void inject_spike(int neuronIndex, double timestamp) {
-            spike_queue.emplace(neurons.at(neuronIndex)->receive_external_input<Synapse>(timestamp, neuronIndex, -1, 1, 0));
+        void inject_spike(int neuronIndex, double timestamp, spike_type type = spike_type::initial) {
+            spike_queue.emplace(neurons.at(neuronIndex)->receive_external_input<Synapse>(timestamp, type, neuronIndex, -1, 1, 0));
         }
         
         // adding spikes predicted by the asynchronous network (timestep = 0) for synaptic integration
@@ -1166,7 +1173,7 @@ namespace hummus {
         }
         
         // add spikes from an event vector to the network
-        void inject_input(const std::vector<event>& data) {
+        void inject_input(const std::vector<event>& data, spike_type type = spike_type::initial) {
             // error handling
             if (layers.empty()) {
                 throw std::logic_error("add a layer of neurons before injecting spikes");
@@ -1175,7 +1182,7 @@ namespace hummus {
             for (auto& event: data) {
                 // one dimensional data
                 if (event.x == -1) {
-                    inject_spike(event.neuron_id, event.timestamp); // the neuron_id can represent the sublayer so no need to account for it
+                    inject_spike(event.neuron_id, event.timestamp, type); // the neuron_id can represent the sublayer so no need to account for it
                 // two dimensional data
                 } else {
                     // 2D to 1D mapping for the first layer of the network
@@ -1216,7 +1223,7 @@ namespace hummus {
             
             // injecting into the initial spike vector
             for (auto& spike_time: spike_times) {
-                spike_queue.emplace(neurons[neuronIndex]->receive_external_input<Synapse>(spike_time, neuronIndex, -1, 1, 0));
+                spike_queue.emplace(neurons[neuronIndex]->receive_external_input<Synapse>(spike_time, spike_type::initial, neuronIndex, -1, 1, 0));
             }
         }
         
@@ -1330,7 +1337,7 @@ namespace hummus {
             }
             
             std::atomic_bool running(true);
-            std::thread spikeManager([&running, &sync, trainingData, _timestep, testData, this] {
+            std::thread spikeManager([&] {
                 sync.lock();
                 sync.unlock();
                 
@@ -1407,7 +1414,7 @@ namespace hummus {
         }
         
         // running asynchronously through one .es file - relies on the sepia header
-        void run_es(const std::string filename, bool classification=false, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
+        void run_es(const std::string filename, bool classification=false, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, int polarity=2, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
             asynchronous = true;
             
             for (auto& n: neurons) {
@@ -1457,9 +1464,17 @@ namespace hummus {
                                                                     throw sepia::end_of_file();
                                                                 }
 
-                                                                // temporal crop and spatial crop
-                                                                if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                    es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                // temporal crop and spatial crop and filtering the selected polarity
+                                                                if (polarity == 2) {
+                                                                    if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                        es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                    }
+                                                                } else if (polarity == 0 || polarity == 1) {
+                                                                    if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                        es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                    }
+                                                                } else {
+                                                                    throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                 }
                                                             });
                 } else if (header.event_stream_type == sepia::type::atis) {
@@ -1471,9 +1486,18 @@ namespace hummus {
                                                                       throw sepia::end_of_file();
                                                                   }
                         
-                                                                  // filtering out gray level events, temporal crop and spatial crop
-                                                                  if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                      es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                  if (polarity == 2) {
+                                                                      // filtering out gray level events, the selected polarity, temporal crop and spatial crop
+                                                                      if (!event.is_threshold_crossing && event.polarity == static_cast<int>(polarity) && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                          es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                      }
+                                                                  } else if (polarity == 0 || polarity == 1) {
+                                                                      // filtering out gray level events, the selected polarity, temporal crop and spatial crop
+                                                                      if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                          es_run_helper(static_cast<double>(event.t), event.x, event.y);
+                                                                      }
+                                                                  } else {
+                                                                      throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                   }
                                                               });
                 } else {
@@ -1502,7 +1526,7 @@ namespace hummus {
         }
         
         // running asynchronously through a database of .es files - relies on the sepia header
-        void run_database(const std::vector<std::string>& training_database, const std::vector<std::string>& testing_database={}, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
+        void run_database(const std::vector<std::string>& training_database, const std::vector<std::string>& testing_database={}, uint64_t t_max=UINT64_MAX, uint64_t t_min=0, int polarity=2, uint16_t x_max=UINT16_MAX, uint16_t x_min=0, uint16_t y_max=UINT16_MAX, uint16_t y_min=0) {
             
             asynchronous = true;
             
@@ -1520,7 +1544,7 @@ namespace hummus {
             }
             
             std::atomic_bool running(true);
-            auto loop = std::thread([&running, &sync, training_database, testing_database, t_max, t_min, x_max, x_min, y_max, y_min, this]() {
+            auto loop = std::thread([&]() {
                 sync.lock();
                 sync.unlock();
                 
@@ -1557,11 +1581,19 @@ namespace hummus {
                                                                      if (event.t > t_max || !running.load(std::memory_order_relaxed)) {
                                                                          throw sepia::end_of_file();
                                                                      }
-                                                                                                
-                                                                     // temporal crop and spatial crop
-                                                                     if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                        es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
-                                                                    }
+                                                    
+                                                                     // temporal crop and spatial crop and polarity selection
+                                                                     if (polarity == 2) {
+                                                                         if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                            es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                         }
+                                                                     } else if (polarity == 0 || polarity == 1) {
+                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                            es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                         }
+                                                                     } else {
+                                                                         throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
+                                                                     }
                                                                  });
                         
                     } else if (header.event_stream_type == sepia::type::atis) {
@@ -1573,9 +1605,17 @@ namespace hummus {
                                                                           throw sepia::end_of_file();
                                                                       }
                             
-                                                                      // filtering out gray level events, temporal crop and spatial crop
-                                                                      if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                          es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                      // filtering out gray level events, temporal crop and spatial crop and polarity selection
+                                                                      if (polarity == 2) {
+                                                                          if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                          }
+                                                                      } else if (polarity == 0 || polarity == 1) {
+                                                                          if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                          }
+                                                                      } else {
+                                                                          throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                       }
                                                                   });
                     } else {
@@ -1644,10 +1684,19 @@ namespace hummus {
                                                                              throw sepia::end_of_file();
                                                                          }
                                 
-                                                                         // temporal crop and spatial crop
-                                                                         if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                             final_t = static_cast<double>(event.t);
-                                                                             es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                         // temporal crop and spatial crop and polarity selection
+                                                                         if (polarity == 2) {
+                                                                             if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                 final_t = static_cast<double>(event.t);
+                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                             }
+                                                                         } else if (polarity == 0 || polarity == 1) {
+                                                                             if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                 final_t = static_cast<double>(event.t);
+                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                             }
+                                                                         } else {
+                                                                             throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                          }
                                                                      });
                         } else if (header.event_stream_type == sepia::type::atis) {
@@ -1659,10 +1708,19 @@ namespace hummus {
                                                                               throw sepia::end_of_file();
                                                                           }
                                 
-                                                                          // filtering out gray level events, temporal crop and spatial crop
-                                                                          if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
-                                                                              final_t = static_cast<double>(event.t);
-                                                                              es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                          // filtering out gray level events, temporal crop and spatial crop and polarity selection
+                                                                          if (polarity == 2) {
+                                                                              if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                  final_t = static_cast<double>(event.t);
+                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                              }
+                                                                          } else if (polarity == 0 || polarity == 1) {
+                                                                              if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                                  final_t = static_cast<double>(event.t);
+                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                              }
+                                                                          } else {
+                                                                              throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
                                                                           }
                                                                       });
                         } else {
@@ -1745,11 +1803,11 @@ namespace hummus {
             return addons;
         }
         
-        std::unique_ptr<MainThreadAddon>& get_main_thread_addon() {
+        std::unique_ptr<MainAddon>& get_main_thread_addon() {
             return th_addon;
         }
 
-        void set_main_thread_addon(MainThreadAddon* new_thAddon) {
+        void set_main_thread_addon(MainAddon* new_thAddon) {
             th_addon.reset(new_thAddon);
         }
 
@@ -1807,7 +1865,7 @@ namespace hummus {
             
             // if spike_queue and predicted_spikes are both empty: propagate the event through the correct input neuron
             if (spike_queue.empty() && predicted_spikes.empty()) {
-                spike s = neurons[idx]->receive_external_input<Synapse>(t, idx, -1, 1, 0);
+                spike s = neurons[idx]->receive_external_input<Synapse>(t, spike_type::initial, idx, -1, 1, 0);
                 neurons[idx]->update(t, s.propagation_synapse, this, 0, s.type);
             } else {
                 // propagate all spikes occuring before the event timestamp
@@ -1842,7 +1900,7 @@ namespace hummus {
                 }
                 
                 // propagate the event through the correct input neuron
-                spike s = neurons[idx]->receive_external_input<Synapse>(t, idx, -1, 1, 0);
+                spike s = neurons[idx]->receive_external_input<Synapse>(t, spike_type::initial, idx, -1, 1, 0);
                 neurons[idx]->update(t, s.propagation_synapse, this, 0, s.type);
             }
             
@@ -2131,7 +2189,7 @@ namespace hummus {
         std::vector<layer>                      layers;
 		std::vector<std::unique_ptr<Neuron>>    neurons;
         std::vector<std::unique_ptr<Addon>>     addons;
-        std::unique_ptr<MainThreadAddon>        th_addon;
+        std::unique_ptr<MainAddon>              th_addon;
 		std::deque<label>                       training_labels;
         bool                                    decision_making;
         std::unordered_map<std::string, int>    classes_map;

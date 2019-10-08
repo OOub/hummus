@@ -14,10 +14,9 @@
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
 #include "../source/addons/spike_logger.hpp"
-#include "../source/learningRules/myelin_plasticity_v1.hpp"
+#include "../source/learning_rules/myelin_plasticity_v1.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/cuba_lif.hpp"
-#include "../source/neurons/decisionMaking.hpp"
 
 int main(int argc, char** argv) {
     

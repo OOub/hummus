@@ -1,5 +1,5 @@
 /*
- * mainThreadAddon.hpp
+ * main_addon.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
@@ -14,12 +14,12 @@
 #include "addon.hpp"
 
 namespace hummus {
-	class MainThreadAddon : public Addon {
+	class MainAddon : public Addon {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		MainThreadAddon() = default;
-		virtual ~MainThreadAddon(){}
+		MainAddon() = default;
+		virtual ~MainAddon(){}
 		
         // method that starts the GUI
 		virtual void begin(Network* network, std::mutex* sync){}

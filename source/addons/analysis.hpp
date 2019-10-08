@@ -15,7 +15,7 @@
 #include <limits>
 #include <algorithm>
 
-#include "../dataParser.hpp"
+#include "../data_parser.hpp"
 
 namespace hummus {
     
@@ -45,7 +45,7 @@ namespace hummus {
         virtual ~Analysis(){}
         
 		// ----- PUBLIC METHODS -----
-		void accuracy() {
+		double accuracy() {
 			if (!classified_labels.empty() && classified_labels.size() == actual_labels.size()) {
 				std::vector<std::string> correctLabels;
 				for (auto i=0; i<actual_labels.size(); i++) {
@@ -56,8 +56,10 @@ namespace hummus {
 				
 				double accuracy = (static_cast<double>(correctLabels.size())/actual_labels.size())*100.;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
+                return accuracy;
 			} else {
-				throw std::logic_error("there is a problem with the classified and actual labels");
+                std::cout << "there is a problem with the classified and actual labels" << std::endl;
+                return -1;
 			}
 		}
 		

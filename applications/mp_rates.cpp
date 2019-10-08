@@ -14,9 +14,8 @@
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
 #include "../source/neurons/parrot.hpp"
-#include "../source/neurons/decisionMaking.hpp"
 #include "../source/neurons/cuba_lif.hpp"
-#include "../source/learningRules/myelin_plasticity_v2.hpp"
+#include "../source/learning_rules/myelin_plasticity_v2.hpp"
 
 int main(int argc, char** argv) {
     hummus::Network network;

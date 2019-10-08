@@ -10,7 +10,6 @@
  */
 
 #include <iostream>
-//#include <torch/torch.h>
 
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
@@ -19,9 +18,6 @@
 #include "../source/addons/spike_logger.hpp"
 
 int main(int argc, char** argv) {
-    
-//    torch::Tensor tensor = torch::rand({2, 3});
-//    std::cout << tensor << std::endl;
     
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
@@ -51,7 +47,7 @@ int main(int argc, char** argv) {
     display.plot_currents();
 
     //  ----- RUNNING THE NETWORK -----
-    network.verbosity(2);
+    network.verbosity(1);
     network.run(100, 0.1);
 
     //  ----- SAVE THE NETWORK IN A JSON FILE -----
