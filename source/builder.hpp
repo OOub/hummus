@@ -153,8 +153,8 @@ namespace hummus {
                 n->set_membrane_time_constant(input["membrane_time_constant"].get<float>());
             }
             
-            if (input["conductance"].is_number()) {
-                n->set_conductance(input["conductance"].get<float>());
+            if (input["capacitance"].is_number()) {
+                n->set_capacitance(input["capacitance"].get<float>());
             }
             
             if (input["leakage_conductance"].is_number()) {
@@ -162,7 +162,7 @@ namespace hummus {
             }
             
             if (input["class_label"].is_string()) {
-                dynamic_cast<DecisionMaking*>(n)->set_class_label(input["class_label"].get<std::string>());
+                dynamic_cast<Decision_Making*>(n)->set_class_label(input["class_label"].get<std::string>());
             }
 
             // specific neuron parameters
@@ -200,7 +200,7 @@ namespace hummus {
                         
                         switch (int json_id = axonalSynapse[i]["json_id"].get<int>(); json_id) {
                             case 0: {
-                            n->make_synapse<Synapse>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
+                            n->make_synapse<Synapse>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay);
                                 
                                 break;
                             } case 1: {

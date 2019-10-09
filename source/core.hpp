@@ -839,7 +839,6 @@ namespace hummus {
                 }
             }
         }
-
         
         // connecting a subsampled layer to its previous layer. Last set of paramaters are to characterize the synapses. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T = Synapse, typename F, typename... Args>
@@ -935,7 +934,7 @@ namespace hummus {
                 }
             }
         }
-
+        
         // interconnecting a layer (feedforward, feedback and self-excitation) with randomised weights and delays. lambdaFunction: Takes in one of the classes inside the randomDistributions folder to define a distribution for the weights.
         template <typename T = Synapse, typename F, typename... Args>
         void reservoir(layer reservoirLayer, int number_of_synapses, F&& lambdaFunction, int feedforward_connection_ratio, int feedback_connection_ratio, int self_excitation_connection_ratio, Args&&... args) {
@@ -980,7 +979,7 @@ namespace hummus {
                 }
             }
         }
-
+        
 		// connecting two layers according to a weight matrix vector of vectors and a delays matrix vector of vectors (columns for input and rows for output)
         template <typename T = Synapse, typename... Args>
         void connectivity_matrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<float>> weights, std::vector<std::vector<float>> delays, Args&&... args) {
@@ -1059,7 +1058,7 @@ namespace hummus {
                 }
             }
         }
-
+        
         // all to all connection between layers. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays
         template <typename T = Synapse, typename F, typename... Args>
         void all_to_all(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int connection_ratio, Args&&... args) {
@@ -1090,7 +1089,7 @@ namespace hummus {
                 }
             }
         }
-
+        
         // interconnecting a layer with soft winner-takes-all synapses, using negative weights
         template <typename T = Synapse, typename F, typename... Args>
         void lateral_inhibition(layer current_layer, int number_of_synapses, F&& lambdaFunction, int connection_ratio, Args&&... args) {
@@ -1144,7 +1143,7 @@ namespace hummus {
                 }
             }
         }
-
+        
         // ----- PUBLIC NETWORK METHODS -----
         // adds a spike to the priority queue
         void inject_spike(spike s) {
