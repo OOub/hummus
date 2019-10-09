@@ -19,20 +19,20 @@ solution 'hummus'
 
             newoption {
        			trigger     = 'no_tbb',
-                description = 'Compiles with tbb'
+                description = 'Compiles without tbb'
     	    }
-
-            if _OPTIONS['no_tbb'] then
-                print(string.char(27) .. '[32m Building without TBB' .. string.char(27) .. '[0m')
-            else
-                with_tbb = true
-            end
 
   			if _OPTIONS['no_qt'] then
      			print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
      		else
      			with_qt = true
   			end
+
+            if _OPTIONS['no_tbb'] then
+                print(string.char(27) .. '[32m Building without TBB' .. string.char(27) .. '[0m')
+            else
+                with_tbb = true
+            end
 
       			-- All files in source, third_party and applications
           	files {'source/**.hpp',
@@ -73,15 +73,11 @@ solution 'hummus'
                 end
               	includedirs {'/usr/local/include'}
             	libdirs {'/usr/local/lib'}
+                buildoptions {'-std=c++17'}
+               	linkoptions {'-std=c++17'}
 
             -- Linux specific settings
             configuration 'linux'
                 links {'pthread'}
-                buildoptions {'-std=c++17'}
-               	linkoptions {'-std=c++17'}
 
-            -- Mac OS X specific settings
-            configuration 'macosx'
-                buildoptions {'-std=c++17'}
-               	linkoptions {'-std=c++17'}
     end

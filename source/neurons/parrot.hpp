@@ -39,8 +39,7 @@ namespace hummus {
                 if (addon->get_mask().empty() && !addon->no_automatic_include()) {
                     add_relevant_addon(addon.get());
                 } else {
-                    auto it = std::find(addon->get_mask().begin(), addon->get_mask().end(), static_cast<size_t>(neuron_id));
-                    if (it != addon->get_mask().end()) {
+                    if (auto it = std::find(addon->get_mask().begin(), addon->get_mask().end(), static_cast<size_t>(neuron_id)); it != addon->get_mask().end()) {
                         add_relevant_addon(addon.get());
                     }
                 }

@@ -55,8 +55,8 @@ namespace hummus {
                     for (auto i=0; i<layer.size(); i++) {
 	
                         if (layer[i]["neuron_type"].is_number()) {
-                            int neuronType = layer[i]["neuron_type"].get<int>();
-                            switch (neuronType) {
+
+                            switch (int neuronType = layer[i]["neuron_type"].get<int>(); neuronType) {
                                 // creating parrot layer
                                 case 0: {
                                     layer_helper<Parrot>(layer[i]);
@@ -167,8 +167,7 @@ namespace hummus {
 
             // specific neuron parameters
             if (input["type"].is_number()) {
-                int type = input["type"].get<int>();
-                switch (type) {
+                switch (int type = input["type"].get<int>(); type) {
                     // CUBA_LIF neuron
                     case 1: {
                         capture_CUBA_LIF_parameters<CUBA_LIF>(input, n);
@@ -198,9 +197,8 @@ namespace hummus {
                     
                     if (axonalSynapse[i]["postsynaptic_neuron"].is_number()) {
                         float synapseTimeConstant = 0;
-                        int json_id = axonalSynapse[i]["json_id"].get<int>();
                         
-                        switch (json_id) {
+                        switch (int json_id = axonalSynapse[i]["json_id"].get<int>(); json_id) {
                             case 0: {
                             n->make_synapse<Synapse>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
                                 
