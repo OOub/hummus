@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.12)
 
 # project description
-project (Hummus VERSION 1.0
-		        DESCRIPTION "Hummus spiking neural network simulator"
+project(Hummus VERSION 1.0
+                DESCRIPTION "Hummus spiking neural network simulator"
                 LANGUAGES CXX)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(GLOBAL PROPERTY AUTOGEN_TARGETS_FOLDER autogen)
+set_property(GLOBAL PROPERTY AUTOGEN_TARGETS_FOLDER _autogen)
 
 # setting default build type
 set(default_build_type "Release")
@@ -35,7 +35,7 @@ target_sources(hummus_library INTERFACE ${header_list})
 # preserving directory hierarchy inside IDE
 foreach(header IN LISTS header_list)
     file(RELATIVE_PATH path "${CMAKE_SOURCE_DIR}" "${header}")
-    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES "${path}")
+    source_group(TREE ${CMAKE_SOURCE_DIR} FILES "${path}")
 endforeach()
 
 # Setting which directories are needed
@@ -60,21 +60,33 @@ endif()
 
 # handles optional Qt 5 linking and includes
 if(QT)
-    set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP moc)
+    set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP _moc)
     add_compile_definitions(QT QT_NO_KEYWORDS)
     set(CMAKE_AUTOMOC ON)
-    set(CMAKE_AUTORCC ON)
-    set(CMAKE_AUTOUIC ON)
     find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
-    target_link_libraries(hummus_library INTERFACE Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Widgets Qt5::QuickControls2 Qt5::Charts)
-    source_group(moc FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_automoc.cpp )
+    target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
+                                                        ${Qt5Gui_INCLUDE_DIRS}
+                                                        ${Qt5Qml_INCLUDE_DIRS}
+                                                        ${Qt5Quick_INCLUDE_DIRS}
+                                                        ${Qt5Widgets_INCLUDE_DIRS}
+                                                        ${Qt5QuickControls2_INCLUDE_DIRS}
+                                                        ${Qt5Charts_INCLUDE_DIRS})
+
+    target_link_libraries(hummus_library INTERFACE Qt5::Core
+                                                   Qt5::Gui
+                                                   Qt5::Qml
+                                                   Qt5::Quick
+                                                   Qt5::Widgets
+                                                   Qt5::QuickControls2
+                                                   Qt5::Charts)
+    source_group(moc FILES ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}_automoc.cpp )
 endif()
 
 # handles optional libtorch (C++ frontend of pytorch) linking and includes
 if(TORCH)
-    add_compile_definitions(TORCH)
     find_package(Torch REQUIRED)
     target_link_libraries(hummus_library INTERFACE ${TORCH_LIBRARIES})
+    add_compile_definitions(TORCH)
 endif()
 
 # Linux specific configuration
@@ -88,17 +100,14 @@ target_compile_features(hummus_library INTERFACE cxx_std_17)
 
 ######### HUMMUS EXECUTABLES #########
 
-# file(GLOB application_list CONFIGURE_DEPENDS "applications/*.cpp")
-#
-# foreach(app IN LISTS application_list)
-#     get_filename_component(app_name "${app}" NAME_WE)
-#     add_executable(${app_name} applications/${app_name}.cpp)
-#     source_group("applications" FILES applications/${app_name}.cpp)
-#     target_compile_features(${app_name} PRIVATE cxx_std_17)
-#     target_link_libraries(${app_name} PRIVATE hummus_library)
-# endforeach()
+# gather all .cpp inside the applications folder
+file(GLOB application_list CONFIGURE_DEPENDS "applications/*.cpp")
 
-add_executable(basic_test applications/basic_test.cpp)
-source_group("applications" FILES applications/basic_test.cpp)
-target_compile_features(basic_test PRIVATE cxx_std_17)
-target_link_libraries(basic_test PRIVATE hummus_library)
+# build executable for each application
+foreach(app IN LISTS application_list)
+    get_filename_component(app_name "${app}" NAME_WE)
+    add_executable(${app_name} applications/${app_name}.cpp)
+    source_group("applications" FILES applications/${app_name}.cpp)
+    target_compile_features(${app_name} PRIVATE cxx_std_17)
+    target_link_libraries(${app_name} PRIVATE hummus_library)
+endforeach()
