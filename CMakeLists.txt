@@ -16,8 +16,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # options to handle compilation with or without external dependencies
-option(QT    "Compiles without Qt5"  ON)
-option(TBB   "Compiles without TBB"  ON)
+option(QT    "Compiles with Qt5"  ON)
+option(TBB   "Compiles with TBB"  OFF)
 option(TORCH "Compile with libtorch" OFF)
 
 ######### HUMMUS LIBRARY #########
