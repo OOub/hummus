@@ -10,7 +10,7 @@ Lemon Juice, chickpeas, tahini, and a dash of olive oil, spice things up and you
 Event-based | Clock-based
 ------------|------------------
 performance | easier algorithms
-for neuromorphic platforms | neurons updated at every timestep
+made for neuromorphic platforms | neurons updated at every timestep
 
 #### **Ok but seriously, why?**
 Hummus was born because of the inflexibility of other simulators to adapt according the needs of the neuromorphic engineering field. We wanted tp **easily explore original learning rules**, work with **neurons that include non-linear event-based current dynamics**, and create biologically-unrealistic networks tailored specifically for certain event-based computer-vision tasks. This simulator allows us to easily implement new ideas without having to delve into endless lines of code, and it was developed with two goals in mind: flexibility and simplicity
@@ -41,6 +41,7 @@ to install:
 * CMake 3.12+
 * Qt 5.9+     - **optional**
 * intel TBB   - **optional**
+* libtorch    - **optional**
 
 #### **Supported OS**
 Compilation requires a C++17 compiler and a recent version of CMake. Due to the dependency on the C++17 filesystem library the only supported Operating Systems are:
@@ -67,10 +68,19 @@ brew install cmake
 brew install qt5
 ~~~~
 
-4. Install TBB (optional: enables the parallelisation tbb library for use to run networks multiple times in parallel)
+4. Install TBB (optional: enables the parallelisation tbb library. Unused within Hummus. safe to ignore)
 ~~~~
 brew install tbb
 ~~~~
+
+5. Install libtorch (optional: for classification purposes for example. Unused within Hummus. safe to ignore)
+~~~~
+cd
+wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-macos-latest.zip
+unzip libtorch-shared-with-deps-latest.zip
+~~~~
+
+disclaimer: we're saving it on the home directory for simplicity.
 
 #### **On Linux**
 
@@ -88,6 +98,15 @@ sudo apt-get install qt5-default libqt5charts5 libqt5charts5-dev libqt5qml5 qtde
 ~~~~
 sudo apt install libtbb-dev
 ~~~~
+
+4. Install libtorch (optional: for classification purposes for example. Unused within Hummus. safe to ignore)
+~~~~
+cd
+wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
+unzip libtorch-shared-with-deps-latest.zip
+~~~~
+
+disclaimer: we're saving it on the home directory for simplicity.
 
 ## Building Hummus
 
