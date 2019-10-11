@@ -48,7 +48,7 @@ namespace hummus {
 		double accuracy() {
 			if (!classified_labels.empty() && classified_labels.size() == actual_labels.size()) {
 				std::vector<std::string> correctLabels;
-				for (auto i=0; i<actual_labels.size(); i++) {
+				for (int i=0; i<static_cast<int>(actual_labels.size()); i++) {
 					if (classified_labels[i] == actual_labels[i]) {
 						correctLabels.emplace_back(classified_labels[i]);
 					}
@@ -130,7 +130,7 @@ namespace hummus {
                 } else {
                     labels.emplace_back(label{"end", std::numeric_limits<double>::max()});
 
-                    for (auto i=1; i<labels.size(); i++) {
+                    for (int i=1; i<static_cast<int>(labels.size()); i++) {
 
                         std::vector<std::string> labels_interval;
                         // get all labels between each interval

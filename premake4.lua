@@ -13,25 +13,27 @@ solution 'hummus'
             location 'build'
 
             newoption {
-       			trigger     = 'no_qt',
-                description = 'Compiles without Qt'
+       			trigger     = 'NO_QT',
+                description = 'Compiles without Qt5'
     		}
 
             newoption {
-       			trigger     = 'no_tbb',
-                description = 'Compiles without tbb'
+       			trigger     = 'NO_TBB',
+                description = 'Compiles without TBB'
     	    }
 
-  			if _OPTIONS['no_qt'] then
+  			if _OPTIONS['NO_QT'] then
      			print(string.char(27) .. '[32m Building without Qt' .. string.char(27) .. '[0m')
      		else
      			with_qt = true
+                defines {"QT", "QT_NO_KEYWORDS"}
   			end
 
-            if _OPTIONS['no_tbb'] then
+            if _OPTIONS['NO_TBB'] then
                 print(string.char(27) .. '[32m Building without TBB' .. string.char(27) .. '[0m')
             else
                 with_tbb = true
+                defines {"TBB"}
             end
 
       			-- All files in source, third_party and applications
@@ -69,7 +71,6 @@ solution 'hummus'
             configuration 'linux or macosx'
                 if with_tbb then
                     links {'tbb'}
-                    defines {"TBB"}
                 end
               	includedirs {'/usr/local/include'}
             	libdirs {'/usr/local/lib'}

@@ -11,11 +11,11 @@ R""(
  * Information: QML file that defines the GUI.
  */
 
-import QtQuick 2.13
-import QtQuick.Controls 2.13
-import QtQuick.Layouts 1.13
-import QtQuick.Window 2.13
-import QtCharts 2.13
+import QtQuick 2.7
+import QtQuick.Controls 2.2
+import QtQuick.Layouts 1.3
+import QtQuick.Window 2.3
+import QtCharts 2.2
 
 import InputViewer 1.0
 import OutputViewer 1.0

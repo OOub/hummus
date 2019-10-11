@@ -131,21 +131,21 @@ namespace hummus {
                 sublayer_id(_sublayer_id),
                 rf_id(_rf_id),
                 xy_coordinates(_xy_coordinates),
-                threshold(_threshold), //mV
+                current(0), // pA
                 potential(_restingPotential), //mV
+                trace(0),
+                threshold(_threshold), //mV
+                resting_potential(_restingPotential), //mV
+                trace_time_constant(_traceTimeConstant),
                 capacitance(_capacitance), // pF
                 leakage_conductance(_leakage_conductance), // nS
                 membrane_time_constant(_capacitance/_leakage_conductance), // ms
-                current(0), // pA
                 refractory_period(_refractory_period), //ms
-                resting_potential(_restingPotential), //mV
-                trace(0),
-                trace_time_constant(_traceTimeConstant),
+                active(true),
                 previous_spike_time(0),
                 previous_input_time(0),
-                class_label(_classLabel),
-                active(true),
-                neuron_type(0) {
+                neuron_type(0),
+                class_label(_classLabel) {
             // error handling
             if (membrane_time_constant <= 0) {
                 throw std::logic_error("The potential decay cannot less than or equal to 0");
@@ -416,16 +416,16 @@ namespace hummus {
 
 		// ----- CONSTRUCTOR AND DESTRUCTOR ------
         Network() :
-                learning_status(true),
-                asynchronous(false),
-                decision_making(false),
-                learning_off_signal(-1),
                 verbose(0),
-                decision_pre_ts(0),
-                max_delay(0) {}
+                decision_making(false),
+                learning_status(true),
+                learning_off_signal(-1),
+                max_delay(0),
+                asynchronous(false),
+                decision_pre_ts(0) {}
 
         // ----- NETWORK IMPORT EXPORT METHODS -----
-
+        
         // exporting the network into a JSON file
         void save(std::string filename) {
             nlohmann::json output = nlohmann::json::array();
@@ -573,7 +573,7 @@ namespace hummus {
             std::vector<sublayer> sublayers;
             std::vector<std::size_t> neuronsInLayer;
             float inv_number_neurons = 1. / _numberOfNeurons;
-            for (int i=0; i<_radii.size(); i++) {
+            for (int i=0; i<static_cast<int>(_radii.size()); i++) {
                 std::vector<std::size_t> neuronsInSublayer;
                 for (int k=0+shift; k<_numberOfNeurons+shift; k++) {
                     // we round the coordinates because the precision isn't needed and xy_coordinates are int
@@ -1034,12 +1034,12 @@ namespace hummus {
             int number_of_connections = static_cast<int>(presynapticLayer.neurons.size()) * number_of_synapses;
             auto successful_connections = find_successful_connections(connection_ratio, number_of_connections);
             int idx = 0;
-            for (auto preSubIdx=0; preSubIdx<presynapticLayer.sublayers.size(); preSubIdx++) {
-                for (auto preNeuronIdx=0; preNeuronIdx<presynapticLayer.sublayers[preSubIdx].neurons.size(); preNeuronIdx++) {
-                    for (auto postSubIdx=0; postSubIdx<postsynapticLayer.sublayers.size(); postSubIdx++) {
-                        for (auto postNeuronIdx=0; postNeuronIdx<postsynapticLayer.sublayers[postSubIdx].neurons.size(); postNeuronIdx++) {
+            for (int preSubIdx=0; preSubIdx<static_cast<int>(presynapticLayer.sublayers.size()); preSubIdx++) {
+                for (int preNeuronIdx=0; preNeuronIdx<static_cast<int>(presynapticLayer.sublayers[preSubIdx].neurons.size()); preNeuronIdx++) {
+                    for (int postSubIdx=0; postSubIdx<static_cast<int>(postsynapticLayer.sublayers.size()); postSubIdx++) {
+                        for (int postNeuronIdx=0; postNeuronIdx<static_cast<int>(postsynapticLayer.sublayers[postSubIdx].neurons.size()); postNeuronIdx++) {
                             if (preNeuronIdx == postNeuronIdx) {
-                                for (auto i=0; i<number_of_synapses; i++) {
+                                for (int i=0; i<number_of_synapses; i++) {
 
                                     if (successful_connections[idx]) {
 
@@ -1216,7 +1216,7 @@ namespace hummus {
             // computing spike times from inter-spike intervals
             std::vector<float> spike_times(inter_spike_intervals.size(), 0.0);
             spike_times[0] = inter_spike_intervals[0];
-            for (auto i=1; i<spike_times.size(); i++) {
+            for (int i=1; i<static_cast<int>(spike_times.size()); i++) {
                 spike_times[i] = spike_times[i-1] + inter_spike_intervals[i];
             }
             std::transform(spike_times.begin(), spike_times.end(), spike_times.begin(), [&](float& st){return st*0.001+timestamp;});
@@ -2023,7 +2023,7 @@ namespace hummus {
                     }
 
                     // update neurons that haven't received a spike
-                    for (auto idx=0; idx<neurons.size(); idx++) {
+                    for (int idx=0; idx<static_cast<int>(neurons.size()); idx++) {
                         if (neuronStatus[idx]) {
                             neuronStatus[idx] = false;
                         } else {

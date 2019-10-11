@@ -27,9 +27,6 @@
 #include <QtCharts/QXYSeries>
 #include <QtCharts/QChart>
 
-Q_DECLARE_METATYPE(QtCharts::QAbstractSeries *)
-Q_DECLARE_METATYPE(QtCharts::QValueAxis *)
-
 namespace hummus {
     
     class InputViewer : public QObject {
@@ -40,9 +37,9 @@ namespace hummus {
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         InputViewer(QObject *parent = 0) :
                 QObject(parent),
-                timeWindow(100),
-                openGL(true),
                 isClosed(false),
+                openGL(true),
+                timeWindow(100),
                 maxX(1),
                 minY(0),
                 maxY(1),
@@ -94,7 +91,7 @@ namespace hummus {
         }
         
     Q_SIGNALS:
-    public slots:
+    public Q_SLOTS:
 		
     	// ----- QT-RELATED METHODS -----
     	void change_sublayer(int newSublayer) {

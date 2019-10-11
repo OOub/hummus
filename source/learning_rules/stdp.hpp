@@ -22,10 +22,10 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR -----
 		STDP(float _A_plus=1, float _A_minus=0.4, float _tau_plus=20, float _tau_minus=40) :
+                pre_layer(-1),
                 A_plus(_A_plus),
                 A_minus(_A_minus),
                 tau_plus(_tau_plus),
-                pre_layer(-1),
                 tau_minus(_tau_minus) {
             do_not_automatically_include = true;
         }

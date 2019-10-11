@@ -37,16 +37,16 @@ namespace hummus {
         // ----- CONSTRUCTOR AND DESTRUCTOR
         DynamicsViewer(QObject *parent = 0) :
                 QObject(parent),
-                time_window(100),
-                openGL(true),
                 is_closed(false),
+                openGL(true),
+                time_window(100),
                 max_x(0),
                 min_y(-70),
                 max_y(-50),
                 min_y_right(0),
                 max_y_right(1),
-                current_plot(false),
-                neuron_tracker(-1) {
+                neuron_tracker(-1),
+                current_plot(false) {
             atomic_guard.clear(std::memory_order_release);
         }
         
@@ -106,7 +106,7 @@ namespace hummus {
         }
         
     Q_SIGNALS:
-    public slots:
+    public Q_SLOTS:
 		
         // ----- QT-RELATED METHODS -----
         void change_tracked_neuron(int new_neuron) {

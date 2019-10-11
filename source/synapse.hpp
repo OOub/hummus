@@ -29,14 +29,14 @@ namespace hummus {
                 postsynaptic_neuron(_postsynaptic_neuron),
                 weight(_weight),
                 delay(_delay),
-                external_current(_external_current),
                 synaptic_current(0),
                 previous_input_time(0),
                 gaussian_std_dev(0),
-                json_id(0),
-                kernel_id(0),
+                synapse_time_constant(0),
+                external_current(_external_current),
                 synaptic_efficacy(1),
-                synapse_time_constant(0) {}
+                kernel_id(0),
+                json_id(0) {}
 
         virtual ~Synapse(){}
 
@@ -85,7 +85,7 @@ namespace hummus {
             previous_input_time = new_time;
         }
 
-        const float get_synapse_time_constant() const {
+        float get_synapse_time_constant() const {
             return synapse_time_constant;
         }
 

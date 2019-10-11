@@ -52,7 +52,7 @@ namespace hummus {
                 // build the layers
                 if (input.back()["layers"].is_array()){
                     auto& layer = input.back()["layers"];
-                    for (auto i=0; i<layer.size(); i++) {
+                    for (auto i=0; i<static_cast<int>(layer.size()); i++) {
 	
                         if (layer[i]["neuron_type"].is_number()) {
 
@@ -91,7 +91,7 @@ namespace hummus {
                     for (auto& n: network->get_neurons()) {
                         auto& dendriticSynapse = input.back()["neurons"][n->get_neuron_id()]["dendritic_synapses"];
                         if (dendriticSynapse.is_array() && !dendriticSynapse.empty()) {
-                            for (auto i=0; i<dendriticSynapse.size(); i++) {
+                            for (auto i=0; i<static_cast<int>(dendriticSynapse.size()); i++) {
                                 float weight = 0;
                                 if (dendriticSynapse[i]["weight"].is_number()) {
                                     weight = dendriticSynapse[i]["weight"].get<float>();
@@ -180,7 +180,7 @@ namespace hummus {
             auto& axonalSynapse = input["axonal_synapses"];
             if (axonalSynapse.is_array() && !axonalSynapse.empty()) {
 
-                for (auto i=0; i<axonalSynapse.size(); i++) {
+                for (auto i=0; i<static_cast<int>(axonalSynapse.size()); i++) {
                     float weight = 0;
                     if (axonalSynapse[i]["weight"].is_number()) {
                         weight = axonalSynapse[i]["weight"].get<float>();
