@@ -26,7 +26,7 @@ A matlab toolbox called Hummus Utilities is bundled, in order to easily generate
 
 to install:
 
-1. to to the hummus directory
+1. go to the hummus directory
 2. go to ``utilities/matlab/``
 3. double click on **Hummus Utilities.mltbx**
 4. read the bundled quick start guide in Matlab for examples on how to use the toolbox
@@ -45,6 +45,7 @@ to install:
 
 #### **Supported OS**
 Compilation requires a C++17 compiler and a recent version of CMake. Due to the dependency on the C++17 filesystem library the only supported Operating Systems are:
+
 * macOS Catalina (10.15+)
 * Ubuntu Disco (19.04+)
 * Debian Buster (10+)
