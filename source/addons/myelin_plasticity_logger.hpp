@@ -59,7 +59,7 @@ namespace hummus {
             copy_to(bytes.data() + 6, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
 
             int count = 8;
-            for (auto i=0; i<timeDifferences.size(); i++) {
+            for (int i=0; i<static_cast<int>(timeDifferences.size()); i++) {
                 copy_to(bytes.data() + count,   static_cast<int32_t>(timeDifferences[i] * 100));
                 copy_to(bytes.data() + count+4, static_cast<int16_t>(modifiedSynapses[i]->get_presynaptic_neuron_id()));
                 copy_to(bytes.data() + count+6, static_cast<int16_t>(modifiedSynapses[i]->get_delay()*100));

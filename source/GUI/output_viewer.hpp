@@ -38,9 +38,9 @@ namespace hummus {
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         OutputViewer(QObject *parent = 0) :
                 QObject(parent),
-                timeWindow(100),
                 openGL(true),
                 isClosed(false),
+                timeWindow(100),
                 input(0),
                 minY(0),
                 maxY(1),
@@ -95,7 +95,7 @@ namespace hummus {
         }
         
     Q_SIGNALS:
-    public slots:
+    public Q_SLOTS:
 		
     	// ----- QT-RELATED METHODS -----
 		void change_layer(int newLayer) {

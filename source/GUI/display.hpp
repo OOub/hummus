@@ -50,20 +50,20 @@ namespace hummus {
             qmlRegisterType<InputViewer>("InputViewer", 1, 0, "InputViewer");
             qmlRegisterType<OutputViewer>("OutputViewer", 1, 0, "OutputViewer");
             qmlRegisterType<DynamicsViewer>("DynamicsViewer", 1, 0, "DynamicsViewer");
-			
+
 			engine = new QQmlApplicationEngine();
-			
+
 			engine->rootContext()->setContextProperty("layers", 1);
 			engine->rootContext()->setContextProperty("inputSublayer", 1);
 			engine->rootContext()->setContextProperty("sublayers", 1);
 			engine->rootContext()->setContextProperty("numberOfNeurons", 1);
 			engine->rootContext()->setContextProperty("displayCurrents", false);
-                    
-            engine->loadData(
+
+            engine->loadData(    // @@NOT WORKING
 				#include "gui.qml"
             );
             auto window = qobject_cast<QQuickWindow*>(engine->rootObjects().first());
-            
+
 			QSurfaceFormat format;
             format.setDepthBufferSize(24);
             format.setStencilBufferSize(8);
@@ -98,7 +98,7 @@ namespace hummus {
             output_viewer->handle_update(timestamp);
             dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
 		}
-        
+
 		void begin(Network* network, std::mutex* sync) override {
             // finding the number of layers in the network
             int numberOfLayers = static_cast<int>(network->get_layers().size());
@@ -126,7 +126,7 @@ namespace hummus {
             }
 
             int neuronNumber = static_cast<int>(network->get_neurons().size());
-            
+
             engine->rootContext()->setContextProperty("numberOfNeurons", neuronNumber);
             engine->rootContext()->setContextProperty("inputSublayer", sublayerInLayers[0]-1);
             engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
@@ -139,18 +139,18 @@ namespace hummus {
             output_viewer->change_layer(outputLayerToTrack);
             output_viewer->change_sublayer(outputSublayerToTrack);
             dynamics_viewer->track_neuron(neuronToTrack);
-			
+
             sync->unlock();
 
 			app->exec();
 		}
-		
+
         void reset() override {
             input_viewer->reset();
             output_viewer->reset();
             dynamics_viewer->reset();
         }
-        
+
 		// ----- SETTERS -----
 		void hardware_acceleration(bool accelerate=true) {
             input_viewer->hardware_acceleration(accelerate);
@@ -161,19 +161,19 @@ namespace hummus {
 		void track_layer(int layerToTrack) {
 			outputLayerToTrack = layerToTrack;
 		}
-		
+
 		void track_input_sublayer(int sublayerToTrack) {
 			inputSublayerToTrack = sublayerToTrack;
 		}
-		
+
 		void track_output_sublayer(int sublayerToTrack) {
 			outputSublayerToTrack = sublayerToTrack;
 		}
-		
+
         void track_neuron(size_t _neuron_to_track) {
             neuronToTrack = static_cast<int>(_neuron_to_track);
         }
-        
+
         void track_neuron(int _neuron_to_track) {
         	neuronToTrack = _neuron_to_track;
         }
@@ -183,7 +183,7 @@ namespace hummus {
             output_viewer->set_time_window(new_window);
             dynamics_viewer->set_time_window(new_window);
         }
-		
+
         void plot_currents(bool current_plot=true) {
             engine->rootContext()->setContextProperty("displayCurrents", current_plot);
             dynamics_viewer->plot_currents(current_plot);

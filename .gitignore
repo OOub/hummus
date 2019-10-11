@@ -18,3 +18,7 @@ utilities/python/spikeLog\.bin
 utilities/python/rcNetwork\.json
 
 *.pyc
+
+xbuild/basic_test_autogen/
+
+xbuild/

@@ -52,8 +52,7 @@ namespace hummus {
                 if (addon->get_mask().empty() && !addon->no_automatic_include()) {
                     add_relevant_addon(addon.get());
                 } else {
-                    auto it = std::find(addon->get_mask().begin(), addon->get_mask().end(), static_cast<size_t>(neuron_id));
-                    if (it != addon->get_mask().end()) {
+                    if (auto it = std::find(addon->get_mask().begin(), addon->get_mask().end(), static_cast<size_t>(neuron_id)); it != addon->get_mask().end()) {
                         add_relevant_addon(addon.get());
                     }
                 }
@@ -171,7 +170,7 @@ namespace hummus {
             if (type != spike_type::end_of_integration && potential >= threshold) {
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
                 if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
-                    if (decision_queue.size() < network->get_decision_parameters().spike_history_size) {
+                    if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
                         decision_queue.pop_front();
@@ -322,7 +321,7 @@ namespace hummus {
                 
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
                 if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
-                    if (decision_queue.size() < network->get_decision_parameters().spike_history_size) {
+                    if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
                         decision_queue.pop_front();

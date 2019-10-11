@@ -34,8 +34,8 @@ namespace hummus {
         WeightMaps(std::string filename, std::string _trainingLabels, std::string _testLabels="") :
                 save_file(filename, std::ios::out | std::ios::binary),
         		training_labels({}),
+                test_labels({}),
         		test_string(_testLabels),
-        		test_labels({}),
         		train(true) {
 					
 			// opening a new binary file to save data in

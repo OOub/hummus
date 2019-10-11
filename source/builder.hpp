@@ -52,11 +52,11 @@ namespace hummus {
                 // build the layers
                 if (input.back()["layers"].is_array()){
                     auto& layer = input.back()["layers"];
-                    for (auto i=0; i<layer.size(); i++) {
+                    for (auto i=0; i<static_cast<int>(layer.size()); i++) {
 	
                         if (layer[i]["neuron_type"].is_number()) {
-                            int neuronType = layer[i]["neuron_type"].get<int>();
-                            switch (neuronType) {
+
+                            switch (int neuronType = layer[i]["neuron_type"].get<int>(); neuronType) {
                                 // creating parrot layer
                                 case 0: {
                                     layer_helper<Parrot>(layer[i]);
@@ -91,7 +91,7 @@ namespace hummus {
                     for (auto& n: network->get_neurons()) {
                         auto& dendriticSynapse = input.back()["neurons"][n->get_neuron_id()]["dendritic_synapses"];
                         if (dendriticSynapse.is_array() && !dendriticSynapse.empty()) {
-                            for (auto i=0; i<dendriticSynapse.size(); i++) {
+                            for (auto i=0; i<static_cast<int>(dendriticSynapse.size()); i++) {
                                 float weight = 0;
                                 if (dendriticSynapse[i]["weight"].is_number()) {
                                     weight = dendriticSynapse[i]["weight"].get<float>();
@@ -153,8 +153,8 @@ namespace hummus {
                 n->set_membrane_time_constant(input["membrane_time_constant"].get<float>());
             }
             
-            if (input["conductance"].is_number()) {
-                n->set_conductance(input["conductance"].get<float>());
+            if (input["capacitance"].is_number()) {
+                n->set_capacitance(input["capacitance"].get<float>());
             }
             
             if (input["leakage_conductance"].is_number()) {
@@ -162,13 +162,12 @@ namespace hummus {
             }
             
             if (input["class_label"].is_string()) {
-                dynamic_cast<DecisionMaking*>(n)->set_class_label(input["class_label"].get<std::string>());
+                dynamic_cast<Decision_Making*>(n)->set_class_label(input["class_label"].get<std::string>());
             }
 
             // specific neuron parameters
             if (input["type"].is_number()) {
-                int type = input["type"].get<int>();
-                switch (type) {
+                switch (int type = input["type"].get<int>(); type) {
                     // CUBA_LIF neuron
                     case 1: {
                         capture_CUBA_LIF_parameters<CUBA_LIF>(input, n);
@@ -181,7 +180,7 @@ namespace hummus {
             auto& axonalSynapse = input["axonal_synapses"];
             if (axonalSynapse.is_array() && !axonalSynapse.empty()) {
 
-                for (auto i=0; i<axonalSynapse.size(); i++) {
+                for (auto i=0; i<static_cast<int>(axonalSynapse.size()); i++) {
                     float weight = 0;
                     if (axonalSynapse[i]["weight"].is_number()) {
                         weight = axonalSynapse[i]["weight"].get<float>();
@@ -198,11 +197,10 @@ namespace hummus {
                     
                     if (axonalSynapse[i]["postsynaptic_neuron"].is_number()) {
                         float synapseTimeConstant = 0;
-                        int json_id = axonalSynapse[i]["json_id"].get<int>();
                         
-                        switch (json_id) {
+                        switch (int json_id = axonalSynapse[i]["json_id"].get<int>(); json_id) {
                             case 0: {
-                            n->make_synapse<Synapse>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay, amplitudeScaling);
+                            n->make_synapse<Synapse>(network->get_neurons()[axonalSynapse[i]["postsynaptic_neuron"].get<int>()].get(), 100., weight, delay);
                                 
                                 break;
                             } case 1: {

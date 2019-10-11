@@ -27,9 +27,9 @@ namespace hummus {
     public:
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
         SpikeLogger(std::string filename, bool _efficient=true) :
-                efficient(_efficient),
                 save_file(filename, std::ios::out | std::ios::binary),
-                previous_timestamp(0) {
+                previous_timestamp(0),
+                efficient(_efficient) {
             if (!save_file.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
