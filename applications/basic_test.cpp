@@ -42,9 +42,9 @@ int main(int argc, char** argv) {
     network.inject_spike(0, 30);
 
     //  ----- DISPLAY SETTINGS -----
-//    display.set_time_window(100);
-//    display.track_neuron(1);
-//    display.plot_currents();
+    display.set_time_window(100);
+    display.track_neuron(1);
+    display.plot_currents();
 
     //  ----- RUNNING THE NETWORK -----
     network.verbosity(1);

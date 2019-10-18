@@ -63,12 +63,12 @@ endif()
 if(QT)
     message("-- Compiling with Qt5")
     add_compile_definitions(QT QT_NO_KEYWORDS)
+    set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP _moc)
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
     set(CMAKE_AUTOUIC ON)
 
     find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
-    set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP _moc)
 
     target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
                                                         ${Qt5Gui_INCLUDE_DIRS}
