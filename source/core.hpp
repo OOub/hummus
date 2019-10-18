@@ -34,6 +34,7 @@
 // external Dependencies
 #include "../third_party/json.hpp"
 #include "../third_party/sepia.hpp"
+#include "../third_party/numpy.hpp"
 
 // random distributions
 #include "random_distributions/lognormal.hpp"

@@ -1,5 +1,3 @@
-R""(
-
 /*
  * gui.qml
  * Hummus - spiking neural network simulator
@@ -573,4 +571,3 @@ ApplicationWindow {
     	dynamicsViewer.disable();
 	}
 }
-)""

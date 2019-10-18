@@ -45,7 +45,8 @@ namespace hummus {
                 minY(0),
                 maxY(1),
                 layerTracker(1),
-                sublayerTracker(0) {
+                sublayerTracker(0),
+                layer_changed(false) {
             atomicGuard.clear(std::memory_order_release);
         }
         
@@ -73,10 +74,18 @@ namespace hummus {
         }
 		
 		// ----- SETTERS -----
-		void set_engine(QQmlApplicationEngine* _engine) {
-			engine = _engine;
-		}
+        bool get_layer_changed() const {
+            return layer_changed;
+        }
+        
+        void set_layer_changed(bool new_layer) {
+            layer_changed = new_layer;
+        }
 		
+        int get_layer_tracker() const {
+            return layerTracker;
+        }
+        
 		void set_time_window(double newWindow) {
             timeWindow = newWindow;
         }
@@ -85,6 +94,10 @@ namespace hummus {
             openGL = accelerate;
         }
 		
+        std::vector<std::vector<int>> get_y_lookup() const {
+            return yLookupTable;
+        }
+        
 		void set_y_lookup(std::vector<std::vector<int>> newLookup, std::vector<int> _neuronsInLayers) {
 		    yLookupTable = newLookup;
 		    neuronsInLayers = _neuronsInLayers;
@@ -101,9 +114,8 @@ namespace hummus {
 		void change_layer(int newLayer) {
 			layerTracker = newLayer;
 			sublayerTracker = 0;
-            engine->rootContext()->setContextProperty("sublayers", static_cast<int>(yLookupTable[layerTracker].size()-1));
+            layer_changed = true;
 			int previousLayerNeurons = std::accumulate(neuronsInLayers.begin(), neuronsInLayers.begin()+layerTracker, 0);
-			
 			minY = previousLayerNeurons;
 			maxY = minY+1;
 		}
@@ -159,6 +171,6 @@ namespace hummus {
         int                           sublayerTracker;
         std::vector<std::vector<int>> yLookupTable;
         std::vector<int>              neuronsInLayers;
-        QQmlApplicationEngine*        engine;
+        bool                          layer_changed;
     };
 }

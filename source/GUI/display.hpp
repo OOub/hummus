@@ -51,7 +51,7 @@ namespace hummus {
             qmlRegisterType<OutputViewer>("OutputViewer", 1, 0, "OutputViewer");
             qmlRegisterType<DynamicsViewer>("DynamicsViewer", 1, 0, "DynamicsViewer");
 
-			engine = new QQmlApplicationEngine();
+			engine.reset(new QQmlApplicationEngine());
 
 			engine->rootContext()->setContextProperty("layers", 1);
 			engine->rootContext()->setContextProperty("inputSublayer", 1);
@@ -59,11 +59,10 @@ namespace hummus {
 			engine->rootContext()->setContextProperty("numberOfNeurons", 1);
 			engine->rootContext()->setContextProperty("displayCurrents", false);
 
-            engine->loadData(    // @@NOT WORKING
-				#include "gui.qml"
-            );
+            engine->load(QUrl(QStringLiteral("qrc:/gui.qml")));
+                    
             auto window = qobject_cast<QQuickWindow*>(engine->rootObjects().first());
-
+                    
 			QSurfaceFormat format;
             format.setDepthBufferSize(24);
             format.setStencilBufferSize(8);
@@ -82,6 +81,11 @@ namespace hummus {
     	// ----- PUBLIC DISPLAY METHODS -----
 		void incoming_spike(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
             dynamics_viewer->handle_data(timestamp, postsynaptic_neuron->get_neuron_id(), postsynaptic_neuron->get_potential(), postsynaptic_neuron->get_current(), postsynaptic_neuron->get_threshold());
+            
+            if (output_viewer->get_layer_changed()) {
+                engine->rootContext()->setContextProperty("sublayers", static_cast<int>(output_viewer->get_y_lookup()[output_viewer->get_layer_tracker()].size()-1));
+                output_viewer->set_layer_changed(false);
+            }
 		}
 
         void neuron_fired(double timestamp, Synapse* s, Neuron* postsynaptic_neuron, Network* network) override {
@@ -132,7 +136,6 @@ namespace hummus {
             engine->rootContext()->setContextProperty("layers", numberOfLayers-1);
 
             input_viewer->set_y_lookup(neuronsInSublayers[0]);
-            output_viewer->set_engine(engine);
             output_viewer->set_y_lookup(neuronsInSublayers, neuronsInLayers);
 
             input_viewer->change_sublayer(inputSublayerToTrack);
@@ -188,12 +191,12 @@ namespace hummus {
             engine->rootContext()->setContextProperty("displayCurrents", current_plot);
             dynamics_viewer->plot_currents(current_plot);
         }
-        
+
     protected:
 
 		// ----- IMPLEMENTATION VARIABLES -----
         std::unique_ptr<QApplication>          app;
-        QQmlApplicationEngine*                 engine;
+        std::unique_ptr<QQmlApplicationEngine> engine;
         InputViewer*                           input_viewer;
         OutputViewer*                          output_viewer;
         DynamicsViewer*                        dynamics_viewer;

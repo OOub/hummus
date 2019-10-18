@@ -51,6 +51,7 @@ target_include_directories(hummus_library INTERFACE third_party/
 
 # handles optional Intel Threading Building Blocks (TBB) linking and includes
 if(TBB)
+    message("-- Compiling with intel TBB")
     add_compile_definitions(TBB)
     find_library(tbb_location NAMES tbb)
     add_library(tbb SHARED IMPORTED)
@@ -60,10 +61,15 @@ endif()
 
 # handles optional Qt 5 linking and includes
 if(QT)
-    set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP _moc)
+    message("-- Compiling with Qt5")
     add_compile_definitions(QT QT_NO_KEYWORDS)
+    set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP _moc)
     set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+    set(CMAKE_AUTOUIC ON)
+
     find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
+
     target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
                                                         ${Qt5Gui_INCLUDE_DIRS}
                                                         ${Qt5Qml_INCLUDE_DIRS}
@@ -79,11 +85,13 @@ if(QT)
                                                    Qt5::Widgets
                                                    Qt5::QuickControls2
                                                    Qt5::Charts)
-    source_group(moc FILES ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}_automoc.cpp )
+
+    source_group(_moc REGULAR_EXPRESSION "\\.rule$")
 endif()
 
 # handles optional libtorch (C++ frontend of pytorch) linking and includes
 if(TORCH)
+    message("-- Compiling with Libtorch")
     find_package(Torch REQUIRED)
     target_link_libraries(hummus_library INTERFACE ${TORCH_LIBRARIES})
     add_compile_definitions(TORCH)
@@ -106,7 +114,11 @@ file(GLOB application_list CONFIGURE_DEPENDS "applications/*.cpp")
 # build executable for each application
 foreach(app IN LISTS application_list)
     get_filename_component(app_name "${app}" NAME_WE)
-    add_executable(${app_name} applications/${app_name}.cpp)
+    if (QT)
+        add_executable(${app_name} applications/${app_name}.cpp source/GUI/gui.qrc)
+    else()
+        add_executable(${app_name} applications/${app_name}.cpp)
+    endif()
     source_group("applications" FILES applications/${app_name}.cpp)
     target_compile_features(${app_name} PRIVATE cxx_std_17)
     target_link_libraries(${app_name} PRIVATE hummus_library)

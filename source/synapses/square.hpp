@@ -64,7 +64,7 @@ namespace hummus {
 		}
 
 		virtual void to_json(nlohmann::json& output) override {
-			// general synapse sparameters
+			// general synapse parameters
             output.push_back({
                 {"json_id", json_id},
                 {"weight", weight},
