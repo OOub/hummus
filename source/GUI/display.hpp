@@ -59,7 +59,7 @@ namespace hummus {
 			engine->rootContext()->setContextProperty("numberOfNeurons", 1);
 			engine->rootContext()->setContextProperty("displayCurrents", false);
 
-            engine->loadData(    // @@NOT WORKING
+            engine->loadData(
 				#include "gui.qml"
             );
             auto window = qobject_cast<QQuickWindow*>(engine->rootObjects().first());

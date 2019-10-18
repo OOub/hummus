@@ -6,7 +6,7 @@
  * Email: omar.oubari@inserm.fr
  * Last Version: 24/01/2019
  *
- * Information: Parrot neurons take in spikes or events and instantly propagate them in the network. The potential does not decay.
+ * Information: neuron modelled according to the ULPEC analog neuron made by the IMS at Université de Bordeaux.
  *
  * NEURON TYPE 3 (in JSON SAVE FILE)
  */
@@ -25,8 +25,11 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Hardware(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 0, 0, 0, 0, 0, "") {
+        Hardware(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, float _threshold=1.2, float _restingPotential=1.1, float _i_discharge=0, float _i_cancel=0, float _scaling_factor=725) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, 0, _threshold, _restingPotential, ""),
+                i_cancel(_i_cancel),
+                i_discharge(_i_discharge),
+                scaling_factor(_scaling_factor) {
                     
             // neuron type = 3 for JSON save
             neuron_type = 3;
@@ -49,11 +52,31 @@ namespace hummus {
         }
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
-            // 1. update the synapses
-            // 2. if not none and post is active send the spike to the synapses and get an estimate of the current (taking into consideration i_cancel and the scaling factor K)
-            // 3. calculate potential according to the equation
-            // 4. if threshold = 0 then keep increasing forever without generating spikes
-            // 5. if spikes generated then send 3 spikes to terminals for the double square waveform
+            if (type != spike_type::none && active) {
+                
+                // handles case where the neuron never fires - for validation with the cadence experiments
+                if (threshold == 0) {
+                    // 1. get an estimate of the current (taking into consideration i_cancel and the scaling factor K)
+                    float total_current = 0;
+                    for (auto& memristor: dendritic_tree) {
+                        // taking only the active memristors
+                        total_current += memristor->get_synaptic_current();
+                    }
+                    
+                    // 2. calculate potential according to the equation
+                    
+                } else {
+                    // 1. get an estimate of the current (taking into consideration i_cancel and the scaling factor K)
+                    
+                    // 2. calculate potential according to the equation
+                    
+                    // 3. propagate spike through the axon terminals (back to the presynaptic neurons for ULPEC)
+                                        
+                    // 5. winner-takes-all to reset potential
+                    
+                    // 6. refractory period = 10 events from other output neurons
+                }
+            }
 		}
         
         // write neuron parameters in a JSON format
@@ -96,5 +119,9 @@ namespace hummus {
                 }
             }
         }
+        
+        float i_cancel;
+        float i_discharge;
+        float scaling_factor;
 	};
 }
