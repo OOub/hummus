@@ -32,8 +32,8 @@ namespace hummus {
 	struct event {
 		double   timestamp;
         int      neuron_id;
-		int      x;
-		int      y;
+		int      x = -1;
+		int      y = -1;
 	};
 	
 	class DataParser {
@@ -136,7 +136,7 @@ namespace hummus {
                 	split(fields, line, " ,");
                 	// 1D data
                 	if (fields.size() == 2) {
-						data.emplace_back(event{std::stod(fields[0]), std::stoi(fields[1]), -1, -1});
+						data.emplace_back(event{std::stod(fields[0]), std::stoi(fields[1])});
                         max_id = std::max(max_id, std::stoi(fields[1]));
                     // 2D Data
 					} else if (fields.size() == 3) {
@@ -206,22 +206,22 @@ namespace hummus {
         }
 		
         // read a weight matrix file delimited by a space or a comma, where the inputs are the columns and the outputs are the rows
-        std::vector<std::vector<float>> read_connectivity_matrix(std::string filename) {
+        std::vector<std::vector<double>> read_connectivity_matrix(std::string filename) {
             data_file.open(filename);
             
             if (data_file.good()) {
                 std::string line;
-                std::vector<std::vector<float>> data;
+                std::vector<std::vector<double>> data;
                 
                 while (std::getline(data_file, line)) {
                     std::vector<std::string> fields;
                     split(fields, line, " ,");
                     
-                    std::vector<float> postsynaptic_weights;
+                    std::vector<double> postsynaptic_weights;
                     
-                    // filling temporary vector by each field of the line read, then convert the field to float
+                    // filling temporary vector by each field of the line read, then convert the field to double
                     for (auto& f: fields) {
-                        postsynaptic_weights.emplace_back(std::stof(f));
+                        postsynaptic_weights.emplace_back(std::stod(f));
                     }
                     
                     // filling vector of vectors to build 2D weight matrix

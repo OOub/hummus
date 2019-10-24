@@ -24,9 +24,9 @@ namespace hummus {
 
 	public:
 		// ----- CONSTRUCTOR -----
-		Memristor(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight) :
-                Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, 0, 0),
-                V_syn(-1) {
+		Memristor(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay, double _invert_current=true) :
+                Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, _delay, 0),
+                invert_current(static_cast<bool>(_invert_current)) {
             json_id = 3;
             type = synapse_type::excitatory;
 		}
@@ -34,15 +34,23 @@ namespace hummus {
 		virtual ~Memristor(){}
 
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp, float timestep) override {
-            return 0;
-        }
-
-		virtual void receive_spike() override {
+		virtual void receive_spike(double potential=0) override {
+            // updating synaptic_potential
+            synaptic_potential += potential;
+            
             // calculating synaptic current
-            synaptic_current = weight * V_syn;
+            if (invert_current) {
+                synaptic_current = - weight * synaptic_potential;
+            } else {
+                synaptic_current = weight * synaptic_potential;
+            }
 		}
 
+        virtual void reset() override {
+            synaptic_potential = 0;
+            synaptic_current = 0;
+        }
+        
 		virtual void to_json(nlohmann::json& output) override {
 			// general synapse parameters
             output.push_back({
@@ -53,8 +61,7 @@ namespace hummus {
 				{"synapse_time_constant", synapse_time_constant},
             });
 		}
-    
     protected:
-        float  V_syn;
+        bool  invert_current;
 	};
 }

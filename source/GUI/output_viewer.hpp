@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 02/03/2018
+ * Last Version: 18/10/2019
  *
  * Information: The OutputViewer class is used by the Display class to show the output neurons. Depends on Qt5
  */

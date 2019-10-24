@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Parrot(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
+        Parrot(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, double _traceTimeConstant=20, double _threshold=-50, double _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, _traceTimeConstant, _threshold, _restingPotential, "") {
             inv_trace_tau = 1. / _traceTimeConstant;
         }
@@ -46,7 +46,7 @@ namespace hummus {
             }
         }
         
-        virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
             
             if (network->is_asynchronous()) {
                 timestep = timestamp - previous_spike_time;
@@ -157,6 +157,6 @@ namespace hummus {
         }
         
         // ----- PARROT PARAMETERS -----
-        float   inv_trace_tau;
+        double   inv_trace_tau;
 	};
 }

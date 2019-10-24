@@ -20,7 +20,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Normal(float _weight_mu=1, float _weight_sigma=0, float _delay_mu=0, float _delay_sigma=0, float _weight_lower_limit=-INFINITY, float _weight_upper_limit=INFINITY, float _delay_lower_limit=0, float _delay_upper_limit=INFINITY) :
+        Normal(double _weight_mu=1, double _weight_sigma=0, double _delay_mu=0, double _delay_sigma=0, double _weight_lower_limit=-INFINITY, double _weight_upper_limit=INFINITY, double _delay_lower_limit=0, double _delay_upper_limit=INFINITY) :
                 weight_mu(_weight_mu),
                 weight_sigma(_weight_sigma),
                 weight_lower_limit(_weight_lower_limit),
@@ -32,16 +32,16 @@ namespace hummus {
             // randomising weights and delays
             std::random_device device;
             random_engine = std::mt19937(device());
-            delay_random = std::normal_distribution<float>(delay_mu, delay_sigma);
-            weight_random = std::normal_distribution<float>(weight_mu, weight_sigma);
+            delay_random = std::normal_distribution<double>(delay_mu, delay_sigma);
+            weight_random = std::normal_distribution<double>(weight_mu, weight_sigma);
         }
 		
-        std::pair<float, float> operator()(int x, int y, int depth) {
+        std::pair<double, double> operator()(int x, int y, int depth) {
             return std::make_pair(truncate(weight_random(random_engine), weight_lower_limit, weight_upper_limit), truncate(delay_random(random_engine), delay_lower_limit, delay_upper_limit));
         }
 		
         // truncated normal distribution
-        float truncate(float x, float a, float b) {
+        double truncate(double x, double a, double b) {
             if (x >= a && x <= b) {
                 return x;
             } else {
@@ -53,17 +53,17 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                    random_engine;
-        std::normal_distribution<float> delay_random;
-        std::normal_distribution<float> weight_random;
-        float                           weight_mu;
-        float                           weight_sigma;
-        float                           weight_lower_limit;
-        float                           weight_upper_limit;
-        float                           delay_mu;
-        float                           delay_sigma;
-        float                           delay_lower_limit;
-        float                           delay_upper_limit;
+        std::mt19937                     random_engine;
+        std::normal_distribution<double> delay_random;
+        std::normal_distribution<double> weight_random;
+        double                           weight_mu;
+        double                           weight_sigma;
+        double                           weight_lower_limit;
+        double                           weight_upper_limit;
+        double                           delay_mu;
+        double                           delay_sigma;
+        double                           delay_lower_limit;
+        double                           delay_upper_limit;
 	};
 }
 

@@ -24,7 +24,7 @@ namespace hummus {
 
 	public:
 		// ----- CONSTRUCTOR -----
-		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=10, float _external_current=100, float _gaussian_std_dev=0) :
+		Exponential(int _target_neuron, int _parent_neuron, double _weight, double _delay, double _synapse_time_constant=10, double _external_current=100, double _gaussian_std_dev=0) :
 				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current) {
 
 			synapse_time_constant = _synapse_time_constant;
@@ -41,7 +41,7 @@ namespace hummus {
 			// initialising a normal distribution
             std::random_device device;
             random_engine = std::mt19937(device());
-            normal_distribution = std::normal_distribution<float>(0, _gaussian_std_dev);
+            normal_distribution = std::normal_distribution<double>(0, _gaussian_std_dev);
 
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
@@ -54,13 +54,13 @@ namespace hummus {
 		virtual ~Exponential(){}
 
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp, float timestep) override {
+        virtual double update(double timestamp, double timestep=0) override {
             // decay the current
             synaptic_current -= synaptic_current * timestep * inv_s_tau;
             return synaptic_current;
         }
 
-		virtual void receive_spike() override {
+		virtual void receive_spike(double potential=0) override {
             // increase the synaptic current in response to an incoming spike
             synaptic_current += weight * (external_current+normal_distribution(random_engine));
 		}
@@ -77,8 +77,8 @@ namespace hummus {
 		}
 
 	protected:
-        float                           inv_s_tau;
-		std::mt19937                    random_engine;
-		std::normal_distribution<float> normal_distribution;
+        double                           inv_s_tau;
+		std::mt19937                     random_engine;
+		std::normal_distribution<double> normal_distribution;
 	};
 }
