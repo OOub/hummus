@@ -71,13 +71,9 @@ if(QT)
     # Qt for Linux
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         if(EXISTS /usr/include/qt5/)
-            set(QT_INSTALL_PATH /usr/include/qt5/)
-            file( GLOB_RECURSE sres ${QT_INSTALL_PATH}/*/Qt5Config.cmake )
-            get_filename_component( Qt5_DIR ${sres} DIRECTORY )
+            set(CMAKE_PREFIX_PATH /usr/include/qt5/)
         else()
-            set(QT_INSTALL_PATH /usr/include/x86_64-linux-gnu/qt5/)
-            file( GLOB_RECURSE sres ${QT_INSTALL_PATH}/*/Qt5Config.cmake )
-            get_filename_component( Qt5_DIR ${sres} DIRECTORY )
+            set(CMAKE_PREFIX_PATH /usr/include/x86_64-linux-gnu/qt5/)
         endif()
 
         find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets Charts REQUIRED)
@@ -98,10 +94,7 @@ if(QT)
 
     # Qt for macOS
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        set(QT_INSTALL_PATH /usr/local/opt/qt/)
-        file( GLOB_RECURSE sres ${QT_INSTALL_PATH}/*/Qt5Config.cmake )
-        get_filename_component( Qt5_DIR ${sres} DIRECTORY )
-
+        set(CMAKE_PREFIX_PATH /usr/local/opt/qt/)
         find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
 
         target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
@@ -131,12 +124,6 @@ if(TORCH)
     find_package(Torch REQUIRED)
     target_link_libraries(hummus_library INTERFACE ${TORCH_LIBRARIES})
     add_compile_definitions(TORCH)
-endif()
-
-# Linux specific configuration
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    find_package(Threads REQUIRED)
-    target_link_libraries(hummus_library INTERFACE Threads::Threads)
 endif()
 
 # All users of this library will need at least C++17
