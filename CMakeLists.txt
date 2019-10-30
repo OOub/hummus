@@ -126,6 +126,12 @@ if(TORCH)
     add_compile_definitions(TORCH)
 endif()
 
+# Linux specific configuration
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_package(Threads REQUIRED)
+    target_link_libraries(hummus_library INTERFACE Threads::Threads)
+endif()
+
 # All users of this library will need at least C++17
 target_compile_features(hummus_library INTERFACE cxx_std_17)
 
