@@ -33,8 +33,8 @@ namespace hummus {
             random_engine = std::mt19937(device());
 			
 			if (int_type) {
-                int_delay_random = std::uniform_int_distribution<float>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
-                int_weight_random = std::uniform_int_distribution<float>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
+                int_delay_random = std::uniform_int_distribution<int>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
+                int_weight_random = std::uniform_int_distribution<int>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
 			} else {
                 real_delay_random = std::uniform_real_distribution<float>(delay_lower_limit, delay_upper_limit);
                 real_weight_random = std::uniform_real_distribution<float>(weight_lower_limit, weight_upper_limit);
@@ -54,9 +54,9 @@ namespace hummus {
         
         // ----- IMPLEMENTATION VARIABLES -----
         std::mt19937                          random_engine;
-        std::uniform_int_distribution<float>  int_delay_random;
+        std::uniform_int_distribution<int>    int_delay_random;
+        std::uniform_int_distribution<int>    int_weight_random;
 		std::uniform_real_distribution<float> real_delay_random;
-        std::uniform_int_distribution<float>  int_weight_random;
 		std::uniform_real_distribution<float> real_weight_random;
 		bool                                  int_type;
 	};

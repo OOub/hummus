@@ -84,15 +84,15 @@ namespace hummus {
         float                         timer; // selects how often a decision neuron fires. for es files: set to 0 if Decision is to be made at the end of the file
     };
 
-    // receptive_fields
-    struct receptive_fields {
+    // receptive_field
+    struct receptive_field {
         std::vector<std::size_t>      neurons; // neuron indices belonging to the receptive field
         int                           id; // receptive field ID
     };
 
     // the equivalent of feature maps
 	struct sublayer {
-        std::vector<receptive_fields> receptive_fields; // receptive fields of a sublayer
+        std::vector<receptive_field>  receptive_fields; // receptive fields of a sublayer
 		std::vector<std::size_t>      neurons; // neuron indices belonging to a sublayer
 		int                           id; // sublayer ID
 	};
@@ -790,7 +790,7 @@ namespace hummus {
             for (auto& convSub: postsynapticLayer.sublayers) {
                 int sublayershift = 0;
                 for (auto& preSub: presynapticLayer.sublayers) {
-                    std::vector<receptive_fields> rf;
+                    std::vector<receptive_field> rf;
 
                     // initialising window on the first center coordinates
                     std::pair centerCoordinates((postsynapticLayer.kernel_size-1) * 0.5, (postsynapticLayer.kernel_size-1) * 0.5);
@@ -826,7 +826,7 @@ namespace hummus {
                             }
                         }
 
-                        rf.emplace_back(receptive_fields{rf_neurons, rf_id});
+                        rf.emplace_back(receptive_field{rf_neurons, rf_id});
 
                         // finding the coordinates for the center of each receptive field
                         centerCoordinates.first += postsynapticLayer.stride;
@@ -884,7 +884,7 @@ namespace hummus {
             for (auto& poolSub: postsynapticLayer.sublayers) {
                 int sublayershift = 0;
                 for (auto& preSub: presynapticLayer.sublayers) {
-                    std::vector<receptive_fields> rf;
+                    std::vector<receptive_field> rf;
 
                     if (poolSub.id == preSub.id) {
 
@@ -921,7 +921,7 @@ namespace hummus {
                                 }
                             }
 
-                            rf.emplace_back(receptive_fields{rf_neurons, rf_id});
+                            rf.emplace_back(receptive_field{rf_neurons, rf_id});
 
                             // finding the coordinates for the center of each receptive field
                             centerCoordinates.first += lcd;
