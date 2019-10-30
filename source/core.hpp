@@ -81,7 +81,7 @@ namespace hummus {
         int                           layer_number; // decision_making layer id
         int                           spike_history_size; // how many spikes to take into consideration for the heuristics
         int                           rejection_threshold; // percentage of spikes that need to belong to the same class in order for a neuron to be labelled
-        double                        timer; // selects how often a decision neuron fires. for es files: set to 0 if Decision is to be made at the end of the file
+        float                         timer; // selects how often a decision neuron fires. for es files: set to 0 if Decision is to be made at the end of the file
     };
 
     // receptive_fields
@@ -130,7 +130,7 @@ namespace hummus {
     public:
 
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Neuron(int _neuron_id, int _layer_id, int _sublayer_id, int _rf_id, std::pair<int, int> _xy_coordinates, int _refractory_period=3, double _capacitance=200, double _leakage_conductance=10, double _traceTimeConstant=20, double _threshold=-50, double _restingPotential=-70, std::string _classLabel="") :
+        Neuron(int _neuron_id, int _layer_id, int _sublayer_id, int _rf_id, std::pair<int, int> _xy_coordinates, int _refractory_period=3, float _capacitance=200, float _leakage_conductance=10, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 neuron_id(_neuron_id),
                 layer_id(_layer_id),
                 sublayer_id(_sublayer_id),
@@ -164,10 +164,10 @@ namespace hummus {
 		virtual void initialisation(Network* network) {}
 
 		// asynchronous update method
-		virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) = 0;
+		virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) = 0;
 
 		// synchronous update method
-		virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) {
+		virtual void update_sync(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) {
 			update(timestamp, s, network, timestep, type);
 		}
 
@@ -193,9 +193,9 @@ namespace hummus {
 
         // adds a synapse that connects two Neurons together
         template <typename T = Synapse, typename... Args>
-        Synapse* make_synapse(Neuron* post_neuron, double weight, double delay, Args&&... args) {
+        Synapse* make_synapse(Neuron* post_neuron, float weight, float delay, Args&&... args) {
             if (post_neuron) {
-                axon_terminals.emplace_back(new T{post_neuron->neuron_id, neuron_id, weight, delay, static_cast<double>(std::forward<Args>(args))...});
+                axon_terminals.emplace_back(new T{post_neuron->neuron_id, neuron_id, weight, delay, static_cast<float>(std::forward<Args>(args))...});
                 post_neuron->get_dendritic_tree().emplace_back(axon_terminals.back().get());
                 return axon_terminals.back().get();
             } else {
@@ -213,7 +213,7 @@ namespace hummus {
         }
 
         // share information - generic getter that can be used for accessing child members from parent
-        virtual double share_information() { return 0; }
+        virtual float share_information() { return 0; }
 
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) {}
@@ -268,50 +268,50 @@ namespace hummus {
             return initial_synapse;
         }
 
-        double set_potential(double new_potential) {
+        float set_potential(float new_potential) {
             return potential = new_potential;
         }
 
-        double get_potential() const {
+        float get_potential() const {
             return potential;
         }
 
-        double get_resting_potential() const {
+        float get_resting_potential() const {
             return resting_potential;
         }
 
-        void set_resting_potential(double newE_l) {
+        void set_resting_potential(float newE_l) {
             resting_potential = newE_l;
         }
 
-        double get_threshold() const {
+        float get_threshold() const {
             return threshold;
         }
 
-        double set_threshold(double _threshold) {
+        float set_threshold(float _threshold) {
             return threshold = _threshold;
         }
 
-        double get_current() const {
+        float get_current() const {
             return current;
         }
-        void set_current(double newCurrent) {
+        void set_current(float newCurrent) {
             current = newCurrent;
         }
 
-        double get_trace() const {
+        float get_trace() const {
             return trace;
         }
 
-        void set_trace(double newtrace) {
+        void set_trace(float newtrace) {
             trace = newtrace;
         }
 
-        double get_trace_time_constant() const {
+        float get_trace_time_constant() const {
             return trace_time_constant;
         }
 
-        void set_trace_time_constant(double new_constant) {
+        void set_trace_time_constant(float new_constant) {
             trace_time_constant = new_constant;
         }
 
@@ -335,23 +335,23 @@ namespace hummus {
             relevant_addons.emplace_back(new_addon);
         }
 
-        double get_capacitance() const {
+        float get_capacitance() const {
             return capacitance;
         }
 
-        void set_capacitance(double k) {
+        void set_capacitance(float k) {
             capacitance = k;
         }
 
-        void set_leakage_conductance(double k) {
+        void set_leakage_conductance(float k) {
             leakage_conductance = k;
         }
 
-        double get_membrane_time_constant() const {
+        float get_membrane_time_constant() const {
             return membrane_time_constant;
         }
 
-        void set_membrane_time_constant(double new_constant) {
+        void set_membrane_time_constant(float new_constant) {
             membrane_time_constant = new_constant;
         }
 
@@ -392,17 +392,17 @@ namespace hummus {
         std::unique_ptr<Synapse>                  initial_synapse;
 
         // ----- DYNAMIC VARIABLES -----
-        double                                    current;
-        double                                    potential;
-        double                                    trace;
+        float                                     current;
+        float                                     potential;
+        float                                     trace;
 
         // ----- FIXED PARAMETERS -----
-        double                                    threshold;
-        double                                    resting_potential;
-        double                                    trace_time_constant;
-        double                                    capacitance;
-        double                                    leakage_conductance;
-        double                                    membrane_time_constant;
+        float                                     threshold;
+        float                                     resting_potential;
+        float                                     trace_time_constant;
+        float                                     capacitance;
+        float                                     leakage_conductance;
+        float                                     membrane_time_constant;
         int                                       refractory_period;
 
         // ----- IMPLEMENTATION PARAMETERS -----
@@ -502,7 +502,7 @@ namespace hummus {
 
         // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer
         template <typename T, typename... Args>
-        layer make_decision(std::deque<label> _trainingLabels, int _spike_history_size, int _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_decision(std::deque<label> _trainingLabels, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             training_labels = _trainingLabels;
             decision_making = true;
 
@@ -553,7 +553,7 @@ namespace hummus {
 
         // overload for the makeDecision function that takes in a path to a text label file with the format: label_name timestamp
         template <typename T, typename... Args>
-        layer make_decision(std::string trainingLabelFilename, int _spike_history_size, int _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_decision(std::string trainingLabelFilename, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
             return make_decision<T>(training_labels, _spike_history_size, _rejection_threshold, _timer, _addons, std::forward<Args>(args)...);
@@ -987,7 +987,7 @@ namespace hummus {
         
 		// connecting two layers according to a weight matrix vector of vectors and a delays matrix vector of vectors (columns for input and rows for output)
         template <typename T = Synapse, typename... Args>
-        void connectivity_matrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<double>> weights, std::vector<std::vector<double>> delays, Args&&... args) {
+        void connectivity_matrix(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, std::vector<std::vector<float>> weights, std::vector<std::vector<float>> delays, Args&&... args) {
 
             // error handling
             if (weights.size() != delays.size() && weights[0].size() != delays[0].size()) {
@@ -1202,7 +1202,7 @@ namespace hummus {
         }
 
         // add a poissonian spike train to the initial spike vector
-        void poisson_spike_generator(int neuronIndex, double timestamp, double rate, double timestep, double duration) {
+        void poisson_spike_generator(int neuronIndex, double timestamp, float rate, float timestep, float duration) {
             // calculating number of spikes
             int spike_number = std::floor(duration/timestep);
 
@@ -1243,7 +1243,7 @@ namespace hummus {
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This method does not take any data in and just runs the network as is. the only way to add spikes is through the injectSpike / poissonSpikeGenerator or injectSpikesFromData methods
-        void run(double _runtime, double _timestep=0, bool classification=false) {
+        void run(double _runtime, float _timestep=0, bool classification=false) {
             // error handling
             if (_timestep < 0) {
                 throw std::logic_error("the timestep cannot be negative");
@@ -1303,7 +1303,7 @@ namespace hummus {
                     sync_run_helper(&running, _runtime, _timestep, classification);
                 }
 
-                std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
+                std::chrono::duration<float> elapsed_seconds = std::chrono::system_clock::now()-start;
                 if (verbose != 0) {
                     std::cout << "it took " << elapsed_seconds.count() << "s" << std::endl;
                 }
@@ -1322,7 +1322,7 @@ namespace hummus {
         }
 
         // running through the network asynchronously if timestep = 0 and synchronously otherwise. This method takes in a vector of inputs from the read_txt_data method
-        void run_data(const std::vector<event>& trainingData, double _timestep=0, const std::vector<event>& testData={}) {
+        void run_data(const std::vector<event>& trainingData, float _timestep=0, const std::vector<event>& testData={}) {
 
             if (_timestep == 0) {
                 asynchronous = true;
@@ -1360,7 +1360,7 @@ namespace hummus {
                     sync_run_helper(&running, trainingData.back().timestamp+max_delay, _timestep, false);
                 }
 
-                std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
+                std::chrono::duration<float> elapsed_seconds = std::chrono::system_clock::now()-start;
                 if (verbose != 0) {
                     std::cout << "it took " << elapsed_seconds.count() << "s" << std::endl;
                 }
@@ -1513,7 +1513,7 @@ namespace hummus {
                 // going through any leftover spikes after the last event is propagated
                 async_run_helper(&running, false, true);
 
-                std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
+                std::chrono::duration<float> elapsed_seconds = std::chrono::system_clock::now()-start;
                 if (verbose != 0) {
                     std::cout << "it took " << elapsed_seconds.count() << "s to run." << std::endl;
                 }
@@ -1641,7 +1641,7 @@ namespace hummus {
                     reset_network(false);
                 }
 
-                std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now()-start;
+                std::chrono::duration<float> elapsed_seconds = std::chrono::system_clock::now()-start;
                 if (verbose != 0) {
                     std::cout << "it took " << elapsed_seconds.count() << "s" << std::endl;
                 }
@@ -1990,7 +1990,7 @@ namespace hummus {
         }
 
         // helper function that runs the network when clock-mode is selected (timestep > 0)
-        void sync_run_helper(std::atomic_bool* running, double runtime, double timestep, bool classification=false) {
+        void sync_run_helper(std::atomic_bool* running, double runtime, float timestep, bool classification=false) {
             if (!neurons.empty()) {
 
                 // creating vector of the same size as neurons
@@ -2118,7 +2118,7 @@ namespace hummus {
             }
         }
 
-        void choose_winner_online(double t, double timestep) {
+        void choose_winner_online(double t, float timestep) {
             if (t - decision_pre_ts >= decision.timer) {
                 // get intensities from all DecisionMaking neurons
                 int winner_neuron = -1; float previous_intensity = -1.0f;
@@ -2145,7 +2145,7 @@ namespace hummus {
                 decision_pre_ts = t;
             }
         }
-        void choose_winner_eof(double t, double timestep) {
+        void choose_winner_eof(double t, float timestep) {
             // get intensities from all DecisionMaking neurons
             int winner_neuron = -1; float previous_intensity = -1.0f;
             for (auto& n: layers[decision.layer_number].neurons) {
@@ -2211,7 +2211,7 @@ namespace hummus {
         std::string                             current_label;
 		bool                                    learning_status;
 		double                                  learning_off_signal;
-        double                                  max_delay;
+        float                                   max_delay;
         bool                                    asynchronous;
         decision_heuristics                     decision;
         double                                  decision_pre_ts;

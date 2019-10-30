@@ -57,7 +57,7 @@ namespace hummus {
         virtual ~DynamicsViewer(){}
 		
     	// ----- PUBLIC DYNAMICSVIEWER METHODS -----
-		void handle_data(double timestamp, int postsynapticNeuronID, double _potential, double _current, double _threshold) {
+		void handle_data(double timestamp, int postsynapticNeuronID, float _potential, float _current, float _threshold) {
 			if (postsynapticNeuronID == neuron_tracker) {
                 while (atomic_guard.test_and_set(std::memory_order_acquire)) {}
 				if (!is_closed) {
@@ -87,21 +87,21 @@ namespace hummus {
 		}
 		
 		// ----- SETTERS -----
-        void set_potential_limits(double _y_n_lim, double _y_p_lim) {
+        void set_potential_limits(float _y_n_lim, float _y_p_lim) {
             y_n_lim = _y_n_lim;
             y_p_lim = _y_p_lim;
             min_y = _y_n_lim;
             max_y = _y_p_lim;
         }
         
-        void set_current_limits(double _yr_n_lim, double _yr_p_lim) {
+        void set_current_limits(float _yr_n_lim, float _yr_p_lim) {
             yr_n_lim = _yr_n_lim;
             yr_p_lim = _yr_p_lim;
             min_y_right = _yr_n_lim;
             max_y_right = _yr_p_lim;
         }
         
-		void set_time_window(double new_window) {
+		void set_time_window(float new_window) {
             time_window = new_window;
         }
 		
@@ -199,21 +199,21 @@ namespace hummus {
         // ----- IMPLEMENTATION VARIABLES -----
         bool                  is_closed;
         bool                  openGL;
-        double                time_window;
+        float                 time_window;
         QVector<QPointF>      points;
         QVector<QPointF>      thres_points;
         QVector<QPointF>      current_points;
-        double                max_x;
-        double                min_y;
-        double                max_y;
-        double                min_y_right;
-        double                max_y_right;
+        float                 max_x;
+        float                 min_y;
+        float                 max_y;
+        float                 min_y_right;
+        float                 max_y_right;
         std::atomic_flag      atomic_guard;
         int                   neuron_tracker;
         bool                  current_plot;
-        double                y_n_lim;
-        double                y_p_lim;
-        double                yr_n_lim;
-        double                yr_p_lim;
+        float                 y_n_lim;
+        float                 y_p_lim;
+        float                 yr_n_lim;
+        float                 yr_p_lim;
     };
 }

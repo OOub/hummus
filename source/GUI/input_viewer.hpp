@@ -74,7 +74,7 @@ namespace hummus {
         }
 		
 		// ----- SETTERS -----
-        void set_time_window(double newWindow) {
+        void set_time_window(float newWindow) {
             timeWindow = newWindow;
         }
 		
@@ -139,9 +139,9 @@ namespace hummus {
     	// ----- IMPLEMENTATION VARIABLES -----
         bool                  isClosed;
         bool                  openGL;
-        double                timeWindow;
+        float                 timeWindow;
         QVector<QPointF>      points;
-        double                maxX;
+        float                 maxX;
         int                   minY;
         int                   maxY;
         std::atomic_flag      atomicGuard;

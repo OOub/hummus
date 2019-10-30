@@ -41,13 +41,13 @@ namespace hummus {
 		
 		virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             // potentiation
-            double G_0 = s->get_weight();
+            float G_0 = s->get_weight();
             if (s->get_synaptic_potential() <= thres_pot) {
-                double delta_G = A_pot * (G_max - G_0);
+                float delta_G = A_pot * (G_max - G_0);
                 s->set_weight(G_0+delta_G);
             // depression
             } else if (s->get_synaptic_potential() >= thres_dep) {
-                double delta_G = A_dep * (G_0 - G_min);
+                float delta_G = A_dep * (G_0 - G_min);
                 s->set_weight(G_0+delta_G);
             }
 		}

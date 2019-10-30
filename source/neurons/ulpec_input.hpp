@@ -25,7 +25,7 @@ namespace hummus {
 
     public:
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        ULPEC_Input(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=25, double _threshold=1.2, double _restingPotential=1.1, double _tau=10, double _injected_potential=-1) :
+        ULPEC_Input(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=25, float _threshold=1.2, float _restingPotential=1.1, float _tau=10, float _injected_potential=-1) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, 0, _threshold, _restingPotential, ""),
                 injected_potential(_injected_potential) {
 
@@ -50,7 +50,7 @@ namespace hummus {
             }
         }
 
-        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
             // updating GUI values status before any computation
             if (network->get_main_thread_addon()) {
@@ -95,7 +95,7 @@ namespace hummus {
             }
         }
 
-        virtual double share_information() override {
+        virtual float share_information() override {
             return injected_potential;
         }
         
@@ -132,6 +132,6 @@ namespace hummus {
     protected:
         
         // ----- PULSE_GENERATOR PARAMETERS -----
-        double       injected_potential;
+        float       injected_potential;
     };
 }

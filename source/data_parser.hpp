@@ -170,8 +170,8 @@ namespace hummus {
                     auto it = std::max_element(data.begin(), data.end(), [&](event a, event b){ return a.timestamp < b.timestamp; });
                     double max_timestamp = data[std::distance(data.begin(), it)].timestamp;
                     
-                    // uniform int distribution for the timestamps of spontaneous spikes
-                    std::uniform_int_distribution<double> uniform_timestamp(0, max_timestamp);
+                    // uniform real distribution for the timestamps of spontaneous spikes
+                    std::uniform_real_distribution<double> uniform_timestamp(0, max_timestamp);
                     
                     // finding the number of spontaneous spikes to add to the data
                     int additive_spikes = std::round(data.size() * additive_noise / 100.);
@@ -181,7 +181,7 @@ namespace hummus {
                         std::uniform_int_distribution<> uniform_id(0, max_id);
                         
                         for (auto i=0; i<additive_spikes; i++) {
-                            data.emplace_back(event{uniform_timestamp(random_engine), uniform_id(random_engine), UINT16_MAX, UINT16_MAX});
+                            data.emplace_back(event{uniform_timestamp(random_engine), uniform_id(random_engine)});
                         }
                     // two-dimensional data
                     } else {
@@ -206,20 +206,20 @@ namespace hummus {
         }
 		
         // read a weight matrix file delimited by a space or a comma, where the inputs are the columns and the outputs are the rows
-        std::vector<std::vector<double>> read_connectivity_matrix(std::string filename) {
+        std::vector<std::vector<float>> read_connectivity_matrix(std::string filename) {
             data_file.open(filename);
             
             if (data_file.good()) {
                 std::string line;
-                std::vector<std::vector<double>> data;
+                std::vector<std::vector<float>> data;
                 
                 while (std::getline(data_file, line)) {
                     std::vector<std::string> fields;
                     split(fields, line, " ,");
                     
-                    std::vector<double> postsynaptic_weights;
+                    std::vector<float> postsynaptic_weights;
                     
-                    // filling temporary vector by each field of the line read, then convert the field to double
+                    // filling temporary vector by each field of the line read, then convert the field to float
                     for (auto& f: fields) {
                         postsynaptic_weights.emplace_back(std::stod(f));
                     }

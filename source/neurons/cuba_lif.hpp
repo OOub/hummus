@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, double _capacitance=200, double _leakageConductance=10, bool _wta=false, bool _homeostasis=false, bool _burstingActivity=false, double _traceTimeConstant=10, double _decayHomeostasis=20, double _homeostasisBeta=0.1, double _threshold=-50, double _restingPotential=-70, std::string _classLabel="") :
+        CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _wta=false, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=10, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 wta(_wta),
                 bursting_activity(_burstingActivity),
@@ -69,7 +69,7 @@ namespace hummus {
 		}
         
         // homeostasis does not work for the event-based neuron because it would complicate spike prediction
-        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
             if (network->get_main_thread_addon()) {
                 network->get_main_thread_addon()->status_update(timestamp, this, network);
@@ -84,18 +84,18 @@ namespace hummus {
             if (type == spike_type::initial) {
                 current = s->update(timestamp, timestep);
             } else {
-                double total_current = 0;
+                float total_current = 0;
                 for (auto& synapse: dendritic_tree) {
                     total_current += synapse->update(timestamp, timestep);
                 }
                 current = total_current;
             }
             
-            double input_td = timestamp - previous_input_time;
+            float input_td = static_cast<float>(timestamp - previous_input_time);
             
             if (type == spike_type::initial || type == spike_type::generated) {
                 
-                double exp_input_mem_tau = std::exp(- input_td * inv_membrane_tau);
+                float exp_input_mem_tau = std::exp(- input_td * inv_membrane_tau);
 
                 // trace decay
                 trace -= input_td * inv_trace_tau;
@@ -119,7 +119,7 @@ namespace hummus {
                         current = s->get_synaptic_current();
                     } else {
                         // integating synaptic currents from dendritic tree
-                        double total_current = 0;
+                        float total_current = 0;
                         for (auto& synapse: dendritic_tree) {
                             total_current += synapse->get_synaptic_current();
                         }
@@ -153,12 +153,12 @@ namespace hummus {
                 }
             } else if (type == spike_type::prediction) {
                 if (active) {
-                    double exp_input_mem_tau = std::exp(- input_td * inv_membrane_tau);
+                    float exp_input_mem_tau = std::exp(- input_td * inv_membrane_tau);
                     potential = resting_potential + current * (1 - exp_input_mem_tau) + (potential - resting_potential) * exp_input_mem_tau;
                 }
             } else if (type == spike_type::end_of_integration) {
                 if (active) {
-                    double exp_s_tau_mem_tau = std::exp(-s->get_synapse_time_constant() * inv_membrane_tau);
+                    float exp_s_tau_mem_tau = std::exp(-s->get_synapse_time_constant() * inv_membrane_tau);
                     potential = resting_potential + current * (1 - exp_s_tau_mem_tau) + (potential - resting_potential) * exp_s_tau_mem_tau;
                 }
             }
@@ -227,7 +227,7 @@ namespace hummus {
             }
 		}
 		
-        virtual void update_sync(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+        virtual void update_sync(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
             // handling multiple spikes at the same timestamp (to prevent excessive decay)
             if (timestamp != 0 && timestamp - previous_input_time == 0) {
@@ -243,7 +243,7 @@ namespace hummus {
             if (type == spike_type::initial) {
                 current = s->update(timestamp, timestep);
             } else {
-                double total_current = 0;
+                float total_current = 0;
                 for (auto& synapse: dendritic_tree) {
                     total_current += synapse->update(timestamp, timestep);
                 }
@@ -282,7 +282,7 @@ namespace hummus {
                     if (type == spike_type::initial) {
                         current = s->get_synaptic_current();
                     } else {
-                        double total_current = 0;
+                        float total_current = 0;
                         for (auto& synapse: dendritic_tree) {
                             total_current += synapse->get_synaptic_current();
                         }
@@ -440,15 +440,15 @@ namespace hummus {
             homeostasis = new_bool;
         }
         
-        void set_resting_threshold(double new_thres) {
+        void set_resting_threshold(float new_thres) {
             resting_threshold = new_thres;
         }
         
-        void set_decay_homeostasis(double new_DH) {
+        void set_decay_homeostasis(float new_DH) {
             decay_homeostasis = new_DH;
         }
         
-        void set_homeostasis_beta(double new_HB) {
+        void set_homeostasis_beta(float new_HB) {
             homeostasis_beta = new_HB;
         }
         
@@ -482,14 +482,14 @@ namespace hummus {
         bool                         wta;
 		bool                         bursting_activity;
 		bool                         homeostasis;
-		double                       resting_threshold;
-		double                       decay_homeostasis;
-		double                       homeostasis_beta;
+		float                        resting_threshold;
+		float                        decay_homeostasis;
+		float                        homeostasis_beta;
 		Synapse*                     active_synapse;
         
         // Parameters for performance improvement
-        double                       inv_trace_tau;
-        double                       inv_membrane_tau;
-        double                       inv_homeostasis_tau;
+        float                        inv_trace_tau;
+        float                        inv_membrane_tau;
+        float                        inv_homeostasis_tau;
 	};
 }

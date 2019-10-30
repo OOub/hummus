@@ -86,7 +86,7 @@ namespace hummus {
             return layerTracker;
         }
         
-		void set_time_window(double newWindow) {
+		void set_time_window(float newWindow) {
             timeWindow = newWindow;
         }
 		
@@ -161,9 +161,9 @@ namespace hummus {
     	// ----- IMPLEMENTATION VARIABLES -----
         bool                          openGL;
         bool                          isClosed;
-        double                        timeWindow;
+        float                         timeWindow;
         QVector<QPointF>              points;
-        double                        input;
+        float                         input;
         int                           minY;
         int                           maxY;
         std::atomic_flag              atomicGuard;

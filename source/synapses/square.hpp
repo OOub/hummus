@@ -24,11 +24,11 @@ namespace hummus {
 
 	public:
 		// ----- CONSTRUCTOR -----
-		Square(int _target_neuron, int _parent_neuron, double _weight, double _delay, double _synapse_time_constant=10, double _external_current=80, double _gaussian_std_dev=0) :
-				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current) {
+		Square(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=10, float _external_current=80, float _gaussian_std_dev=0) :
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay),
+                external_current(_external_current) {
 
             synapse_time_constant = _synapse_time_constant;
-            gaussian_std_dev = _gaussian_std_dev;
 			json_id = 2;
 
 			// error handling
@@ -39,7 +39,7 @@ namespace hummus {
             // initialising a normal distribution
 			std::random_device device;
             random_engine = std::mt19937(device());
-            normal_distribution = std::normal_distribution<double>(0, _gaussian_std_dev);
+            normal_distribution = std::normal_distribution<float>(0, _gaussian_std_dev);
 
             // current-based synapse figuring out if excitatory or inhibitory
             if (_weight < 0) {
@@ -51,16 +51,15 @@ namespace hummus {
 		virtual ~Square(){}
 
 		// ----- PUBLIC METHODS -----
-        virtual double update(double timestamp, double timestep=0) override {
+        virtual float update(double timestamp, float timestep=0) override {
             if (timestamp - previous_input_time > synapse_time_constant) {
                 synaptic_current = 0;
             }
             return synaptic_current;
         }
 
-		virtual void receive_spike(double potential=0) override {
+		virtual void receive_spike(float potential=0) override {
             synaptic_current += weight * (external_current+normal_distribution(random_engine));
-
 		}
 
 		virtual void to_json(nlohmann::json& output) override {
@@ -75,7 +74,8 @@ namespace hummus {
 		}
 
 	protected:
-		std::mt19937                    random_engine;
-		std::normal_distribution<double> normal_distribution;
+		std::mt19937                     random_engine;
+		std::normal_distribution<float>  normal_distribution;
+        float                            external_current;
 	};
 }

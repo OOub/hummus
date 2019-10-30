@@ -45,7 +45,7 @@ namespace hummus {
         virtual ~Analysis(){}
         
 		// ----- PUBLIC METHODS -----
-		double accuracy() {
+		float accuracy() {
 			if (!classified_labels.empty() && classified_labels.size() == actual_labels.size()) {
 				std::vector<std::string> correctLabels;
 				for (int i=0; i<static_cast<int>(actual_labels.size()); i++) {
@@ -54,7 +54,7 @@ namespace hummus {
 					}
 				}
 				
-				double accuracy = (static_cast<double>(correctLabels.size())/actual_labels.size())*100.;
+				float accuracy = (static_cast<float>(correctLabels.size())/actual_labels.size())*100.;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
                 return accuracy;
 			} else {

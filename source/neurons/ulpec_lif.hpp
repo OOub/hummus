@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        ULPEC_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, double _capacitance=5e-12, double _threshold=1.2, double _restingPotential=0, double _i_discharge=12e-9, double _epsilon=0, double _scaling_factor=650, bool _potentiation_flag=true, double _tau_up=0.5, double _tau_down_event=10, double _tau_down_spike=1.5, double _delta_v=1) :
+        ULPEC_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, float _capacitance=5e-12, float _threshold=1.2, float _restingPotential=0, float _i_discharge=12e-9, float _epsilon=0, float _scaling_factor=650, bool _potentiation_flag=true, float _tau_up=0.5, float _tau_down_event=10, float _tau_down_spike=1.5, float _delta_v=1) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, 0, 0, _threshold, _restingPotential, ""),
                 epsilon(_epsilon),
                 i_discharge(_i_discharge),
@@ -57,7 +57,7 @@ namespace hummus {
             }
         }
         
-        virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
+        virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
             // checking whether a refractory period is over
             if (!active && refractory_counter >= refractory_period) {
@@ -190,7 +190,7 @@ namespace hummus {
             }
         }
         
-        virtual double share_information() override {
+        virtual float share_information() override {
             refractory_counter++;
             return refractory_counter;
         }
@@ -200,7 +200,7 @@ namespace hummus {
         // computing the neuron's current
         void compute_current() {
             // compute r_network
-            double r_network = 0;
+            float r_network = 0;
             for (auto& memristor: dendritic_tree) {
                 // taking the inactive memristors
                 if (memristor->get_synaptic_current() <= 0) {
@@ -209,13 +209,13 @@ namespace hummus {
             }
             
             // compute i_cancel
-            double i_cancel = 0;
+            float i_cancel = 0;
             if (r_network > 0) {
                  i_cancel = epsilon / r_network;
             }
             
             // getting the current i_x
-            double i_x = 0;
+            float i_x = 0;
             for (auto& memristor: dendritic_tree) {
                 // taking only the active memristors
                 if (memristor->get_synaptic_current() > 0) {
@@ -233,7 +233,7 @@ namespace hummus {
         
         // computing the neuron's V_membrane
         void compute_potential(double timestamp, Synapse* s, Network* network) {
-            double delta_t = (timestamp - previous_input_time) * 1e-6; /// delta_t converted to seconds
+            float delta_t = static_cast<float>((timestamp - previous_input_time) * 1e-6); /// delta_t converted to seconds
             potential += (current * delta_t / capacitance) - (i_discharge * delta_t / capacitance);
             
             if (potential < 0) {
@@ -368,14 +368,14 @@ namespace hummus {
             }
         }
         
-        double  epsilon;
-        double  i_discharge;
-        double  scaling_factor;
-        bool    potentiation_flag;
-        double  tau_up;
-        double  tau_down_event;
-        double  tau_down_spike;
-        int     refractory_counter;
-        double  delta_v;
+        float  epsilon;
+        float  i_discharge;
+        float  scaling_factor;
+        bool   potentiation_flag;
+        float  tau_up;
+        float  tau_down_event;
+        float  tau_down_spike;
+        int    refractory_counter;
+        float  delta_v;
 	};
 }

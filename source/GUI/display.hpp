@@ -181,17 +181,17 @@ namespace hummus {
         	neuronToTrack = _neuron_to_track;
         }
 
-		void set_time_window(double new_window) {
+		void set_time_window(float new_window) {
             input_viewer->set_time_window(new_window);
             output_viewer->set_time_window(new_window);
             dynamics_viewer->set_time_window(new_window);
         }
 
-        void set_potential_limits(double n_lim, double p_limit) {
+        void set_potential_limits(float n_lim, float p_limit) {
             dynamics_viewer->set_potential_limits(n_lim, p_limit);
         }
         
-        void set_current_limits(double n_lim, double p_limit) {
+        void set_current_limits(float n_lim, float p_limit) {
             dynamics_viewer->set_current_limits(n_lim, p_limit);
         }
         void plot_currents(bool current_plot=true) {

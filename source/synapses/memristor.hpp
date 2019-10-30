@@ -25,7 +25,7 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR -----
 		Memristor(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay) :
-                Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, _delay, 0) {
+                Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, _delay) {
             json_id = 3;
             type = synapse_type::excitatory;
 		}
@@ -33,7 +33,7 @@ namespace hummus {
 		virtual ~Memristor(){}
 
 		// ----- PUBLIC METHODS -----
-		virtual void receive_spike(double potential=0) override {
+		virtual void receive_spike(float potential=0) override {
             // updating synaptic_potential
             synaptic_potential += potential;
             
@@ -53,7 +53,6 @@ namespace hummus {
                 {"weight", weight},
                 {"delay", delay},
                 {"postsynaptic_neuron", postsynaptic_neuron},
-				{"synapse_time_constant", synapse_time_constant},
             });
 		}
 	};
