@@ -25,19 +25,20 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        ULPEC_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, double _capacitance=5e-12, double _threshold=1.2, double _restingPotential=0, double _i_discharge=12e-9, double _epsilon=0, double _scaling_factor=725, bool _potentiation_flag=true, double _tau_up=0.5, double _tau_down_event=10, double _tau_down_spike=1.5) :
+        ULPEC_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, double _capacitance=5e-12, double _threshold=1.2, double _restingPotential=0, double _i_discharge=12e-9, double _epsilon=0, double _scaling_factor=650, bool _potentiation_flag=true, double _tau_up=0.5, double _tau_down_event=10, double _tau_down_spike=1.5, double _delta_v=1) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, 0, 0, _threshold, _restingPotential, ""),
                 epsilon(_epsilon),
-                i_cancel(0),
                 i_discharge(_i_discharge),
                 scaling_factor(_scaling_factor),
                 potentiation_flag(_potentiation_flag),
+                tau_up(_tau_up),
                 tau_down_event(_tau_down_event),
-                tau_down_spike(_tau_down_spike) {
+                tau_down_spike(_tau_down_spike),
+                refractory_counter(0),
+                delta_v(_delta_v) {
                     
             // neuron type = 3 for JSON save
             neuron_type = 3;
-            membrane_time_constant = _tau_up;
         }
 		
 		virtual ~ULPEC_LIF(){}
@@ -58,146 +59,85 @@ namespace hummus {
         
         virtual void update(double timestamp, Synapse* s, Network* network, double timestep, spike_type type) override {
             
+            // checking whether a refractory period is over
+            if (!active && refractory_counter >= refractory_period) {
+                active = true;
+                refractory_counter = 0;
+            }
+            
             if (active) {
-                
-                // converting microseconds to seconds
-                double delta_t = (timestamp - previous_input_time) * 1e-6; // converting microseconds to seconds
+                if (type == spike_type::initial) {
                     
-                // checking if the neuron is in a refractory period
-                if (refractory_counter >= refractory_period) { // @@DEBUG: this should be based on a counter of output neurons not on time
-                    active = true;
-                    refractory_counter = 0;
-                }
-                
-                // calculating i_cancel and R_network
-                double r_network = 0;
-                for (auto& memristor: dendritic_tree) {
-                    // taking only the inactive memristors
-                    if (memristor->get_synaptic_current() <= 0) {
-                        r_network = 1. / memristor->get_weight();
-                    }
-                }
-                if (r_network > 0) {
-                    i_cancel = epsilon / r_network;
-                }
-                
-                // getting the current i_x being injected into the neuron taking into consideration i_cancel
-                double i_x = 0;
-                for (auto& memristor: dendritic_tree) {
-                    // taking only the active memristors
-                    if (memristor->get_synaptic_current() > 0) {
-                        i_x += memristor->get_synaptic_current();
-                    }
-                }
-                  
-                // calculating current (i_z) taking into consideration the scaling factor
-                if (i_x > i_cancel) {
-                    current = (i_x - i_cancel) * 1./scaling_factor;
-                } else {
-                    current = 0;
-                }
-                
-                // calculate potential according to the equation
-                potential += (current * delta_t / capacitance) - (i_discharge * delta_t / capacitance);
-                
-                if (potential < 0) {
-                    potential = 0;
-                }
-                
-                std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << std::endl;
-                if (network->get_verbose() == 2) {
-                    std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << std::endl;
-                }
-                
-                for (auto& addon: relevant_addons) {
-                    addon->incoming_spike(timestamp, s, this, network);
-                }
+                    // compute the current
+                    compute_current();
+                    
+                    // compute the potential V_membrane
+                    compute_potential(timestamp, s, network);
+                    
+                    // injecting potential in the memristor
+                    s->receive_spike(delta_v);
+                    
+                    // check if the threshold is crossed, and start the corresponding chain of events if it is
+                    threshold_cross_check(timestamp, s, network);
+                    
+                    // sending a spike via the same synapse to signal the end of inference
+                    network->inject_spike(spike{timestamp + tau_down_event, s, spike_type::end_of_integration});
+                    
+                } else if (type == spike_type::end_of_integration) {
+                    
+                    // compute the current
+                    compute_current();
 
-                if (network->get_main_thread_addon()) {
-                    network->get_main_thread_addon()->incoming_spike(timestamp, s, this, network);
-                }
-                
-                // to handle case where the neuron never fires - for validation with the cadence experiments
-                if (threshold != 0 && potential >= threshold) {
-                    // save spikes on the LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                    if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
-                        if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
-                            decision_queue.emplace_back(network->get_current_label());
-                        } else {
-                            decision_queue.pop_front();
-                            decision_queue.emplace_back(network->get_current_label());
-                        }
+                    // compute the potential V_membrane
+                    compute_potential(timestamp, s, network);
+
+                    // check if the threshold is crossed, and start the corresponding chain of events if it is
+                    threshold_cross_check(timestamp, s, network);
+
+                    // update the GUI just before inference ends
+                    auto& presynaptic_neuron = network->get_neurons()[s->get_presynaptic_neuron_id()];
+                    if (network->get_main_thread_addon()) {
+                        network->get_main_thread_addon()->status_update(timestamp, presynaptic_neuron.get(), network);
                     }
                     
-                    if (network->get_verbose() == 2) {
-                        std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << " --> SPIKED" << std::endl;
+                    // remove the injected potential in the memristor
+                    s->receive_spike(-delta_v);
+                    
+                    // remove the inject potential from the presynaptic neuron
+                    presynaptic_neuron->set_potential(presynaptic_neuron->get_potential() - presynaptic_neuron->share_information());
+                    
+                    // update the GUI just after inference ends
+                    if (network->get_main_thread_addon()) {
+                        network->get_main_thread_addon()->status_update(timestamp, presynaptic_neuron.get(), network);
                     }
+                } else if (type == spike_type::trigger_down) {
+                    // injecting potential in the memristor
+                    s->receive_spike(-delta_v);
                     
-                    // propagate spike through the axon terminals
-                    for (auto& axonTerminal : axon_terminals) {
-                        auto& postsynaptic_layer = network->get_layers()[network->get_neurons()[axonTerminal->get_postsynaptic_neuron_id()]->get_layer_id()];
-                        if (postsynaptic_layer.active) {
-                            // dealing with feedforward and lateral connections
-                            if (postsynaptic_layer.id >= layer_id) {
-                                network->inject_spike(spike{timestamp + axonTerminal->get_delay(), axonTerminal.get(), spike_type::generated});
-                            // dealing with feedback connections
-                            } else {
-                                auto& presynaptic_neuron = network->get_neurons()[axonTerminal->get_postsynaptic_neuron_id()];
-                                // potentiation order flag STDP
-                                if (potentiation_flag) {
-                                    // send postsynaptic pulse after 13us
-                                    network->inject_spike(spike{timestamp + 13, axonTerminal.get(), spike_type::trigger_down});
-                                    network->inject_spike(spike{timestamp + 13 + membrane_time_constant, axonTerminal.get(), spike_type::trigger_down_to_up});
-                                    network->inject_spike(spike{timestamp + 13 + tau_down_spike, axonTerminal.get(), spike_type::end_trigger_up});
-                                    
-                                    // if presynaptic neuron was active at some point
-                                    if (presynaptic_neuron->get_trace() == 1) {
-                                        // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
-                                        network->inject_spike(spike{timestamp + 12, axonTerminal.get(), spike_type::trigger_down});
-                                        network->inject_spike(spike{timestamp + 12 + tau_down_event, axonTerminal.get(), spike_type::end_trigger_down});
-                                        
-                                    } else {
-                                        // inject trigger_up spike to presynaptic_neuron for depression after 14us
-                                        network->inject_spike(spike{timestamp + 14, axonTerminal.get(), spike_type::trigger_up});
-                                        network->inject_spike(spike{timestamp + 14 + membrane_time_constant, axonTerminal.get(), spike_type::end_trigger_up});
-                                    }
-                                // depression inhibitor flag STDP
-                                } else {
-                                    // send postsynaptic pulse instantly and any currently spiking neurons will automatically potentiate
-                                    network->inject_spike(spike{timestamp + 13, axonTerminal.get(), spike_type::trigger_down});
-                                    network->inject_spike(spike{timestamp + 13 + membrane_time_constant, axonTerminal.get(), spike_type::trigger_down_to_up});
-                                    network->inject_spike(spike{timestamp + 13 + tau_down_spike, axonTerminal.get(), spike_type::end_trigger_up});
-                                    
-                                    if (presynaptic_neuron->get_trace() == 0) {
-                                        // inject trigger_up spike to presynaptic_neuron for depression after 1us
-                                        network->inject_spike(spike{timestamp + 1, axonTerminal.get(), spike_type::trigger_up});
-                                        network->inject_spike(spike{timestamp + 1 + membrane_time_constant, axonTerminal.get(), spike_type::end_trigger_up});
-                                    }
-                                }
-                                
-                                // reset trace
-                                presynaptic_neuron->set_trace(0);
-                            }
-                        }
-                    }
+                } else if (type == spike_type::trigger_up) {
+                    // injecting potential in the memristor
+                    s->receive_spike(delta_v);
                     
-                    // everytime a postsynaptic neuron fires increment refractory counter on all postsynaptic neurons that are currently inactive
-                    check_refractory(network);
+                } else if (type == spike_type::trigger_down_to_up) {
+                    // from down to up to get the postsynaptic waveform
+                    s->receive_spike(2*delta_v);
                     
-                    // winner-takes-all to reset potential on all neurons in the same layer
-                    winner_takes_all(timestamp, network);
+                } else if (type == spike_type::end_trigger_up) {
+                    // remove the injected potential in the memristor
+                    s->receive_spike(-delta_v);
                     
-                    // disable neuron for refractory period
-                    active = false;
-                    
-                    // save time when neuron fired
-                    previous_spike_time = timestamp;
+                } else if (type == spike_type::end_trigger_down) {
+                    // remove the injected potential in the memristor
+                    s->receive_spike(delta_v);
                 }
                 
                 // save computation time
                 previous_input_time = timestamp;
+                
+                // activate learning rule whenever learning threshold is passed
+                request_learning(timestamp, s, this, network);
             }
-		}
+        }
         
         // reset a neuron to its initial status
         virtual void reset_neuron(Network* network, bool clearAddons=true) override {
@@ -250,12 +190,158 @@ namespace hummus {
             }
         }
         
-        virtual int share_information() override {
-            refractory_counter += 1;
+        virtual double share_information() override {
+            refractory_counter++;
             return refractory_counter;
         }
         
     protected:
+        
+        // computing the neuron's current
+        void compute_current() {
+            // compute r_network
+            double r_network = 0;
+            for (auto& memristor: dendritic_tree) {
+                // taking the inactive memristors
+                if (memristor->get_synaptic_current() <= 0) {
+                    r_network = 1. / memristor->get_weight();
+                }
+            }
+            
+            // compute i_cancel
+            double i_cancel = 0;
+            if (r_network > 0) {
+                 i_cancel = epsilon / r_network;
+            }
+            
+            // getting the current i_x
+            double i_x = 0;
+            for (auto& memristor: dendritic_tree) {
+                // taking only the active memristors
+                if (memristor->get_synaptic_current() > 0) {
+                    i_x += memristor->get_synaptic_current();
+                }
+            }
+            
+            // calculating current (i_z) taking into consideration the scaling factor
+            if (i_x > i_cancel) {
+                current = (i_x - i_cancel) * 1./scaling_factor;
+            } else {
+                current = 0;
+            }
+        }
+        
+        // computing the neuron's V_membrane
+        void compute_potential(double timestamp, Synapse* s, Network* network) {
+            double delta_t = (timestamp - previous_input_time) * 1e-6; /// delta_t converted to seconds
+            potential += (current * delta_t / capacitance) - (i_discharge * delta_t / capacitance);
+            
+            if (potential < 0) {
+                potential = 0;
+            }
+            
+            if (network->get_verbose() == 2 && potential < threshold) {
+                std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << std::endl;
+            }
+
+            for (auto& addon: relevant_addons) {
+                addon->incoming_spike(timestamp, s, this, network);
+            }
+
+            if (network->get_main_thread_addon()) {
+                network->get_main_thread_addon()->incoming_spike(timestamp, s, this, network);
+            }
+        }
+        
+        // check if the threshold is crossed, and start the corresponding chain of events if it is
+        void threshold_cross_check(double timestamp, Synapse* s, Network* network) {
+            if (threshold != 0 && potential >= threshold) {
+                // save spikes on the LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
+                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                    if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
+                        decision_queue.emplace_back(network->get_current_label());
+                    } else {
+                        decision_queue.pop_front();
+                        decision_queue.emplace_back(network->get_current_label());
+                    }
+                }
+
+                if (network->get_verbose() == 2) {
+                    std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << " --> SPIKED" << std::endl;
+                }
+                
+                for (auto& addon: relevant_addons) {
+                    addon->neuron_fired(timestamp, s, this, network);
+                }
+                
+                if (network->get_main_thread_addon()) {
+                    network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
+                }
+                
+                // propagate spike through the axon terminals (towards decision-making neurons)
+                for (auto& axon_terminal : axon_terminals) {
+                    auto& postsynaptic_layer = network->get_layers()[network->get_neurons()[axon_terminal->get_postsynaptic_neuron_id()]->get_layer_id()];
+                    if (postsynaptic_layer.active) {
+                        network->inject_spike(spike{timestamp + axon_terminal->get_delay(), axon_terminal.get(), spike_type::generated});
+                    }
+                }
+                
+                // handle changing memristor conductance
+                for (auto& dendrite: dendritic_tree) {
+                    
+                    auto& presynaptic_neuron = network->get_neurons()[dendrite->get_presynaptic_neuron_id()];
+
+                    // POF learning pulse
+                    if (potentiation_flag) {
+                        // send postsynaptic pulse after 13us
+                        network->inject_spike(spike{timestamp + 13, dendrite, spike_type::trigger_down});
+                        network->inject_spike(spike{timestamp + 13 + tau_up, dendrite, spike_type::trigger_down_to_up});
+                        network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
+                        
+                        // if presynaptic neuron was active at some point
+                        if (presynaptic_neuron->get_trace() == 1) {
+                            // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
+                            network->inject_spike(spike{timestamp + 12, dendrite, spike_type::trigger_down});
+                            network->inject_spike(spike{timestamp + 12 + tau_down_event, dendrite, spike_type::end_trigger_down});
+
+                        } else {
+                            // inject trigger_up spike to presynaptic_neuron for depression after 14us
+                            network->inject_spike(spike{timestamp + 14, dendrite, spike_type::trigger_up});
+                            network->inject_spike(spike{timestamp + 14 + membrane_time_constant, dendrite, spike_type::end_trigger_up});
+                        }
+
+                        
+                    // DIF learning pulse
+                    } else {
+                        // send postsynaptic pulse instantly and any currently spiking neurons will automatically potentiate
+                        network->inject_spike(spike{timestamp, dendrite, spike_type::trigger_down});
+                        network->inject_spike(spike{timestamp + tau_up, dendrite, spike_type::trigger_down_to_up});
+                        network->inject_spike(spike{timestamp + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
+                        
+                        if (presynaptic_neuron->get_trace() == 0) {
+                            // inject trigger_up spike to presynaptic_neuron for depression after 1us
+                            network->inject_spike(spike{timestamp + 1, dendrite, spike_type::trigger_up});
+                            network->inject_spike(spike{timestamp + 1 + tau_up, dendrite, spike_type::end_trigger_up});
+                        }
+                    }
+                    
+                    // reset trace
+                    presynaptic_neuron->set_trace(0);
+                }
+                
+                // everytime a postsynaptic neuron fires increment refractory counter on all postsynaptic neurons that are currently inactive
+                check_refractory(network);
+
+                // winner-takes-all to reset potential on all neurons in the same layer
+                winner_takes_all(timestamp, network);
+
+                // disable neuron for refractory period
+                active = false;
+
+                // save time when neuron fired
+                previous_spike_time = timestamp;
+            }
+        }
         
         void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
@@ -283,12 +369,13 @@ namespace hummus {
         }
         
         double  epsilon;
-        double  i_cancel;
         double  i_discharge;
         double  scaling_factor;
         bool    potentiation_flag;
+        double  tau_up;
         double  tau_down_event;
         double  tau_down_spike;
         int     refractory_counter;
+        double  delta_v;
 	};
 }

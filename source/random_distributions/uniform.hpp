@@ -44,9 +44,9 @@ namespace hummus {
 		
         std::pair<double, double> operator()(int x, int y, int depth) {
         	if (int_type) {
-				return std::make_pair(real_weight_random(random_engine), real_delay_random(random_engine));
+                return std::make_pair(int_weight_random(random_engine), int_delay_random(random_engine));
 			} else {
-				return std::make_pair(int_weight_random(random_engine), int_delay_random(random_engine));
+				return std::make_pair(real_weight_random(random_engine), real_delay_random(random_engine));
 			}
         }
 		

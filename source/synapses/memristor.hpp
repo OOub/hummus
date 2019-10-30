@@ -24,9 +24,8 @@ namespace hummus {
 
 	public:
 		// ----- CONSTRUCTOR -----
-		Memristor(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay, double _invert_current=true) :
-                Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, _delay, 0),
-                invert_current(static_cast<bool>(_invert_current)) {
+		Memristor(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay) :
+                Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, _delay, 0) {
             json_id = 3;
             type = synapse_type::excitatory;
 		}
@@ -39,11 +38,7 @@ namespace hummus {
             synaptic_potential += potential;
             
             // calculating synaptic current
-            if (invert_current) {
-                synaptic_current = - weight * synaptic_potential;
-            } else {
-                synaptic_current = weight * synaptic_potential;
-            }
+            synaptic_current = weight * synaptic_potential;            
 		}
 
         virtual void reset() override {
@@ -61,7 +56,5 @@ namespace hummus {
 				{"synapse_time_constant", synapse_time_constant},
             });
 		}
-    protected:
-        bool  invert_current;
 	};
 }

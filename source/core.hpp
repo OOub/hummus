@@ -213,7 +213,7 @@ namespace hummus {
         }
 
         // share information - generic getter that can be used for accessing child members from parent
-        virtual int share_information() { return 0; }
+        virtual double share_information() { return 0; }
 
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) {}
@@ -1593,7 +1593,7 @@ namespace hummus {
                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                          }
                                                                      } else if (polarity == 0 || polarity == 1) {
-                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                          }
                                                                      } else {
@@ -1616,7 +1616,7 @@ namespace hummus {
                                                                               es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                           }
                                                                       } else if (polarity == 0 || polarity == 1) {
-                                                                          if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                          if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                               es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                           }
                                                                       } else {
@@ -1631,6 +1631,11 @@ namespace hummus {
                     // going through any leftover spikes after the last event is propagated
                     async_run_helper(&running, false, true);
 
+                    // sending the on_pattern_end addon message
+                    for (auto& addon: addons) {
+                        addon->on_pattern_end(this);
+                    }
+                    
                     idx++;
 
                     reset_network(false);
@@ -1696,7 +1701,7 @@ namespace hummus {
                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                              }
                                                                          } else if (polarity == 0 || polarity == 1) {
-                                                                             if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                             if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                  final_t = static_cast<double>(event.t);
                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                              }
@@ -1715,12 +1720,12 @@ namespace hummus {
 
                                                                           // filtering out gray level events, temporal crop and spatial crop and polarity selection
                                                                           if (polarity == 2) {
-                                                                              if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                   final_t = static_cast<double>(event.t);
                                                                                   es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                               }
                                                                           } else if (polarity == 0 || polarity == 1) {
-                                                                              if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                   final_t = static_cast<double>(event.t);
                                                                                   es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                               }
@@ -1736,6 +1741,11 @@ namespace hummus {
                         // going through any leftover spikes after the last event is propagated
                         async_run_helper(&running, true, true);
 
+                        // sending the on_pattern_end addon message
+                        for (auto& addon: addons) {
+                            addon->on_pattern_end(this);
+                        }
+                        
                         if (decision_making && decision.timer == 0) {
                             choose_winner_eof(final_t, 0);
                         } else if (decision_making && decision.timer > 0) {
@@ -1858,6 +1868,7 @@ namespace hummus {
         // -----PROTECTED NETWORK METHODS -----
 
         void es_run_helper(double t, int x, int y, bool classification=false) {
+
             // 1. find neuron corresponding to the event coordinates through 2D to 1D mapping
             int idx = (x + layers[0].width * y);
 
