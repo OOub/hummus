@@ -36,7 +36,7 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937               random_engine;
+        std::mt19937                     random_engine;
         std::cauchy_distribution<float> delay_random;
         std::cauchy_distribution<float> weight_random;
 	};

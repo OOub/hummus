@@ -68,23 +68,52 @@ if(QT)
     set(CMAKE_AUTORCC ON)
     set(CMAKE_AUTOUIC ON)
 
-    find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
+    # Qt for Linux
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        if(EXISTS /usr/include/qt5/)
+            set(CMAKE_PREFIX_PATH /usr/include/qt5/)
+        else()
+            set(CMAKE_PREFIX_PATH /usr/include/x86_64-linux-gnu/qt5/)
+        endif()
 
-    target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
-                                                        ${Qt5Gui_INCLUDE_DIRS}
-                                                        ${Qt5Qml_INCLUDE_DIRS}
-                                                        ${Qt5Quick_INCLUDE_DIRS}
-                                                        ${Qt5Widgets_INCLUDE_DIRS}
-                                                        ${Qt5QuickControls2_INCLUDE_DIRS}
-                                                        ${Qt5Charts_INCLUDE_DIRS})
+        find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets Charts REQUIRED)
 
-    target_link_libraries(hummus_library INTERFACE Qt5::Core
-                                                   Qt5::Gui
-                                                   Qt5::Qml
-                                                   Qt5::Quick
-                                                   Qt5::Widgets
-                                                   Qt5::QuickControls2
-                                                   Qt5::Charts)
+        target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
+                                                            ${Qt5Gui_INCLUDE_DIRS}
+                                                            ${Qt5Qml_INCLUDE_DIRS}
+                                                            ${Qt5Quick_INCLUDE_DIRS}
+                                                            ${Qt5Widgets_INCLUDE_DIRS}
+                                                            ${Qt5Charts_INCLUDE_DIRS})
+
+        target_link_libraries(hummus_library INTERFACE Qt5::Core
+                                                       Qt5::Gui
+                                                       Qt5::Qml
+                                                       Qt5::Quick
+                                                       Qt5::Widgets
+                                                       Qt5::Charts)
+
+    # Qt for macOS
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(CMAKE_PREFIX_PATH /usr/local/opt/qt/)
+        find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
+
+        target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
+                                                            ${Qt5Gui_INCLUDE_DIRS}
+                                                            ${Qt5Qml_INCLUDE_DIRS}
+                                                            ${Qt5Quick_INCLUDE_DIRS}
+                                                            ${Qt5Widgets_INCLUDE_DIRS}
+                                                            ${Qt5QuickControls2_INCLUDE_DIRS}
+                                                            ${Qt5Charts_INCLUDE_DIRS})
+
+        target_link_libraries(hummus_library INTERFACE Qt5::Core
+                                                       Qt5::Gui
+                                                       Qt5::Qml
+                                                       Qt5::Quick
+                                                       Qt5::Widgets
+                                                       Qt5::QuickControls2
+                                                       Qt5::Charts)
+
+    endif()
 
     source_group(_moc REGULAR_EXPRESSION "\\.rule$")
 endif()

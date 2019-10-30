@@ -41,13 +41,17 @@ namespace hummus {
                 openGL(true),
                 time_window(100),
                 max_x(0),
-                min_y(-70),
-                max_y(-50),
-                min_y_right(0),
-                max_y_right(1),
                 neuron_tracker(-1),
-                current_plot(false) {
+                current_plot(false),
+                y_n_lim(-70),
+                y_p_lim(-50),
+                yr_n_lim(0),
+                yr_p_lim(1) {
             atomic_guard.clear(std::memory_order_release);
+            min_y = y_n_lim;
+            max_y = y_p_lim;
+            min_y_right = yr_n_lim;
+            max_y_right = yr_p_lim;
         }
         
         virtual ~DynamicsViewer(){}
@@ -83,7 +87,21 @@ namespace hummus {
 		}
 		
 		// ----- SETTERS -----
-		void set_time_window(double new_window) {
+        void set_potential_limits(float _y_n_lim, float _y_p_lim) {
+            y_n_lim = _y_n_lim;
+            y_p_lim = _y_p_lim;
+            min_y = _y_n_lim;
+            max_y = _y_p_lim;
+        }
+        
+        void set_current_limits(float _yr_n_lim, float _yr_p_lim) {
+            yr_n_lim = _yr_n_lim;
+            yr_p_lim = _yr_p_lim;
+            min_y_right = _yr_n_lim;
+            max_y_right = _yr_p_lim;
+        }
+        
+		void set_time_window(float new_window) {
             time_window = new_window;
         }
 		
@@ -112,10 +130,10 @@ namespace hummus {
         void change_tracked_neuron(int new_neuron) {
             if (neuron_tracker != new_neuron) {
                 neuron_tracker = new_neuron;
-                min_y = -70;
-                max_y = -50;
-                min_y_right = 0;
-                max_y_right = 1;
+                min_y = y_n_lim;
+                max_y = y_p_lim;
+                min_y_right = yr_n_lim;
+                max_y_right = yr_p_lim;
             }
         }
     
@@ -143,7 +161,7 @@ namespace hummus {
                                 points.remove(0, static_cast<int>(std::distance(points.begin(), firstToKeep)));
                     
                                 static_cast<QtCharts::QXYSeries *>(series)->replace(points);
-                                axisY->setRange(min_y-1,max_y+1);
+                                axisY->setRange(min_y,max_y);
                             }
                             break;
                         case 1:
@@ -165,7 +183,7 @@ namespace hummus {
                                     current_points.remove(0, static_cast<int>(std::distance(current_points.begin(), firstToKeep)));
                                     
                                     static_cast<QtCharts::QXYSeries *>(series)->replace(current_points);
-                                    axisY->setRange(min_y_right-1,max_y_right+1);
+                                    axisY->setRange(min_y_right,max_y_right);
                                 }
                                 break;
                             }
@@ -181,11 +199,11 @@ namespace hummus {
         // ----- IMPLEMENTATION VARIABLES -----
         bool                  is_closed;
         bool                  openGL;
-        double                time_window;
+        float                 time_window;
         QVector<QPointF>      points;
         QVector<QPointF>      thres_points;
         QVector<QPointF>      current_points;
-        double                max_x;
+        float                 max_x;
         float                 min_y;
         float                 max_y;
         float                 min_y_right;
@@ -193,5 +211,9 @@ namespace hummus {
         std::atomic_flag      atomic_guard;
         int                   neuron_tracker;
         bool                  current_plot;
+        float                 y_n_lim;
+        float                 y_p_lim;
+        float                 yr_n_lim;
+        float                 yr_p_lim;
     };
 }

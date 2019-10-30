@@ -46,6 +46,9 @@ namespace hummus {
         // message that is activated to update the status of the network. This allows decay equations and the GUI to keep calculating even when neurons don't receive any spikes
 		virtual void status_update(double timestamp, Neuron* postsynapticNeuron, Network* network){}
         
+        // message activated only when running with es databases at the end of every pattern
+        virtual void on_pattern_end(Network* network){}
+        
         // message that is activated whenever a neuron wants to learn
         virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network){};
         

@@ -1,12 +1,12 @@
 /*
- * pulse_generator.hpp
+ * ulpec_input.hpp
  * Hummus - spiking neural network simulator
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
  * Last Version: 24/01/2019
  *
- * Information: pulse_generator neurons generates waveforms used in the context of the ulpec project.
+ * Information: ULPEC_Input neurons generates waveforms used in the context of the ulpec project.
  *
  * NEURON TYPE 4 (in JSON SAVE FILE)
  */
@@ -21,21 +21,20 @@ namespace hummus {
     class Neuron;
     class Network;
 
-    class Pulse_Generator : public Neuron {
+    class ULPEC_Input : public Neuron {
 
     public:
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Pulse_Generator(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _threshold=1.2, float _restingPotential=1.1, double _tau_up=0.5, double _tau_down=10, float _input_voltage=1) :
+        ULPEC_Input(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=25, float _threshold=1.2, float _restingPotential=1.1, float _tau=10, float _injected_potential=-1) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, 0, _threshold, _restingPotential, ""),
-                tau_up(_tau_up),
-                tau_down(_tau_down),
-                input_voltage(_input_voltage) {
+                injected_potential(_injected_potential) {
 
             // DecisionMaking neuron type = 2 for JSON save
             neuron_type = 4;
+            membrane_time_constant = _tau;
         }
 
-        virtual ~Pulse_Generator(){}
+        virtual ~ULPEC_Input(){}
 
         // ----- PUBLIC INPUT NEURON METHODS -----
         virtual void initialisation(Network* network) override {
@@ -52,47 +51,54 @@ namespace hummus {
         }
 
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
-            // initial spike = AER event
-            if (type == spike_type::initial) {
-                // 1. decrease in voltage square waveform (to 0.1V)
-                potential -= input_voltage;
+            
+            // updating GUI values status before any computation
+            if (network->get_main_thread_addon()) {
+                network->get_main_thread_addon()->status_update(timestamp, this, network);
+            }
                 
-                // 2. end of integration spike on the same neuron after tau_down
-                network->inject_spike(spike{timestamp + tau_down, s, spike_type::end_of_integration});
+            // checking if there's a refractory period
+            if (timestamp - previous_spike_time >= refractory_period) {
+                active = true;
+            }
+
+            if (type == spike_type::initial && active) {
+                // updating potential of input neuron
+                potential += injected_potential;
                 
-                // 3. set trace to 1 -> equivalent to the 1bit activity flag
+                // propagating spike to the next layer
+                for (auto& axon_terminal: axon_terminals) {
+                    network->inject_spike(spike{timestamp, axon_terminal.get(), spike_type::initial});
+                }
+                
+                if (network->get_verbose() == 2) {
+                    std::cout << "t " << timestamp << " " << neuron_id << " v_pre " << potential << " --> INPUT" << std::endl;
+                }
+                
+                // send neuron_fired signal to the addons
+                for (auto& addon: relevant_addons) {
+                    addon->neuron_fired(timestamp, s, this, network);
+                }
+
+                if (network->get_main_thread_addon()) {
+                    network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
+                }
+
+                // set trace to 1
                 trace = 1;
-                
-                // 4. inject voltage into the memristors and propagate spike to the next layer
-                for (auto& axon_terminal: axon_terminals) {
-                    axon_terminal->receive_spike();
-                    network->inject_spike(spike{timestamp, axon_terminal.get(), spike_type::generated});
-                }
-                
-            // programming spike
-            } else if (type == spike_type::programming) {
-                // 1. increase in voltage square waveform (2.1V)
-                potential += input_voltage;
-                
-                // 2. end of integration spike on the same neuron after tau_up
-                network->inject_spike(spike{timestamp + tau_up, s, spike_type::end_of_integration});
-                
-                // 3. inject voltage into the memristors
-                for (auto& axon_terminal: axon_terminals) {
-                    axon_terminal->receive_spike();
-                }
-                
-            // spike that resets the potential to get the square waveform
-            } else if (type == spike_type::end_of_integration) {
-                potential = resting_potential;
-                
-                // reset the synaptic current for all the memristors
-                for (auto& axon_terminal: axon_terminals) {
-                    axon_terminal->update(timestamp, 0);
-                }
+
+                // setting time when inference started
+                previous_spike_time = timestamp;
+
+                // starting refractory period to accept AER events
+                active = false;
             }
         }
 
+        virtual float share_information() override {
+            return injected_potential;
+        }
+        
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) override{
             // general neuron parameters
@@ -102,13 +108,10 @@ namespace hummus {
                 {"sublayer_id", sublayer_id},
                 {"rf_id", rf_id},
                 {"xy_coordinates", xy_coordinates},
-                {"trace_time_constant", trace_time_constant},
                 {"threshold", threshold},
                 {"resting_potential", resting_potential},
                 {"refractory_period", refractory_period},
-                {"tau_up", tau_up},
-                {"tau_down", tau_down},
-                {"input_voltage", input_voltage},
+                {"injected_potential", injected_potential},
                 {"dendritic_synapses", nlohmann::json::array()},
                 {"axonal_synapses", nlohmann::json::array()},
             });
@@ -129,8 +132,6 @@ namespace hummus {
     protected:
         
         // ----- PULSE_GENERATOR PARAMETERS -----
-        double    tau_up;
-        double    tau_down;
-        float     input_voltage;
+        float       injected_potential;
     };
 }

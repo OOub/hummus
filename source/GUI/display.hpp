@@ -4,7 +4,7 @@
  *
  * Created by Omar Oubari.
  * Email: omar.oubari@inserm.fr
- * Last Version: 31/07/2018
+ * Last Version: 19/10/2019
  *
  * Information: Add-on used to display a GUI of the spiking neural network output using Qt (Qt5 dependency)
  */
@@ -71,9 +71,9 @@ namespace hummus {
             window->setFormat(format);
             window->show();
 
-            input_viewer = window->findChild<InputViewer*>("inputViewer");
-            output_viewer = window->findChild<OutputViewer*>("outputViewer");
-            dynamics_viewer = window->findChild<DynamicsViewer*>("dynamicsViewer");
+            input_viewer.reset(window->findChild<InputViewer*>("inputViewer"));
+            output_viewer.reset(window->findChild<OutputViewer*>("outputViewer"));
+            dynamics_viewer.reset(window->findChild<DynamicsViewer*>("dynamicsViewer"));
         }
         
         virtual ~Display(){}
@@ -181,12 +181,19 @@ namespace hummus {
         	neuronToTrack = _neuron_to_track;
         }
 
-		void set_time_window(double new_window) {
+		void set_time_window(float new_window) {
             input_viewer->set_time_window(new_window);
             output_viewer->set_time_window(new_window);
             dynamics_viewer->set_time_window(new_window);
         }
 
+        void set_potential_limits(float n_lim, float p_limit) {
+            dynamics_viewer->set_potential_limits(n_lim, p_limit);
+        }
+        
+        void set_current_limits(float n_lim, float p_limit) {
+            dynamics_viewer->set_current_limits(n_lim, p_limit);
+        }
         void plot_currents(bool current_plot=true) {
             engine->rootContext()->setContextProperty("displayCurrents", current_plot);
             dynamics_viewer->plot_currents(current_plot);
@@ -197,9 +204,9 @@ namespace hummus {
 		// ----- IMPLEMENTATION VARIABLES -----
         std::unique_ptr<QApplication>          app;
         std::unique_ptr<QQmlApplicationEngine> engine;
-        InputViewer*                           input_viewer;
-        OutputViewer*                          output_viewer;
-        DynamicsViewer*                        dynamics_viewer;
+        std::unique_ptr<InputViewer>           input_viewer;
+        std::unique_ptr<OutputViewer>          output_viewer;
+        std::unique_ptr<DynamicsViewer>        dynamics_viewer;
         int                                    neuronToTrack;
         int                                    inputSublayerToTrack;
         int                                    outputLayerToTrack;

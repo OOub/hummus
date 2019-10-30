@@ -103,8 +103,8 @@ namespace hummus {
             }
         }
 
-        virtual int share_information() override {
-            return intensity;
+        virtual float share_information() override {
+            return static_cast<float>(intensity);
         }
 
         // write neuron parameters in a JSON format

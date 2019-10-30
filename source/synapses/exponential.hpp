@@ -25,12 +25,12 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR -----
 		Exponential(int _target_neuron, int _parent_neuron, float _weight, float _delay, float _synapse_time_constant=10, float _external_current=100, float _gaussian_std_dev=0) :
-				Synapse(_target_neuron, _parent_neuron, _weight, _delay, _external_current) {
-
-			synapse_time_constant = _synapse_time_constant;
+				Synapse(_target_neuron, _parent_neuron, _weight, _delay),
+                external_current(_external_current) {
+                    
+            synapse_time_constant = _synapse_time_constant;
             inv_s_tau = 1./synapse_time_constant;
 
-            gaussian_std_dev = _gaussian_std_dev;
 			json_id = 1;
 
 			// error handling
@@ -54,13 +54,13 @@ namespace hummus {
 		virtual ~Exponential(){}
 
 		// ----- PUBLIC METHODS -----
-        virtual float update(double timestamp, float timestep) override {
+        virtual float update(double timestamp, float timestep=0) override {
             // decay the current
             synaptic_current -= synaptic_current * timestep * inv_s_tau;
             return synaptic_current;
         }
 
-		virtual void receive_spike() override {
+		virtual void receive_spike(float potential=0) override {
             // increase the synaptic current in response to an incoming spike
             synaptic_current += weight * (external_current+normal_distribution(random_engine));
 		}
@@ -77,8 +77,9 @@ namespace hummus {
 		}
 
 	protected:
-        float                           inv_s_tau;
-		std::mt19937                    random_engine;
-		std::normal_distribution<float> normal_distribution;
+        float                            inv_s_tau;
+		std::mt19937                     random_engine;
+		std::normal_distribution<float>  normal_distribution;
+        float                            external_current;
 	};
 }

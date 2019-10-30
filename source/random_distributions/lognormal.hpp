@@ -36,7 +36,7 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                  random_engine;
+        std::mt19937                        random_engine;
         std::lognormal_distribution<float> delay_random;
         std::lognormal_distribution<float> weight_random;
 	};

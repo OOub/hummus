@@ -32,8 +32,8 @@ namespace hummus {
 	struct event {
 		double   timestamp;
         int      neuron_id;
-		int      x;
-		int      y;
+		int      x = -1;
+		int      y = -1;
 	};
 	
 	class DataParser {
@@ -136,7 +136,7 @@ namespace hummus {
                 	split(fields, line, " ,");
                 	// 1D data
                 	if (fields.size() == 2) {
-						data.emplace_back(event{std::stod(fields[0]), std::stoi(fields[1]), -1, -1});
+						data.emplace_back(event{std::stod(fields[0]), std::stoi(fields[1])});
                         max_id = std::max(max_id, std::stoi(fields[1]));
                     // 2D Data
 					} else if (fields.size() == 3) {
@@ -170,8 +170,8 @@ namespace hummus {
                     auto it = std::max_element(data.begin(), data.end(), [&](event a, event b){ return a.timestamp < b.timestamp; });
                     double max_timestamp = data[std::distance(data.begin(), it)].timestamp;
                     
-                    // uniform int distribution for the timestamps of spontaneous spikes
-                    std::uniform_int_distribution<double> uniform_timestamp(0, max_timestamp);
+                    // uniform real distribution for the timestamps of spontaneous spikes
+                    std::uniform_real_distribution<double> uniform_timestamp(0, max_timestamp);
                     
                     // finding the number of spontaneous spikes to add to the data
                     int additive_spikes = std::round(data.size() * additive_noise / 100.);
@@ -181,7 +181,7 @@ namespace hummus {
                         std::uniform_int_distribution<> uniform_id(0, max_id);
                         
                         for (auto i=0; i<additive_spikes; i++) {
-                            data.emplace_back(event{uniform_timestamp(random_engine), uniform_id(random_engine), UINT16_MAX, UINT16_MAX});
+                            data.emplace_back(event{uniform_timestamp(random_engine), uniform_id(random_engine)});
                         }
                     // two-dimensional data
                     } else {
@@ -221,7 +221,7 @@ namespace hummus {
                     
                     // filling temporary vector by each field of the line read, then convert the field to float
                     for (auto& f: fields) {
-                        postsynaptic_weights.emplace_back(std::stof(f));
+                        postsynaptic_weights.emplace_back(std::stod(f));
                     }
                     
                     // filling vector of vectors to build 2D weight matrix

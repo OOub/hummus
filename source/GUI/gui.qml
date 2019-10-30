@@ -150,7 +150,7 @@ ApplicationWindow {
 					ValueAxis {
 						id:inputX
 						tickCount: inputInnerRec.width/75
-						titleText: "Time (ms)"
+						titleText: "Time"
 						labelsFont:Qt.font({pointSize: 11})
 					}
 
@@ -313,7 +313,7 @@ ApplicationWindow {
 					ValueAxis {
 						id:outputX
 						tickCount: outputInnerRec.width/75
-						titleText: "Time (ms)"
+						titleText: "Time"
 						labelsFont:Qt.font({pointSize: 11})
 					}
 
@@ -459,21 +459,21 @@ ApplicationWindow {
 					ValueAxis {
 						id:mX
 						tickCount: potentialInnerRec.width/75
-						titleText: "Time (ms)"
+						titleText: "Time"
 						labelsFont:Qt.font({pointSize: 11})
 					}
 
 					ValueAxis {
 						id:mY
 						tickCount: potentialInnerRec.height/50
-						titleText: "Membrane Potential (mV)"
+						titleText: "Membrane Potential"
 						labelsFont:Qt.font({pointSize: 11})
 					}
 
 					ValueAxis {
 						id:mY_right
 						tickCount: potentialInnerRec.height/50
-						titleText: "Injected Current (A)"
+						titleText: "Injected Current"
 						labelsFont:Qt.font({pointSize: 11})
 					}
 
@@ -489,6 +489,7 @@ ApplicationWindow {
 						axisX: mX
 						axisY: mY
 						color: "#ED6A56"
+                        style: Qt.DotLine
 					}
 
 					LineSeries {

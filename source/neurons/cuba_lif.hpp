@@ -91,7 +91,7 @@ namespace hummus {
                 current = total_current;
             }
             
-            float input_td = timestamp - previous_input_time;
+            float input_td = static_cast<float>(timestamp - previous_input_time);
             
             if (type == spike_type::initial || type == spike_type::generated) {
                 
@@ -482,14 +482,14 @@ namespace hummus {
         bool                         wta;
 		bool                         bursting_activity;
 		bool                         homeostasis;
-		double                       resting_threshold;
-		double                       decay_homeostasis;
-		double                       homeostasis_beta;
+		float                        resting_threshold;
+		float                        decay_homeostasis;
+		float                        homeostasis_beta;
 		Synapse*                     active_synapse;
         
         // Parameters for performance improvement
-        double                       inv_trace_tau;
-        double                       inv_membrane_tau;
-        double                       inv_homeostasis_tau;
+        float                        inv_trace_tau;
+        float                        inv_membrane_tau;
+        float                        inv_homeostasis_tau;
 	};
 }

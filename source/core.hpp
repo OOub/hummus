@@ -68,7 +68,11 @@ namespace hummus {
         end_of_integration, // asynchronous - updating synapses when they become inactive (not a real spike)
         prediction, // asynchronous - future theoretical spike time (not a real spike)
         decision, // for decision-making (real spike)
-        programming, // ulpec spike for depression (real spike)
+        trigger_up, // for ulpec - voltage > resting_potential
+        trigger_down, // for ulpec - voltage < resting_potential
+        trigger_down_to_up, // for ulpec - postsynaptic pulse
+        end_trigger_up, // end of the trigger_up waveform
+        end_trigger_down, // end of the trigger_down waveform
         none // synchronous - for updates at every clock (not a real spike)
     };
 
@@ -77,18 +81,18 @@ namespace hummus {
         int                           layer_number; // decision_making layer id
         int                           spike_history_size; // how many spikes to take into consideration for the heuristics
         int                           rejection_threshold; // percentage of spikes that need to belong to the same class in order for a neuron to be labelled
-        double                        timer; // selects how often a decision neuron fires. for es files: set to 0 if Decision is to be made at the end of the file
+        float                         timer; // selects how often a decision neuron fires. for es files: set to 0 if Decision is to be made at the end of the file
     };
 
-    // receptive_fields
-    struct receptive_fields {
+    // receptive_field
+    struct receptive_field {
         std::vector<std::size_t>      neurons; // neuron indices belonging to the receptive field
         int                           id; // receptive field ID
     };
 
     // the equivalent of feature maps
 	struct sublayer {
-        std::vector<receptive_fields> receptive_fields; // receptive fields of a sublayer
+        std::vector<receptive_field>  receptive_fields; // receptive fields of a sublayer
 		std::vector<std::size_t>      neurons; // neuron indices belonging to a sublayer
 		int                           id; // sublayer ID
 	};
@@ -209,7 +213,7 @@ namespace hummus {
         }
 
         // share information - generic getter that can be used for accessing child members from parent
-        virtual int share_information() { return 0; }
+        virtual float share_information() { return 0; }
 
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) {}
@@ -376,16 +380,16 @@ namespace hummus {
         virtual void winner_takes_all(double timestamp, Network* network) {}
 
         // ----- NEURON SPATIAL PARAMETERS -----
-        int                                        neuron_id;
-        int                                        layer_id;
-        int                                        sublayer_id;
-        int                                        rf_id;
-        std::pair<int, int>                        xy_coordinates;
+        int                                       neuron_id;
+        int                                       layer_id;
+        int                                       sublayer_id;
+        int                                       rf_id;
+        std::pair<int, int>                       xy_coordinates;
 
         // ----- SYNAPSES OF THE NEURON -----
-        std::vector<Synapse*>                      dendritic_tree;
-        std::vector<std::unique_ptr<Synapse>>      axon_terminals;
-        std::unique_ptr<Synapse>                   initial_synapse;
+        std::vector<Synapse*>                     dendritic_tree;
+        std::vector<std::unique_ptr<Synapse>>     axon_terminals;
+        std::unique_ptr<Synapse>                  initial_synapse;
 
         // ----- DYNAMIC VARIABLES -----
         float                                     current;
@@ -498,7 +502,7 @@ namespace hummus {
 
         // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer
         template <typename T, typename... Args>
-        layer make_decision(std::deque<label> _trainingLabels, int _spike_history_size, int _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_decision(std::deque<label> _trainingLabels, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             training_labels = _trainingLabels;
             decision_making = true;
 
@@ -549,7 +553,7 @@ namespace hummus {
 
         // overload for the makeDecision function that takes in a path to a text label file with the format: label_name timestamp
         template <typename T, typename... Args>
-        layer make_decision(std::string trainingLabelFilename, int _spike_history_size, int _rejection_threshold, double _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_decision(std::string trainingLabelFilename, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
             return make_decision<T>(training_labels, _spike_history_size, _rejection_threshold, _timer, _addons, std::forward<Args>(args)...);
@@ -786,7 +790,7 @@ namespace hummus {
             for (auto& convSub: postsynapticLayer.sublayers) {
                 int sublayershift = 0;
                 for (auto& preSub: presynapticLayer.sublayers) {
-                    std::vector<receptive_fields> rf;
+                    std::vector<receptive_field> rf;
 
                     // initialising window on the first center coordinates
                     std::pair centerCoordinates((postsynapticLayer.kernel_size-1) * 0.5, (postsynapticLayer.kernel_size-1) * 0.5);
@@ -822,7 +826,7 @@ namespace hummus {
                             }
                         }
 
-                        rf.emplace_back(receptive_fields{rf_neurons, rf_id});
+                        rf.emplace_back(receptive_field{rf_neurons, rf_id});
 
                         // finding the coordinates for the center of each receptive field
                         centerCoordinates.first += postsynapticLayer.stride;
@@ -880,7 +884,7 @@ namespace hummus {
             for (auto& poolSub: postsynapticLayer.sublayers) {
                 int sublayershift = 0;
                 for (auto& preSub: presynapticLayer.sublayers) {
-                    std::vector<receptive_fields> rf;
+                    std::vector<receptive_field> rf;
 
                     if (poolSub.id == preSub.id) {
 
@@ -917,7 +921,7 @@ namespace hummus {
                                 }
                             }
 
-                            rf.emplace_back(receptive_fields{rf_neurons, rf_id});
+                            rf.emplace_back(receptive_field{rf_neurons, rf_id});
 
                             // finding the coordinates for the center of each receptive field
                             centerCoordinates.first += lcd;
@@ -1203,24 +1207,24 @@ namespace hummus {
             int spike_number = std::floor(duration/timestep);
 
             // initialising the random engine
-            std::random_device                     device;
-            std::mt19937                           random_engine(device());
-            std::uniform_real_distribution<float>  distribution(0.0,1.0);
+            std::random_device                      device;
+            std::mt19937                            random_engine(device());
+            std::uniform_real_distribution<double>  distribution(0.0,1.0);
 
-            std::vector<float> inter_spike_intervals;
-            float inv_rate = 1. / rate;
+            std::vector<double> inter_spike_intervals;
+            double inv_rate = 1. / rate;
             // generating uniformly distributed random numbers
             for (auto i = 0; i < spike_number; ++i) {
                 inter_spike_intervals.emplace_back((- std::log(distribution(random_engine)) * inv_rate) * 1000);
             }
 
             // computing spike times from inter-spike intervals
-            std::vector<float> spike_times(inter_spike_intervals.size(), 0.0);
+            std::vector<double> spike_times(inter_spike_intervals.size(), 0.0);
             spike_times[0] = inter_spike_intervals[0];
             for (int i=1; i<static_cast<int>(spike_times.size()); i++) {
                 spike_times[i] = spike_times[i-1] + inter_spike_intervals[i];
             }
-            std::transform(spike_times.begin(), spike_times.end(), spike_times.begin(), [&](float& st){return st*0.001+timestamp;});
+            std::transform(spike_times.begin(), spike_times.end(), spike_times.begin(), [&](double& st){return st*0.001+timestamp;});
 
             // injecting into the initial spike vector
             for (auto& spike_time: spike_times) {
@@ -1589,7 +1593,7 @@ namespace hummus {
                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                          }
                                                                      } else if (polarity == 0 || polarity == 1) {
-                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                          }
                                                                      } else {
@@ -1612,7 +1616,7 @@ namespace hummus {
                                                                               es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                           }
                                                                       } else if (polarity == 0 || polarity == 1) {
-                                                                          if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                          if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                               es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
                                                                           }
                                                                       } else {
@@ -1627,6 +1631,11 @@ namespace hummus {
                     // going through any leftover spikes after the last event is propagated
                     async_run_helper(&running, false, true);
 
+                    // sending the on_pattern_end addon message
+                    for (auto& addon: addons) {
+                        addon->on_pattern_end(this);
+                    }
+                    
                     idx++;
 
                     reset_network(false);
@@ -1692,7 +1701,7 @@ namespace hummus {
                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                              }
                                                                          } else if (polarity == 0 || polarity == 1) {
-                                                                             if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                             if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                  final_t = static_cast<double>(event.t);
                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                              }
@@ -1711,12 +1720,12 @@ namespace hummus {
 
                                                                           // filtering out gray level events, temporal crop and spatial crop and polarity selection
                                                                           if (polarity == 2) {
-                                                                              if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                   final_t = static_cast<double>(event.t);
                                                                                   es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                               }
                                                                           } else if (polarity == 0 || polarity == 1) {
-                                                                              if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                              if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                   final_t = static_cast<double>(event.t);
                                                                                   es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
                                                                               }
@@ -1732,6 +1741,11 @@ namespace hummus {
                         // going through any leftover spikes after the last event is propagated
                         async_run_helper(&running, true, true);
 
+                        // sending the on_pattern_end addon message
+                        for (auto& addon: addons) {
+                            addon->on_pattern_end(this);
+                        }
+                        
                         if (decision_making && decision.timer == 0) {
                             choose_winner_eof(final_t, 0);
                         } else if (decision_making && decision.timer > 0) {
@@ -1854,6 +1868,7 @@ namespace hummus {
         // -----PROTECTED NETWORK METHODS -----
 
         void es_run_helper(double t, int x, int y, bool classification=false) {
+
             // 1. find neuron corresponding to the event coordinates through 2D to 1D mapping
             int idx = (x + layers[0].width * y);
 
@@ -2103,7 +2118,7 @@ namespace hummus {
             }
         }
 
-        void choose_winner_online(double t, double timestep) {
+        void choose_winner_online(double t, float timestep) {
             if (t - decision_pre_ts >= decision.timer) {
                 // get intensities from all DecisionMaking neurons
                 int winner_neuron = -1; float previous_intensity = -1.0f;
@@ -2130,7 +2145,7 @@ namespace hummus {
                 decision_pre_ts = t;
             }
         }
-        void choose_winner_eof(double t, double timestep) {
+        void choose_winner_eof(double t, float timestep) {
             // get intensities from all DecisionMaking neurons
             int winner_neuron = -1; float previous_intensity = -1.0f;
             for (auto& n: layers[decision.layer_number].neurons) {
