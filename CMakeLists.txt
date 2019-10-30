@@ -80,31 +80,47 @@ if(QT)
             get_filename_component( Qt5_DIR ${sres} DIRECTORY )
         endif()
 
+        find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets Charts REQUIRED)
+
+        target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
+                                                            ${Qt5Gui_INCLUDE_DIRS}
+                                                            ${Qt5Qml_INCLUDE_DIRS}
+                                                            ${Qt5Quick_INCLUDE_DIRS}
+                                                            ${Qt5Widgets_INCLUDE_DIRS}
+                                                            ${Qt5Charts_INCLUDE_DIRS})
+
+        target_link_libraries(hummus_library INTERFACE Qt5::Core
+                                                       Qt5::Gui
+                                                       Qt5::Qml
+                                                       Qt5::Quick
+                                                       Qt5::Widgets
+                                                       Qt5::Charts)
+
     # Qt for macOS
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(QT_INSTALL_PATH /usr/local/opt/qt/)
         file( GLOB_RECURSE sres ${QT_INSTALL_PATH}/*/Qt5Config.cmake )
         get_filename_component( Qt5_DIR ${sres} DIRECTORY )
+
+        find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
+
+        target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
+                                                            ${Qt5Gui_INCLUDE_DIRS}
+                                                            ${Qt5Qml_INCLUDE_DIRS}
+                                                            ${Qt5Quick_INCLUDE_DIRS}
+                                                            ${Qt5Widgets_INCLUDE_DIRS}
+                                                            ${Qt5QuickControls2_INCLUDE_DIRS}
+                                                            ${Qt5Charts_INCLUDE_DIRS})
+
+        target_link_libraries(hummus_library INTERFACE Qt5::Core
+                                                       Qt5::Gui
+                                                       Qt5::Qml
+                                                       Qt5::Quick
+                                                       Qt5::Widgets
+                                                       Qt5::QuickControls2
+                                                       Qt5::Charts)
+
     endif()
-
-    find_package(Qt5 COMPONENTS Core Gui Qml Quick Widgets QuickControls2 Charts REQUIRED)
-
-    message("${Qt5Core_INCLUDE_DIRS}")
-    target_include_directories(hummus_library INTERFACE ${Qt5Core_INCLUDE_DIRS}
-                                                        ${Qt5Gui_INCLUDE_DIRS}
-                                                        ${Qt5Qml_INCLUDE_DIRS}
-                                                        ${Qt5Quick_INCLUDE_DIRS}
-                                                        ${Qt5Widgets_INCLUDE_DIRS}
-                                                        ${Qt5QuickControls2_INCLUDE_DIRS}
-                                                        ${Qt5Charts_INCLUDE_DIRS})
-
-    target_link_libraries(hummus_library INTERFACE Qt5::Core
-                                                   Qt5::Gui
-                                                   Qt5::Qml
-                                                   Qt5::Quick
-                                                   Qt5::Widgets
-                                                   Qt5::QuickControls2
-                                                   Qt5::Charts)
 
     source_group(_moc REGULAR_EXPRESSION "\\.rule$")
 endif()
