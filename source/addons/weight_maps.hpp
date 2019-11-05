@@ -72,7 +72,7 @@ namespace hummus {
                     int count = 4;
                     for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
                         copy_to(bytes.data() + count, static_cast<double>(dendrite->get_weight()));
-                        count++;
+                        count += 8;
                     }
 
                     // saving to file

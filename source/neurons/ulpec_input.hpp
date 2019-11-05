@@ -58,7 +58,7 @@ namespace hummus {
             }
                 
             // checking if there's a refractory period
-            if (timestamp - previous_spike_time >= refractory_period) {
+            if (!active && timestamp - previous_spike_time >= refractory_period) {
                 active = true;
             }
 
@@ -91,7 +91,7 @@ namespace hummus {
                 previous_spike_time = timestamp;
 
                 // starting refractory period to accept AER events
-                active = false;
+//                active = false;
             }
         }
 
