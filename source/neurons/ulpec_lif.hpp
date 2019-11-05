@@ -59,11 +59,11 @@ namespace hummus {
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
-//            // checking whether a refractory period is over
-//            if (!active && refractory_counter >= refractory_period) {
-//                active = true;
-//                refractory_counter = 0;
-//            }
+            // checking whether a refractory period is over
+            if (!active && refractory_counter >= refractory_period) {
+                active = true;
+                refractory_counter = 0;
+            }
             
             if (type == spike_type::initial && active) {
                 
@@ -333,7 +333,7 @@ namespace hummus {
                 winner_takes_all(timestamp, network);
 
                 // disable neuron for refractory period
-//                active = false;
+                active = false;
 
                 // save time when neuron fired
                 previous_spike_time = timestamp;

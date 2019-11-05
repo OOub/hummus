@@ -24,8 +24,8 @@ namespace hummus {
 	class Decision_Making : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Decision_Making(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", int _refractoryPeriod=0, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 200, 10, 20, _threshold, _restingPotential, _classLabel) {
+        Decision_Making(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _threshold=-50, float _restingPotential=-70) :
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 200, 10, 20, _threshold, _restingPotential, _classLabel) {
 
             // DecisionMaking neuron type = 2 for JSON save
             neuron_type = 2;
@@ -49,17 +49,9 @@ namespace hummus {
        
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
-            std::cout << "w eir man" << std::endl;
-            
-            // checking whether a refractory period is over
-            if (!active && refractory_counter >= refractory_period) {
-                active = true;
-                refractory_counter = 0;
-            }
-            
             if (active) {
                 if (type == spike_type::decision) {
-
+                                        
                     potential = threshold;
 
                     if (network->get_verbose() >= 1) {
@@ -73,16 +65,12 @@ namespace hummus {
                     if (network->get_main_thread_addon()) {
                         network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
                     }
-
-                    // everytime a decision-making neuron fires increment refractory counter on all decision-making neurons that are currently inactive
-                    check_refractory(network);
                     
                     // reset intensities on all other neurons
                     winner_takes_all(timestamp, network);
                     potential = resting_potential;
                     previous_spike_time = timestamp;
-                    active = false;
-
+                    
                 } else {
                     if (type != spike_type::none && s->get_type() == synapse_type::excitatory){
                         ++intensity;
@@ -128,15 +116,6 @@ namespace hummus {
         }
 
     protected:
-
-        void check_refractory(Network* network) {
-            for (auto& n: network->get_layers()[layer_id].neurons) {
-                auto& neuron = network->get_neurons()[n];
-                if (neuron->get_neuron_id() != neuron_id && !neuron->get_activity()) {
-                    dynamic_cast<Decision_Making*>(neuron.get())->increment_refractory_counter();
-                }
-            }
-        }
         
         void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
@@ -149,13 +128,8 @@ namespace hummus {
         void set_intensity(int new_intensity) {
             intensity = new_intensity;
         }
-
-        void increment_refractory_counter() {
-            refractory_counter++;
-        }
         
 		// ----- DECISION-MAKING NEURON PARAMETERS -----
         int      intensity;
-        int      refractory_counter;
 	};
 }

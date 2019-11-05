@@ -81,6 +81,25 @@ namespace hummus {
             }
             step_couter++;
         }
+        
+        void on_completed(Network* network) override {
+            for (auto& n: neuron_mask) {
+                const int16_t bitSize = 4+8*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
+                std::vector<char> bytes(bitSize);
+
+                copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
+                copy_to(bytes.data() + 2, static_cast<int16_t>(n));
+
+                int count = 4;
+                for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
+                    copy_to(bytes.data() + count, static_cast<double>(dendrite->get_weight()));
+                    count += 8;
+                }
+
+                // saving to file
+                save_file.write(bytes.data(), bytes.size());
+            }
+        }
 		
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----

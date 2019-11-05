@@ -1674,7 +1674,7 @@ namespace hummus {
 
                     // loop through each .es file in the testing database
                     for (auto filename : testing_database) {
-                        std::cout << filename << std::endl;
+                    
                         if (verbose == 2) {
                             std::cout << filename << std::endl;
                         }
@@ -2147,6 +2147,7 @@ namespace hummus {
             }
         }
         void choose_winner_eof(double t, float timestep) {
+            
             // get intensities from all DecisionMaking neurons
             int winner_neuron = -1; float previous_intensity = -1.0f;
             for (auto& n: layers[decision.layer_number].neurons) {

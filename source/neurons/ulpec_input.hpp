@@ -91,12 +91,8 @@ namespace hummus {
                 previous_spike_time = timestamp;
 
                 // starting refractory period to accept AER events
-//                active = false;
+                active = false;
             }
-        }
-
-        virtual float share_information() override {
-            return injected_potential;
         }
         
         // write neuron parameters in a JSON format
@@ -105,8 +101,6 @@ namespace hummus {
             output.push_back({
                 {"type",neuron_type},
                 {"layer_id",layer_id},
-                {"sublayer_id", sublayer_id},
-                {"rf_id", rf_id},
                 {"xy_coordinates", xy_coordinates},
                 {"threshold", threshold},
                 {"resting_potential", resting_potential},
