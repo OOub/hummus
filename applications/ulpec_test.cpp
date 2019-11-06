@@ -91,13 +91,13 @@ int main(int argc, char** argv) {
         }
         
         // generating N-MNIST training database
-        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", 5, {"5", "6", "9"});
+        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", 1, {"5", "6", "9"});
         
         // generating N-MNIST test database
-        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 5, {"5", "6", "9"});
+        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 1, {"5", "6", "9"});
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.1, -0.1, -1.6, 1.6, 1e-7, 1e-9);
-        auto& results = network.make_addon<hummus::Analysis>(test_database.second);
+        auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
         
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(28, 28, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
