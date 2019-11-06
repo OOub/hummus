@@ -27,7 +27,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Analysis(std::string testLabels) {
+		Analysis(std::string testLabels, std::string _filename="") : filename(_filename) {
 			DataParser parser;
 			labels = parser.read_txt_labels(testLabels);
 			for (auto label: labels) {
@@ -35,7 +35,7 @@ namespace hummus {
 			}
 		}
 		
-        Analysis(std::deque<label> testLabels) {
+        Analysis(std::deque<label> testLabels, std::string _filename="") : filename(_filename) {
             labels = testLabels;
             for (auto label: labels) {
                 actual_labels.emplace_back(label.name);
@@ -54,6 +54,14 @@ namespace hummus {
 					}
 				}
 				
+                // save labels
+                if (!filename.empty()) {
+                    std::ofstream ofs(filename);
+                    for (auto i=0; i < actual_labels.size(); i++) {
+                        ofs << actual_labels[i] << " " << classified_labels[i] << "\n";
+                    }
+                }
+                
 				float accuracy = (static_cast<float>(correctLabels.size())/actual_labels.size())*100.;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
                 return accuracy;
@@ -167,6 +175,7 @@ namespace hummus {
 		
 	protected:
 		// ----- IMPLEMENTATION VARIABLES -----
+        std::string                              filename;
 		std::vector<std::pair<double, Neuron*>>  classified_spikes;
 		std::deque<label>                        labels;
 		std::deque<std::string>                  actual_labels;

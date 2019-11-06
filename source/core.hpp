@@ -173,6 +173,7 @@ namespace hummus {
 
         // reset a neuron to its initial status
         virtual void reset_neuron(Network* network, bool clearAddons=true) {
+            active = true;
             previous_input_time = 0;
             previous_spike_time = 0;
             potential = resting_potential;
@@ -1561,9 +1562,9 @@ namespace hummus {
                 // loop through each .es file in the training database
                 auto idx = 0;
                 for (auto filename : training_database) {
-
+                    
                     if (verbose == 2) {
-                        std::cout << "new pattern" << std::endl;
+                        std::cout << filename << std::endl;
                     }
 
                     if (!running.load(std::memory_order_relaxed)) {
@@ -1673,9 +1674,9 @@ namespace hummus {
 
                     // loop through each .es file in the testing database
                     for (auto filename : testing_database) {
-
+                    
                         if (verbose == 2) {
-                            std::cout << "new pattern" << std::endl;
+                            std::cout << filename << std::endl;
                         }
 
                         if (!running.load(std::memory_order_relaxed)) {
@@ -2146,6 +2147,7 @@ namespace hummus {
             }
         }
         void choose_winner_eof(double t, float timestep) {
+            
             // get intensities from all DecisionMaking neurons
             int winner_neuron = -1; float previous_intensity = -1.0f;
             for (auto& n: layers[decision.layer_number].neurons) {

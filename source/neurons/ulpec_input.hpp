@@ -58,7 +58,7 @@ namespace hummus {
             }
                 
             // checking if there's a refractory period
-            if (timestamp - previous_spike_time >= refractory_period) {
+            if (!active && timestamp - previous_spike_time >= refractory_period) {
                 active = true;
             }
 
@@ -94,10 +94,6 @@ namespace hummus {
                 active = false;
             }
         }
-
-        virtual float share_information() override {
-            return injected_potential;
-        }
         
         // write neuron parameters in a JSON format
         virtual void to_json(nlohmann::json& output) override{
@@ -105,8 +101,6 @@ namespace hummus {
             output.push_back({
                 {"type",neuron_type},
                 {"layer_id",layer_id},
-                {"sublayer_id", sublayer_id},
-                {"rf_id", rf_id},
                 {"xy_coordinates", xy_coordinates},
                 {"threshold", threshold},
                 {"resting_potential", resting_potential},
