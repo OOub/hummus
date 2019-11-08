@@ -49,33 +49,29 @@ namespace hummus {
        
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
-            if (active) {
-                if (type == spike_type::decision) {
-                                        
-                    potential = threshold;
+            if (type == spike_type::decision) {
+                                    
+                potential = threshold;
 
-                    if (network->get_verbose() >= 1) {
-                        std::cout << "t=" << timestamp << " class " << class_label << " --> DECISION" << std::endl;
-                    }
-
-                    for (auto& addon: relevant_addons) {
-                        addon->neuron_fired(timestamp, s, this, network);
-                    }
-
-                    if (network->get_main_thread_addon()) {
-                        network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
-                    }
-                    
-                    // reset intensities on all other neurons
-                    winner_takes_all(timestamp, network);
-                    potential = resting_potential;
-                    previous_spike_time = timestamp;
-                    
-                } else {
-                    if (type != spike_type::none && s->get_type() == synapse_type::excitatory){
-                        ++intensity;
-                    }
+                if (network->get_verbose() >= 1) {
+                    std::cout << "t=" << timestamp << " class " << class_label << " --> DECISION" << std::endl;
                 }
+
+                for (auto& addon: relevant_addons) {
+                    addon->neuron_fired(timestamp, s, this, network);
+                }
+
+                if (network->get_main_thread_addon()) {
+                    network->get_main_thread_addon()->neuron_fired(timestamp, s, this, network);
+                }
+                
+                // reset intensities on all other neurons
+                winner_takes_all(timestamp, network);
+                potential = resting_potential;
+                previous_spike_time = timestamp;
+                
+            } else if (type == spike_type::generated) {
+                ++intensity;
             }
         }
 

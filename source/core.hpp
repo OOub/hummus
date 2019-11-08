@@ -55,8 +55,14 @@
 #include "synapses/square.hpp"
 #include "synapses/memristor.hpp"
 
+// intel threading building block (TBB) for parallelisation
 #ifdef TBB
 #include "tbb/tbb.h"
+#endif
+
+// libtorch - C++ frontend of the pytorch machine learning framework
+#ifdef TORCH
+#include <torch/torch.h>
 #endif
 
 namespace hummus {
@@ -428,7 +434,8 @@ namespace hummus {
                 learning_off_signal(-1),
                 max_delay(0),
                 asynchronous(false),
-                decision_pre_ts(0) {}
+                decision_pre_ts(0),
+                skip_presentation(std::numeric_limits<double>::max()) {}
 
         // ----- NETWORK IMPORT EXPORT METHODS -----
         
@@ -1584,7 +1591,10 @@ namespace hummus {
                                                                  sepia::filename_to_ifstream(filename),
                                                                  [&](sepia::dvs_event event) {
                                                                      // stopping the event collection beyond a certain temporal threshold
-                                                                     if (event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                     if (event.t > skip_presentation || event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                         if (skip_presentation != std::numeric_limits<double>::max()) {
+                                                                             skip_presentation = std::numeric_limits<double>::max();
+                                                                         }
                                                                          throw sepia::end_of_file();
                                                                      }
 
@@ -1607,7 +1617,10 @@ namespace hummus {
                                                                   sepia::filename_to_ifstream(filename),
                                                                   [&](sepia::atis_event event) {
                                                                       // stopping the event collection beyond a certain temporal threshold
-                                                                      if (event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                      if (event.t > skip_presentation || event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                          if (skip_presentation != std::numeric_limits<double>::max()) {
+                                                                              skip_presentation = std::numeric_limits<double>::max();
+                                                                          }
                                                                           throw sepia::end_of_file();
                                                                       }
 
@@ -1674,8 +1687,8 @@ namespace hummus {
 
                     // loop through each .es file in the testing database
                     for (auto filename : testing_database) {
-                    
-                        if (verbose == 2) {
+
+                        if (verbose == 1) {
                             std::cout << filename << std::endl;
                         }
 
@@ -1691,7 +1704,10 @@ namespace hummus {
                                                                      sepia::filename_to_ifstream(filename),
                                                                      [&](sepia::dvs_event event) {
                                                                          // stopping the event collection beyond a certain temporal threshold
-                                                                         if (event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                         if (event.t > skip_presentation || event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                             if (skip_presentation != std::numeric_limits<double>::max()) {
+                                                                                 skip_presentation = std::numeric_limits<double>::max();
+                                                                             }
                                                                              throw sepia::end_of_file();
                                                                          }
 
@@ -1715,7 +1731,10 @@ namespace hummus {
                                                                       sepia::filename_to_ifstream(filename),
                                                                       [&](sepia::atis_event event) {
                                                                           // stopping the event collection beyond a certain temporal threshold
-                                                                          if (event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                          if (event.t > skip_presentation || event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                              if (skip_presentation != std::numeric_limits<double>::max()) {
+                                                                                  skip_presentation = std::numeric_limits<double>::max();
+                                                                              }
                                                                               throw sepia::end_of_file();
                                                                           }
 
@@ -1851,6 +1870,14 @@ namespace hummus {
             return verbose;
         }
 
+        double get_skip_presentation() const {
+            return skip_presentation;
+        }
+        
+        void set_skip_presentation(double b) {
+            skip_presentation = b;
+        }
+        
         decision_heuristics& get_decision_parameters() {
             return decision;
         }
@@ -2095,7 +2122,7 @@ namespace hummus {
                                                                                     });
 
                         // assign label to neuron if element larger than the rejection threshold and does not hold less spikes than the spike_history_size
-                        int inv_queue_size = 100 / neuron_to_label->get_decision_queue().size();
+                        float inv_queue_size = 100. / neuron_to_label->get_decision_queue().size();
                         if (max_label.second * inv_queue_size >= decision.rejection_threshold && max_label.second >= decision.spike_history_size) {
                             neuron_to_label->set_class_label(max_label.first);
                         }
@@ -2217,5 +2244,6 @@ namespace hummus {
         bool                                    asynchronous;
         decision_heuristics                     decision;
         double                                  decision_pre_ts;
+        double                                  skip_presentation;
     };
 }

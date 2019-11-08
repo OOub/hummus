@@ -169,7 +169,7 @@ namespace hummus {
             
             if (type != spike_type::end_of_integration && potential >= threshold) {
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                if (network->get_learning_status() && network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
                     if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
@@ -320,7 +320,7 @@ namespace hummus {
 			if (potential >= threshold && active_synapse) {
                 
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                if (network->get_learning_status() &&  network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
                     if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
