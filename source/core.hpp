@@ -1554,7 +1554,7 @@ namespace hummus {
                 // loop through each .es file in the training database
                 for (auto filename : training_database) {
                     
-                    if (verbose == 2) {
+                    if (verbose == 1) {
                         std::cout << filename << std::endl;
                     }
 

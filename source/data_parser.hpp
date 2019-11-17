@@ -71,9 +71,11 @@ namespace hummus {
             
             // repeat elements in vector
             if (repetition > 0) {
+                std::vector<std::string> database_cp = database;
+                std::deque<label> labels_cp = labels;
                 for (auto i=0; i<repetition; ++i) {
-                    labels.insert(labels.end(), labels.begin(), labels.end());
-                    database.insert(database.end(), database.begin(), database.end());
+                    labels.insert(labels.end(), labels_cp.begin(), labels_cp.end());
+                    database.insert(database.end(), database_cp.begin(), database_cp.end());
                 }
             }
             

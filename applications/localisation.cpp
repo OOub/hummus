@@ -40,8 +40,8 @@ int main(int argc, char** argv) {
     }
     
     // generating sense8 training and testing databases
-    auto training_database = parser.generate_database("/Users/omaroubari/Datasets/sense8_no_distance/Train", 100, 1, {"90", "180"});
-    auto test_database = parser.generate_database("/Users/omaroubari/Datasets/sense8_no_distance/Test", 100, 1, {"90", "180"});
+    auto training_database = parser.generate_database("/Users/omaroubari/Datasets/sense8_no_distance/Train", 100, 10, {"90", "180"});
+    auto test_database = parser.generate_database("/Users/omaroubari/Datasets/sense8_no_distance/Test", 100, 0, {"90", "180"});
     
     // initialising addons
     auto& mp = network.make_addon<hummus::MP_1>();
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     
     // creating layers
     auto input = network.make_circle<hummus::Parrot>(8, {0.3}, {}); // input layer with 8 neurons
-    auto output = network.make_layer<hummus::CUBA_LIF>(10, {&mp}, 0, 250, 10, true, false, false, 20); // 100 direction neurons
+    auto output = network.make_layer<hummus::CUBA_LIF>(100, {&mp}, 0, 200, 10, true, false, false, 20); // 100 ouptput neurons
     auto decision = network.make_decision<hummus::Decision_Making>(training_database.second, 10, 50, 0, {});
     
     // connecting layers
