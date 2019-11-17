@@ -16,6 +16,7 @@
 #include "../source/neurons/ulpec_input.hpp"
 #include "../source/neurons/ulpec_lif.hpp"
 #include "../source/neurons/decision_making.hpp"
+#include "../source/neurons/regression.hpp"
 #include "../source/addons/potential_logger.hpp"
 #include "../source/addons/analysis.hpp"
 #include "../source/addons/weight_maps.hpp"
@@ -26,7 +27,8 @@ int main(int argc, char** argv) {
     bool cadence = false;
     bool use_gui = false;
     bool plot_currents = false;
-
+    bool logistic_regression = true;
+    
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
         double runtime = 500; /// microseconds
@@ -102,8 +104,13 @@ int main(int argc, char** argv) {
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(28, 28, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
         auto output = network.make_layer<hummus::ULPEC_LIF>(100, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false); /// 100 ULPEC_LIF neurons
-        auto decision_layer = network.make_decision<hummus::Decision_Making>(training_database.second, 10, 50, 0, {});
-
+        
+        if (logistic_regression) {
+            network.make_logistic_regression<hummus::Regression>(training_database.second, 0.1, 0.9, 5e-4, 70, 128, 5000, 0, {});
+        } else {
+            network.make_decision<hummus::Decision_Making>(training_database.second, 10, 60, 0, {});
+        }
+        
         auto& g_maps = network.make_addon<hummus::WeightMaps>("ulpec_g_maps.bin", 5000);
         g_maps.activate_for(output.neurons);
         
@@ -112,9 +119,9 @@ int main(int argc, char** argv) {
         
         // running network asynchronously with spatial cropping down to 28x28 input and taking only the first N-MNIST saccade
         network.verbosity(1);
-        network.run_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
+        network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
                               
-        // measuring Classification Accuracy
+        // measuring classification accuracy
         results.accuracy();
     }
     

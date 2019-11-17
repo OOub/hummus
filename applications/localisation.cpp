@@ -16,43 +16,54 @@
 #include "../source/core.hpp"
 #include "../source/neurons/cuba_lif.hpp"
 #include "../source/neurons/parrot.hpp"
+#include "../source/neurons/decision_making.hpp"
 #include "../source/GUI/display.hpp"
-#include "../source/addons/potential_logger.hpp"
-#include "../source/addons/myelin_plasticity_logger.hpp"
 #include "../source/learning_rules/myelin_plasticity_v1.hpp"
+#include "../source/addons/analysis.hpp"
+#include "../source/addons/spike_logger.hpp"
+#include "../source/addons/myelin_plasticity_logger.hpp"
 
 int main(int argc, char** argv) {
-
-    /// parameters
+    // parameters
     bool use_gui = false;
+    int  time_scaling_factor = 1e4;
+    float timestep = 0.1;
     
-    /// initialisation
+    // initialisation
     hummus::Network network;
     hummus::DataParser parser;
     
-    auto training_data = parser.read_txt_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/direction_only_100.txt");
-    auto training_labels = parser.read_txt_labels("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/localisation/direction_only_100_labels.txt");
-     
     if (use_gui) {
         auto& display = network.make_gui<hummus::Display>();
-        display.set_time_window(10000);
-        display.plot_currents();
+        display.set_time_window(5000);
+        display.track_neuron(8);
     }
     
-    // delay learning rule
-    auto& mp = network.make_addon<hummus::MP_1>();
-
-    //  ----- CREATING THE NETWORK -----
-    auto input     = network.make_circle<hummus::Parrot>(8, {0.3}, {}); // input layer with 8 neurons
-    auto direction = network.make_layer<hummus::CUBA_LIF>(100, {&mp}, 0, 200, 10, false, false, false, 20); // 100 direction neurons
+    // generating sense8 training and testing databases
+    auto training_database = parser.generate_database("/Users/omaroubari/Datasets/sense8_no_distance/Train", 100, 1, {"90", "180"});
+    auto test_database = parser.generate_database("/Users/omaroubari/Datasets/sense8_no_distance/Test", 100, 1, {"90", "180"});
     
-    //  ----- CONNECTING THE NETWORK -----
-    network.all_to_all<hummus::Square>(input, direction, 1, hummus::Normal(0.125, 0, 5, 3), 100);
-    network.lateral_inhibition<hummus::Square>(direction, 1, hummus::Normal(-1, 0, 0, 1), 100);
-
+    // initialising addons
+    auto& mp = network.make_addon<hummus::MP_1>();
+    auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
+    network.make_addon<hummus::SpikeLogger>("sense8_spikelog.bin");
+    network.make_addon<hummus::MyelinPlasticityLogger>("sense8_mplog.bin");
+    
+    // creating layers
+    auto input = network.make_circle<hummus::Parrot>(8, {0.3}, {}); // input layer with 8 neurons
+    auto output = network.make_layer<hummus::CUBA_LIF>(10, {&mp}, 0, 250, 10, true, false, false, 20); // 100 direction neurons
+    auto decision = network.make_decision<hummus::Decision_Making>(training_database.second, 10, 50, 0, {});
+    
+    // connecting layers
+    network.all_to_all<hummus::Square>(input, output, 1, hummus::Normal(0.125, 0, 5, 3), 100, 10, 80);
+    
     // running network
-    network.verbosity(0);
-    network.run_data(training_data, 0.1);
-
+    network.verbosity(1);
+    network.run_npy_database(training_database.first, timestep, test_database.first, time_scaling_factor);
+    
+    // measuring classification accuracy
+    results.accuracy();
+    
+    // exit application
     return 0;
 }

@@ -135,6 +135,13 @@ cmake -DQT=OFF -S . -B build
 cmake --build build
 ~~~~
 
+When using torch you will also have to specify the location of the TorchConfig.cmake file. So it will look like this:
+
+~~~~
+cmake -DTORCH=ON -DTorch_DIR=/absolute/path/to/TorchConfig.cmake -S . -B build
+cmake --build build
+~~~~
+
 ## Testing
 from the base directory of hummus we can run the basic_test application to check if everything is running correctly
 ~~~~

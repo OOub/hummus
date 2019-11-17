@@ -316,7 +316,7 @@ namespace hummus {
             if (network->get_main_thread_addon()) {
                 network->get_main_thread_addon()->status_update(timestamp, this, network);
             }
-
+            
 			if (potential >= threshold && active_synapse) {
                 
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer

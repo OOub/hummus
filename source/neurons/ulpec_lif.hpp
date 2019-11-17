@@ -346,7 +346,7 @@ namespace hummus {
                 previous_spike_time = timestamp;
                 
                 // skip presentation after learning is completed
-                if (skip_after_post) {
+                if (skip_after_post && network->get_learning_status()) {
                     if (potentiation_flag) {
                         network->set_skip_presentation(timestamp + 25);
                     } else {
