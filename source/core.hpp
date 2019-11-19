@@ -519,6 +519,7 @@ namespace hummus {
             int label_idx = 0;
             for (auto& label: training_labels) {
                 classes_map.insert({label.name, label_idx});
+                reverse_classes_map.insert({label_idx, label.name});
                 ++label_idx;
             }
             
@@ -1710,7 +1711,7 @@ namespace hummus {
                 // loop through each .es file in the training database
                 for (auto filename : training_database) {
                     
-                    if (verbose >= 1) {
+                    if (verbose > 1) {
                         std::cout << filename << std::endl;
                     }
 
@@ -1933,6 +1934,11 @@ namespace hummus {
                             }
                         }
 
+                        // send a decision spike to the computation layer of the regression neurons
+                        if (logistic_regression && decision.timer == 0) {
+                            neurons[layers[decision.layer_number-1].neurons[0]]->update(final_t, nullptr, this, 0, spike_type::decision);
+                        }
+                        
                         presentation_counter++;
                         
                         reset_network(false);
@@ -2052,6 +2058,10 @@ namespace hummus {
         
         std::unordered_map<std::string, int> get_classes_map() const {
             return classes_map;
+        }
+        
+        std::unordered_map<int, std::string> get_reverse_classes_map() const {
+            return reverse_classes_map;
         }
          
         // verbose argument (0 for no couts at all, 1 for network-related print-outs and learning rule print-outs, 2 for network and neuron-related print-outs
@@ -2436,6 +2446,7 @@ namespace hummus {
 		std::deque<label>                       training_labels;
         bool                                    decision_making;
         std::unordered_map<std::string, int>    classes_map;
+        std::unordered_map<int, std::string>    reverse_classes_map;
         std::string                             current_label;
 		bool                                    learning_status;
 		double                                  learning_off_signal;
