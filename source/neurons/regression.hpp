@@ -68,7 +68,7 @@ namespace hummus {
                 presentations_before_training(_presentations_before_training),
                 computation_id(0),
                 log_interval(_log_interval),
-                model(1,1) {
+                model(100,3) {
 
             // Regression neuron type = 5 for JSON save
             neuron_type = 5;
@@ -204,7 +204,7 @@ namespace hummus {
             auto data_set = CustomDataset(x_training, labels, number_of_output_neurons).map(torch::data::transforms::Stack<>());
             
             // generate a data loader
-            auto data_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
+            auto data_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(
                 std::move(data_set),
                 batch_size);
             
@@ -235,11 +235,11 @@ namespace hummus {
                     optimizer.zero_grad();
                     
                     // forward pass
-                    auto tr_output = model(tr_data);
-                    auto loss = torch::nll_loss(torch::log_softmax(tr_output, 0), tr_labels);
+                    auto tr_output = torch::nll_loss(torch::log_softmax(model(tr_data),0) ,tr_labels);
+                    auto loss = tr_output.item<float>();
                     
                     // backward pass
-                    loss.backward();
+                    tr_output.backward();
                     
                     // apply gradients
                     optimizer.step();
@@ -252,7 +252,7 @@ namespace hummus {
                         epochs,
                         batch_idx * batch.data.size(0),
                         dataset_size,
-                        loss.template item<float>());
+                        loss);
                     }
                 }
             }
@@ -261,12 +261,15 @@ namespace hummus {
         void test_model(double timestamp, float timestep, Network* network) {
             
             x_online = x_online.to(torch::kF32);
-            torch::Tensor output = model(x_online);
+            torch::Tensor output = torch::log_softmax(model(x_online),0);
+
             auto pred = output.argmax(0);
+            auto class_label = network->get_reverse_classes_map()[pred.item<int>()];
+                
             auto& decision = network->get_layers()[network->get_decision_parameters().layer_number].neurons;
             for (auto& n: decision) {
                 auto& neuron = network->get_neurons()[n];
-                if (neuron->get_class_label() == network->get_reverse_classes_map()[pred.item<int>()]) {
+                if (neuron->get_class_label() == class_label) {
                     neuron->update(timestamp, nullptr, network, timestep, spike_type::decision);
                 }
             }
