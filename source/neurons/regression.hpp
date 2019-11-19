@@ -30,7 +30,6 @@ namespace hummus {
             labels_(torch::from_blob(std::data(_labels), {static_cast<int>(_labels.size()), 1}).clone()),
             data_size(_labels.size()),
             out_dim(number_of_output_neurons) {
-//                data_.reshape({static_cast<int>(data_size), out_dim});
             };
 
         torch::data::Example<> get(size_t index) override {
@@ -263,7 +262,6 @@ namespace hummus {
             
             x_online = x_online.to(torch::kF32);
             torch::Tensor output = model(x_online);
-
             auto pred = output.argmax(0);
             auto& decision = network->get_layers()[network->get_decision_parameters().layer_number].neurons;
             for (auto& n: decision) {
