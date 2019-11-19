@@ -25,14 +25,16 @@ namespace hummus {
 
     class CustomDataset : public torch::data::Dataset<CustomDataset> {
     public:
-        explicit CustomDataset(std::vector<torch::Tensor> _data, std::vector<int> _labels) :
+        explicit CustomDataset(std::vector<torch::Tensor> _data, std::vector<int> _labels, int number_of_output_neurons) :
             data_(torch::cat(_data, 0)),
             labels_(torch::from_blob(std::data(_labels), {static_cast<int>(_labels.size()), 1}).clone()),
-            data_size(_labels.size()) {};
+            data_size(_labels.size()),
+            out_dim(number_of_output_neurons) {};
 
         torch::data::Example<> get(size_t index) override {
-//            torch::Tensor X_labels = torch::from_blob(std::data(labels_), {static_cast<int>(labels_.size()), 1}).clone();
-//            torch::Tensor X = torch::cat(data_, 0);
+//            data_ = data_.reshape({1, data_.numel()});
+//            data_ = data_.reshape({static_cast<int>(data_size), out_dim});
+//            data_ = data_.transpose(1,0);
             return {data_[index], labels_[index]};
         };
         
@@ -44,6 +46,8 @@ namespace hummus {
             torch::Tensor data_;
             torch::Tensor labels_;
             size_t        data_size;
+            int           out_dim;
+        
     };
     
     class Synapse;
@@ -150,8 +154,7 @@ namespace hummus {
                     } else if (!network->get_learning_status()){
                         
                         // predict winner
-                        
-                        // send a spike to the winner decision neuron (next regression layer)
+                        test_model(network);
                         
                         // reset x_online
                         x_online = torch::zeros(number_of_output_neurons);
@@ -194,9 +197,15 @@ namespace hummus {
     protected:
         
         void train_model(Network* network) {
+            
+            if (x_training.empty()) {
+                throw std::runtime_error("the training data vector is empty");
+            }
+            
             // generate data set. we can add transforms to the data set, e.g. stack batches into a single tensor.
-            auto data_set = CustomDataset(x_training, labels).map(torch::data::transforms::Stack<>());
-
+//            auto data_set = CustomDataset(x_training, labels, number_of_output_neurons).map(torch::data::transforms::Stack<>());
+            auto data_set = CustomDataset(x_training, labels, number_of_output_neurons).map(torch::data::transforms::Stack<>());
+            
             // generate a data loader
             auto data_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
                 std::move(data_set),
@@ -205,7 +214,7 @@ namespace hummus {
             int dataset_size = data_set.size().value();
             
             // create model and instantiate it (size, dimension)
-            model = torch::nn::Linear(dataset_size, network->get_classes_map().size());
+            model = torch::nn::Linear(number_of_output_neurons, network->get_classes_map().size());
             
             // instantiate optimizer
             torch::optim::SGD optimizer(model->parameters(),
@@ -216,8 +225,6 @@ namespace hummus {
                 
                 // Track loss.
                 int batch_idx = 0;
-                float mse = 0.; // mean squared error
-                int count = 0;
                 
                 for (auto& batch : *data_loader) {
                     auto tr_data = batch.data;
@@ -239,8 +246,6 @@ namespace hummus {
                     
                     // apply gradients
                     optimizer.step();
-                    
-                    mse += loss.template item<float>();
 
                     ++batch_idx;
                     if (network->get_verbose() >= 1 && batch_idx % log_interval == 0) {
@@ -252,17 +257,22 @@ namespace hummus {
                         dataset_size,
                         loss.template item<float>());
                     }
-
-                    count++;
-                    
-                    mse /= static_cast<float>(count);
-                    printf(" Mean squared error: %f\n", mse);
                 }
             }
         }
         
-        void test(Network* network) {
+        void test_model(Network* network) {
             
+            x_online = x_online.to(torch::kF32);
+////            x_online = x_online.unsqueeze(0);
+//            x_online = x_online.view({-1, number_of_output_neurons});
+            torch::Tensor output = model(x_online);
+//            torch::Tensor prob = torch::exp(output);
+//            std::cout << prob[0][0].item<float>()*100. << std::endl;
+//            auto pred = output.argmax(1);
+            
+//            std::cout << pred << " " << std::endl;
+//            network->get_reverse_classes_map()[pred]
         }
         
         std::vector<torch::Tensor> x_training;
