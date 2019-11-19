@@ -33,7 +33,8 @@ namespace hummus {
                 resting_threshold(_threshold),
                 decay_homeostasis(_decayHomeostasis),
                 homeostasis_beta(_homeostasisBeta),
-                active_synapse(nullptr) {
+                active_synapse(nullptr),
+                refractory_counter(0) {
                     
             // LIF neuron type == 1 (for JSON save)
             neuron_type = 1;
@@ -75,9 +76,10 @@ namespace hummus {
                 network->get_main_thread_addon()->status_update(timestamp, this, network);
             }
             
-            // checking if the neuron is in a refractory period
-            if (timestamp - previous_spike_time >= refractory_period) {
+            // checking whether a refractory period is over
+            if (!active && refractory_counter >= refractory_period) {
                 active = true;
+                refractory_counter = 0;
             }
             
             // updating current of synapses
@@ -216,8 +218,10 @@ namespace hummus {
                     }
                 }
                 
+                // everytime a postsynaptic neuron fires increment refractory counter on all postsynaptic neurons that are currently inactive
+                check_refractory(network);
+                
                 previous_spike_time = timestamp;
-                potential = resting_potential;
                 active = false;
                 current = 0;
                 
@@ -234,9 +238,10 @@ namespace hummus {
                 timestep = 0;
             }
             
-            // checking if the neuron is in a refractory period
-            if (timestamp - previous_spike_time >= refractory_period) {
+            // checking whether a refractory period is over
+            if (!active && refractory_counter >= refractory_period) {
                 active = true;
+                refractory_counter = 0;
             }
             
             // updating current of synapses
@@ -361,20 +366,22 @@ namespace hummus {
                     }
 				}
                 
+                // everytime a postsynaptic neuron fires increment refractory counter on all postsynaptic neurons that are currently inactive
+                check_refractory(network);
+                
                 previous_spike_time = timestamp;
-                potential = resting_potential;
 				active = false;
                 current = 0;
+                
 			}
 		}
 		
         virtual void reset_neuron(Network* network, bool clearAddons=true) override {
             previous_input_time = 0;
             previous_spike_time = 0;
-            current = 0;
             potential = resting_potential;
             trace = 0;
-            active = true;
+            current = 0;
             
             for (auto& dendrite: dendritic_tree) {
                 dendrite->reset();
@@ -465,17 +472,23 @@ namespace hummus {
         
         virtual void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
-                auto& neuron = network->get_neurons()[n];
-    
-                if (neuron->get_neuron_id() != neuron_id) {
-                    neuron->set_activity(false);
-                    neuron->set_potential(resting_potential);
-                    neuron->set_current(0);
-                    for (auto& dendrite: neuron->get_dendritic_tree()) {
-                        dendrite->reset();
+                network->get_neurons()[n]->set_potential(resting_potential);
+            }
+        }
+        
+        void check_refractory(Network* network) {
+            if (refractory_period > 0) {
+                for (auto& n: network->get_layers()[layer_id].neurons) {
+                    auto& neuron = network->get_neurons()[n];
+                    if (neuron->get_neuron_id() != neuron_id && !neuron->get_activity()) {
+                        dynamic_cast<CUBA_LIF*>(neuron.get())->increment_refractory_counter();
                     }
                 }
             }
+        }
+        
+        void increment_refractory_counter() {
+            refractory_counter++;
         }
         
 		// ----- LIF PARAMETERS -----
@@ -486,6 +499,7 @@ namespace hummus {
 		float                        decay_homeostasis;
 		float                        homeostasis_beta;
 		Synapse*                     active_synapse;
+        int                          refractory_counter;
         
         // Parameters for performance improvement
         float                        inv_trace_tau;

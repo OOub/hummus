@@ -507,7 +507,7 @@ namespace hummus {
 
         // layer of one logistic regression neuron that makes the relevant decision-making neuron spike for classification.
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::deque<label> _trainingLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int presentations_before_training, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::deque<label> _trainingLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             if (decision_making) {
                 throw std::logic_error("you cannot have two different classification layers. the decision-making classifier is already initialised");
             }
@@ -536,7 +536,7 @@ namespace hummus {
             }
             
             // create the computation layer of regression neuron
-            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), "", learning_rate, momentum, weight_decay, epochs, batch_size, presentations_before_training, std::forward<Args>(args)...));
+            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), "", learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, std::forward<Args>(args)...));
             
             // looping through addons and adding the layer to the neuron mask
             for (auto& addon: _addons) {
@@ -551,7 +551,7 @@ namespace hummus {
 
             int i=1;
             for (const auto& it: classes_map) {
-                neurons.emplace_back(std::make_unique<T>(i+shift, layer_id+1, 0, 0, std::pair(-1, -1), it.first, learning_rate, momentum, weight_decay, epochs, batch_size, presentations_before_training, std::forward<Args>(args)...));
+                neurons.emplace_back(std::make_unique<T>(i+shift, layer_id+1, 0, 0, std::pair(-1, -1), it.first, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
                 ++i;
             }
@@ -1459,6 +1459,9 @@ namespace hummus {
                     
                     // train logistic regression if available
                     if (logistic_regression) {
+                        if (verbose != 0) {
+                            std::cout << "training logistic regression" << std::endl;
+                        }
                         neurons[layers[decision.layer_number-1].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
                     }
                     
@@ -1554,7 +1557,7 @@ namespace hummus {
                 // loop through each .es file in the training database
                 for (auto filename : training_database) {
                     
-                    if (verbose == 1) {
+                    if (verbose >= 1) {
                         std::cout << filename << std::endl;
                     }
 
@@ -1633,9 +1636,9 @@ namespace hummus {
                         auto end_time = inject_npy(filename, scaling_factor);
                         
                         if (_timestep == 0) {
-                            async_run_helper(&running, false);
+                            async_run_helper(&running, true);
                         } else {
-                            sync_run_helper(&running, end_time+max_delay, _timestep, false);
+                            sync_run_helper(&running, end_time+max_delay, _timestep, true);
                         }
                         
                         // sending the on_pattern_end addon message
@@ -1707,7 +1710,7 @@ namespace hummus {
                 // loop through each .es file in the training database
                 for (auto filename : training_database) {
                     
-                    if (verbose == 2) {
+                    if (verbose >= 1) {
                         std::cout << filename << std::endl;
                     }
 
@@ -1820,6 +1823,9 @@ namespace hummus {
                     
                     // train logistic regression if available
                     if (logistic_regression) {
+                        if (verbose != 0) {
+                            std::cout << "training logistic regression" << std::endl;
+                        }
                         neurons[layers[decision.layer_number-1].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
                     }
 

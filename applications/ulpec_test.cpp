@@ -93,10 +93,10 @@ int main(int argc, char** argv) {
         }
         
         // generating N-MNIST training database
-        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", 1, {"5", "6", "9"});
+        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Train", 100, {"5"});
         
         // generating N-MNIST test database
-        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 1, {"5", "6", "9"});
+        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Test", 100, {"5"});
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.1, -0.1, -1.6, 1.6, 1e-7, 1e-9);
         auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
         auto output = network.make_layer<hummus::ULPEC_LIF>(100, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false); /// 100 ULPEC_LIF neurons
         
         if (logistic_regression) {
-            network.make_logistic_regression<hummus::Regression>(training_database.second, 0.1, 0.9, 5e-4, 70, 128, 5000, 0, {});
+            network.make_logistic_regression<hummus::Regression>(training_database.second, 0.1, 0.9, 5e-4, 70, 128, 1, 2, 0, {});
         } else {
             network.make_decision<hummus::Decision_Making>(training_database.second, 10, 60, 0, {});
         }
