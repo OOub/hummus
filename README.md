@@ -138,7 +138,7 @@ cmake --build build
 When using torch you will also have to specify the location of the TorchConfig.cmake file. So it will look like this:
 
 ~~~~
-cmake -DTORCH=ON -DTorch_DIR=/absolute/path/to/share/cmake/Torch/TorchConfig.cmake -S . -B build
+cmake -DTORCH=ON -DTorch_DIR=/absolute/path/to/share/cmake/Torch/ -S . -B build
 cmake --build build
 ~~~~
 
