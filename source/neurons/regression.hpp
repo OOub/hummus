@@ -22,19 +22,18 @@
 #include "../../third_party/json.hpp"
 
 namespace hummus {
-
+    
     class CustomDataset : public torch::data::Dataset<CustomDataset> {
     public:
         explicit CustomDataset(std::vector<torch::Tensor> _data, std::vector<int> _labels, int number_of_output_neurons) :
-            data_(torch::cat(_data, 0)),
+            data_(torch::stack(_data, 0)),
             labels_(torch::from_blob(std::data(_labels), {static_cast<int>(_labels.size()), 1}).clone()),
             data_size(_labels.size()),
-            out_dim(number_of_output_neurons) {};
+            out_dim(number_of_output_neurons) {
+//                data_.reshape({static_cast<int>(data_size), out_dim});
+            };
 
         torch::data::Example<> get(size_t index) override {
-//            data_ = data_.reshape({1, data_.numel()});
-//            data_ = data_.reshape({static_cast<int>(data_size), out_dim});
-//            data_ = data_.transpose(1,0);
             return {data_[index], labels_[index]};
         };
         
@@ -267,11 +266,12 @@ namespace hummus {
 ////            x_online = x_online.unsqueeze(0);
 //            x_online = x_online.view({-1, number_of_output_neurons});
             torch::Tensor output = model(x_online);
+            auto pred = output.argmax(1);
 //            torch::Tensor prob = torch::exp(output);
 //            std::cout << prob[0][0].item<float>()*100. << std::endl;
 //            auto pred = output.argmax(1);
             
-//            std::cout << pred << " " << std::endl;
+            std::cout << pred << std::endl;
 //            network->get_reverse_classes_map()[pred]
         }
         
