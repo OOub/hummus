@@ -247,10 +247,10 @@ namespace hummus {
                     ++batch_idx;
                     if (network->get_verbose() >= 1 && batch_idx % log_interval == 0) {
                         std::printf(
-                        "\rTrain Epoch: %d/%d [%5ld/%5d] Loss: %.4f",
+                        "\rTrain Epoch: %d/%d [%5d/%5d] Loss: %.4f",
                         epoch,
                         epochs,
-                        batch_idx * batch.data.size(0),
+                        batch_idx * static_cast<int>(batch.data.size(0)),
                         dataset_size,
                         loss);
                     }
@@ -261,7 +261,7 @@ namespace hummus {
         void test_model(double timestamp, float timestep, Network* network) {
             
             x_online = x_online.to(torch::kF32);
-            torch::Tensor output = torch::log_softmax(model(x_online),0);
+            torch::Tensor output = model(x_online);//torch::log_softmax(model(x_online),0);
 
             auto pred = output.argmax(0);
             auto class_label = network->get_reverse_classes_map()[pred.item<int>()];
