@@ -232,7 +232,7 @@ namespace hummus {
                     
                     // forward pass
                     auto tr_output = model(tr_data);
-                    auto loss = torch::nll_loss(tr_output, tr_labels);
+                    auto loss = torch::nll_loss(torch::log_softmax(tr_output, 0), tr_labels);
                     
                     // backward pass
                     loss.backward();
