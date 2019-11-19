@@ -247,7 +247,7 @@ namespace hummus {
                     ++batch_idx;
                     if (network->get_verbose() >= 1 && batch_idx % log_interval == 0) {
                         std::printf(
-                        "\rTrain Epoch: %d/%d [%5lld/%5d] Loss: %.4f",
+                        "\rTrain Epoch: %d/%d [%5ld/%5d] Loss: %.4f",
                         epoch,
                         epochs,
                         batch_idx * batch.data.size(0),
