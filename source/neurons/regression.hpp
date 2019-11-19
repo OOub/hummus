@@ -153,7 +153,7 @@ namespace hummus {
                     } else if (!network->get_learning_status()){
                         
                         // predict winner
-                        test_model(network);
+                        test_model(timestamp, timestep, network);
                         
                         // reset x_online
                         x_online = torch::zeros(number_of_output_neurons);
@@ -202,7 +202,6 @@ namespace hummus {
             }
             
             // generate data set. we can add transforms to the data set, e.g. stack batches into a single tensor.
-//            auto data_set = CustomDataset(x_training, labels, number_of_output_neurons).map(torch::data::transforms::Stack<>());
             auto data_set = CustomDataset(x_training, labels, number_of_output_neurons).map(torch::data::transforms::Stack<>());
             
             // generate a data loader
@@ -260,19 +259,19 @@ namespace hummus {
             }
         }
         
-        void test_model(Network* network) {
+        void test_model(double timestamp, float timestep, Network* network) {
             
             x_online = x_online.to(torch::kF32);
-////            x_online = x_online.unsqueeze(0);
-//            x_online = x_online.view({-1, number_of_output_neurons});
             torch::Tensor output = model(x_online);
-            auto pred = output.argmax(1);
-//            torch::Tensor prob = torch::exp(output);
-//            std::cout << prob[0][0].item<float>()*100. << std::endl;
-//            auto pred = output.argmax(1);
-            
-            std::cout << pred << std::endl;
-//            network->get_reverse_classes_map()[pred]
+
+            auto pred = output.argmax(0);
+            auto& decision = network->get_layers()[network->get_decision_parameters().layer_number].neurons;
+            for (auto& n: decision) {
+                auto& neuron = network->get_neurons()[n];
+                if (neuron->get_class_label() == network->get_reverse_classes_map()[pred.item<int>()]) {
+                    neuron->update(timestamp, nullptr, network, timestep, spike_type::decision);
+                }
+            }
         }
         
         std::vector<torch::Tensor> x_training;
