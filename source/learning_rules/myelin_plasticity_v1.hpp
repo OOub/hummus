@@ -48,7 +48,7 @@ namespace hummus {
                 throw std::logic_error("the myelin plasticity time constant cannot be equal to the neuron's membrane time constant");
             }
             
-            if (network->get_verbose() >= 1) {
+            if (network->get_verbose() > 1) {
                 std::cout << "New learning epoch at t=" << timestamp << std::endl;
             }
             
@@ -79,7 +79,7 @@ namespace hummus {
                         
                         input->increment_delay(delta_delay);
 
-                        if (network->get_verbose() >= 1) {
+                        if (network->get_verbose() > 1) {
                             std::cout << " inside learning window " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->get_delay() << " trace " << inputNeuron->get_trace() << " threshold " << inputNeuron->get_threshold() << " current: " << postsynapticNeuron->get_current() << " previous input time: "<< postsynapticNeuron->get_previous_input_time() << std::endl;
                         }
                     }

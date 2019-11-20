@@ -515,9 +515,14 @@ namespace hummus {
             training_labels = _trainingLabels;
             logistic_regression = true;
             
+            std::deque<label> unique_labels = _trainingLabels;
+            std::sort(unique_labels.begin(), unique_labels.end(), [](label a, label b){return a.name < b.name;});
+            auto last = std::unique(unique_labels.begin(), unique_labels.end(), [](label a, label b){return a.name == b.name;});
+            unique_labels.erase(last, unique_labels.end());
+            
             // add the unique classes to the classes_map
             int label_idx = 0;
-            for (auto& label: training_labels) {
+            for (auto& label: unique_labels) {
                 classes_map.insert({label.name, label_idx});
                 reverse_classes_map.insert({label_idx, label.name});
                 ++label_idx;
@@ -580,10 +585,10 @@ namespace hummus {
         
         // overload for the make_logistic_regression function that takes in a path to a text label file with the format: label_name timestamp
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::string trainingLabelFilename, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::string trainingLabelFilename, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
-            return make_logistic_regression<T>(training_labels, _timer, _addons, std::forward<Args>(args)...);
+            return make_logistic_regression<T>(training_labels, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, _timer, _addons, std::forward<Args>(args)...);
         }
             
         // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer
@@ -635,7 +640,7 @@ namespace hummus {
             decision.spike_history_size = _spike_history_size;
             decision.rejection_threshold = _rejection_threshold;
             decision.timer = _timer;
-
+            
             // building layer structure
             layers.emplace_back(layer{{sublayer{{}, neuronsInLayer, 0}}, neuronsInLayer, layer_id, false});
 
@@ -2403,7 +2408,7 @@ namespace hummus {
                         std::cout << "at t=" << t << " No decision could be made" << std::endl;
                     }
                 }
-
+                    
                 // saving previous timestamp
                 decision_pre_ts = t;
             }

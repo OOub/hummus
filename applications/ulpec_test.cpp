@@ -93,10 +93,10 @@ int main(int argc, char** argv) {
         }
         
         // generating N-MNIST training database
-        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Train", 100, {"5", "6", "9"});
+        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", 10, {"5", "6", "9"});
         
         // generating N-MNIST test database
-        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Test", 100, {"5", "6", "9"});
+        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 10, {"5", "6", "9"});
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.1, -0.1, -1.6, 1.6, 1e-7, 1e-9);
         auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
         auto output = network.make_layer<hummus::ULPEC_LIF>(100, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false); /// 100 ULPEC_LIF neurons
         
         if (logistic_regression) {
-            network.make_logistic_regression<hummus::Regression>(training_database.second, 0.0001, 0.9, 5e-4, 70, 6, 1, 5, 0, {});
+            network.make_logistic_regression<hummus::Regression>(training_database.second, 0.1, 0.9, 5e-4, 70, 32, 50, 0, 0, {});
         } else {
             network.make_decision<hummus::Decision_Making>(training_database.second, 10, 60, 0, {});
         }
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
         network.all_to_all<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(1e-9, 1e-7, 0, 0, false), 100, -1);
         
         // running network asynchronously with spatial cropping down to 28x28 input and taking only the first N-MNIST saccade
-        network.verbosity(1);
+        network.verbosity(0);
         network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
                               
         // measuring classification accuracy

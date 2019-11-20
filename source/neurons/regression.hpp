@@ -14,6 +14,7 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -25,12 +26,12 @@ namespace hummus {
     
     class CustomDataset : public torch::data::Dataset<CustomDataset> {
     public:
-        explicit CustomDataset(std::vector<torch::Tensor> _data, std::vector<int> _labels, int number_of_output_neurons) :
+        explicit CustomDataset(std::vector<torch::Tensor> _data, std::vector<int>& _labels, int number_of_output_neurons) :
             data_(torch::stack(_data, 0)),
-            labels_(torch::from_blob(std::data(_labels), {static_cast<int>(_labels.size()), 1}).clone()),
+            labels_(torch::tensor(_labels)),
+//            labels_(torch::from_blob(std::data(_labels), {static_cast<int>(_labels.size()), 1}).clone()),
             data_size(_labels.size()),
-            out_dim(number_of_output_neurons) {
-            };
+            out_dim(number_of_output_neurons) {};
 
         torch::data::Example<> get(size_t index) override {
             return {data_[index], labels_[index]};
@@ -68,7 +69,8 @@ namespace hummus {
                 presentations_before_training(_presentations_before_training),
                 computation_id(0),
                 log_interval(_log_interval),
-                model(100,3) {
+                model(100,3),
+                debug_mode(false) {
 
             // Regression neuron type = 5 for JSON save
             neuron_type = 5;
@@ -204,7 +206,7 @@ namespace hummus {
             auto data_set = CustomDataset(x_training, labels, number_of_output_neurons).map(torch::data::transforms::Stack<>());
             
             // generate a data loader
-            auto data_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(
+            auto data_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
                 std::move(data_set),
                 batch_size);
             
@@ -231,11 +233,26 @@ namespace hummus {
                     tr_data = tr_data.to(torch::kF32);
                     tr_labels = tr_labels.to(torch::kInt64);
                     
+                    if (debug_mode) {
+                        std::ofstream ofs("training_data.txt");
+                        for (auto i=0; i<tr_data.size(0); ++i) {
+                            for (auto j=0; j<tr_data.size(1); ++j) {
+                                ofs << tr_data[i][j].item<float>() << " ";
+                            }
+                            ofs << "\n";
+                        }
+                    }
+                    
+                    std::ofstream ofs2("training_labels.txt");
+                    for (auto i=0; i<tr_labels.size(0); ++i) {
+                        ofs2 << tr_labels[i].item<float>() << "\n";
+                    }
+                    
                     // reset gradients
                     optimizer.zero_grad();
                     
                     // forward pass
-                    auto tr_output = torch::nll_loss(torch::log_softmax(model(tr_data),0) ,tr_labels);
+                    auto tr_output = torch::nll_loss(torch::log_softmax(model(tr_data),1) ,tr_labels);
                     auto loss = tr_output.item<float>();
                     
                     // backward pass
@@ -261,8 +278,16 @@ namespace hummus {
         void test_model(double timestamp, float timestep, Network* network) {
             
             x_online = x_online.to(torch::kF32);
-            torch::Tensor output = model(x_online);//torch::log_softmax(model(x_online),0);
-
+            
+            if (debug_mode) {
+                std::ofstream ofs3("test_data.txt");
+                for (auto i=0; i<x_online.size(0); ++i) {
+                    ofs3 << x_online[i].item<float>() << "\n";
+                }
+            }
+            
+            torch::Tensor output = model(x_online);
+            
             auto pred = output.argmax(0);
             auto class_label = network->get_reverse_classes_map()[pred.item<int>()];
                 
@@ -290,5 +315,6 @@ namespace hummus {
         int                        computation_id;
         int                        log_interval;
         torch::nn::Linear          model;
+        bool                       debug_mode;
 	};
 }
