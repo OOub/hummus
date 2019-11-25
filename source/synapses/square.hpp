@@ -59,7 +59,7 @@ namespace hummus {
         }
 
 		virtual void receive_spike(float potential=0) override {
-            synaptic_current += weight * (external_current+normal_distribution(random_engine));
+            synaptic_current += efficacy * weight * (external_current+normal_distribution(random_engine));
 		}
 
 		virtual void to_json(nlohmann::json& output) override {

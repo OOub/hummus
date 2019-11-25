@@ -422,7 +422,7 @@ namespace hummus {
     public:
 
 		// ----- CONSTRUCTOR AND DESTRUCTOR ------
-        Network() :
+        Network(bool seed_network=false) :
                 verbose(0),
                 decision_making(false),
                 learning_status(true),
@@ -432,7 +432,15 @@ namespace hummus {
                 decision_pre_ts(0),
                 skip_presentation(std::numeric_limits<double>::max()),
                 logistic_regression(false),
-                presentation_counter(0) {}
+                presentation_counter(0) {
+                    std::random_device device;
+                    if (seed_network) {
+                        std::seed_seq seed{device(), device(), device(), device(), device(), device(), device(), device()};
+                        random_engine = std::mt19937(seed);
+                    } else {
+                        random_engine = std::mt19937(device());
+                    }
+                }
 
         // ----- NETWORK IMPORT EXPORT METHODS -----
         
@@ -911,7 +919,7 @@ namespace hummus {
                             // connecting neurons from the presynaptic layer to the convolutional one, depedning on the number of synapses
                             for (auto i=0; i<number_of_synapses; i++) {
                                 // calculating weights and delays according to the provided distribution
-                                const std::pair weight_delay = lambdaFunction(x, y, convSub.id);
+                                const std::pair weight_delay = lambdaFunction(x, y, convSub.id, random_engine);
 
                                 // creating a synapse between the neurons
                                 neurons[idx]->make_synapse<T>(neurons[n].get(), weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
@@ -1006,7 +1014,7 @@ namespace hummus {
 
                                 for (auto i=0; i<number_of_synapses; i++) {
                                     // calculating weights and delays according to the provided distribution
-                                    const std::pair weight_delay = lambdaFunction(x, y, poolSub.id);
+                                    const std::pair weight_delay = lambdaFunction(x, y, poolSub.id, random_engine);
 
                                     // connecting neurons from the presynaptic layer to the convolutional one
                                     neurons[idx]->make_synapse<T>(neurons[n].get(), weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
@@ -1056,7 +1064,7 @@ namespace hummus {
                 for (auto post: reservoirLayer.neurons) {
                     for (auto i=0; i<number_of_synapses; i++) {
                         // calculating weights and delays according to the provided distribution
-                        const std::pair weight_delay = lambdaFunction(0, 0, 0);
+                        const std::pair weight_delay = lambdaFunction(0, 0, 0, random_engine);
 
                         // self-excitation connection_ratio
                         if (pre == post) {
@@ -1145,7 +1153,7 @@ namespace hummus {
 
                                     if (successful_connections[idx]) {
 
-                                        const std::pair weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_xy_coordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_xy_coordinates().second, postsynapticLayer.sublayers[postSubIdx].id);
+                                        const std::pair weight_delay = lambdaFunction(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_xy_coordinates().first, neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]]->get_xy_coordinates().second, postsynapticLayer.sublayers[postSubIdx].id, random_engine);
                                     neurons[presynapticLayer.sublayers[preSubIdx].neurons[preNeuronIdx]]->make_synapse<T>(neurons[postsynapticLayer.sublayers[postSubIdx].neurons[postNeuronIdx]].get(), weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
 
                                         // to shift the network runtime by the maximum delay in the clock mode
@@ -1176,7 +1184,7 @@ namespace hummus {
                             for (auto i=0; i<number_of_synapses; i++) {
 
                                 if (successful_connections[idx]) {
-                                    const std::pair weight_delay = lambdaFunction(neurons[postNeuron]->get_xy_coordinates().first, neurons[postNeuron]->get_xy_coordinates().second, postSub.id);
+                                    const std::pair weight_delay = lambdaFunction(neurons[postNeuron]->get_xy_coordinates().first, neurons[postNeuron]->get_xy_coordinates().second, postSub.id, random_engine);
 
                                     neurons[preNeuron]->make_synapse<T>(neurons[postNeuron].get(), weight_delay.first, weight_delay.second, std::forward<Args>(args)...);
 
@@ -1219,7 +1227,7 @@ namespace hummus {
                     for (auto& postNeurons: sub.neurons) {
                         if (preNeurons != postNeurons && neurons[preNeurons]->get_rf_id() == neurons[postNeurons]->get_rf_id()) {
                             for (auto i=0; i<number_of_synapses; i++) {
-                                const std::pair weight_delay = lambdaFunction(0, 0, 0);
+                                const std::pair weight_delay = lambdaFunction(0, 0, 0, random_engine);
                                 neurons[preNeurons]->make_synapse<T>(neurons[postNeurons].get(), -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                                 idx++;
                             }
@@ -1234,7 +1242,7 @@ namespace hummus {
                             for (auto& postNeurons: subToInhibit.neurons) {
                                 if (neurons[preNeurons]->get_rf_id() == neurons[postNeurons]->get_rf_id()) {
                                     for (auto i=0; i<number_of_synapses; i++) {
-                                        const std::pair weight_delay = lambdaFunction(0, 0, 0);
+                                        const std::pair weight_delay = lambdaFunction(0, 0, 0, random_engine);
                                         neurons[preNeurons]->make_synapse<T>(neurons[postNeurons].get(), -1*std::abs(weight_delay.first), weight_delay.second, std::forward<Args>(args)...);
                                         idx++;
                                     }
@@ -1304,8 +1312,6 @@ namespace hummus {
             int spike_number = std::floor(duration/timestep);
 
             // initialising the random engine
-            std::random_device                      device;
-            std::mt19937                            random_engine(device());
             std::uniform_real_distribution<double>  distribution(0.0,1.0);
 
             std::vector<double> inter_spike_intervals;
@@ -2307,10 +2313,6 @@ namespace hummus {
                 std::vector<int> indices(all_connections);
                 std::iota(indices.begin(), indices.end(), 0);
 
-                std::random_device  device;
-                std::seed_seq       seed{device(), device(), device(), device(), device(), device(), device(), device()};
-                std::mt19937        random_engine(seed);
-
                 // calculate how many successful connections there should be according to the connection_ratio
                 int successful_connections = (connection_ratio * all_connections) / 100;
 
@@ -2462,5 +2464,6 @@ namespace hummus {
         double                                  skip_presentation;
         bool                                    logistic_regression;
         int                                     presentation_counter; // for es_database method only
+        std::mt19937                            random_engine;
     };
 }

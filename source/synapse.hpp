@@ -27,6 +27,7 @@ namespace hummus {
         Synapse(int _postsynaptic_neuron, int _presynaptic_neuron, float _weight, float _delay, float _synapse_time_constant=0) :
                 presynaptic_neuron(_presynaptic_neuron),
                 postsynaptic_neuron(_postsynaptic_neuron),
+                efficacy(1),
                 weight(_weight),
                 delay(_delay),
                 synaptic_current(0),
@@ -99,6 +100,17 @@ namespace hummus {
             return weight;
         }
 
+        float get_efficacy() const {
+            return efficacy;
+        }
+        
+        void set_efficacy(float new_efficacy) {
+            efficacy = new_efficacy;
+            if (efficacy < 0) {
+                efficacy = 0;
+            }
+        }
+        
         void set_weight(float new_weight) {
             weight = new_weight;
         }
@@ -138,6 +150,7 @@ namespace hummus {
     protected:
         int                        presynaptic_neuron;
         int                        postsynaptic_neuron;
+        float                      efficacy;
         float                      weight;
         float                      delay;
         float                      synaptic_current;

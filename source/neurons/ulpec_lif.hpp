@@ -130,11 +130,18 @@ namespace hummus {
                 s->receive_spike(2*delta_v);
 
             } else if (type == spike_type::end_trigger_up) {
+                for (auto& addon: relevant_addons) {
+                    addon->incoming_spike(timestamp, s, this, network);
+                }
                 
                 // remove the injected potential in the memristor
                 s->receive_spike(-delta_v);
                 
             } else if (type == spike_type::end_trigger_down) {
+                
+                for (auto& addon: relevant_addons) {
+                    addon->incoming_spike(timestamp, s, this, network);
+                }
                 
                 // remove the injected potential in the memristor
                 s->receive_spike(delta_v);

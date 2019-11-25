@@ -227,3 +227,7 @@ def read_aedat(aedatfile):
     zipped_data = list(zip(ts,x,y,pol))
     formatted_data = np.array(zipped_data, dtype=[('t', '<u8'), ('x', '<u2'), ('y', '<u2'), ('is_increase', '?')])
     return formatted_data
+
+if __name__ == '__main__':
+    poker_to_es('/Users/omaroubari/Desktop/he_95_td.dat', '/Users/omaroubari/Desktop/heart.es')
+

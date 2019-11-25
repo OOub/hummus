@@ -20,7 +20,7 @@
 int main(int argc, char** argv) {
     
     //  ----- INITIALISING THE NETWORK -----
-    hummus::Network network;
+    hummus::Network network(true);
 
     //  ----- INITIALISING ADD-ONS -----
     network.make_addon<hummus::SpikeLogger>("spike_log.bin");

@@ -23,20 +23,18 @@ namespace hummus {
         LogNormal(float weight_mu=1, float weight_sigma=0, float delay_mu=0, float delay_sigma=0) {
 
             // randomising weights and delays
-            std::random_device device;
-            random_engine = std::mt19937(device());
             delay_random = std::lognormal_distribution<float>(delay_mu, delay_sigma);
             weight_random = std::lognormal_distribution<float>(weight_mu, weight_sigma);
         }
 		
-        std::pair<float, float> operator()(int x, int y, int depth) {
+        template<class RNG>
+        std::pair<float, float> operator()(int x, int y, int depth, RNG &random_engine) {
 			return std::make_pair(weight_random(random_engine), delay_random(random_engine));
         }
         
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                        random_engine;
         std::lognormal_distribution<float> delay_random;
         std::lognormal_distribution<float> weight_random;
 	};

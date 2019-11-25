@@ -40,9 +40,14 @@ namespace hummus {
         
     public:
     	// ----- CONSTRUCTOR -----
-        DataParser() {
+        DataParser(bool seed_parser=false) {
             std::random_device device;
-            random_engine = std::mt19937(device());
+            if (seed_parser) {
+                std::seed_seq seed{device(), device(), device(), device(), device(), device(), device(), device()};
+                random_engine = std::mt19937(seed);
+            } else {
+                random_engine = std::mt19937(device());
+            }
             gaussian = std::normal_distribution<>(0.0, 1.0);
         };
         

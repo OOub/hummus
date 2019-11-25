@@ -77,10 +77,10 @@ namespace hummus {
             }
             
             // checking whether a refractory period is over
-            if (!active && refractory_counter >= refractory_period) {
+            if (timestamp - previous_spike_time >= refractory_period) {
                 active = true;
-                refractory_counter = 0;
             }
+
             
             // updating current of synapses
             if (type == spike_type::initial) {
@@ -218,9 +218,6 @@ namespace hummus {
                     }
                 }
                 
-                // everytime a postsynaptic neuron fires increment refractory counter on all postsynaptic neurons that are currently inactive
-                check_refractory(network);
-                
                 previous_spike_time = timestamp;
                 active = false;
                 current = 0;
@@ -238,10 +235,8 @@ namespace hummus {
                 timestep = 0;
             }
             
-            // checking whether a refractory period is over
-            if (!active && refractory_counter >= refractory_period) {
+            if (timestamp - previous_spike_time >= refractory_period) {
                 active = true;
-                refractory_counter = 0;
             }
             
             // updating current of synapses
@@ -343,6 +338,7 @@ namespace hummus {
                 for (auto& addon: relevant_addons) {
                     addon->neuron_fired(timestamp, active_synapse, this, network);
 				}
+                
                 if (network->get_main_thread_addon()) {
                     network->get_main_thread_addon()->neuron_fired(timestamp, active_synapse, this, network);
 				}
@@ -366,9 +362,7 @@ namespace hummus {
                     }
 				}
                 
-                // everytime a postsynaptic neuron fires increment refractory counter on all postsynaptic neurons that are currently inactive
-                check_refractory(network);
-                
+                potential = resting_potential;
                 previous_spike_time = timestamp;
 				active = false;
                 current = 0;
@@ -472,23 +466,14 @@ namespace hummus {
         
         virtual void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
-                network->get_neurons()[n]->set_potential(resting_potential);
-            }
-        }
-        
-        void check_refractory(Network* network) {
-            if (refractory_period > 0) {
-                for (auto& n: network->get_layers()[layer_id].neurons) {
-                    auto& neuron = network->get_neurons()[n];
-                    if (neuron->get_neuron_id() != neuron_id && !neuron->get_activity()) {
-                        dynamic_cast<CUBA_LIF*>(neuron.get())->increment_refractory_counter();
-                    }
+                auto& neuron = network->get_neurons()[n];
+                neuron->set_potential(resting_potential);
+                neuron->set_current(0);
+                neuron->set_activity(false);
+                for (auto& dendrite: neuron->get_dendritic_tree()) {
+                    dendrite->reset();
                 }
             }
-        }
-        
-        void increment_refractory_counter() {
-            refractory_counter++;
         }
         
 		// ----- LIF PARAMETERS -----
