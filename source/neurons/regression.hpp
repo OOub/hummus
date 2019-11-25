@@ -14,13 +14,13 @@
 #pragma once
 
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include <torch/torch.h> // requires the libtorch option to be ON in cmake
 #include "../../third_party/json.hpp"
+#include "../../third_party/numpy.hpp"
 
 namespace hummus {
     
@@ -29,7 +29,6 @@ namespace hummus {
         explicit CustomDataset(std::vector<torch::Tensor> _data, std::vector<int>& _labels, int number_of_output_neurons) :
             data_(torch::stack(_data, 0)),
             labels_(torch::tensor(_labels)),
-//            labels_(torch::from_blob(std::data(_labels), {static_cast<int>(_labels.size()), 1}).clone()),
             data_size(_labels.size()),
             out_dim(number_of_output_neurons) {};
 
@@ -56,7 +55,7 @@ namespace hummus {
 	class Regression : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, float _threshold=-50, float _restingPotential=-70) :
+        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, bool save_tensor=false, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 200, 10, 20, _threshold, _restingPotential, _classLabel),
                 learning_rate(_learning_rate),
                 momentum(_momentum),
@@ -70,7 +69,7 @@ namespace hummus {
                 computation_id(0),
                 log_interval(_log_interval),
                 model(100,3),
-                debug_mode(false) {
+                debug_mode(save_tensor) {
 
             // Regression neuron type = 5 for JSON save
             neuron_type = 5;
@@ -84,7 +83,7 @@ namespace hummus {
 		virtual ~Regression(){}
 
         // ----- PUBLIC REGRESSION NEURON METHODS -----
-       virtual void initialisation(Network* network) override {
+        virtual void initialisation(Network* network) override {
            // searching for addons that are relevant to this neuron. if addons do not have a mask they are automatically relevant / not filtered out
            for (auto& addon: network->get_addons()) {
                if (addon->get_mask().empty() && !addon->no_automatic_include()) {
@@ -115,7 +114,60 @@ namespace hummus {
                number_of_output_neurons = static_cast<int>(previous_layer_neurons.size());
                computation_id = network->get_layers()[layer_id-1].neurons[0];
            }
-       }
+        }
+        
+        virtual void end(Network* network) override {
+            // save training and test tensor into numpy array
+            if (debug_mode && computation_layer) {
+                // parsing training data
+                torch::Tensor tmp_tr_data = torch::stack(x_training, 0);
+                torch::Tensor tmp_tr_labels = torch::tensor(labels_train);
+                
+                // converting data to stl container
+                const int tr_data_shape[2] = {static_cast<int>(tmp_tr_data.size(0)),static_cast<int>(tmp_tr_data.size(1))};
+                std::vector<int> tr_data_stl;
+                for (auto i=0; i<tmp_tr_data.size(0); ++i) {
+                    for (auto j=0; j<tmp_tr_data.size(1); ++j) {
+                        tr_data_stl.emplace_back(tmp_tr_data[i][j].item<int>());
+                    }
+                }
+                
+                // converting labels to stl container
+                const int tr_label_shape[2] = {static_cast<int>(tmp_tr_labels.size(0))};
+                std::vector<int> tr_label_stl;
+                for (auto i=0; i<tmp_tr_labels.size(0); ++i) {
+                    tr_label_stl.emplace_back(tmp_tr_labels[i].item<int>());
+                }
+                
+                // saving training set to npy file
+                aoba::SaveArrayAsNumpy("logistic_tr_set.npy", false, 2, &tr_data_shape[0], &tr_data_stl[0]);
+                aoba::SaveArrayAsNumpy("logistic_tr_label.npy", false, 1, &tr_label_shape[0], &tr_label_stl[0]);
+                
+                // parsing test data
+                torch::Tensor tmp_te_data = torch::stack(x_test, 0);
+                torch::Tensor tmp_te_labels = torch::tensor(labels_test);;
+                
+                // converting data to stl container
+                const int te_data_shape[2] = {static_cast<int>(tmp_te_data.size(0)),static_cast<int>(tmp_te_data.size(1))};
+                std::vector<int> te_data_stl;
+                for (auto i=0; i<tmp_te_data.size(0); ++i) {
+                    for (auto j=0; j<tmp_te_data.size(1); ++j) {
+                        te_data_stl.emplace_back(tmp_te_data[i][j].item<int>());
+                    }
+                }
+                
+                // converting labels to stl container
+                const int te_label_shape[2] = {static_cast<int>(tmp_te_labels.size(0))};
+                std::vector<int> te_label_stl;
+                for (auto i=0; i<tmp_te_labels.size(0); ++i) {
+                    te_label_stl.emplace_back(tmp_te_labels[i].item<int>());
+                }
+                
+                // saving test set to npy file
+                aoba::SaveArrayAsNumpy("logistic_te_set.npy", false, 2, &te_data_shape[0], &te_data_stl[0]);
+                aoba::SaveArrayAsNumpy("logistic_te_label.npy", false, 1, &te_label_shape[0], &te_label_stl[0]);
+            }
+        }
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             // none spikes are used  by the computation layer for training the logistic regression
@@ -145,13 +197,15 @@ namespace hummus {
                     // during the training set the computation neuron collects data
                     if (network->get_learning_status() && network->get_presentation_counter() >= presentations_before_training) {
                         x_training.emplace_back(x_online);
-                        labels.emplace_back(network->get_classes_map()[network->get_current_label()]);
+                        labels_train.emplace_back(network->get_classes_map()[network->get_current_label()]);
                         
                         // reset x_online each time it is included in the training vector
                         x_online = torch::zeros(number_of_output_neurons);
                     
                     // during the test set the computation neuron is used to decide which regression neuron from the decision layer should fire
                     } else if (!network->get_learning_status()){
+                        x_test.emplace_back(x_online);
+                        labels_test.emplace_back(network->get_classes_map()[network->get_current_label()]);
                         
                         // predict winner
                         test_model(timestamp, timestep, network);
@@ -203,7 +257,7 @@ namespace hummus {
             }
             
             // generate data set. we can add transforms to the data set, e.g. stack batches into a single tensor.
-            auto data_set = CustomDataset(x_training, labels, number_of_output_neurons).map(torch::data::transforms::Stack<>());
+            auto data_set = CustomDataset(x_training, labels_train, number_of_output_neurons).map(torch::data::transforms::Stack<>());
             
             // generate a data loader
             auto data_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
@@ -229,24 +283,9 @@ namespace hummus {
                     auto tr_data = batch.data;
                     auto tr_labels = batch.target.squeeze();
                     
-                    // format data and labels to the accepted torch data types
+                    // format data and tr_labels to the accepted torch data types
                     tr_data = tr_data.to(torch::kF32);
                     tr_labels = tr_labels.to(torch::kInt64);
-                    
-                    if (debug_mode) {
-                        std::ofstream ofs("training_data.txt");
-                        for (auto i=0; i<tr_data.size(0); ++i) {
-                            for (auto j=0; j<tr_data.size(1); ++j) {
-                                ofs << tr_data[i][j].item<float>() << " ";
-                            }
-                            ofs << "\n";
-                        }
-                    }
-                    
-                    std::ofstream ofs2("training_labels.txt");
-                    for (auto i=0; i<tr_labels.size(0); ++i) {
-                        ofs2 << tr_labels[i].item<float>() << "\n";
-                    }
                     
                     // reset gradients
                     optimizer.zero_grad();
@@ -279,13 +318,6 @@ namespace hummus {
             
             x_online = x_online.to(torch::kF32);
             
-            if (debug_mode) {
-                std::ofstream ofs3("test_data.txt");
-                for (auto i=0; i<x_online.size(0); ++i) {
-                    ofs3 << x_online[i].item<float>() << "\n";
-                }
-            }
-            
             torch::Tensor output = model(x_online);
             
             auto pred = output.argmax(0);
@@ -301,8 +333,10 @@ namespace hummus {
         }
         
         std::vector<torch::Tensor> x_training;
+        std::vector<torch::Tensor> x_test;
         torch::Tensor              x_online;
-        std::vector<int>           labels;
+        std::vector<int>           labels_train;
+        std::vector<int>           labels_test;
         float                      learning_rate;
         float                      momentum;
         float                      weight_decay;

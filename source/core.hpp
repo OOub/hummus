@@ -164,6 +164,9 @@ namespace hummus {
 		// ability to do things inside a neuron, outside the constructor before the network actually runs
 		virtual void initialisation(Network* network) {}
 
+        // ability to do things inside a neuron, after the network is done running
+        virtual void end(Network* network) {}
+        
 		// asynchronous update method
 		virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) = 0;
 
@@ -515,12 +518,13 @@ namespace hummus {
 
         // layer of one logistic regression neuron that makes the relevant decision-making neuron spike for classification.
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::deque<label> _trainingLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::deque<label> _trainingLabels, std::deque<label> _testLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, bool save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             if (decision_making) {
                 throw std::logic_error("you cannot have two different classification layers. the decision-making classifier is already initialised");
             }
             
             training_labels = _trainingLabels;
+            test_labels = _testLabels;
             logistic_regression = true;
             
             std::deque<label> unique_labels = _trainingLabels;
@@ -550,7 +554,7 @@ namespace hummus {
             }
             
             // create the computation layer of regression neuron
-            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), "", learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, std::forward<Args>(args)...));
+            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), "", learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, save_tensor, std::forward<Args>(args)...));
             
             // looping through addons and adding the layer to the neuron mask
             for (auto& addon: _addons) {
@@ -593,21 +597,23 @@ namespace hummus {
         
         // overload for the make_logistic_regression function that takes in a path to a text label file with the format: label_name timestamp
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::string trainingLabelFilename, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::string trainingLabelFilename, std::string testLabelFilename, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, bool save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
-            return make_logistic_regression<T>(training_labels, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, _timer, _addons, std::forward<Args>(args)...);
+            auto test_labels = dataParser.read_txt_labels(testLabelFilename);
+            return make_logistic_regression<T>(training_labels, test_labels, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, save_tensor, _timer, _addons, std::forward<Args>(args)...);
         }
             
         // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer
         template <typename T, typename... Args>
-        layer make_decision(std::deque<label> _trainingLabels, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_decision(std::deque<label> _trainingLabels, std::deque<label> _testLabels, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             
             if (logistic_regression) {
                 throw std::logic_error("you cannot have two different classification layers. the logistic regression classifier is already initialised");
             }
             
             training_labels = _trainingLabels;
+            test_labels = _testLabels;
             decision_making = true;
 
             // add the unique classes to the classes_map
@@ -657,10 +663,11 @@ namespace hummus {
 
         // overload for the make_decision function that takes in a path to a text label file with the format: label_name timestamp
         template <typename T, typename... Args>
-        layer make_decision(std::string trainingLabelFilename, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_decision(std::string trainingLabelFilename, std::string testLabelFilename, int _spike_history_size, int _rejection_threshold, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
-            return make_decision<T>(training_labels, _spike_history_size, _rejection_threshold, _timer, _addons, std::forward<Args>(args)...);
+            auto test_labels = dataParser.read_txt_labels(testLabelFilename);;
+            return make_decision<T>(training_labels, test_labels, _spike_history_size, _rejection_threshold, _timer, _addons, std::forward<Args>(args)...);
         }
 
         // adds neurons arranged in circles of various radii
@@ -1504,6 +1511,10 @@ namespace hummus {
                     }
                 }
 
+                for (auto& n: neurons) {
+                    n->end(this);
+                }
+                
                 for (auto& addon: addons) {
                     addon->on_completed(this);
                 }
@@ -1678,6 +1689,10 @@ namespace hummus {
                     }
                 }
 
+                for (auto& n: neurons) {
+                    n->end(this);
+                }
+                
                 for (auto& addon: addons) {
                     addon->on_completed(this);
                 }
@@ -1868,6 +1883,11 @@ namespace hummus {
 
                         auto header = sepia::read_header(sepia::filename_to_ifstream(filename));
 
+                        // get the current label for the database - one label per pattern
+                        if (!test_labels.empty()) {
+                            current_label = test_labels[presentation_counter].name;
+                        }
+                        
                         double final_t = 0;
                         if (header.event_stream_type == sepia::type::dvs) {
                             sepia::join_observable<sepia::type::dvs>(
@@ -1960,7 +1980,11 @@ namespace hummus {
                         std::cout << "it took " << elapsed_seconds.count() << "s" << std::endl;
                     }
                 }
-
+                
+                for (auto& n: neurons) {
+                    n->end(this);
+                }
+                
                 for (auto& addon: addons) {
                     addon->on_completed(this);
                 }
@@ -2159,25 +2183,31 @@ namespace hummus {
         void async_run_helper(std::atomic_bool* running, bool classification=false, bool eof=false) {
             // lambda function to update neuron status asynchronously
             auto requestUpdate = [&](spike s, bool classification) {
-                if (!classification) {
-                    if (!eof) {
-                        if (!training_labels.empty()) {
-                            if (training_labels.front().onset <= s.timestamp) {
-                                current_label = training_labels.front().name;
-                                training_labels.pop_front();
-                            }
+                if (!classification && !eof) {
+                    if (!training_labels.empty()) {
+                        if (training_labels.front().onset <= s.timestamp) {
+                            current_label = training_labels.front().name;
+                            training_labels.pop_front();
                         }
+                    }
 
-                        if (learning_off_signal != -1) {
-                            if (learning_status==true && s.timestamp >= learning_off_signal) {
-                                if (verbose != 0) {
-                                    std::cout << "learning turned off at t=" << s.timestamp << std::endl;
-                                }
-                                learning_status = false;
+                    if (learning_off_signal != -1) {
+                        if (learning_status==true && s.timestamp >= learning_off_signal) {
+                            if (verbose != 0) {
+                                std::cout << "learning turned off at t=" << s.timestamp << std::endl;
                             }
+                            learning_status = false;
                         }
                     }
                 } else {
+                    
+                    if (!eof && !test_labels.empty()) {
+                        if (test_labels.front().onset <= s.timestamp) {
+                            current_label = test_labels.front().name;
+                            test_labels.pop_front();
+                        }
+                    }
+                    
                     if (decision_making && decision.timer > 0) {
                         choose_winner_online(s.timestamp, 0);
                     }
@@ -2262,6 +2292,15 @@ namespace hummus {
                             }
                         }
                     } else {
+                        
+                        // get the current test label if a set of labels are provided
+                        if (!test_labels.empty()) {
+                            if (test_labels.front().onset <= i) {
+                                current_label = test_labels.front().name;
+                                test_labels.pop_front();
+                            }
+                        }
+                        
                         if (decision_making && decision.timer > 0) {
                             choose_winner_online(i, timestep);
                         }
@@ -2451,6 +2490,7 @@ namespace hummus {
         std::vector<std::unique_ptr<Addon>>     addons;
         std::unique_ptr<MainAddon>              th_addon;
 		std::deque<label>                       training_labels;
+        std::deque<label>                       test_labels;
         bool                                    decision_making;
         std::unordered_map<std::string, int>    classes_map;
         std::unordered_map<int, std::string>    reverse_classes_map;

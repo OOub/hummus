@@ -45,7 +45,7 @@ namespace hummus {
             // potentiation            
             float G_0 = s->get_weight();
             if (s->get_synaptic_potential() <= thres_pot) {
-                if (network->get_verbose() >= 1) {
+                if (network->get_verbose() > 1) {
                     std::cout << " LTP" << std::endl;
                 }
                 float delta_G = A_pot * (G_max - G_0);
@@ -53,7 +53,7 @@ namespace hummus {
                 
             // depression
             } else if (s->get_synaptic_potential() >= thres_dep) {
-                if (network->get_verbose() >= 1) {
+                if (network->get_verbose() > 1) {
                     std::cout << "LTD" << std::endl;
                 }
                 float delta_G = A_dep * (G_0 - G_min);
