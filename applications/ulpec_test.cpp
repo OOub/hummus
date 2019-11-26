@@ -27,8 +27,9 @@ int main(int argc, char** argv) {
     bool cadence = false;
     bool use_gui = false;
     bool plot_currents = false;
-    bool logistic_regression = true;
+    bool logistic_regression = false;
     bool seed = true;
+    bool multiple_epochs = false;
     
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
@@ -83,7 +84,7 @@ int main(int argc, char** argv) {
         
         if (use_gui) {
             auto& display = network.make_gui<hummus::Display>();
-             display.set_time_window(100000);
+            display.set_time_window(100000);
             display.set_potential_limits(-2.1, 2.1);
             display.track_neuron(2);
             display.hardware_acceleration(false);
@@ -99,17 +100,19 @@ int main(int argc, char** argv) {
         // generating N-MNIST test database
         auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 100, {"5","6","9"});
         
-        auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.1, -0.1, -1.6, 1.6, 1e-7, 1e-9);
+        auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.02, -0.02, -1.6, 1.6, 1e-7, 1e-9);
         auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
         
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(28, 28, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
         auto output = network.make_layer<hummus::ULPEC_LIF>(100, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false); /// 100 ULPEC_LIF neurons
         
+        hummus::layer classifier;
         if (logistic_regression) {
-            network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0.9, 5e-4, 70, 128, 10, 10000, false, 0, {});
+            int logistic_start = static_cast<int>(training_database.second.size()) - 1000;
+            classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, logistic_start, false, 0, {});
         } else {
-            network.make_decision<hummus::Decision_Making>(training_database.second, test_database.second, 10, 60, 0, {});
+            classifier = network.make_decision<hummus::Decision_Making>(training_database.second, test_database.second, 10, 60, 0, {});
         }
         
         auto& g_maps = network.make_addon<hummus::WeightMaps>("ulpec_g_maps.bin", 5000);
@@ -120,8 +123,29 @@ int main(int argc, char** argv) {
         
         // running network asynchronously with spatial cropping down to 28x28 input and taking only the first N-MNIST saccade
         network.verbosity(0);
-        network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
-                              
+        if (multiple_epochs) {
+            // disabling propagation to the regression layer
+            classifier.active = false;
+            
+            // training the STDP
+            network.run_es_database(training_database.first, {}, 100000, 0, 1, 27, 0, 27, 0);
+            
+            // reset the network
+            network.reset_network();
+            
+            // turn off the learning
+            network.turn_off_learning();
+            
+            // enabling propagation to the regression layer
+            classifier.active = true;
+            
+            // separate epoch to train the Logistic regression
+            network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
+            
+        } else {
+            network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
+        }
+        
         // measuring classification accuracy
         results.accuracy();
     }

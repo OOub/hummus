@@ -23,7 +23,7 @@
 #include "../../third_party/numpy.hpp"
 
 namespace hummus {
-    
+
     class CustomDataset : public torch::data::Dataset<CustomDataset> {
     public:
         explicit CustomDataset(std::vector<torch::Tensor> _data, std::vector<int>& _labels, int number_of_output_neurons) :
@@ -250,7 +250,7 @@ namespace hummus {
         
     protected:
         
-        void train_model(Network* network) {
+        virtual void train_model(Network* network) {
             
             if (x_training.empty()) {
                 throw std::runtime_error("the training data vector is empty");
@@ -314,7 +314,7 @@ namespace hummus {
             }
         }
         
-        void test_model(double timestamp, float timestep, Network* network) {
+        virtual void test_model(double timestamp, float timestep, Network* network) {
             
             x_online = x_online.to(torch::kF32);
             
