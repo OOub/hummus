@@ -170,6 +170,9 @@ namespace hummus {
         }
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
+            
+            std::cout << "regression accessed" << std::endl;
+            
             // none spikes are used  by the computation layer for training the logistic regression
             if (type == spike_type::none && computation_layer) {
                 
@@ -323,7 +326,7 @@ namespace hummus {
             auto pred = output.argmax(0);
             auto class_label = network->get_reverse_classes_map()[pred.item<int>()];
                 
-            auto& decision = network->get_layers()[network->get_decision_parameters().layer_number].neurons;
+            auto& decision = network->get_layers()[network->get_decision_parameters().layer_number+1].neurons;
             for (auto& n: decision) {
                 auto& neuron = network->get_neurons()[n];
                 if (neuron->get_class_label() == class_label) {

@@ -42,6 +42,7 @@ namespace hummus {
         }
         
 		virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            
             // potentiation            
             float G_0 = s->get_weight();
             if (s->get_synaptic_potential() <= thres_pot) {

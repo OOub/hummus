@@ -581,7 +581,7 @@ namespace hummus {
             }
             
             // saving the decision parameters
-            decision.layer_number = layer_id+1;
+            decision.layer_number = layer_id;
             decision.timer = _timer;
             
             // building decision layer structure
@@ -593,7 +593,7 @@ namespace hummus {
             // connecting the computation and decision layers all_to_all
             all_to_all<>(layers[layer_id], layers[layer_id+1], 1, hummus::Normal(1), 100);
             
-            return layers.back();
+            return layers[layer_id];
         }
         
         // overload for the make_logistic_regression function that takes in a path to a text label file with the format: label_name timestamp
@@ -1482,7 +1482,7 @@ namespace hummus {
                         if (verbose != 0) {
                             std::cout << "training logistic regression" << std::endl;
                         }
-                        neurons[layers[decision.layer_number-1].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
+                        neurons[layers[decision.layer_number].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
                     }
                     
                     inject_input(testData);
@@ -1603,8 +1603,8 @@ namespace hummus {
                     }
                     
                     // send a decision spike to the computation layer of the regression neurons
-                    if (logistic_regression && decision.timer == 0) {
-                        neurons[layers[decision.layer_number-1].neurons[0]]->update(end_time, nullptr, this, 0, spike_type::decision);
+                    if (logistic_regression && decision.timer == 0 && layers[decision.layer_number].active) {
+                        neurons[layers[decision.layer_number].neurons[0]]->update(end_time, nullptr, this, 0, spike_type::decision);
                     }
                     
                     presentation_counter++;
@@ -1628,9 +1628,9 @@ namespace hummus {
                        prepare_decision_making();
                     }
 
-                    // train logistic regression if available
+                    // test logistic regression if available
                     if (logistic_regression) {
-                       neurons[layers[decision.layer_number-1].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
+                       neurons[layers[decision.layer_number].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
                     }
 
                     for (auto& addon: addons) {
@@ -1824,8 +1824,8 @@ namespace hummus {
                     }
                     
                     // send a decision spike to the computation layer of the regression neurons
-                    if (logistic_regression && decision.timer == 0) {
-                        neurons[layers[decision.layer_number-1].neurons[0]]->update(final_t, nullptr, this, 0, spike_type::decision);
+                    if (logistic_regression && decision.timer == 0 && layers[decision.layer_number].active) {
+                        neurons[layers[decision.layer_number].neurons[0]]->update(final_t, nullptr, this, 0, spike_type::decision);
                     }
                     
                     presentation_counter++;
@@ -1854,7 +1854,7 @@ namespace hummus {
                         if (verbose != 0) {
                             std::cout << "training logistic regression" << std::endl;
                         }
-                        neurons[layers[decision.layer_number-1].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
+                        neurons[layers[decision.layer_number].neurons[0]]->update(0, nullptr, this, 0, spike_type::none);
                     }
 
                     for (auto& addon: addons) {
@@ -1968,7 +1968,7 @@ namespace hummus {
 
                         // send a decision spike to the computation layer of the regression neurons
                         if (logistic_regression && decision.timer == 0) {
-                            neurons[layers[decision.layer_number-1].neurons[0]]->update(final_t, nullptr, this, 0, spike_type::decision);
+                            neurons[layers[decision.layer_number].neurons[0]]->update(final_t, nullptr, this, 0, spike_type::decision);
                         }
                         
                         presentation_counter++;
@@ -2099,7 +2099,15 @@ namespace hummus {
         std::unordered_map<int, std::string> get_reverse_classes_map() const {
             return reverse_classes_map;
         }
-         
+        
+        void activate_layer(int layer_id) {
+            layers[layer_id].active = true;
+        }
+        
+        void deactivate_layer(int layer_id) {
+            layers[layer_id].active = false;
+        }
+        
         // verbose argument (0 for no couts at all, 1 for network-related print-outs and learning rule print-outs, 2 for network and neuron-related print-outs
         void verbosity(int value) {
             if (value >= 0 && value <= 2) {
@@ -2170,9 +2178,9 @@ namespace hummus {
                 choose_winner_online(t, 0);
             }
             
-            if (logistic_regression && decision.timer > 0 ) {
+            if (logistic_regression && decision.timer > 0 && layers[decision.layer_number].active) {
                 if (t - decision_pre_ts >= decision.timer) {
-                    neurons[layers[decision.layer_number-1].neurons[0]]->update(t, nullptr, this, 0, spike_type::decision);
+                    neurons[layers[decision.layer_number].neurons[0]]->update(t, nullptr, this, 0, spike_type::decision);
                     
                     // saving previous timestamp
                     decision_pre_ts = t;
@@ -2213,9 +2221,9 @@ namespace hummus {
                         choose_winner_online(s.timestamp, 0);
                     }
                     
-                    if (logistic_regression && decision.timer > 0 ) {
+                    if (logistic_regression && decision.timer > 0 && layers[decision.layer_number].active) {
                         if (s.timestamp - decision_pre_ts >= decision.timer) {
-                            neurons[layers[decision.layer_number-1].neurons[0]]->update(s.timestamp, nullptr, this, 0, spike_type::decision);
+                            neurons[layers[decision.layer_number].neurons[0]]->update(s.timestamp, nullptr, this, 0, spike_type::decision);
                             
                             // saving previous timestamp
                             decision_pre_ts = s.timestamp;
@@ -2306,9 +2314,9 @@ namespace hummus {
                             choose_winner_online(i, timestep);
                         }
                         
-                        if (logistic_regression && decision.timer > 0 ) {
+                        if (logistic_regression && decision.timer > 0 && layers[decision.layer_number].active) {
                             if (i - decision_pre_ts >= decision.timer) {
-                                neurons[layers[decision.layer_number-1].neurons[0]]->update(i, nullptr, this, timestep, spike_type::decision);
+                                neurons[layers[decision.layer_number].neurons[0]]->update(i, nullptr, this, timestep, spike_type::decision);
                                 
                                 // saving previous timestamp
                                 decision_pre_ts = i;

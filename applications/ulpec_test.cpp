@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     bool plot_currents = false;
     bool logistic_regression = true;
     bool seed = true;
-    bool multiple_epochs = false;
+    bool multiple_epochs = true;
     
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
@@ -95,10 +95,10 @@ int main(int argc, char** argv) {
         }
         
         // generating N-MNIST training database
-        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", 100, {});
+        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", 1, {"5", "6", "9"});
         
         // generating N-MNIST test database
-        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 100, {});
+        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 1, {"5", "6", "9"});
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.01, -0.01, -1.6, 1.6, 1e-7, 1e-9);
         auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
@@ -122,10 +122,11 @@ int main(int argc, char** argv) {
         network.all_to_all<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(1e-9, 1e-7, 0, 0, false), 100, -1);
         
         // running network asynchronously with spatial cropping down to 28x28 input and taking only the first N-MNIST saccade
-        network.verbosity(0);
+        network.verbosity(1);
+        
         if (multiple_epochs) {
             // disabling propagation to the regression layer
-            classifier.active = false;
+            network.deactivate_layer(classifier.id);
             
             // training the STDP
             network.run_es_database(training_database.first, {}, 100000, 0, 1, 27, 0, 27, 0);
@@ -137,7 +138,7 @@ int main(int argc, char** argv) {
             network.turn_off_learning();
             
             // enabling propagation to the regression layer
-            classifier.active = true;
+            network.activate_layer(classifier.id);
             
             // separate epoch to train the Logistic regression
             network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
