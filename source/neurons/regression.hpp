@@ -171,8 +171,6 @@ namespace hummus {
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
             
-            std::cout << "regression accessed" << std::endl;
-            
             // none spikes are used  by the computation layer for training the logistic regression
             if (type == spike_type::none && computation_layer) {
                 
