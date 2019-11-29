@@ -1,20 +1,29 @@
 import numpy as np
 import struct
 
-def spike_reader(log):
+def spike_reader(log, efficient_format):
     """
-    Reads files with a format:
-        SpikeLogger Binary File Specs (efficient version only) |
-        ------------| --------
-        timestamp diff (x100) | byte 0 to 4 (int32)
+    Reads spike_logger files
+
+    EFFICIENT FORMAT
+        timestamp difference (x100) | byte 0 to 4 (int32)
         delay (x100) | byte 4 to 6 (int16)
         weight (x100)| byte 6 to 7 (int8)
         potential (x100)| byte 7 to 9 (int16)
-        neuron ID | byte 9 to 11 (int16)
+        presynaptic neuron ID | byte 9 to 11 (int16)
+        postsynaptic neuron ID | byte 9 to 11 (int16)
         layer ID | byte 11 to 12 (int8)
-        receptive field id| byte 12 to 13 (int8)
-        x coordinate | byte 13 to 14 (int8)
-        y coordinate | byte 14 to 15 (int8)
+
+    FULL FORMAT
+        raw timestamp | byte 0 to 8 (double)
+        delay | byte 8 to 10 (float)
+        weight | byte 10 to 12 (float)
+        potential (x100)| byte 7 to 9 (int16)
+        presynaptic neuron ID | byte 9 to 11 (int16)
+        postsynaptic neuron ID | byte 9 to 11 (int16)
+        layer ID | byte 11 to 12 (int8)
+
+
     """
     with open(log,'rb') as f:
         d=f.read()
@@ -27,24 +36,9 @@ def spike_reader(log):
             i+=1
     return l
 
-def regression_spike_parser(logname, p=28, layer=-1, N=-1):
-    log=np.array(spike_reader(logname))
-    tstmps = sorted(list(set(log[:,0])))
-
-    t2i = { t:i for i,t in enumerate(tstmps)}
-    T=len(tstmps)
-
-    Sp = np.zeros((T,N),dtype=np.int8)
-
-    for i,n in enumerate(log[:,0]):
-        if log[i,5]<(p**2):
-            continue
-        Sp[t2i[n], int(log[i,5])-(p**2)]=1
-    return Sp
-
 def potential_reader(log):
     """
-    Reads files with a format:
+    Reads potential_logger files with a format:
         PotentialLogger Binary File Specs |
         ------------| --------
         timestamp diff (x100) | byte 0 to 4 (int32)
@@ -62,20 +56,8 @@ def potential_reader(log):
             i+=1
     return l
 
-def regression_potential_parser(logname, p=28,layer=-1,N=-1,ds=0):
-    log=np.array(potential_reader(logname))
-    log[:,0]=np.cumsum(log[:,0])//100
-    if ds>0:
-        log[:,0]=log[:,0]//ds
-    tstmps = np.arange(np.min(log[:,0]),np.max(log[:,0])+1)
-    t2i = { t:i for i,t in enumerate(tstmps)}
+def weight_maps_reader(log):
+    print("not implemented yet")
 
-    T=len(tstmps)
-
-    minID = p**2
-    Sp = np.zeros((T,N))
-    for i,n in enumerate(log[:,0]):
-        tindex= t2i[n]
-        nindex= log[i,2]-minID
-        Sp[tindex, nindex]+=log[i,1]
-    return Sp
+def myelin_plasticity_reader(log):
+    print("not implemented yet")
