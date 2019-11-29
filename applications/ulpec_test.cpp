@@ -101,7 +101,6 @@ int main(int argc, char** argv) {
         auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 1, {"5", "6", "9"});
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.01, -0.01, -1.6, 1.6, 1e-7, 1e-9);
-        auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
         
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(28, 28, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
@@ -114,9 +113,6 @@ int main(int argc, char** argv) {
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_database.second, test_database.second, 10, 60, 0, {});
         }
-        
-        auto& g_maps = network.make_addon<hummus::WeightMaps>("ulpec_g_maps.bin", 5000);
-        g_maps.activate_for(output.neurons);
         
         // connecting the input and output layer with memristive synapses. conductances initialised with a uniform distribution between G_min and G_max
         network.all_to_all<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(1e-9, 1e-7, 0, 0, false), 100, -1);
@@ -140,15 +136,29 @@ int main(int argc, char** argv) {
             // enabling propagation to the regression layer
             network.activate_layer(classifier.id);
             
+            // initialise add-ons
+            auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
+            auto& g_maps = network.make_addon<hummus::WeightMaps>("ulpec_g_maps.bin", 5000);
+            g_maps.activate_for(output.neurons);
+            
             // separate epoch to train the Logistic regression
             network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
             
+            // measuring classification accuracy
+            results.accuracy();
+            
         } else {
+            // initialise add-ons
+            auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
+            auto& g_maps = network.make_addon<hummus::WeightMaps>("ulpec_g_maps.bin", 5000);
+            g_maps.activate_for(output.neurons);
+            
+            // run the network
             network.run_es_database(training_database.first, test_database.first, 100000, 0, 1, 27, 0, 27, 0);
+            
+            // measuring classification accuracy
+            results.accuracy();
         }
-        
-        // measuring classification accuracy
-        results.accuracy();
     }
     
     // exiting application
