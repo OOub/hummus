@@ -26,10 +26,12 @@ namespace hummus {
         
     public:
     	// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        SpikeLogger(std::string filename, bool _efficient=true) :
+        SpikeLogger(std::string filename, bool _log_after_learning=false, bool _efficient=true) :
                 save_file(filename, std::ios::out | std::ios::binary),
                 previous_timestamp(0),
-                efficient(_efficient) {
+                efficient(_efficient),
+                log_after_learning(_log_after_learning) {
+                    
             if (!save_file.good()) {
                 throw std::runtime_error("the file could not be opened");
             }
@@ -57,17 +59,47 @@ namespace hummus {
         
 		void incoming_spike(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (efficient) {
-                efficient_format(timestamp, s, postsynapticNeuron, network);
+                if (log_after_learning) {
+                    // logging only after learning is stopped
+                    if (!network->get_learning_status()) {
+                        efficient_format(timestamp, s, postsynapticNeuron, network);
+                    }
+                    
+                } else {
+                    efficient_format(timestamp, s, postsynapticNeuron, network);
+                }
             } else {
-                full_format(timestamp, s, postsynapticNeuron, network);
+                if (log_after_learning) {
+                    // logging only after learning is stopped
+                    if (!network->get_learning_status()) {
+                        full_format(timestamp, s, postsynapticNeuron, network);
+                    }
+                } else {
+                    full_format(timestamp, s, postsynapticNeuron, network);
+                }
             }
         }
         
 		void neuron_fired(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
             if (efficient) {
-                efficient_format(timestamp, s, postsynapticNeuron, network);
+                if (log_after_learning) {
+                    // logging only after learning is stopped
+                    if (!network->get_learning_status()) {
+                        efficient_format(timestamp, s, postsynapticNeuron, network);
+                    }
+                    
+                } else {
+                    efficient_format(timestamp, s, postsynapticNeuron, network);
+                }
             } else {
-                full_format(timestamp, s, postsynapticNeuron, network);
+                if (log_after_learning) {
+                    // logging only after learning is stopped
+                    if (!network->get_learning_status()) {
+                        full_format(timestamp, s, postsynapticNeuron, network);
+                    }
+                } else {
+                    full_format(timestamp, s, postsynapticNeuron, network);
+                }
             }
         }
 		
@@ -117,5 +149,6 @@ namespace hummus {
         std::ofstream        save_file;
         double               previous_timestamp;
         bool                 efficient;
+        bool                 log_after_learning;
     };
 }

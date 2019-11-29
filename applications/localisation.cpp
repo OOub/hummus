@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     bool use_gui = false;
     
     // network parameters
-    float timestep = 0.1;
+    float timestep = 1;
     bool wta = true;
     bool homeostasis = true;
     
@@ -49,11 +49,11 @@ int main(int argc, char** argv) {
     std::vector<hummus::event> training_data;
     std::deque<hummus::label> training_labels;
     if (synthetic_data) {
-        training_data = parser.read_txt_data("/Users/omaroubari/Datasets/sense8_data_syn.txt");
-        training_labels = parser.read_txt_labels("/Users/omaroubari/Datasets/sense8_labels_syn.txt");
+        training_data = parser.read_txt_data("/Users/omaroubari/Datasets/sense8/sense8_data_syn.txt");
+        training_labels = parser.read_txt_labels("/Users/omaroubari/Datasets/sense8/sense8_labels_syn.txt");
     } else {
-        training_data = parser.read_txt_data("/Users/omaroubari/Datasets/sense8_data.txt");
-        training_labels = parser.read_txt_labels("/Users/omaroubari/Datasets/sense8_labels.txt");
+        training_data = parser.read_txt_data("/Users/omaroubari/Datasets/sense8/sense8_data.txt");
+        training_labels = parser.read_txt_labels("/Users/omaroubari/Datasets/sense8/sense8_labels.txt");
     }
     
     // initialising addons
@@ -63,12 +63,10 @@ int main(int argc, char** argv) {
         spike_log = "sense8_spikelog_syn.bin";
         mp_log    = "sense8_mplog_syn.bin";
     } else {
-//        spike_log = "sense8_spikelog_1tp.bin";
-//        mp_log    = "sense8_mplog_1tp.bin";
-        spike_log = "sense8_spikelog_0_1tp.bin";
-        mp_log    = "sense8_mplog_0_1tp.bin";
+        spike_log = "sense8_spikelog_1tp.bin";
+        mp_log    = "sense8_mplog_1tp.bin";
     }
-    auto& mp = network.make_addon<hummus::MP_1>(100, 1);
+    auto& mp = network.make_addon<hummus::MP_1>(100, 0.1);
     network.make_addon<hummus::SpikeLogger>(spike_log);
     network.make_addon<hummus::MyelinPlasticityLogger>(mp_log);
     
@@ -77,7 +75,7 @@ int main(int argc, char** argv) {
     auto direction = network.make_layer<hummus::CUBA_LIF>(50, {&mp}, 100, 250, 10, wta, homeostasis, false);
     
     // connecting layers
-    network.all_to_all<hummus::Square>(input, direction, 1, hummus::Normal(0.125, 0, 5, 3), 100, 3, 235);
+    network.all_to_all<hummus::Square>(input, direction, 1, hummus::Normal(0.125, 0, 5, 3), 100, 3, 200);
     
     // running network
     network.verbosity(0);
