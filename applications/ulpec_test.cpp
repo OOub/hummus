@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     bool plot_currents = false;
     bool logistic_regression = true;
     bool seed = true;
-    bool multiple_epochs = true;
+    bool multiple_epochs = false;
     
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
@@ -95,10 +95,10 @@ int main(int argc, char** argv) {
         }
         
         // generating N-MNIST training database
-        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", 1, {"5", "6", "9"});
+        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Train", 100, {"5", "6", "9"});
         
         // generating N-MNIST test database
-        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", 1, {"5", "6", "9"});
+        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Test", 100, {"5", "6", "9"});
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.01, -0.01, -1.6, 1.6, 1e-7, 1e-9);
         
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
         
         hummus::layer classifier;
         if (logistic_regression) {
-            int logistic_start = static_cast<int>(training_database.second.size()) - 5000;
+            int logistic_start = 0;//static_cast<int>(training_database.second.size()) - 5000;
             classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, logistic_start, false, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_database.second, test_database.second, 10, 60, 0, {});
@@ -129,9 +129,6 @@ int main(int argc, char** argv) {
             
             // reset the network
             network.reset_network();
-            
-            // turn off the learning
-            network.turn_off_learning();
             
             // enabling propagation to the regression layer
             network.activate_layer(classifier.id);

@@ -116,7 +116,7 @@ namespace hummus {
                 copy_to(bytes.data() + 6,  static_cast<int8_t>(s->get_weight()*100));
                 copy_to(bytes.data() + 7,  static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
                 copy_to(bytes.data() + 9,  static_cast<int16_t>(s->get_presynaptic_neuron_id()));
-                copy_to(bytes.data() + 11,  static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
+                copy_to(bytes.data() + 11, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                 copy_to(bytes.data() + 13, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
                 
                 // saving to file
@@ -135,7 +135,7 @@ namespace hummus {
                 copy_to(bytes.data() + 8,  s->get_delay());
                 copy_to(bytes.data() + 12, s->get_weight());
                 copy_to(bytes.data() + 16, static_cast<int16_t>(postsynapticNeuron->get_potential() * 100));
-                copy_to(bytes.data() + 18,  static_cast<int16_t>(s->get_presynaptic_neuron_id()));
+                copy_to(bytes.data() + 18, static_cast<int16_t>(s->get_presynaptic_neuron_id()));
                 copy_to(bytes.data() + 20, static_cast<int16_t>(postsynapticNeuron->get_neuron_id()));
                 copy_to(bytes.data() + 22, static_cast<int8_t>(postsynapticNeuron->get_layer_id()));
                 

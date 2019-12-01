@@ -2003,6 +2003,10 @@ namespace hummus {
         void reset_network(bool clear_addons=true) {
             decision_pre_ts = 0;
 
+            if (clear_addons) {
+                addons.clear();
+            }
+            
             for (auto& n: neurons) {
                 n->reset_neuron(this, clear_addons);
             }

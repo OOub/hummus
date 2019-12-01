@@ -15,6 +15,13 @@ from struct import unpack, pack
 from joblib import Parallel, delayed
 
 ####### BATCH CONVERSION OF WHOLE DATASET USING PARALLELISATION #######
+def batch_poker_to_es(poker_directory_in,poker_directory_out):
+    files = [os.path.join(dp, f) for dp, dn, fn in os.walk(poker_directory_in) for f in fn]
+
+    num_cores = multiprocessing.cpu_count()
+
+    Parallel(n_jobs=num_cores)(delayed(poker_to_es)(f_in,os.path.join(poker_directory_out,f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in files)
+
 def batch_nmnist_to_es(nmnist_directory_in,nmnist_directory_out):
     train_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(nmnist_directory_in,"Train")) for f in fn]
     test_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(nmnist_directory_in,"Test")) for f in fn]
@@ -25,8 +32,32 @@ def batch_nmnist_to_es(nmnist_directory_in,nmnist_directory_out):
     Parallel(n_jobs=num_cores)(delayed(nmnist_to_es)(f_in,os.path.join(nmnist_directory_out,"Test",f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in test_files)
 
 ####### METHODS TO CONVERT FILES FROM POPULAR NEUROMORPHIC DATASETS INTO THE ES FORMAT #######
-def poker_to_es(filepath_in, filepath_out):
-    """ Converts a file from the POKER-DVS dataset into the .es format with dimensions 32x32"""
+def ncar_to_es(filepath_in, filepath_out, verbose=False):
+    if filepath_in.split('.')[1] == 'dat':
+        # create the output directory if it doesn't exist
+        basepath_out = os.path.dirname(filepath_out)
+        if not os.path.exists(basepath_out):
+            os.makedirs(basepath_out)
+            
+        # read file
+        data = loris.read_file(filepath_in)
+        
+        # parse data according to the N-CAR specs
+        data['width'] = 320
+        data['height'] = 240
+
+        for event in data['events']:
+            event[2] = 239 - event[2]
+        
+        # write to es
+        loris.write_events_to_file(data, filepath_out)
+        
+    else:
+        if verbose:
+            print(filepath_in, "is not an accepted file")
+        
+def poker_to_es(filepath_in, filepath_out, verbose=False):
+    """ Converts a file from the POKER-DVS dataset into the .es format with dimensions 35x35"""
 
     if filepath_in.split('.')[1] == 'dat':
 
@@ -39,8 +70,8 @@ def poker_to_es(filepath_in, filepath_out):
         data = loris.read_file(filepath_in)
 
         # parse data according to the POKER-DVS specs
-        data['width'] = 34
-        data['height'] = 34
+        data['width'] = 35
+        data['height'] = 35
 
         for event in data['events']:
             event[2] = 239 - event[2]
@@ -52,7 +83,7 @@ def poker_to_es(filepath_in, filepath_out):
             print(filepath_in, "is not an accepted file")
 
 def nmnist_to_es(filepath_in, filepath_out, verbose=False):
-    """ Converts a file from the N-MNIST dataset into the .es format with dimensions 28x28"""
+    """ Converts a file from the N-MNIST dataset into the .es format with dimensions 34x34"""
 
     if filepath_in.split('.')[1] == 'bin':
 
@@ -74,7 +105,7 @@ def nmnist_to_es(filepath_in, filepath_out, verbose=False):
             print(filepath_in, "is not an accepted file")
 
 
-def gesture_to_es(filepath_in, filepath_out):
+def gesture_to_es(filepath_in, filepath_out, verbose=False):
     """ Converts a file from the DVS128 GESTURE dataset into the .es format with dimensions 128x128"""
 
     if filepath_in.split('.')[1] == 'aedat':
@@ -228,6 +259,5 @@ def read_aedat(aedatfile):
     formatted_data = np.array(zipped_data, dtype=[('t', '<u8'), ('x', '<u2'), ('y', '<u2'), ('is_increase', '?')])
     return formatted_data
 
-if __name__ == '__main__':
-    poker_to_es('/Users/omaroubari/Desktop/he_95_td.dat', '/Users/omaroubari/Desktop/heart.es')
-
+if __name__ == "__main__":
+    ncar_to_es("/Users/omaroubari/Desktop/car_original_td.dat", "/Users/omaroubari/Desktop/car_original_td.es")
