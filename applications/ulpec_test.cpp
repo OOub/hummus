@@ -31,6 +31,12 @@ int main(int argc, char** argv) {
     bool seed = true;
     bool multiple_epochs = false;
     
+    std::string gmap_filename = "nmnist_3_g_maps.bin";
+    std::string label_filename = "nmnist_3_labels.txt";
+    std::vector<std::string> classes = {"5", "6", "9"};
+    int percentage_data = 100;
+    int logistic_start = 0;//static_cast<int>(training_database.second.size()) - 5000;
+    
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
         double runtime = 500; /// microseconds
@@ -95,10 +101,10 @@ int main(int argc, char** argv) {
         }
         
         // generating N-MNIST training database
-        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Train", 100, {"5", "6", "9"});
+        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", percentage_data, classes);
         
         // generating N-MNIST test database
-        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/mini_es_N-MNIST/Test", 100, {"5", "6", "9"});
+        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", percentage_data, classes);
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.01, -0.01, -1.6, 1.6, 1e-7, 1e-9);
         
@@ -108,7 +114,6 @@ int main(int argc, char** argv) {
         
         hummus::layer classifier;
         if (logistic_regression) {
-            int logistic_start = 0;//static_cast<int>(training_database.second.size()) - 5000;
             classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, logistic_start, false, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_database.second, test_database.second, 10, 60, 0, {});
@@ -134,8 +139,8 @@ int main(int argc, char** argv) {
             network.activate_layer(classifier.id);
             
             // initialise add-ons
-            auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
-            auto& g_maps = network.make_addon<hummus::WeightMaps>("ulpec_g_maps.bin", 5000);
+            auto& results = network.make_addon<hummus::Analysis>(test_database.second, label_filename);
+            auto& g_maps = network.make_addon<hummus::WeightMaps>(gmap_filename, 5000);
             g_maps.activate_for(output.neurons);
             
             // separate epoch to train the Logistic regression
@@ -146,8 +151,8 @@ int main(int argc, char** argv) {
             
         } else {
             // initialise add-ons
-            auto& results = network.make_addon<hummus::Analysis>(test_database.second, "labels.txt");
-            auto& g_maps = network.make_addon<hummus::WeightMaps>("ulpec_g_maps.bin", 5000);
+            auto& results = network.make_addon<hummus::Analysis>(test_database.second, label_filename);
+            auto& g_maps = network.make_addon<hummus::WeightMaps>(gmap_filename, 5000);
             g_maps.activate_for(output.neurons);
             
             // run the network

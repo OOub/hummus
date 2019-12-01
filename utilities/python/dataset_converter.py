@@ -15,6 +15,15 @@ from struct import unpack, pack
 from joblib import Parallel, delayed
 
 ####### BATCH CONVERSION OF WHOLE DATASET USING PARALLELISATION #######
+def batch_ncar_to_es(ncar_directory_in,ncar_directory_out):
+    train_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(ncar_directory_in,"train")) for f in fn]
+    test_files = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(ncar_directory_in,"test")) for f in fn]
+
+    num_cores = multiprocessing.cpu_count()
+
+    Parallel(n_jobs=num_cores)(delayed(ncar_to_es)(f_in,os.path.join(ncar_directory_out,"train",f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in train_files)
+    Parallel(n_jobs=num_cores)(delayed(ncar_to_es)(f_in,os.path.join(ncar_directory_out,"test",f_in.split("/")[-2],f_in.split("/")[-1].split('.')[0]+'.es')) for f_in in test_files)
+
 def batch_poker_to_es(poker_directory_in,poker_directory_out):
     files = [os.path.join(dp, f) for dp, dn, fn in os.walk(poker_directory_in) for f in fn]
 
@@ -43,12 +52,12 @@ def ncar_to_es(filepath_in, filepath_out, verbose=False):
         data = loris.read_file(filepath_in)
         
         # parse data according to the N-CAR specs
-        data['width'] = 320
-        data['height'] = 240
+        data['width'] = 64
+        data['height'] = 56
 
         for event in data['events']:
-            event[2] = 239 - event[2]
-        
+            event[2] = 55 - event[2]
+
         # write to es
         loris.write_events_to_file(data, filepath_out)
         
@@ -260,4 +269,4 @@ def read_aedat(aedatfile):
     return formatted_data
 
 if __name__ == "__main__":
-    ncar_to_es("/Users/omaroubari/Desktop/car_original_td.dat", "/Users/omaroubari/Desktop/car_original_td.es")
+    batch_ncar_to_es("/Users/omaroubari/Datasets/N-CARS/", "/Users/omaroubari/Datasets/es_N-CARS/")
