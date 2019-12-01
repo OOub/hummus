@@ -519,7 +519,7 @@ namespace hummus {
 
         // layer of one logistic regression neuron that makes the relevant decision-making neuron spike for classification.
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::deque<label> _trainingLabels, std::deque<label> _testLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, bool save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::deque<label> _trainingLabels, std::deque<label> _testLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             if (decision_making) {
                 throw std::logic_error("you cannot have two different classification layers. the decision-making classifier is already initialised");
             }
@@ -598,7 +598,7 @@ namespace hummus {
         
         // overload for the make_logistic_regression function that takes in a path to a text label file with the format: label_name timestamp
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::string trainingLabelFilename, std::string testLabelFilename, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, bool save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::string trainingLabelFilename, std::string testLabelFilename, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
             auto test_labels = dataParser.read_txt_labels(testLabelFilename);

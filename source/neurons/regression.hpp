@@ -55,7 +55,7 @@ namespace hummus {
 	class Regression : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, bool save_tensor=false, float _threshold=-50, float _restingPotential=-70) :
+        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, std::string save_tensor="", float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 200, 10, 20, _threshold, _restingPotential, _classLabel),
                 learning_rate(_learning_rate),
                 momentum(_momentum),
@@ -118,7 +118,7 @@ namespace hummus {
         
         virtual void end(Network* network) override {
             // save training and test tensor into numpy array
-            if (debug_mode && computation_layer) {
+            if (!debug_mode.empty() && computation_layer) {
                 // parsing training data
                 torch::Tensor tmp_tr_data = torch::stack(x_training, 0);
                 torch::Tensor tmp_tr_labels = torch::tensor(labels_train);
@@ -140,8 +140,8 @@ namespace hummus {
                 }
                 
                 // saving training set to npy file
-                aoba::SaveArrayAsNumpy("logistic_tr_set.npy", false, 2, &tr_data_shape[0], &tr_data_stl[0]);
-                aoba::SaveArrayAsNumpy("logistic_tr_label.npy", false, 1, &tr_label_shape[0], &tr_label_stl[0]);
+                aoba::SaveArrayAsNumpy(debug_mode.append("_tr_set.npy"), false, 2, &tr_data_shape[0], &tr_data_stl[0]);
+                aoba::SaveArrayAsNumpy(debug_mode.append("_tr_label.npy"), false, 1, &tr_label_shape[0], &tr_label_stl[0]);
                 
                 // parsing test data
                 torch::Tensor tmp_te_data = torch::stack(x_test, 0);
@@ -164,8 +164,8 @@ namespace hummus {
                 }
                 
                 // saving test set to npy file
-                aoba::SaveArrayAsNumpy("logistic_te_set.npy", false, 2, &te_data_shape[0], &te_data_stl[0]);
-                aoba::SaveArrayAsNumpy("logistic_te_label.npy", false, 1, &te_label_shape[0], &te_label_stl[0]);
+                aoba::SaveArrayAsNumpy(debug_mode.append("_te_set.npy"), false, 2, &te_data_shape[0], &te_data_stl[0]);
+                aoba::SaveArrayAsNumpy(debug_mode.append("_te_label.npy"), false, 1, &te_label_shape[0], &te_label_stl[0]);
             }
         }
         
@@ -333,23 +333,23 @@ namespace hummus {
             }
         }
         
-        std::vector<torch::Tensor> x_training;
-        std::vector<torch::Tensor> x_test;
-        torch::Tensor              x_online;
-        std::vector<int>           labels_train;
-        std::vector<int>           labels_test;
-        float                      learning_rate;
-        float                      momentum;
-        float                      weight_decay;
-        int                        epochs;
-        int                        batch_size;
-        bool                       computation_layer;
-        int                        neuron_id_shift;
-        int                        number_of_output_neurons;
-        int                        presentations_before_training;
-        int                        computation_id;
-        int                        log_interval;
-        torch::nn::Linear          model;
-        bool                       debug_mode;
+        std::vector<torch::Tensor>          x_training;
+        std::vector<torch::Tensor>          x_test;
+        torch::Tensor                       x_online;
+        std::vector<int>                    labels_train;
+        std::vector<int>                    labels_test;
+        float                               learning_rate;
+        float                               momentum;
+        float                               weight_decay;
+        int                                 epochs;
+        int                                 batch_size;
+        bool                                computation_layer;
+        int                                 neuron_id_shift;
+        int                                 number_of_output_neurons;
+        int                                 presentations_before_training;
+        int                                 computation_id;
+        int                                 log_interval;
+        torch::nn::Linear                   model;
+        std::string                         debug_mode;
 	};
 }

@@ -29,13 +29,53 @@ int main(int argc, char** argv) {
     bool plot_currents = false;
     bool logistic_regression = true;
     bool seed = true;
-    bool multiple_epochs = false;
     
-    std::string gmap_filename = "nmnist_3_g_maps.bin";
-    std::string label_filename = "nmnist_3_labels.txt";
+    // 3 class NMNIST
+    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
+    std::string gmap_filename        = "nmnist_3_g_maps.bin";
+    std::string label_filename       = "nmnist_3_labels.txt";
     std::vector<std::string> classes = {"5", "6", "9"};
-    int percentage_data = 100;
-    int logistic_start = 0;//static_cast<int>(training_database.second.size()) - 5000;
+    int percentage_data              = 100;
+    int logistic_start               = 0;//static_cast<int>(training_database.second.size()) - 5000;
+    std::string tensor_base_name     = "nmnist_3";
+    bool multiple_epochs             = false;
+    int width                        = 28;
+    int height                       = 28;
+    
+    // 10 class NMNIST
+//    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+//    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
+//    std::string gmap_filename        = "nmnist_10_g_maps.bin";
+//    std::string label_filename       = "nmnist_10_labels.txt";
+//    std::vector<std::string> classes = {};
+//    int percentage_data              = 100;
+//    int logistic_start               = 0;
+//    std::string tensor_base_name     = "nmnist_10";
+//    bool multiple_epochs             = false;
+//    int width                        = 28;
+//    int height                       = 28;
+    
+    // 10 class NMNIST - 2 epochs
+//    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+//    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
+//    std::string gmap_filename        = "nmnist_10_2e_g_maps.bin";
+//    std::string label_filename       = "nmnist_10_2e_labels.txt";
+//    std::vector<std::string> classes = {};
+//    int percentage_data              = 100;
+//    int logistic_start               = 0;
+//    std::string tensor_base_name     = "nmnist_10_2e";
+//    bool multiple_epochs             = true;
+//    int width                        = 28;
+//    int height                       = 28;
+    
+    // 10 class NMNIST - 2pochs - 50% data each
+    
+    // 4 class POKER-DVS
+    
+    // 2 class N-CARS 64x56 paper original
+    
+    // 2 class N-CARS 28x28 cropped
     
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
@@ -101,20 +141,20 @@ int main(int argc, char** argv) {
         }
         
         // generating N-MNIST training database
-        auto training_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Train", percentage_data, classes);
+        auto training_database = parser.generate_nmnist_database(training_path, percentage_data, classes);
         
         // generating N-MNIST test database
-        auto test_database = parser.generate_nmnist_database("/Users/omaroubari/Datasets/es_N-MNIST/Test", percentage_data, classes);
+        auto test_database = parser.generate_nmnist_database(test_path, percentage_data, classes);
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.01, -0.01, -1.6, 1.6, 1e-7, 1e-9);
         
         // creating layers
-        auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(28, 28, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
+        auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
         auto output = network.make_layer<hummus::ULPEC_LIF>(100, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false); /// 100 ULPEC_LIF neurons
         
         hummus::layer classifier;
         if (logistic_regression) {
-            classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, logistic_start, false, 0, {});
+            classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, logistic_start, tensor_base_name, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_database.second, test_database.second, 10, 60, 0, {});
         }
