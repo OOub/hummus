@@ -104,50 +104,6 @@ namespace hummus {
             }
         }
         
-        // saves the files from the N-MNIST database - formatted to eventstream format - into a pair of vector: a vector of strings for the full paths to files, and a vector of labels
-        // The N-MNIST database needs to have the same structure as the original folder otherwise the labels will be messed up. For example: ~/N-MNIST/Train/0
-        std::pair<std::vector<std::string>, std::deque<label>> generate_nmnist_database(const std::string directory_path, int sample_percentage=100, const std::vector<std::string> classes={}) {
-            std::vector<std::string> database;
-            std::deque<label> labels;
-            
-            std::filesystem::path current_dir(directory_path);
-            // save all files containing the .es extension in the database vector
-            for (auto &file : std::filesystem::recursive_directory_iterator(current_dir)) {
-                if (file.path().extension() == ".es") {
-                    // only use specific classes
-                    if (!classes.empty()) {
-                        if (std::find(classes.begin(), classes.end(),file.path().parent_path().filename().string()) != classes.end()) {
-                            labels.emplace_back(label{file.path().parent_path().filename().string(), -1});
-                            database.emplace_back(file.path());
-                        }
-                    // use all N-MNIST classes
-                    } else {
-                        labels.emplace_back(label{file.path().parent_path().filename().string(), -1});
-                        database.emplace_back(file.path());
-                    }
-                }
-            }
-            
-            // shuffle the database and labels vectors
-            std::random_device r;
-            std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
-            
-            // create two random engines with the same state
-            std::mt19937 random_engine1(seed);
-            auto random_engine2 = random_engine1;
-            
-            std::shuffle(database.begin(), database.end(), random_engine1);
-            std::shuffle(labels.begin(), labels.end(), random_engine2);
-            
-            // get the number of samples from the percentage
-            if (sample_percentage < 100) {
-                size_t number_of_samples = static_cast<size_t>(std::ceil(database.size() * sample_percentage / 100));
-                return std::make_pair(std::vector<std::string>(database.begin(), database.begin()+number_of_samples), std::deque<label>(labels.begin(), labels.begin()+number_of_samples));
-            } else {
-                return std::make_pair(database, labels);
-            }
-        }
-        
 		// reading 1D (timestamp, Index), 2D data (timestamp, X, Y) or 2D data with a polarity (timestamp, X, Y, P)
         std::vector<event> read_txt_data(std::string filename, double shift_timestamps=0, bool time_jitter=false, int additive_noise=0) {
             data_file.open(filename);
