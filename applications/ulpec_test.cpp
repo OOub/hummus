@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 //    int height                       = 28;
 //    int repetitions                  = 0;
     
-    // 4 class POKER-DVS
+    // 4 class POKER-DVS 28x28 cropped
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_POKER-DVS/Train";
 //    std::string test_path            = "/Users/omaroubari/Datasets/es_POKER-DVS/Test";
 //    std::string gmap_filename        = "poker_g_maps.bin";

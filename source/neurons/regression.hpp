@@ -140,8 +140,11 @@ namespace hummus {
                 }
                 
                 // saving training set to npy file
-                aoba::SaveArrayAsNumpy(debug_mode.append("_tr_set.npy"), false, 2, &tr_data_shape[0], &tr_data_stl[0]);
-                aoba::SaveArrayAsNumpy(debug_mode.append("_tr_label.npy"), false, 1, &tr_label_shape[0], &tr_label_stl[0]);
+                std::string training_set = debug_mode;
+                aoba::SaveArrayAsNumpy(training_set.append("_tr_set.npy"), false, 2, &tr_data_shape[0], &tr_data_stl[0]);
+                
+                std::string training_labels = debug_mode;
+                aoba::SaveArrayAsNumpy(training_labels.append("_tr_label.npy"), false, 1, &tr_label_shape[0], &tr_label_stl[0]);
                 
                 // parsing test data
                 torch::Tensor tmp_te_data = torch::stack(x_test, 0);
@@ -164,8 +167,11 @@ namespace hummus {
                 }
                 
                 // saving test set to npy file
-                aoba::SaveArrayAsNumpy(debug_mode.append("_te_set.npy"), false, 2, &te_data_shape[0], &te_data_stl[0]);
-                aoba::SaveArrayAsNumpy(debug_mode.append("_te_label.npy"), false, 1, &te_label_shape[0], &te_label_stl[0]);
+                std::string test_set = debug_mode;
+                aoba::SaveArrayAsNumpy(test_set.append("_te_set.npy"), false, 2, &te_data_shape[0], &te_data_stl[0]);
+                
+                std::string test_labels = debug_mode;
+                aoba::SaveArrayAsNumpy(test_labels.append("_te_label.npy"), false, 1, &te_label_shape[0], &te_label_stl[0]);
             }
         }
         
