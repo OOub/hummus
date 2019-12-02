@@ -2002,7 +2002,8 @@ namespace hummus {
         // reset the network back to the initial conditions without changing the network build
         void reset_network(bool clear_addons=true) {
             decision_pre_ts = 0;
-
+            presentation_counter = 0;
+            
             if (clear_addons) {
                 addons.clear();
             }
@@ -2196,7 +2197,7 @@ namespace hummus {
         void async_run_helper(std::atomic_bool* running, bool classification=false, bool eof=false) {
             // lambda function to update neuron status asynchronously
             auto requestUpdate = [&](spike s, bool classification) {
-                if (!classification && !eof) {
+                if (!eof && !classification) {
                     if (!training_labels.empty()) {
                         if (training_labels.front().onset <= s.timestamp) {
                             current_label = training_labels.front().name;

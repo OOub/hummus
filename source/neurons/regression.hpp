@@ -118,11 +118,11 @@ namespace hummus {
         
         virtual void end(Network* network) override {
             // save training and test tensor into numpy array
-            if (!debug_mode.empty() && computation_layer) {
+            if (!debug_mode.empty() && computation_layer && !x_training.empty() && !labels_train.empty() && !x_test.empty() && !labels_test.empty()) {
                 // parsing training data
                 torch::Tensor tmp_tr_data = torch::stack(x_training, 0);
                 torch::Tensor tmp_tr_labels = torch::tensor(labels_train);
-                
+
                 // converting data to stl container
                 const int tr_data_shape[2] = {static_cast<int>(tmp_tr_data.size(0)),static_cast<int>(tmp_tr_data.size(1))};
                 std::vector<int> tr_data_stl;
@@ -131,25 +131,25 @@ namespace hummus {
                         tr_data_stl.emplace_back(tmp_tr_data[i][j].item<int>());
                     }
                 }
-                
+
                 // converting labels to stl container
                 const int tr_label_shape[2] = {static_cast<int>(tmp_tr_labels.size(0))};
                 std::vector<int> tr_label_stl;
                 for (auto i=0; i<tmp_tr_labels.size(0); ++i) {
                     tr_label_stl.emplace_back(tmp_tr_labels[i].item<int>());
                 }
-                
+
                 // saving training set to npy file
                 std::string training_set = debug_mode;
                 aoba::SaveArrayAsNumpy(training_set.append("_tr_set.npy"), false, 2, &tr_data_shape[0], &tr_data_stl[0]);
-                
+
                 std::string training_labels = debug_mode;
                 aoba::SaveArrayAsNumpy(training_labels.append("_tr_label.npy"), false, 1, &tr_label_shape[0], &tr_label_stl[0]);
-                
+
                 // parsing test data
                 torch::Tensor tmp_te_data = torch::stack(x_test, 0);
                 torch::Tensor tmp_te_labels = torch::tensor(labels_test);;
-                
+
                 // converting data to stl container
                 const int te_data_shape[2] = {static_cast<int>(tmp_te_data.size(0)),static_cast<int>(tmp_te_data.size(1))};
                 std::vector<int> te_data_stl;
@@ -158,18 +158,18 @@ namespace hummus {
                         te_data_stl.emplace_back(tmp_te_data[i][j].item<int>());
                     }
                 }
-                
+
                 // converting labels to stl container
                 const int te_label_shape[2] = {static_cast<int>(tmp_te_labels.size(0))};
                 std::vector<int> te_label_stl;
                 for (auto i=0; i<tmp_te_labels.size(0); ++i) {
                     te_label_stl.emplace_back(tmp_te_labels[i].item<int>());
                 }
-                
+
                 // saving test set to npy file
                 std::string test_set = debug_mode;
                 aoba::SaveArrayAsNumpy(test_set.append("_te_set.npy"), false, 2, &te_data_shape[0], &te_data_stl[0]);
-                
+
                 std::string test_labels = debug_mode;
                 aoba::SaveArrayAsNumpy(test_labels.append("_te_label.npy"), false, 1, &te_label_shape[0], &te_label_stl[0]);
             }
