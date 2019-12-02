@@ -63,8 +63,8 @@ int main(int argc, char** argv) {
     std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
     std::string gmap_filename        = "nmnist_10_2e_g_maps.bin";
     std::string label_filename       = "nmnist_10_2e_labels.txt";
-    std::vector<std::string> classes = {"5"};
-    int percentage_data              = 1;
+    std::vector<std::string> classes = {};
+    int percentage_data              = 100;
     int logistic_start               = 0;
     std::string tensor_base_name     = "nmnist_10_2e";
     bool multiple_epochs             = true;
