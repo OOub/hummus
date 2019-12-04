@@ -3,6 +3,8 @@ import torch.nn as nn
 import numpy as np
 from torch.utils import data
 
+torch.manual_seed(0)
+
 class LogisticRegression(torch.nn.Module):
 	def __init__(self, input_dim, output_dim):
 		super(LogisticRegression, self).__init__()
@@ -41,7 +43,6 @@ class LogReg(object):
 				
 				# Forward pass to get output/logits
 				outputs = self.model(features)
-				# print(outputs.shape)
 				
 				# Calculate Loss: LogSoftmax --> negative log likelihood loss
 				loss = criterion(outputs, labels)
@@ -59,24 +60,28 @@ class LogReg(object):
 		_, predicted = torch.max(outputs.data, 1)
 		return predicted
 
+task = 2
 
-# trd = np.load("/Users/gexarcha/data/hummus_stdp/569_stdp_output/logistic_tr_set.npy").astype(np.float32)
-# trl = np.load("/Users/gexarcha/data/hummus_stdp/569_stdp_output/logistic_tr_label.npy").astype(np.int64)
-# ted = np.load("/Users/gexarcha/data/hummus_stdp/569_stdp_output/logistic_te_set.npy").astype(np.float32)
-# tel = np.load("/Users/gexarcha/data/hummus_stdp/569_stdp_output/logistic_te_label.npy").astype(np.int64)
-
-trd = np.load("/Users/gexarcha/data/hummus_stdp/0.02_stdp_learning_3class/logistic_tr_set.npy").astype(np.float32)
-trl = np.load("/Users/gexarcha/data/hummus_stdp/0.02_stdp_learning_3class/logistic_tr_label.npy").astype(np.int64)
-ted = np.load("/Users/gexarcha/data/hummus_stdp/0.02_stdp_learning_3class/logistic_te_set.npy").astype(np.float32)
-tel = np.load("/Users/gexarcha/data/hummus_stdp/0.02_stdp_learning_3class/logistic_te_label.npy").astype(np.int64)
-
-trd = np.load("/Users/gexarcha/data/hummus_stdp/full_class_75.3/logistic_tr_set.npy").astype(np.float32)
-trl = np.load("/Users/gexarcha/data/hummus_stdp/full_class_75.3/logistic_tr_label.npy").astype(np.int64)
-ted = np.load("/Users/gexarcha/data/hummus_stdp/full_class_75.3/logistic_te_set.npy").astype(np.float32)
-tel = np.load("/Users/gexarcha/data/hummus_stdp/full_class_75.3/logistic_te_label.npy").astype(np.int64)
-
-dpts = list(range(0,12000,10))
-
+if task == 0:
+    # 3-class N-MNIST
+    trd = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_tr_set.npy").astype(np.float32)
+    trl = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_tr_label.npy").astype(np.int64)
+    ted = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_te_set.npy").astype(np.float32)
+    tel = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_te_label.npy").astype(np.int64)
+elif task == 1:
+    # 10-class N-MNIST
+    trd = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_tr_set.npy").astype(np.float32)
+    trl = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_tr_label.npy").astype(np.int64)
+    ted = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_te_set.npy").astype(np.float32)
+    tel = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_te_label.npy").astype(np.int64)
+elif task == 2:
+    # 4-class POKER-DVS
+    trd = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_tr_set.npy").astype(np.float32)
+    trl = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_tr_label.npy").astype(np.int64)
+    ted = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_te_set.npy").astype(np.float32)
+    tel = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_te_label.npy").astype(np.int64)
+    
+dpts = list(range(0,len(trd),10))
 
 best = 0
 bestn = 0
@@ -90,3 +95,4 @@ for k in dpts[1:]:
 		best=acc[-1]
 		bestn=k
 		print("We have the best test accuracy at {:.05} using {} datapoints  ".format(best,bestn))
+        

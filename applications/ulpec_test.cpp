@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     bool multiple_epochs             = false;
     int width                        = 28;
     int height                       = 28;
-    int repetitions                  = 20;
+    int repetitions                  = 40;
     
     // 2 class N-CARS 28x28 cropped
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
