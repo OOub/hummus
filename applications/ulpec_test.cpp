@@ -59,32 +59,32 @@ int main(int argc, char** argv) {
 //    int repetitions                  = 0;
     
     // 10 class NMNIST - 2 epochs
-    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
-    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
-    std::string gmap_filename        = "nmnist_10_2e_g_maps.bin";
-    std::string label_filename       = "nmnist_10_2e_labels.txt";
-    std::vector<std::string> classes = {};
-    int percentage_data              = 100;
-    int logistic_start               = 0;
-    std::string tensor_base_name     = "nmnist_10_2e";
-    bool multiple_epochs             = true;
-    int width                        = 28;
-    int height                       = 28;
-    int repetitions                  = 0;
-    
-    // 4 class POKER-DVS 28x28 cropped
-//    std::string training_path        = "/Users/omaroubari/Datasets/es_POKER-DVS/Train";
-//    std::string test_path            = "/Users/omaroubari/Datasets/es_POKER-DVS/Test";
-//    std::string gmap_filename        = "poker_g_maps.bin";
-//    std::string label_filename       = "poker_labels.txt";
+//    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+//    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
+//    std::string gmap_filename        = "nmnist_10_2e_g_maps.bin";
+//    std::string label_filename       = "nmnist_10_2e_labels.txt";
 //    std::vector<std::string> classes = {};
 //    int percentage_data              = 100;
 //    int logistic_start               = 0;
-//    std::string tensor_base_name     = "poker";
-//    bool multiple_epochs             = false;
+//    std::string tensor_base_name     = "nmnist_10_2e";
+//    bool multiple_epochs             = true;
 //    int width                        = 28;
 //    int height                       = 28;
-//    int repetitions                  = 100;
+//    int repetitions                  = 0;
+    
+    // 4 class POKER-DVS 28x28 cropped
+    std::string training_path        = "/Users/omaroubari/Datasets/es_POKER-DVS/Train";
+    std::string test_path            = "/Users/omaroubari/Datasets/es_POKER-DVS/Test";
+    std::string gmap_filename        = "poker_g_maps.bin";
+    std::string label_filename       = "poker_labels.txt";
+    std::vector<std::string> classes = {};
+    int percentage_data              = 100;
+    int logistic_start               = 0;
+    std::string tensor_base_name     = "poker";
+    bool multiple_epochs             = false;
+    int width                        = 28;
+    int height                       = 28;
+    int repetitions                  = 20;
     
     // 2 class N-CARS 28x28 cropped
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
         auto training_database = parser.generate_database(training_path, percentage_data, repetitions, classes);
         
         // generating test database
-        auto test_database = parser.generate_database(test_path, percentage_data, repetitions, classes);
+        auto test_database = parser.generate_database(test_path, percentage_data, 0, classes);
         
         auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.01, -0.01, -1.6, 1.6, 1e-7, 1e-9);
         
