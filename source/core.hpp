@@ -2002,9 +2002,9 @@ namespace hummus {
         // reset the network back to the initial conditions without changing the network build
         void reset_network(bool clear_addons=true) {
             decision_pre_ts = 0;
-            presentation_counter = 0;
             
             if (clear_addons) {
+                presentation_counter = 0;
                 addons.clear();
             }
             
