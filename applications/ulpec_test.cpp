@@ -59,18 +59,18 @@ int main(int argc, char** argv) {
 //    int repetitions                  = 0;
     
     // 10 class NMNIST - 2 epochs
-//    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
-//    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
-//    std::string gmap_filename        = "nmnist_10_2e_g_maps.bin";
-//    std::string label_filename       = "nmnist_10_2e_labels.txt";
-//    std::vector<std::string> classes = {};
-//    int percentage_data              = 100;
-//    int logistic_start               = 0;
-//    std::string tensor_base_name     = "nmnist_10_2e";
-//    bool multiple_epochs             = true;
-//    int width                        = 28;
-//    int height                       = 28;
-//    int repetitions                  = 0;
+    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
+    std::string gmap_filename        = "nmnist_10_2e_g_maps.bin";
+    std::string label_filename       = "nmnist_10_2e_labels.txt";
+    std::vector<std::string> classes = {};
+    int percentage_data              = 100;
+    int logistic_start               = 0;
+    std::string tensor_base_name     = "nmnist_10_2e";
+    bool multiple_epochs             = true;
+    int width                        = 28;
+    int height                       = 28;
+    int repetitions                  = 0;
     
     // 4 class POKER-DVS 28x28 cropped
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_POKER-DVS/Train";
@@ -87,18 +87,18 @@ int main(int argc, char** argv) {
 //    int repetitions                  = 100;
     
     // 2 class N-CARS 28x28 cropped
-    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
-    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
-    std::string gmap_filename        = "ncars_scaled_g_maps.bin";
-    std::string label_filename       = "ncars_scaled_labels.txt";
-    std::vector<std::string> classes = {};
-    int percentage_data              = 1;
-    int logistic_start               = 0;
-    std::string tensor_base_name     = "ncars_scaled";
-    bool multiple_epochs             = false;
-    int width                        = 64;
-    int height                       = 56;
-    int repetitions                  = 0;
+//    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
+//    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
+//    std::string gmap_filename        = "ncars_scaled_g_maps.bin";
+//    std::string label_filename       = "ncars_scaled_labels.txt";
+//    std::vector<std::string> classes = {};
+//    int percentage_data              = 1;
+//    int logistic_start               = 0;
+//    std::string tensor_base_name     = "ncars_scaled";
+//    bool multiple_epochs             = false;
+//    int width                        = 64;
+//    int height                       = 56;
+//    int repetitions                  = 0;
      
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
