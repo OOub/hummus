@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils import data
+import matplotlib.pyplot as plt
+import scikitplot as skplt
 
 class LogisticRegression(torch.nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -30,7 +32,7 @@ class LogReg(object):
         my_dataloader = data.DataLoader(my_dataset, batch_size=self.batch_size) # create your dataloader
 
         criterion = nn.NLLLoss()
-        # optimizer = torch.optim.SGD(self.model.parameters()), lr=self.learning_rate)
+        # optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate, weight_decay=0.0)
 
         for epoch in range(self.epochs):
@@ -61,25 +63,38 @@ class LogReg(object):
 task = 2
 
 if task == 0:
-    # 3-class N-MNIST
+    # 3-class N-MNIST (96%)
     trd = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_tr_set.npy").astype(np.float32)
     trl = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_tr_label.npy").astype(np.int64)
     ted = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_te_set.npy").astype(np.float32)
     tel = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_te_label.npy").astype(np.int64)
 elif task == 1:
-    # 10-class N-MNIST
+    # 10-class N-MNIST (76%)
     trd = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_tr_set.npy").astype(np.float32)
     trl = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_tr_label.npy").astype(np.int64)
     ted = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_te_set.npy").astype(np.float32)
     tel = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_te_label.npy").astype(np.int64)
 elif task == 2:
-    # 4-class POKER-DVS
+    # 4-class POKER-DVS (100%)
     trd = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_tr_set.npy").astype(np.float32)
     trl = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_tr_label.npy").astype(np.int64)
     ted = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_te_set.npy").astype(np.float32)
     tel = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_te_label.npy").astype(np.int64)
+elif task == 3:
+    # N-CARS - 28x28 from origin (54%)
+    trd = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_tr_set.npy").astype(np.float32)
+    trl = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_tr_label.npy").astype(np.int64)
+    ted = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_te_set.npy").astype(np.float32)
+    tel = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_te_label.npy").astype(np.int64)
 
-dpts = list(range(0,len(trd),10))
+# CONFUSION MATRIX FOR 1000 DATA POINTS
+# lreg = LogReg(n_in=100,n_out=np.unique(trl).shape[0], epochs=70)
+# lreg.fit(trd[-10:,:],trl[-10:])
+# p_tel = lreg.predict(ted).numpy()
+# skplt.metrics.plot_confusion_matrix(tel, p_tel, normalize=False)
+
+# ACCURACY VS SAVED DATAPOINTS PLOT
+dpts = list(range(0,1200,10))
 
 best = 0
 bestn = 0
@@ -94,4 +109,8 @@ for k in dpts[1:]:
         bestn=k
         print("We have the best test accuracy at {:.05} using {} datapoints  ".format(best,bestn))
         if best == 1:
+            p_tel = lreg.predict(ted).numpy()
+            skplt.metrics.plot_confusion_matrix(tel, p_tel, normalize=False)
             break;
+
+plt.show()
