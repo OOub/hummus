@@ -63,6 +63,11 @@
 
 namespace hummus {
 
+    enum class optimiser {
+        Adam,
+        SGD
+    };
+
     // used for the event-based mode only in order to predict spike times with dynamic currents
     enum class spike_type {
         initial, // input spikes (real spike)
@@ -519,7 +524,7 @@ namespace hummus {
 
         // layer of one logistic regression neuron that makes the relevant decision-making neuron spike for classification.
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::deque<label> _trainingLabels, std::deque<label> _testLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::deque<label> _trainingLabels, std::deque<label> _testLabels, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, optimiser opt, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             if (decision_making) {
                 throw std::logic_error("you cannot have two different classification layers. the decision-making classifier is already initialised");
             }
@@ -555,7 +560,7 @@ namespace hummus {
             }
             
             // create the computation layer of regression neuron
-            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), "", learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, save_tensor, std::forward<Args>(args)...));
+            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), "", learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, opt, save_tensor, std::forward<Args>(args)...));
             
             // looping through addons and adding the layer to the neuron mask
             for (auto& addon: _addons) {
@@ -570,7 +575,7 @@ namespace hummus {
 
             int i=1;
             for (const auto& it: classes_map) {
-                neurons.emplace_back(std::make_unique<T>(i+shift, layer_id+1, 0, 0, std::pair(-1, -1), it.first, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, std::forward<Args>(args)...));
+                neurons.emplace_back(std::make_unique<T>(i+shift, layer_id+1, 0, 0, std::pair(-1, -1), it.first, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, opt, save_tensor, std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
                 ++i;
             }
@@ -598,11 +603,11 @@ namespace hummus {
         
         // overload for the make_logistic_regression function that takes in a path to a text label file with the format: label_name timestamp
         template <typename T, typename... Args>
-        layer make_logistic_regression(std::string trainingLabelFilename, std::string testLabelFilename, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(std::string trainingLabelFilename, std::string testLabelFilename, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, optimiser opt, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             DataParser dataParser;
             auto training_labels = dataParser.read_txt_labels(trainingLabelFilename);
             auto test_labels = dataParser.read_txt_labels(testLabelFilename);
-            return make_logistic_regression<T>(training_labels, test_labels, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, save_tensor, _timer, _addons, std::forward<Args>(args)...);
+            return make_logistic_regression<T>(training_labels, test_labels, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, opt, save_tensor, _timer, _addons, std::forward<Args>(args)...);
         }
             
         // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer

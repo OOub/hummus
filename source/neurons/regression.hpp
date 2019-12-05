@@ -55,7 +55,7 @@ namespace hummus {
 	class Regression : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, std::string save_tensor="", float _threshold=-50, float _restingPotential=-70) :
+        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, optimiser _opt=optimiser::Adam, std::string save_tensor="", float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 200, 10, 20, _threshold, _restingPotential, _classLabel),
                 learning_rate(_learning_rate),
                 momentum(_momentum),
@@ -69,7 +69,8 @@ namespace hummus {
                 computation_id(0),
                 log_interval(_log_interval),
                 model(100,3),
-                debug_mode(save_tensor) {
+                debug_mode(save_tensor),
+                opt(_opt) {
 
             // Regression neuron type = 5 for JSON save
             neuron_type = 5;
@@ -277,45 +278,88 @@ namespace hummus {
             model = torch::nn::Linear(number_of_output_neurons, network->get_classes_map().size());
             
             // instantiate optimizer
-            torch::optim::SGD optimizer(model->parameters(),
-                                        torch::optim::SGDOptions(learning_rate).momentum(momentum).weight_decay(weight_decay));
+            if (opt == optimiser::Adam) {
+                torch::optim::Adam optimizer(model->parameters(),torch::optim::AdamOptions(learning_rate).weight_decay(weight_decay));
             
-            // loop through epochs to train logistic regression on the training batches
-            for (auto epoch=1; epoch <= epochs; ++epoch) {
-                
-                // Track loss.
-                int batch_idx = 0;
-                
-                for (auto& batch : *data_loader) {
-                    auto tr_data = batch.data;
-                    auto tr_labels = batch.target.squeeze();
+                // loop through epochs to train logistic regression on the training batches
+                for (auto epoch=1; epoch <= epochs; ++epoch) {
                     
-                    // format data and tr_labels to the accepted torch data types
-                    tr_data = tr_data.to(torch::kF32);
-                    tr_labels = tr_labels.to(torch::kInt64);
+                    // Track loss.
+                    int batch_idx = 0;
                     
-                    // reset gradients
-                    optimizer.zero_grad();
-                    
-                    // forward pass
-                    auto tr_output = torch::nll_loss(torch::log_softmax(model(tr_data),1) ,tr_labels);
-                    auto loss = tr_output.item<float>();
-                    
-                    // backward pass
-                    tr_output.backward();
-                    
-                    // apply gradients
-                    optimizer.step();
+                    for (auto& batch : *data_loader) {
+                        auto tr_data = batch.data;
+                        auto tr_labels = batch.target.squeeze();
+                        
+                        // format data and tr_labels to the accepted torch data types
+                        tr_data = tr_data.to(torch::kF32);
+                        tr_labels = tr_labels.to(torch::kInt64);
+                        
+                        // reset gradients
+                        optimizer.zero_grad();
+                        
+                        // forward pass
+                        auto tr_output = torch::nll_loss(torch::log_softmax(model(tr_data),1) ,tr_labels);
+                        auto loss = tr_output.item<float>();
+                        
+                        // backward pass
+                        tr_output.backward();
+                        
+                        // apply gradients
+                        optimizer.step();
 
-                    ++batch_idx;
-                    if (network->get_verbose() >= 1 && batch_idx % log_interval == 0) {
-                        std::printf(
-                        "\rTrain Epoch: %d/%d [%5d/%5d] Loss: %.4f",
-                        epoch,
-                        epochs,
-                        batch_idx * static_cast<int>(batch.data.size(0)),
-                        dataset_size,
-                        loss);
+                        ++batch_idx;
+                        if (network->get_verbose() >= 1 && batch_idx % log_interval == 0) {
+                            std::printf(
+                            "\rTrain Epoch: %d/%d [%5d/%5d] Loss: %.4f",
+                            epoch,
+                            epochs,
+                            batch_idx * static_cast<int>(batch.data.size(0)),
+                            dataset_size,
+                            loss);
+                        }
+                    }
+                }
+            } else if (opt == optimiser::SGD) {
+                torch::optim::SGD optimizer(model->parameters(),torch::optim::SGDOptions(learning_rate).momentum(momentum).weight_decay(weight_decay));
+                
+                // loop through epochs to train logistic regression on the training batches
+                for (auto epoch=1; epoch <= epochs; ++epoch) {
+                    
+                    // Track loss.
+                    int batch_idx = 0;
+                    
+                    for (auto& batch : *data_loader) {
+                        auto tr_data = batch.data;
+                        auto tr_labels = batch.target.squeeze();
+                        
+                        // format data and tr_labels to the accepted torch data types
+                        tr_data = tr_data.to(torch::kF32);
+                        tr_labels = tr_labels.to(torch::kInt64);
+                        
+                        // reset gradients
+                        optimizer.zero_grad();
+                        
+                        // forward pass
+                        auto tr_output = torch::nll_loss(torch::log_softmax(model(tr_data),1) ,tr_labels);
+                        auto loss = tr_output.item<float>();
+                        
+                        // backward pass
+                        tr_output.backward();
+                        
+                        // apply gradients
+                        optimizer.step();
+
+                        ++batch_idx;
+                        if (network->get_verbose() >= 1 && batch_idx % log_interval == 0) {
+                            std::printf(
+                            "\rTrain Epoch: %d/%d [%5d/%5d] Loss: %.4f",
+                            epoch,
+                            epochs,
+                            batch_idx * static_cast<int>(batch.data.size(0)),
+                            dataset_size,
+                            loss);
+                        }
                     }
                 }
             }
@@ -357,5 +401,6 @@ namespace hummus {
         int                                 log_interval;
         torch::nn::Linear                   model;
         std::string                         debug_mode;
+        optimiser                           opt;
 	};
 }

@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
         
         hummus::layer classifier;
         if (logistic_regression) {
-            classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, logistic_start, tensor_base_name, 0, {});
+            classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, logistic_start, hummus::optimiser::Adam, tensor_base_name, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_database.second, test_database.second, 10, 60, 0, {});
         }
