@@ -1776,12 +1776,12 @@ namespace hummus {
                                                                      if (polarity == 2) {
                                                                          if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                              final_t = static_cast<double>(event.t);
-                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
                                                                          }
                                                                      } else if (polarity == 0 || polarity == 1) {
                                                                          if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                              final_t = static_cast<double>(event.t);
-                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
                                                                          }
                                                                      } else {
                                                                          throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
@@ -1804,12 +1804,12 @@ namespace hummus {
                                                                       if (polarity == 2) {
                                                                           if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                               final_t = static_cast<double>(event.t);
-                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
                                                                           }
                                                                       } else if (polarity == 0 || polarity == 1) {
                                                                           if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                               final_t = static_cast<double>(event.t);
-                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y));
+                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
                                                                           }
                                                                       } else {
                                                                           throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
@@ -1911,12 +1911,12 @@ namespace hummus {
                                                                          if (polarity == 2) {
                                                                              if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                  final_t = static_cast<double>(event.t);
-                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min), true);
                                                                              }
                                                                          } else if (polarity == 0 || polarity == 1) {
                                                                              if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                  final_t = static_cast<double>(event.t);
-                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                                 es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min), true);
                                                                              }
                                                                          } else {
                                                                              throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
@@ -1938,12 +1938,12 @@ namespace hummus {
                                                                           if (polarity == 2) {
                                                                               if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                   final_t = static_cast<double>(event.t);
-                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min), true);
                                                                               }
                                                                           } else if (polarity == 0 || polarity == 1) {
                                                                               if (!event.is_threshold_crossing && static_cast<int>(event.polarity) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                   final_t = static_cast<double>(event.t);
-                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), true);
+                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min), true);
                                                                               }
                                                                           } else {
                                                                               throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
@@ -2131,10 +2131,10 @@ namespace hummus {
 
         // -----PROTECTED NETWORK METHODS -----
 
-        void es_run_helper(double t, int x, int y, bool classification=false) {
+        void es_run_helper(double t, int x, int y, int x_min, int y_min, bool classification=false) {
 
             // 1. find neuron corresponding to the event coordinates through 2D to 1D mapping
-            int idx = (x + layers[0].width * y);
+            int idx = ((x - x_min) + layers[0].width * (y - y_min));
 
             // 2. make sure the neuron is actually from the input layer
             if (neurons.at(idx)->get_layer_id() != 0) {

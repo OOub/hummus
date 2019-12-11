@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
     network.all_to_all<hummus::Square>(input, direction, 1, hummus::Normal(0.125, 0, 5, 3), 100, 3, 200);
     
     // running network
-    network.verbosity(0);
+    network.verbosity(1);
     network.run_data(training_data, timestep);
 
     // exit application

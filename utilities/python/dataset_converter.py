@@ -1,10 +1,10 @@
-# dataset_converter.py 
+# dataset_converter.py
 
 # Created by Omar Oubari.
 # Email: omar.oubari@inserm.fr
 # Last Version: 22/08/2019
 
-# Information: code used to convert popular datasets into the eventstream (.es) format accepted by the Hummus spiking neural network simulator. 
+# Information: code used to convert popular datasets into the eventstream (.es) format accepted by the Hummus spiking neural network simulator.
 # For more details on the .es format: https://github.com/neuromorphic-paris/event_stream
 
 import os
@@ -47,10 +47,10 @@ def ncar_to_es(filepath_in, filepath_out, verbose=False):
         basepath_out = os.path.dirname(filepath_out)
         if not os.path.exists(basepath_out):
             os.makedirs(basepath_out)
-            
+
         # read file
         data = loris.read_file(filepath_in)
-        
+
         # parse data according to the N-CAR specs
         data['width'] = 64
         data['height'] = 56
@@ -60,11 +60,11 @@ def ncar_to_es(filepath_in, filepath_out, verbose=False):
 
         # write to es
         loris.write_events_to_file(data, filepath_out)
-        
+
     else:
         if verbose:
             print(filepath_in, "is not an accepted file")
-        
+
 def poker_to_es(filepath_in, filepath_out, verbose=False):
     """ Converts a file from the POKER-DVS dataset into the .es format with dimensions 35x35"""
 
@@ -73,7 +73,7 @@ def poker_to_es(filepath_in, filepath_out, verbose=False):
         # create the output directory if it doesn't exist
         basepath_out = os.path.dirname(filepath_out)
         if not os.path.exists(basepath_out):
-            os.makedirs(basepath_out) 
+            os.makedirs(basepath_out)
 
         # read file
         data = loris.read_file(filepath_in)
@@ -99,7 +99,7 @@ def nmnist_to_es(filepath_in, filepath_out, verbose=False):
         # create the output directory if it doesn't exist
         basepath_out = os.path.dirname(filepath_out)
         if not os.path.exists(basepath_out):
-            os.makedirs(basepath_out) 
+            os.makedirs(basepath_out)
 
         # read file
         events = read_bin(filepath_in)
@@ -122,7 +122,7 @@ def gesture_to_es(filepath_in, filepath_out, verbose=False):
         # create the output directory if it doesn't exist
         basepath_out = os.path.dirname(filepath_out)
         if not os.path.exists(basepath_out):
-            os.makedirs(basepath_out) 
+            os.makedirs(basepath_out)
 
         # read file
         events = read_aedat(filepath_in)
@@ -269,4 +269,4 @@ def read_aedat(aedatfile):
     return formatted_data
 
 if __name__ == "__main__":
-    batch_ncar_to_es("/Users/omaroubari/Datasets/N-CARS/", "/Users/omaroubari/Datasets/es_N-CARS/")
+    batch_ncar_to_es("/Users/omaroubari/Datasets/denoised_N_CARS", "/Users/omaroubari/Datasets/es_denoised_N_CARS")

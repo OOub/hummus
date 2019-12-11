@@ -4,6 +4,7 @@ import numpy as np
 from torch.utils import data
 import matplotlib.pyplot as plt
 import scikitplot as skplt
+import scipy.io as sio
 
 class LogisticRegression(torch.nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -60,7 +61,7 @@ class LogReg(object):
         _, predicted = torch.max(outputs.data, 1)
         return predicted
 
-task = 2
+task = 3
 
 if task == 0:
     # 3-class N-MNIST (96%)
@@ -86,12 +87,12 @@ elif task == 3:
     trl = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_tr_label.npy").astype(np.int64)
     ted = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_te_set.npy").astype(np.float32)
     tel = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_te_label.npy").astype(np.int64)
-
-# CONFUSION MATRIX FOR 1000 DATA POINTS
-# lreg = LogReg(n_in=100,n_out=np.unique(trl).shape[0], epochs=70)
-# lreg.fit(trd[-10:,:],trl[-10:])
-# p_tel = lreg.predict(ted).numpy()
-# skplt.metrics.plot_confusion_matrix(tel, p_tel, normalize=False)
+elif task == 4:
+    # 10-class N-MNIST 2 epochs
+    trd = np.load("/Users/omaroubari/Desktop/report/10classes_2epochs/nmnist_10_2e_tr_set.npy").astype(np.float32)
+    trl = np.load("/Users/omaroubari/Desktop/report/10classes_2epochs/nmnist_10_2e_tr_label.npy").astype(np.int64)
+    ted = np.load("/Users/omaroubari/Desktop/report/10classes_2epochs/nmnist_10_2e_te_set.npy").astype(np.float32)
+    tel = np.load("/Users/omaroubari/Desktop/report/10classes_2epochs/nmnist_10_2e_te_label.npy").astype(np.int64)
 
 # ACCURACY VS SAVED DATAPOINTS PLOT
 dpts = list(range(0,1200,10))
@@ -99,18 +100,25 @@ dpts = list(range(0,1200,10))
 best = 0
 bestn = 0
 acc = []
+points = []
 for k in dpts[1:]:
-    lreg = LogReg(n_in=100,n_out=np.unique(trl).shape[0], epochs=70)
+    lreg = LogReg(n_in=100,n_out=np.unique(trl).shape[0], epochs=45)
     lreg.fit(trd[-k:,:],trl[-k:])
 
     acc.append((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])
+    points.append(k)
     if acc[-1]>best:
         best=acc[-1]
         bestn=k
         print("We have the best test accuracy at {:.05} using {} datapoints  ".format(best,bestn))
-        if best == 1:
-            p_tel = lreg.predict(ted).numpy()
-            skplt.metrics.plot_confusion_matrix(tel, p_tel, normalize=False)
-            break;
-
-plt.show()
+        p_tel = lreg.predict(ted).numpy()
+        if task == 0:
+            sio.savemat('3nmnist.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
+        elif task == 1:
+            sio.savemat('10nmnist.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
+        elif task == 2:
+            sio.savemat('poker.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
+        elif task == 3:
+            sio.savemat('ncar28x28.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
+        elif task == 4:
+            sio.savemat('10nmnist_2e.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
