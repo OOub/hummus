@@ -1774,7 +1774,7 @@ namespace hummus {
 
                                                                      // temporal crop and spatial crop and polarity selection
                                                                      if (polarity == 2) {
-                                                                         if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                         if (event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                              final_t = static_cast<double>(event.t);
                                                                              es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
                                                                          }
@@ -1802,7 +1802,7 @@ namespace hummus {
 
                                                                       // filtering out gray level events, temporal crop and spatial crop and polarity selection
                                                                       if (polarity == 2) {
-                                                                          if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                          if (!event.is_threshold_crossing && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                               final_t = static_cast<double>(event.t);
                                                                               es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
                                                                           }
@@ -1909,7 +1909,7 @@ namespace hummus {
 
                                                                          // temporal crop and spatial crop and polarity selection
                                                                          if (polarity == 2) {
-                                                                             if (event.t >= t_min && event.x >= x_min && event.y <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                             if (event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
                                                                                  final_t = static_cast<double>(event.t);
                                                                                  es_run_helper(final_t, static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min), true);
                                                                              }

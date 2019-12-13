@@ -113,7 +113,7 @@ namespace hummus {
            } else {
                auto& previous_layer_neurons = network->get_layers()[layer_id-2].neurons;
                number_of_output_neurons = static_cast<int>(previous_layer_neurons.size());
-               computation_id = network->get_layers()[layer_id-1].neurons[0];
+               computation_id = static_cast<int>(network->get_layers()[layer_id-1].neurons[0]);
            }
         }
         
@@ -272,7 +272,7 @@ namespace hummus {
                 std::move(data_set),
                 batch_size);
             
-            int dataset_size = data_set.size().value();
+            int dataset_size = static_cast<int>(data_set.size().value());
             
             // create model and instantiate it (size, dimension)
             model = torch::nn::Linear(number_of_output_neurons, network->get_classes_map().size());

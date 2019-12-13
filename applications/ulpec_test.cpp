@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     std::string gmap_filename        = "ncars_scaled_g_maps.bin";
     std::string label_filename       = "ncars_scaled_labels.txt";
     std::vector<std::string> classes = {};
-    int percentage_data              = 100;
+    int percentage_data              = 10;
     int logistic_start               = static_cast<int>(training_path.size()) - 300;
     std::string tensor_base_name     = "ncars_scaled";
     bool multiple_epochs             = false;
