@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
     std::string gmap_filename        = "nmnist_10_2e_g_maps.bin";
     std::string label_filename       = "nmnist_10_2e_labels.txt";
     std::vector<std::string> classes = {};
-    int percentage_data              = 100;
+    int percentage_data              = 1;
     int logistic_start               = 0;
     std::string tensor_base_name     = "nmnist_10_2e";
     bool multiple_epochs             = true;
@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
         network.all_to_all<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(1e-9, 1e-7, 0, 0, false), 100, -1);
 
         // running network asynchronously with spatial cropping down to 28x28 input and taking only the first N-MNIST saccade
-        network.verbosity(0);
+        network.verbosity(1);
 
         if (multiple_epochs) {
             // disabling propagation to the regression layer

@@ -134,7 +134,7 @@ namespace hummus {
                 }
 
                 // converting labels to stl container
-                const int tr_label_shape[2] = {static_cast<int>(tmp_tr_labels.size(0))};
+                const int tr_label_shape[1] = {static_cast<int>(tmp_tr_labels.size(0))};
                 std::vector<int> tr_label_stl;
                 for (auto i=0; i<tmp_tr_labels.size(0); ++i) {
                     tr_label_stl.emplace_back(tmp_tr_labels[i].item<int>());
@@ -161,7 +161,7 @@ namespace hummus {
                 }
 
                 // converting labels to stl container
-                const int te_label_shape[2] = {static_cast<int>(tmp_te_labels.size(0))};
+                const int te_label_shape[1] = {static_cast<int>(tmp_te_labels.size(0))};
                 std::vector<int> te_label_stl;
                 for (auto i=0; i<tmp_te_labels.size(0); ++i) {
                     te_label_stl.emplace_back(tmp_te_labels[i].item<int>());
