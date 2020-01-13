@@ -40,61 +40,47 @@ namespace hummus {
         
     public:
     	// ----- CONSTRUCTOR -----
-        DataParser() {
+        DataParser(bool seed_parser=false) {
             std::random_device device;
-            random_engine = std::mt19937(device());
+            if (seed_parser) {
+                std::seed_seq seed{device(), device(), device(), device(), device(), device(), device(), device()};
+                random_engine = std::mt19937(seed);
+            } else {
+                random_engine = std::mt19937(device());
+            }
             gaussian = std::normal_distribution<>(0.0, 1.0);
         };
         
-        // saves the files from a database of files formatted to eventstream format into a vector of strings
-        std::vector<std::string> generate_database(const std::string directory_path, int sample_percentage=100) {
-            std::vector<std::string> database;
-            std::filesystem::path current_dir(directory_path);
-            // save all files containing the .es extension in the database vector
-            for (auto &file : std::filesystem::recursive_directory_iterator(current_dir)) {
-                if (file.path().extension() == ".es") {
-                    database.emplace_back(file.path());
-                }
-            }
-            
-            // create random engine
-            std::random_device r;
-            std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
-            std::mt19937 random_engine1(seed);
-
-            // shuffle the database vector
-            std::shuffle(begin(database), end(database), random_engine1);
-            
-            // get the number of samples from the percentage
-            if (sample_percentage < 100) {
-                size_t number_of_samples = static_cast<size_t>(std::ceil(database.size() * sample_percentage / 100));
-                return std::vector<std::string>(database.begin(), database.begin()+number_of_samples);
-            } else {
-                return database;
-            }
-        }
-        
-        // saves the files from the N-MNIST database - formatted to eventstream format - into a a pair of vector: a vector of strings for the full paths to files, and a vector of labels
-        // The N-MNIST database needs to have the same structure as the original folder otherwise the labels will be messed up. For example: ~/N-MNIST/Train/0
-        std::pair<std::vector<std::string>, std::deque<label>> generate_nmnist_database(const std::string directory_path, int sample_percentage=100, const std::vector<std::string> classes={}) {
+        // saves the files from a database of files formatted to eventstream or npy format into a pair of vector: a vector of strings for the full paths to files, and a vector of labels. each class should be placed in its own folder
+        std::pair<std::vector<std::string>, std::deque<label>> generate_database(const std::string directory_path, int sample_percentage=100, int repetition=0, const std::vector<std::string> classes={}) {
             std::vector<std::string> database;
             std::deque<label> labels;
             
             std::filesystem::path current_dir(directory_path);
-            // save all files containing the .es extension in the database vector
+            // save all files containing the .es or the .npy extension in the database vector
             for (auto &file : std::filesystem::recursive_directory_iterator(current_dir)) {
-                if (file.path().extension() == ".es") {
+                if (file.path().extension() == ".es" || file.path().extension() == ".npy") {
                     // only use specific classes
                     if (!classes.empty()) {
-                        if (std::find(classes.begin(), classes.end(),std::string(1, file.path().parent_path().string().back()))!=classes.end()) {
-                            labels.emplace_back(label{std::string(1, file.path().parent_path().string().back()), -1});
+                        if (std::find(classes.begin(), classes.end(),file.path().parent_path().filename().string()) != classes.end()) {
+                            labels.emplace_back(label{file.path().parent_path().filename().string(), -1});
                             database.emplace_back(file.path());
                         }
                     // use all N-MNIST classes
                     } else {
-                        labels.emplace_back(label{std::string(1, file.path().parent_path().string().back()), -1});
+                        labels.emplace_back(label{file.path().parent_path().filename().string(), -1});
                         database.emplace_back(file.path());
                     }
+                }
+            }
+            
+            // repeat elements in vector
+            if (repetition > 0) {
+                std::vector<std::string> database_cp = database;
+                std::deque<label> labels_cp = labels;
+                for (auto i=0; i<repetition; ++i) {
+                    labels.insert(labels.end(), labels_cp.begin(), labels_cp.end());
+                    database.insert(database.end(), database_cp.begin(), database_cp.end());
                 }
             }
             

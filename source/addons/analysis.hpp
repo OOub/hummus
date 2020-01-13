@@ -57,7 +57,7 @@ namespace hummus {
                 // save labels
                 if (!filename.empty()) {
                     std::ofstream ofs(filename);
-                    for (auto i=0; i < actual_labels.size(); i++) {
+                    for (int i=0; i < static_cast<int>(actual_labels.size()); i++) {
                         ofs << actual_labels[i] << " " << classified_labels[i] << "\n";
                     }
                 }
@@ -75,6 +75,11 @@ namespace hummus {
             if (network->get_decision_making()) {
                 // logging only after learning is stopped and restrict only to the decision-making layer
                 if (!network->get_learning_status() && postsynapticNeuron->get_layer_id() == network->get_decision_parameters().layer_number) {
+                    classified_spikes.emplace_back(std::make_pair(timestamp, postsynapticNeuron));
+                }
+            } else if (network->get_logistic_regression()) {
+                // logging only after learning is stopped and restrict only to the logistic regression decision layer
+                if (!network->get_learning_status() && postsynapticNeuron->get_layer_id() == network->get_decision_parameters().layer_number+1) {
                     classified_spikes.emplace_back(std::make_pair(timestamp, postsynapticNeuron));
                 }
             } else {

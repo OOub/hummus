@@ -25,7 +25,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        ULPEC_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, float _capacitance=5e-12, float _threshold=1.2, float _restingPotential=0, float _i_discharge=12e-9, float _epsilon=0, float _scaling_factor=650, bool _potentiation_flag=true, float _tau_up=0.5, float _tau_down_event=10, float _tau_down_spike=1.5, float _delta_v=1) :
+        ULPEC_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, float _capacitance=5e-12, float _threshold=1.2, float _restingPotential=0, float _i_discharge=12e-9, float _epsilon=0, float _scaling_factor=650, bool _potentiation_flag=true, float _tau_up=0.5, float _tau_down_event=10, float _tau_down_spike=1.5, float _delta_v=1, bool _skip_after_post=false) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, 0, 0, _threshold, _restingPotential, ""),
                 epsilon(_epsilon),
                 i_discharge(_i_discharge),
@@ -35,7 +35,8 @@ namespace hummus {
                 tau_down_event(_tau_down_event),
                 tau_down_spike(_tau_down_spike),
                 refractory_counter(0),
-                delta_v(_delta_v) {
+                delta_v(_delta_v),
+                skip_after_post(_skip_after_post) {
                                         
             // neuron type = 3 for JSON save
             neuron_type = 3;
@@ -58,6 +59,10 @@ namespace hummus {
         }
         
         virtual void update(double timestamp, Synapse* s, Network* network, float timestep, spike_type type) override {
+            // during testing there is no refractory period
+            if (!network->get_learning_status() && refractory_period != 0) {
+                refractory_period = 0;
+            }
             
             // checking whether a refractory period is over
             if (!active && refractory_counter >= refractory_period) {
@@ -125,11 +130,18 @@ namespace hummus {
                 s->receive_spike(2*delta_v);
 
             } else if (type == spike_type::end_trigger_up) {
+                for (auto& addon: relevant_addons) {
+                    addon->incoming_spike(timestamp, s, this, network);
+                }
                 
                 // remove the injected potential in the memristor
                 s->receive_spike(-delta_v);
                 
             } else if (type == spike_type::end_trigger_down) {
+                
+                for (auto& addon: relevant_addons) {
+                    addon->incoming_spike(timestamp, s, this, network);
+                }
                 
                 // remove the injected potential in the memristor
                 s->receive_spike(delta_v);
@@ -254,8 +266,9 @@ namespace hummus {
         // check if the threshold is crossed, and start the corresponding chain of events if it is
         void threshold_cross_check(double timestamp, Synapse* s, Network* network) {
             if (threshold != 0 && potential >= threshold) {
+                
                 // save spikes on the LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                if (network->get_learning_status() && network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
                     if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
@@ -263,7 +276,7 @@ namespace hummus {
                         decision_queue.emplace_back(network->get_current_label());
                     }
                 }
-
+                
                 if (network->get_verbose() == 2) {
                     std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << " --> SPIKED" << std::endl;
                 }
@@ -288,40 +301,41 @@ namespace hummus {
 
                     auto& presynaptic_neuron = network->get_neurons()[dendrite->get_presynaptic_neuron_id()];
 
-                    // POF learning pulse
-                    if (potentiation_flag) {
-                        // send postsynaptic pulse after 13us
-                        network->inject_spike(spike{timestamp + 13, dendrite, spike_type::trigger_down});
-                        network->inject_spike(spike{timestamp + 13 + tau_up, dendrite, spike_type::trigger_down_to_up});
-                        network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
+                    // only apply programming pulses during the learning phase
+                    if (network->get_learning_status()) {
+                        // POF learning pulse
+                        if (potentiation_flag) {
+                            // send postsynaptic pulse after 13us
+                            network->inject_spike(spike{timestamp + 13, dendrite, spike_type::trigger_down});
+                            network->inject_spike(spike{timestamp + 13 + tau_up, dendrite, spike_type::trigger_down_to_up});
+                            network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
 
-                        // if presynaptic neuron was active at some point
-                        if (presynaptic_neuron->get_trace() == 1) {
-                            // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
-                            network->inject_spike(spike{timestamp + 12, dendrite, spike_type::trigger_down});
-                            network->inject_spike(spike{timestamp + 12 + tau_down_event, dendrite, spike_type::end_trigger_down});
+                            // if presynaptic neuron was active at some point
+                            if (presynaptic_neuron->get_trace() == 1) {
+                                // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
+                                network->inject_spike(spike{timestamp + 12, dendrite, spike_type::trigger_down});
+                                network->inject_spike(spike{timestamp + 12 + tau_down_event, dendrite, spike_type::end_trigger_down});
 
+                            } else {
+                                // inject trigger_up spike to presynaptic_neuron for depression after 14us
+                                network->inject_spike(spike{timestamp + 14, dendrite, spike_type::trigger_up});
+                                network->inject_spike(spike{timestamp + 14 + tau_up, dendrite, spike_type::end_trigger_up});
+                            }
+                            
+                        // DIF learning pulse
                         } else {
-                            // inject trigger_up spike to presynaptic_neuron for depression after 14us
-                            network->inject_spike(spike{timestamp + 14, dendrite, spike_type::trigger_up});
-                            network->inject_spike(spike{timestamp + 14 + tau_up, dendrite, spike_type::end_trigger_up});
-                        }
+                            // send postsynaptic pulse instantly and any currently spiking neurons will automatically potentiate
+                            network->inject_spike(spike{timestamp, dendrite, spike_type::trigger_down});
+                            network->inject_spike(spike{timestamp + tau_up, dendrite, spike_type::trigger_down_to_up});
+                            network->inject_spike(spike{timestamp + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
 
-
-                    // DIF learning pulse
-                    } else {
-                        // send postsynaptic pulse instantly and any currently spiking neurons will automatically potentiate
-                        network->inject_spike(spike{timestamp, dendrite, spike_type::trigger_down});
-                        network->inject_spike(spike{timestamp + tau_up, dendrite, spike_type::trigger_down_to_up});
-                        network->inject_spike(spike{timestamp + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
-
-                        if (presynaptic_neuron->get_trace() == 0) {
-                            // inject trigger_up spike to presynaptic_neuron for depression after 1us
-                            network->inject_spike(spike{timestamp + 1, dendrite, spike_type::trigger_up});
-                            network->inject_spike(spike{timestamp + 1 + tau_up, dendrite, spike_type::end_trigger_up});
+                            if (presynaptic_neuron->get_trace() == 0) {
+                                // inject trigger_up spike to presynaptic_neuron for depression after 1us
+                                network->inject_spike(spike{timestamp + 1, dendrite, spike_type::trigger_up});
+                                network->inject_spike(spike{timestamp + 1 + tau_up, dendrite, spike_type::end_trigger_up});
+                            }
                         }
                     }
-
                     // reset trace
                     presynaptic_neuron->set_trace(0);
                 }
@@ -337,6 +351,15 @@ namespace hummus {
 
                 // save time when neuron fired
                 previous_spike_time = timestamp;
+                
+                // skip presentation after learning is completed
+                if (skip_after_post && network->get_learning_status()) {
+                    if (potentiation_flag) {
+                        network->set_skip_presentation(timestamp + 25);
+                    } else {
+                        network->set_skip_presentation(timestamp + 13);
+                    }
+                }
             }
         }
         
@@ -357,10 +380,12 @@ namespace hummus {
         }
         
         void check_refractory(Network* network) {
-            for (auto& n: network->get_layers()[layer_id].neurons) {
-                auto& neuron = network->get_neurons()[n];
-                if (neuron->get_neuron_id() != neuron_id && !neuron->get_activity()) {
-                    dynamic_cast<ULPEC_LIF*>(neuron.get())->increment_refractory_counter();
+            if (refractory_period > 0) {
+                for (auto& n: network->get_layers()[layer_id].neurons) {
+                    auto& neuron = network->get_neurons()[n];
+                    if (neuron->get_neuron_id() != neuron_id && !neuron->get_activity()) {
+                        dynamic_cast<ULPEC_LIF*>(neuron.get())->increment_refractory_counter();
+                    }
                 }
             }
         }
@@ -378,5 +403,6 @@ namespace hummus {
         float  tau_down_spike;
         int    refractory_counter;
         float  delta_v;
+        bool   skip_after_post;
 	};
 }

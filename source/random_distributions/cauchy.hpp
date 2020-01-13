@@ -23,20 +23,18 @@ namespace hummus {
         Cauchy(float weight_location=1, float weight_scale=0, float delay_location=0, float delay_scale=0) {
 
             // randomising weights and delays
-            std::random_device device;
-            random_engine = std::mt19937(device());
             delay_random = std::cauchy_distribution<float>(delay_location, delay_scale);
             weight_random = std::cauchy_distribution<float>(weight_location, weight_scale);
         }
 		
-        std::pair<float, float> operator()(int x, int y, int depth) {
+        template<class RNG>
+        std::pair<float, float> operator()(int x, int y, int depth, RNG &random_engine) {
 			return std::make_pair(weight_random(random_engine), std::abs(delay_random(random_engine)));
         }
         
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                     random_engine;
         std::cauchy_distribution<float> delay_random;
         std::cauchy_distribution<float> weight_random;
 	};

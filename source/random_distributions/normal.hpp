@@ -20,7 +20,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Normal(float _weight_mu=1, float _weight_sigma=0, float _delay_mu=0, float _delay_sigma=0, float _weight_lower_limit=-INFINITY, float _weight_upper_limit=INFINITY, float _delay_lower_limit=0, float _delay_upper_limit=INFINITY) :
+        Normal(float _weight_mu=1, float _weight_sigma=0, float _delay_mu=0, float _delay_sigma=0,float _weight_lower_limit=-INFINITY, float _weight_upper_limit=INFINITY, float _delay_lower_limit=0, float _delay_upper_limit=INFINITY) :
                 weight_mu(_weight_mu),
                 weight_sigma(_weight_sigma),
                 weight_lower_limit(_weight_lower_limit),
@@ -29,14 +29,14 @@ namespace hummus {
                 delay_sigma(_delay_sigma),
                 delay_lower_limit(_delay_lower_limit),
                 delay_upper_limit(_delay_upper_limit) {
+                    
             // randomising weights and delays
-            std::random_device device;
-            random_engine = std::mt19937(device());
             delay_random = std::normal_distribution<float>(delay_mu, delay_sigma);
             weight_random = std::normal_distribution<float>(weight_mu, weight_sigma);
         }
 		
-        std::pair<float, float> operator()(int x, int y, int depth) {
+        template<class RNG>
+        std::pair<float, float> operator()(int x, int y, int depth, RNG& random_engine) {
             return std::make_pair(truncate(weight_random(random_engine), weight_lower_limit, weight_upper_limit), truncate(delay_random(random_engine), delay_lower_limit, delay_upper_limit));
         }
 		
@@ -53,7 +53,6 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                    random_engine;
         std::normal_distribution<float> delay_random;
         std::normal_distribution<float> weight_random;
         float                           weight_mu;
@@ -66,4 +65,3 @@ namespace hummus {
         float                           delay_upper_limit;
 	};
 }
-

@@ -29,9 +29,6 @@ namespace hummus {
 			}
 
             // randomising weights and delays
-            std::random_device device;
-            random_engine = std::mt19937(device());
-			
 			if (int_type) {
                 int_delay_random = std::uniform_int_distribution<int>(static_cast<int>(delay_lower_limit), static_cast<int>(delay_upper_limit));
                 int_weight_random = std::uniform_int_distribution<int>(static_cast<int>(weight_lower_limit), static_cast<int>(weight_upper_limit));
@@ -41,8 +38,8 @@ namespace hummus {
 			}
         }
 		
-		
-        std::pair<float, float> operator()(int x, int y, int depth) {
+		template<class RNG>
+        std::pair<float, float> operator()(int x, int y, int depth, RNG &random_engine) {
         	if (int_type) {
                 return std::make_pair(int_weight_random(random_engine), int_delay_random(random_engine));
 			} else {
@@ -53,7 +50,6 @@ namespace hummus {
     protected :
         
         // ----- IMPLEMENTATION VARIABLES -----
-        std::mt19937                          random_engine;
         std::uniform_int_distribution<int>    int_delay_random;
         std::uniform_int_distribution<int>    int_weight_random;
 		std::uniform_real_distribution<float> real_delay_random;

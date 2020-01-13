@@ -33,7 +33,8 @@ namespace hummus {
                 resting_threshold(_threshold),
                 decay_homeostasis(_decayHomeostasis),
                 homeostasis_beta(_homeostasisBeta),
-                active_synapse(nullptr) {
+                active_synapse(nullptr),
+                refractory_counter(0) {
                     
             // LIF neuron type == 1 (for JSON save)
             neuron_type = 1;
@@ -75,10 +76,11 @@ namespace hummus {
                 network->get_main_thread_addon()->status_update(timestamp, this, network);
             }
             
-            // checking if the neuron is in a refractory period
+            // checking whether a refractory period is over
             if (timestamp - previous_spike_time >= refractory_period) {
                 active = true;
             }
+
             
             // updating current of synapses
             if (type == spike_type::initial) {
@@ -169,7 +171,7 @@ namespace hummus {
             
             if (type != spike_type::end_of_integration && potential >= threshold) {
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                if (network->get_learning_status() && network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
                     if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
@@ -217,7 +219,6 @@ namespace hummus {
                 }
                 
                 previous_spike_time = timestamp;
-                potential = resting_potential;
                 active = false;
                 current = 0;
                 
@@ -234,7 +235,6 @@ namespace hummus {
                 timestep = 0;
             }
             
-            // checking if the neuron is in a refractory period
             if (timestamp - previous_spike_time >= refractory_period) {
                 active = true;
             }
@@ -316,11 +316,11 @@ namespace hummus {
             if (network->get_main_thread_addon()) {
                 network->get_main_thread_addon()->status_update(timestamp, this, network);
             }
-
+            
 			if (potential >= threshold && active_synapse) {
                 
                 // save spikes on final LIF layer before the Decision Layer for classification purposes if there's a decision-making layer
-                if (network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
+                if (network->get_learning_status() &&  network->get_decision_making() && network->get_decision_parameters().layer_number == layer_id+1) {
                     if (static_cast<int>(decision_queue.size()) < network->get_decision_parameters().spike_history_size) {
                         decision_queue.emplace_back(network->get_current_label());
                     } else {
@@ -338,6 +338,7 @@ namespace hummus {
                 for (auto& addon: relevant_addons) {
                     addon->neuron_fired(timestamp, active_synapse, this, network);
 				}
+                
                 if (network->get_main_thread_addon()) {
                     network->get_main_thread_addon()->neuron_fired(timestamp, active_synapse, this, network);
 				}
@@ -361,20 +362,20 @@ namespace hummus {
                     }
 				}
                 
-                previous_spike_time = timestamp;
                 potential = resting_potential;
+                previous_spike_time = timestamp;
 				active = false;
                 current = 0;
+                
 			}
 		}
 		
         virtual void reset_neuron(Network* network, bool clearAddons=true) override {
             previous_input_time = 0;
             previous_spike_time = 0;
-            current = 0;
             potential = resting_potential;
             trace = 0;
-            active = true;
+            current = 0;
             
             for (auto& dendrite: dendritic_tree) {
                 dendrite->reset();
@@ -466,14 +467,11 @@ namespace hummus {
         virtual void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
                 auto& neuron = network->get_neurons()[n];
-    
-                if (neuron->get_neuron_id() != neuron_id) {
-                    neuron->set_activity(false);
-                    neuron->set_potential(resting_potential);
-                    neuron->set_current(0);
-                    for (auto& dendrite: neuron->get_dendritic_tree()) {
-                        dendrite->reset();
-                    }
+                neuron->set_potential(resting_potential);
+                neuron->set_current(0);
+                neuron->set_activity(false);
+                for (auto& dendrite: neuron->get_dendritic_tree()) {
+                    dendrite->reset();
                 }
             }
         }
@@ -486,6 +484,7 @@ namespace hummus {
 		float                        decay_homeostasis;
 		float                        homeostasis_beta;
 		Synapse*                     active_synapse;
+        int                          refractory_counter;
         
         // Parameters for performance improvement
         float                        inv_trace_tau;
