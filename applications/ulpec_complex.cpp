@@ -40,8 +40,8 @@ int main(int argc, char** argv) {
 
     // creating layers
     auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(28, 28, 1, {}, 25, 1.2, 1.1, 10, -1);
-    auto output_one = network.make_layer<hummus::ULPEC_LIF>(50, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false);
-    auto output_two = network.make_layer<hummus::ULPEC_LIF>(50, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false);
+    auto output_one = network.make_layer<hummus::ULPEC_LIF>(100, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false);
+    auto output_two = network.make_layer<hummus::ULPEC_LIF>(100, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false);
     auto classifier = network.make_logistic_regression<hummus::Regression>(training_database.second, test_database.second, 0.1, 0, 5e-4, 70, 128, 10, 0, hummus::optimiser::Adam, "nmnist_complex", 0, {});
 
     // connecting layers

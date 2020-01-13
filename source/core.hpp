@@ -2426,12 +2426,12 @@ namespace hummus {
                     float inv_queue_size = 100. / neuron_to_label->get_decision_queue().size();
                     if (max_label.second * inv_queue_size >= decision.rejection_threshold && max_label.second >= decision.spike_history_size) {
                         neuron_to_label->set_class_label(max_label.first);
-                    }
-
-                    for (auto& decision_n: layers[decision.layer_number].neurons) {
-                        // connect the neuron to its corresponding decision making neuron if they have the same label
-                        if (!max_label.first.compare(neurons[decision_n]->get_class_label())) {
-                            neuron_to_label->make_synapse(neurons[decision_n].get(), 1, 0, synapse_type::excitatory);
+                        
+                        for (auto& decision_n: layers[decision.layer_number].neurons) {
+                            // connect the neuron to its corresponding decision making neuron if they have the same label
+                            if (!max_label.first.compare(neurons[decision_n]->get_class_label())) {
+                                neuron_to_label->make_synapse(neurons[decision_n].get(), 1, 0, synapse_type::excitatory);
+                            }
                         }
                     }
                 }
