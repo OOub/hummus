@@ -88,23 +88,35 @@ cmake -S . -B build
 cmake --build build
 ~~~~
 
-#### **Building for an IDE**
+#### Available build options
+* TORCH: building with libtorch for logistic regression classifier. The location of the TorchConfig.cmake file needs to be specified
+~~~~
+cmake -DTORCH=ON -DTorch_DIR=/absolute/path/to/share/cmake/Torch/ -S . -B build
+cmake --build build
+~~~~
+
+* QT: building with Qt for visualisation
+~~~~
+cmake -DQT=ON -S . -B build
+cmake --build build
+~~~~
+
+* TBB: building with Intel TBB for parallelisation
+~~~~
+cmake -DTBB=ON -S . -B build
+cmake --build build
+~~~~
+
+#### Building for an IDE
 an alternative way to build Hummus with an IDE. we'll take the example of XCode on macOS:
 ~~~~
 cmake -S . -B build -GXcode
 cmake --open build
 ~~~~
 
-When using torch you will also have to specify the location of the TorchConfig.cmake file. So it will look like this:
+For example, if you're planning on using an IDE such as XCode with libtorch:
 
 ~~~~
-cmake -DTorch_DIR=/absolute/path/to/share/cmake/Torch/ -S . -B build
-cmake --build build
-~~~~
-
-or if you're planning on using an IDE such as XCode
-
-~~~~
-cmake -DTorch_DIR=/absolute/path/to/share/cmake/Torch/ -S . -B build -GXcode
+cmake -DTORCH=ON -DTorch_DIR=/absolute/path/to/share/cmake/Torch/ -S . -B build -GXcode
 cmake --open build
 ~~~~
