@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 # project description
-project(Hummus VERSION 1.0
+project(Hummus  VERSION 0.1
                 DESCRIPTION "Hummus spiking neural network simulator"
                 LANGUAGES CXX)
 
@@ -15,10 +15,10 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
-# options to handle compilation with or without external dependencies
-option(QT    "Compiles with Qt5"  ON)
-option(TBB   "Compiles with TBB"  OFF)
-option(TORCH "Compile with libtorch" OFF)
+# setting options
+option(TBB "Compiles with Intel TBB" OFF)
+option(TORCH "Compiles with Libtorch" ON)
+option(QT "Compiles with Qt5" ON)
 
 ######### HUMMUS LIBRARY #########
 
@@ -41,22 +41,34 @@ endforeach()
 # Setting which directories are needed
 target_include_directories(hummus_library INTERFACE third_party/
                                                     source/
-                                                    source/GUI
-                                                    source/addons
-                                                    source/learning_rules
-                                                    source/neurons
-                                                    source/random_distributions
-                                                    source/synapses
                                                     /usr/local/include)
 
+# blaze dependency
+find_package(blaze REQUIRED)
+if(blaze_FOUND)
+    message("-- Compiling with Blaze")
+    add_compile_definitions(BLAZE)
+    add_library(blaze_target INTERFACE)
+    target_link_libraries(blaze_target INTERFACE blaze::blaze)
+endif()
+
 # handles optional Intel Threading Building Blocks (TBB) linking and includes
-if(TBB)
+if (TBB)
+    find_library(tbb_location NAMES tbb)
     message("-- Compiling with intel TBB")
     add_compile_definitions(TBB)
-    find_library(tbb_location NAMES tbb)
     add_library(tbb SHARED IMPORTED)
     set_target_properties(tbb PROPERTIES IMPORTED_LOCATION ${tbb_location})
     target_link_libraries(hummus_library INTERFACE tbb)
+endif()
+
+# handles optional libtorch (C++ frontend of pytorch) linking and includes
+if (TORCH)
+    find_package(Torch REQUIRED)
+    message("-- Compiling with Libtorch")
+    add_compile_definitions(TORCH)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+    target_link_libraries(hummus_library INTERFACE ${TORCH_LIBRARIES})
 endif()
 
 # handles optional Qt 5 linking and includes
@@ -116,14 +128,6 @@ if(QT)
     endif()
 
     source_group(_moc REGULAR_EXPRESSION "\\.rule$")
-endif()
-
-# handles optional libtorch (C++ frontend of pytorch) linking and includes
-if(TORCH)
-    message("-- Compiling with Libtorch")
-    find_package(Torch REQUIRED)
-    target_link_libraries(hummus_library INTERFACE ${TORCH_LIBRARIES})
-    add_compile_definitions(TORCH)
 endif()
 
 # Linux specific configuration
