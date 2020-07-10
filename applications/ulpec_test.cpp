@@ -43,7 +43,10 @@ int main(int argc, char** argv) {
    int height                       = 28;
    int origin                       = 0;
    int repetitions                  = 0;
-   int number_of_neurons            = 1000;
+   int number_of_neurons            = 400;
+   int regression_size              = 1000;
+   uint64_t t_max                   = 100000;
+   int polarities                   = 1;
 
     // experiment to validate the neuron model in comparison to cadence recordings
     if (cadence) {
@@ -110,7 +113,8 @@ int main(int argc, char** argv) {
 
         // generating training database
         auto training_database = parser.generate_database(training_path, percentage_data, repetitions, classes);
-        int logistic_start = static_cast<int>(training_database.first.size()) - 1000;
+        int logistic_start = static_cast<int>(training_database.first.size()) - regression_size;
+
         // generating test database
         auto test_database = parser.generate_database(test_path, percentage_data, 0, classes);
 
@@ -138,7 +142,7 @@ int main(int argc, char** argv) {
             network.deactivate_layer(classifier.id);
 
             // training the STDP
-            network.run_es_database(training_database.first, {}, 100000, 0, 1, width-1+origin, origin, height-1+origin, origin);
+            network.run_es_database(training_database.first, {}, t_max, 0, polarities, width-1+origin, origin, height-1+origin, origin);
 
             // reset the network
             network.reset_network();
@@ -152,7 +156,7 @@ int main(int argc, char** argv) {
             g_maps.activate_for(output.neurons);
 
             // separate epoch to train the Logistic regression
-            network.run_es_database(training_database.first, test_database.first, UINT64_MAX, 0, 2, width-1+origin, origin, height-1+origin, origin);
+            network.run_es_database(training_database.first, test_database.first, t_max, 0, polarities, width-1+origin, origin, height-1+origin, origin);
 
             // measuring classification accuracy
             results.accuracy();
@@ -164,7 +168,7 @@ int main(int argc, char** argv) {
             g_maps.activate_for(output.neurons);
 
             // run the network
-            network.run_es_database(training_database.first, test_database.first, UINT64_MAX, 0, 2, width-1+origin, origin, height-1+origin, origin);
+            network.run_es_database(training_database.first, test_database.first, t_max, 0, polarities, width-1+origin, origin, height-1+origin, origin);
 
             // measuring classification accuracy
             results.accuracy();
