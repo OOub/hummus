@@ -198,7 +198,7 @@ namespace hummus {
             
             // calculating current (i_z) taking into consideration the scaling factor
             if (i_x > i_cancel) {
-                current = (i_x - i_cancel) * 1./scaling_factor;
+                current = (i_x - i_cancel) / scaling_factor;
             } else {
                 current = 0;
             }
