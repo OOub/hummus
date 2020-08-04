@@ -1,6 +1,0 @@
-Special thanks to the following people for their contribution to the development of Hummus during my PhD:
-
-Alexandre Marcireau - Guidance and advice on the overall architecture
-Georgios Exarchakis - Python log_reader module
-Laurent Dardelet    - Help with the equations behind the event-based LIF neuron
-Gregor Lenz         - Major contribution to my mental health

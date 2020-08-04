@@ -7,13 +7,9 @@
  * Last Version: 21/01/2019
  *
  * Information: current-based leaky integrate and fire (LIF) neuron model
- *
- * NEURON TYPE 1 (in JSON SAVE FILE)
  */
 
 #pragma once
-
-#include "../../third_party/json.hpp"
 
 namespace hummus {
     
@@ -25,7 +21,7 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _wta=false, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=10, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, std::string _classLabel="") :
+        CUBA_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=3, float _capacitance=200, float _leakageConductance=10, bool _wta=false, bool _homeostasis=false, bool _burstingActivity=false, float _traceTimeConstant=10, float _decayHomeostasis=20, float _homeostasisBeta=0.1, float _threshold=-50, float _restingPotential=-70, int _classLabel=01) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, _leakageConductance, _traceTimeConstant, _threshold, _restingPotential, _classLabel),
                 wta(_wta),
                 bursting_activity(_burstingActivity),
@@ -35,9 +31,6 @@ namespace hummus {
                 homeostasis_beta(_homeostasisBeta),
                 active_synapse(nullptr),
                 refractory_counter(0) {
-                    
-            // LIF neuron type == 1 (for JSON save)
-            neuron_type = 1;
                     
             inv_trace_tau = 1. / _traceTimeConstant;
             inv_membrane_tau = 1./ membrane_time_constant;
@@ -387,44 +380,6 @@ namespace hummus {
             
             if (clearAddons) {
                 relevant_addons.clear();
-            }
-        }
-        
-        // write neuron parameters in a JSON format
-        virtual void to_json(nlohmann::json& output) override{
-            // general neuron parameters
-            output.push_back({
-                {"type",neuron_type},
-                {"layer_id",layer_id},
-                {"sublayer_id", sublayer_id},
-                {"rf_id", rf_id},
-                {"xy_coordinates", xy_coordinates},
-                {"trace_time_constant", trace_time_constant},
-                {"threshold", threshold},
-                {"resting_potential", resting_potential},
-                {"refractory_period", refractory_period},
-                {"capacitance", capacitance},
-                {"leakage_conductance", leakage_conductance},
-                {"wta", wta},
-                {"bursting_activity", bursting_activity},
-                {"homeostasis", homeostasis},
-                {"resting_threshold", resting_threshold},
-                {"decay_homeostasis", decay_homeostasis},
-                {"homeostasis_beta", homeostasis_beta},
-                {"dendritic_synapses", nlohmann::json::array()},
-                {"axonal_synapses", nlohmann::json::array()},
-            });
-            
-            // dendritic synapses (preSynapse)
-            auto& dendriticSynapses = output.back()["dendritic_synapses"];
-            for (auto& dendrite: dendritic_tree) {
-                dendrite->to_json(dendriticSynapses);
-            }
-            
-            // axonal synapses (postSynapse)
-            auto& axonalSynapses = output.back()["axonal_synapses"];
-            for (auto& axonTerminal: axon_terminals) {
-                axonTerminal->to_json(axonalSynapses);
             }
         }
         

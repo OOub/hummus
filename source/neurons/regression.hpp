@@ -19,8 +19,7 @@
 #include <vector>
 
 #include <torch/torch.h> // requires the libtorch option to be ON in cmake
-#include "../../third_party/json.hpp"
-#include "../../third_party/numpy.hpp"
+#include "../third_party/numpy.hpp"
 
 namespace hummus {
 
@@ -55,7 +54,7 @@ namespace hummus {
 	class Regression : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, optimiser _opt=optimiser::Adam, std::string save_tensor="", float _threshold=-50, float _restingPotential=-70) :
+        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _classLabel=-1, float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, optimiser _opt=optimiser::Adam, std::string save_tensor="", float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 200, 10, 20, _threshold, _restingPotential, _classLabel),
                 learning_rate(_learning_rate),
                 momentum(_momentum),
@@ -71,12 +70,9 @@ namespace hummus {
                 model(100,3),
                 debug_mode(save_tensor),
                 opt(_opt) {
-
-            // Regression neuron type = 5 for JSON save
-            neuron_type = 5;
                     
             // computation or decision layer of regression
-            if (_classLabel.empty()) {
+            if (_classLabel == -1) {
                 computation_layer = true;
             }
         }
@@ -205,7 +201,7 @@ namespace hummus {
                     // during the training set the computation neuron collects data
                     if (network->get_learning_status() && network->get_presentation_counter() >= presentations_before_training) {
                         x_training.emplace_back(x_online);
-                        labels_train.emplace_back(network->get_classes_map()[network->get_current_label()]);
+                        labels_train.emplace_back(network->get_current_label());
                         
                         // reset x_online each time it is included in the training vector
                         x_online = torch::zeros(number_of_output_neurons);
@@ -213,7 +209,7 @@ namespace hummus {
                     // during the test set the computation neuron is used to decide which regression neuron from the decision layer should fire
                     } else if (!network->get_learning_status()){
                         x_test.emplace_back(x_online);
-                        labels_test.emplace_back(network->get_classes_map()[network->get_current_label()]);
+                        labels_test.emplace_back(network->get_current_label());
                         
                         // predict winner
                         test_model(timestamp, timestep, network);
@@ -372,7 +368,7 @@ namespace hummus {
             torch::Tensor output = model(x_online);
             
             auto pred = output.argmax(0);
-            auto class_label = network->get_reverse_classes_map()[pred.item<int>()];
+            auto class_label = pred.item<int>();
                 
             auto& decision = network->get_layers()[network->get_decision_parameters().layer_number+1].neurons;
             for (auto& n: decision) {

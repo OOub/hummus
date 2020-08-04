@@ -7,7 +7,6 @@
  * Last Version: 23/01/2019
  *
  * Information: a current-based synaptic kernel updating the current according to a square pulse function. the current stays constant for a period of time then resets. only for neurons with current dynamics
- * json_id 2
  */
 
 #pragma once
@@ -15,7 +14,6 @@
 #include <random>
 
 #include "../synapse.hpp"
-#include "../../third_party/json.hpp"
 
 namespace hummus {
 	class Neuron;
@@ -29,7 +27,6 @@ namespace hummus {
                 external_current(_external_current) {
 
             synapse_time_constant = _synapse_time_constant;
-			json_id = 2;
 
 			// error handling
 			if (_synapse_time_constant <= 0) {
@@ -60,17 +57,6 @@ namespace hummus {
 
 		virtual void receive_spike(float potential=0) override {
             synaptic_current += efficacy * weight * (external_current+normal_distribution(random_engine));
-		}
-
-		virtual void to_json(nlohmann::json& output) override {
-			// general synapse parameters
-            output.push_back({
-                {"json_id", json_id},
-                {"weight", weight},
-                {"delay", delay},
-                {"postsynaptic_neuron", postsynaptic_neuron},
-				{"synapse_time_constant", synapse_time_constant},
-            });
 		}
 
 	protected:

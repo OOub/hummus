@@ -14,7 +14,7 @@
 #include <vector>
 #include <string>
 
-#include "../../third_party/numpy.hpp"
+#include "../third_party/numpy.hpp"
 
 namespace hummus {
     

@@ -7,13 +7,9 @@
  * Last Version: 24/01/2019
  *
  * Information: neuron modeled according to the ULPEC analog neuron made by the IMS at Université de Bordeaux.
- *
- * NEURON TYPE 3 (in JSON SAVE FILE)
  */
 
 #pragma once
-
-#include "../../third_party/json.hpp"
 
 namespace hummus {
     
@@ -26,7 +22,7 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         ULPEC_LIF(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=10, float _capacitance=5e-12, float _threshold=1.2, float _restingPotential=0, float _i_discharge=12e-9, float _epsilon=0, float _scaling_factor=650, bool _potentiation_flag=true, float _tau_up=0.5, float _tau_down_event=10, float _tau_down_spike=1.5, float _delta_v=1, bool _skip_after_post=false) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, 0, 0, _threshold, _restingPotential, ""),
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, _capacitance, 0, 0, _threshold, _restingPotential, -1),
                 epsilon(_epsilon),
                 i_discharge(_i_discharge),
                 scaling_factor(_scaling_factor),
@@ -37,9 +33,6 @@ namespace hummus {
                 refractory_counter(0),
                 delta_v(_delta_v),
                 skip_after_post(_skip_after_post) {
-                                        
-            // neuron type = 3 for JSON save
-            neuron_type = 3;
         }
 		
 		virtual ~ULPEC_LIF(){}
@@ -172,36 +165,6 @@ namespace hummus {
 
             if (clearAddons) {
                 relevant_addons.clear();
-            }
-        }
-        
-        // write neuron parameters in a JSON format
-        virtual void to_json(nlohmann::json& output) override {
-            // general neuron parameters
-            output.push_back({
-                {"type",neuron_type},
-                {"layer_id",layer_id},
-                {"sublayer_id", sublayer_id},
-                {"rf_id", rf_id},
-                {"xy_coordinates", xy_coordinates},
-                {"trace_time_constant", trace_time_constant},
-                {"threshold", threshold},
-                {"resting_potential", resting_potential},
-                {"refractory_period", refractory_period},
-                {"dendritic_synapses", nlohmann::json::array()},
-                {"axonal_synapses", nlohmann::json::array()},
-            });
-            
-            // dendritic synapses (preSynapse)
-            auto& dendriticSynapses = output.back()["dendritic_synapses"];
-            for (auto& dendrite: dendritic_tree) {
-                dendrite->to_json(dendriticSynapses);
-            }
-            
-            // axonal synapses (postSynapse)
-            auto& axonalSynapses = output.back()["axonal_synapses"];
-            for (auto& axonTerminal: axon_terminals) {
-                axonTerminal->to_json(axonalSynapses);
             }
         }
         

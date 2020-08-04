@@ -7,13 +7,9 @@
  * Last Version: 24/01/2019
  *
  * Information: Decision-making neurons act as our classifier, roughly approximating a histogram activity-dependent classification. They should always be on the last layer of a network.
- *
- * NEURON TYPE 2 (in JSON SAVE FILE)
  */
 
 #pragma once
-
-#include "../../third_party/json.hpp"
 
 namespace hummus {
 
@@ -24,11 +20,8 @@ namespace hummus {
 	class Decision_Making : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Decision_Making(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, std::string _classLabel="", float _threshold=-50, float _restingPotential=-70) :
+        Decision_Making(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _classLabel=-1, float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 200, 10, 20, _threshold, _restingPotential, _classLabel) {
-
-            // DecisionMaking neuron type = 2 for JSON save
-            neuron_type = 2;
         }
 
 		virtual ~Decision_Making(){}
@@ -92,23 +85,6 @@ namespace hummus {
 
         virtual float share_information() override {
             return static_cast<float>(intensity);
-        }
-        
-        // write neuron parameters in a JSON format
-        virtual void to_json(nlohmann::json& output) override {
-            // general neuron parameters
-            output.push_back({
-                {"type",neuron_type},
-                {"layer_id",layer_id},
-                {"threshold", threshold},
-                {"dendritic_synapses", nlohmann::json::array()},
-            });
-
-            // dendritic synapses (preSynapse)
-            auto& dendriticSynapses = output.back()["dendritic_synapses"];
-            for (auto& dendrite: dendritic_tree) {
-                dendrite->to_json(dendriticSynapses);
-            }
         }
 
     protected:

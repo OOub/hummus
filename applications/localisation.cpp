@@ -46,14 +46,11 @@ int main(int argc, char** argv) {
     }
     
     // generating sense8 training data
-    std::vector<hummus::event> training_data;
-    std::deque<hummus::label> training_labels;
+    hummus::dataset training_data;
     if (synthetic_data) {
-        training_data = parser.read_txt_data("/Users/omaroubari/Datasets/sense8/sense8_data_syn.txt");
-        training_labels = parser.read_txt_labels("/Users/omaroubari/Datasets/sense8/sense8_labels_syn.txt");
+        training_data = parser.load_data("/Users/omaroubari/Datasets/sense8/sense8_data_syn.npy", "/Users/omaroubari/Datasets/sense8/sense8_labels_syn.txt");
     } else {
-        training_data = parser.read_txt_data("/Users/omaroubari/Datasets/sense8/sense8_data.txt");
-        training_labels = parser.read_txt_labels("/Users/omaroubari/Datasets/sense8/sense8_labels.txt");
+        training_data = parser.load_data("/Users/omaroubari/Datasets/sense8/sense8_data.npy", "/Users/omaroubari/Datasets/sense8/sense8_labels.txt");
     }
     
     // initialising addons
@@ -79,7 +76,7 @@ int main(int argc, char** argv) {
     
     // running network
     network.verbosity(1);
-    network.run_data(training_data, timestep);
+    network.run_data(training_data.spikes, timestep);
 
     // exit application
     return 0;

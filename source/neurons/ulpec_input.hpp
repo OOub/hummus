@@ -7,13 +7,9 @@
  * Last Version: 24/01/2019
  *
  * Information: ULPEC_Input neurons generates waveforms used in the context of the ulpec project.
- *
- * NEURON TYPE 4 (in JSON SAVE FILE)
  */
 
 #pragma once
-
-#include "../../third_party/json.hpp"
 
 namespace hummus {
 
@@ -26,11 +22,9 @@ namespace hummus {
     public:
         // ----- CONSTRUCTOR AND DESTRUCTOR -----
         ULPEC_Input(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=25, float _threshold=1.2, float _restingPotential=1.1, float _tau=10, float _injected_potential=-1) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, 0, _threshold, _restingPotential, ""),
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, 0, _threshold, _restingPotential, -1),
                 injected_potential(_injected_potential) {
 
-            // DecisionMaking neuron type = 2 for JSON save
-            neuron_type = 4;
             membrane_time_constant = _tau;
         }
 
@@ -92,34 +86,6 @@ namespace hummus {
 
                 // starting refractory period to accept AER events
                 active = false;
-            }
-        }
-        
-        // write neuron parameters in a JSON format
-        virtual void to_json(nlohmann::json& output) override{
-            // general neuron parameters
-            output.push_back({
-                {"type",neuron_type},
-                {"layer_id",layer_id},
-                {"xy_coordinates", xy_coordinates},
-                {"threshold", threshold},
-                {"resting_potential", resting_potential},
-                {"refractory_period", refractory_period},
-                {"injected_potential", injected_potential},
-                {"dendritic_synapses", nlohmann::json::array()},
-                {"axonal_synapses", nlohmann::json::array()},
-            });
-
-            // dendritic synapses (preSynapse)
-            auto& dendriticSynapses = output.back()["dendritic_synapses"];
-            for (auto& dendrite: dendritic_tree) {
-                dendrite->to_json(dendriticSynapses);
-            }
-
-            // axonal synapses (postSynapse)
-            auto& axonalSynapses = output.back()["axonal_synapses"];
-            for (auto& axonTerminal: axon_terminals) {
-                axonTerminal->to_json(axonalSynapses);
             }
         }
 

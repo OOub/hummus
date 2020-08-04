@@ -7,7 +7,6 @@
  * Last Version: 23/01/2019
  *
  * Information: a current-based synaptic kernel that instantly rises then exponentially decays. only for neurons with current dynamics
- * json_id 1
  */
 
 #pragma once
@@ -15,7 +14,6 @@
 #include <random>
 
 #include "../synapse.hpp"
-#include "../../third_party/json.hpp"
 
 namespace hummus {
 	class Neuron;
@@ -30,8 +28,6 @@ namespace hummus {
                     
             synapse_time_constant = _synapse_time_constant;
             inv_s_tau = 1./synapse_time_constant;
-
-			json_id = 1;
 
 			// error handling
 			if (_synapse_time_constant <= 0) {
@@ -63,17 +59,6 @@ namespace hummus {
 		virtual void receive_spike(float potential=0) override {
             // increase the synaptic current in response to an incoming spike
             synaptic_current += weight * (external_current+normal_distribution(random_engine));
-		}
-
-		virtual void to_json(nlohmann::json& output) override {
-			// general synapse parameters
-            output.push_back({
-                {"json_id", json_id},
-                {"weight", weight},
-                {"delay", delay},
-                {"postsynaptic_neuron", postsynaptic_neuron},
-                {"synapse_time_constant", synapse_time_constant},
-            });
 		}
 
 	protected:

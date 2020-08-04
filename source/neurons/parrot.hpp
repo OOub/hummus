@@ -7,13 +7,9 @@
  * Last Version: 24/01/2019
  *
  * Information: Parrot neurons take in spikes or events and instantly propagate them in the network. The potential does not decay.
- *
- * NEURON TYPE 0 (in JSON SAVE FILE)
  */
 
 #pragma once
-
-#include "../../third_party/json.hpp"
 
 namespace hummus {
     
@@ -26,7 +22,7 @@ namespace hummus {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
         Parrot(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _refractoryPeriod=0, float _traceTimeConstant=20, float _threshold=-50, float _restingPotential=-70) :
-                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, _traceTimeConstant, _threshold, _restingPotential, "") {
+                Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, _refractoryPeriod, 0, 0, _traceTimeConstant, _threshold, _restingPotential, -1) {
             inv_trace_tau = 1. / _traceTimeConstant;
         }
 		
@@ -114,36 +110,6 @@ namespace hummus {
                 }
             }
 		}
-        
-        // write neuron parameters in a JSON format
-        virtual void to_json(nlohmann::json& output) override{
-            // general neuron parameters
-            output.push_back({
-                {"type",neuron_type},
-                {"layer_id",layer_id},
-                {"sublayer_id", sublayer_id},
-                {"rf_id", rf_id},
-                {"xy_coordinates", xy_coordinates},
-                {"trace_time_constant", trace_time_constant},
-                {"threshold", threshold},
-                {"resting_potential", resting_potential},
-                {"refractory_period", refractory_period},
-                {"dendritic_synapses", nlohmann::json::array()},
-                {"axonal_synapses", nlohmann::json::array()},
-            });
-            
-            // dendritic synapses (preSynapse)
-            auto& dendriticSynapses = output.back()["dendritic_synapses"];
-            for (auto& dendrite: dendritic_tree) {
-                dendrite->to_json(dendriticSynapses);
-            }
-            
-            // axonal synapses (postSynapse)
-            auto& axonalSynapses = output.back()["axonal_synapses"];
-            for (auto& axonTerminal: axon_terminals) {
-                axonTerminal->to_json(axonalSynapses);
-            }
-        }
         
     protected:
         

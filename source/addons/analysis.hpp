@@ -27,30 +27,22 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-		Analysis(std::string testLabels, std::string _filename="") : filename(_filename) {
-			DataParser parser;
-			labels = parser.read_txt_labels(testLabels);
-			for (auto label: labels) {
-				actual_labels.emplace_back(label.name);
-			}
-		}
-		
-        Analysis(std::deque<label> testLabels, std::string _filename="") : filename(_filename) {
-            labels = testLabels;
-            for (auto label: labels) {
-                actual_labels.emplace_back(label.name);
-            }
+        Analysis(std::deque<label>& testLabels, std::string _filename="") :
+        filename(_filename),
+        labels(testLabels) {
+            // save label ids
+            std::transform(testLabels.begin(), testLabels.end(),std::back_inserter(actual_labels),[](label& l) {return l.id;});
         }
         
         virtual ~Analysis(){}
         
 		// ----- PUBLIC METHODS -----
 		float accuracy() {
-			if (!classified_labels.empty() && classified_labels.size() == actual_labels.size()) {
-				std::vector<std::string> correctLabels;
+			if (!predicted_labels.empty() && predicted_labels.size() == actual_labels.size()) {
+				std::vector<int> correctLabels;
 				for (int i=0; i<static_cast<int>(actual_labels.size()); i++) {
-					if (classified_labels[i] == actual_labels[i]) {
-						correctLabels.emplace_back(classified_labels[i]);
+					if (predicted_labels[i] == actual_labels[i]) {
+						correctLabels.emplace_back(predicted_labels[i]);
 					}
 				}
 				
@@ -58,11 +50,11 @@ namespace hummus {
                 if (!filename.empty()) {
                     std::ofstream ofs(filename);
                     for (int i=0; i < static_cast<int>(actual_labels.size()); i++) {
-                        ofs << actual_labels[i] << " " << classified_labels[i] << "\n";
+                        ofs << actual_labels[i] << " " << predicted_labels[i] << "\n";
                     }
                 }
                 
-				float accuracy = (static_cast<float>(correctLabels.size())/actual_labels.size())*100.;
+				float accuracy = (static_cast<float>(predicted_labels.size())/actual_labels.size())*100.;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
                 return accuracy;
 			} else {
@@ -96,23 +88,23 @@ namespace hummus {
             if (network->get_decision_parameters().timer == 0) {
                 for (auto& s: classified_spikes) {
                     if (s.second) {
-                        classified_labels.emplace_back(s.second->get_class_label());
+                        predicted_labels.emplace_back(s.second->get_class_label());
                     } else {
-                        classified_labels.emplace_back("NaN");
+                        predicted_labels.emplace_back(-1);
                     }
                 }
             // if choose_winner_online is used
             } else {
                 // if the labels are not timestamped
                 
-                if (labels[0].onset == -1) {
+                if (labels[0].timestamp == -1) {
                     // find all the nullptrs delimiting the eof of each pattern
                     long previous_idx = 0;
                     for (auto it = std::find_if(classified_spikes.begin(), classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.second == nullptr;});
                          it != classified_spikes.end();
                          it = std::find_if(++it, classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.second == nullptr;}))
                     {
-                        std::vector<std::string> labels_interval;
+                        std::vector<int> labels_interval;
                         if (it != classified_spikes.begin() && it != classified_spikes.end()) {
                             auto idx = std::distance(classified_spikes.begin(), std::prev(it));
                             for (auto i = previous_idx; i <= idx; i++) {
@@ -124,32 +116,32 @@ namespace hummus {
 
                         if (!labels_interval.empty()) {
                             // find the most occurring class
-                            std::unordered_map<std::string, int> freq_class;
+                            std::unordered_map<int, int> freq_class;
                             for (auto& label: labels_interval) {
                                 freq_class[label]++;
                             }
 
                             // return the element with the maximum number of spikes
-                            auto max_label = *std::max_element(freq_class.begin(), freq_class.end(), [](const std::pair<std::string, int> &p1,
-                                                                                                        const std::pair<std::string, int> &p2) {
+                            auto max_label = *std::max_element(freq_class.begin(), freq_class.end(), [](const std::pair<int, int> &p1,
+                                                                                                        const std::pair<int, int> &p2) {
                                                                                             return p1.second < p2.second;
                                                                                         });
-                            classified_labels.emplace_back(max_label.first);
+                            predicted_labels.emplace_back(max_label.first);
                         } else {
-                            classified_labels.emplace_back("NaN");
+                            predicted_labels.emplace_back(-1);
                         }
                     }
 
                 } else {
-                    labels.emplace_back(label{"end", std::numeric_limits<double>::max()});
+                    labels.emplace_back(label{-2, std::numeric_limits<double>::max()});
 
                     for (int i=1; i<static_cast<int>(labels.size()); i++) {
 
-                        std::vector<std::string> labels_interval;
+                        std::vector<int> labels_interval;
                         // get all labels between each interval
-                        for (auto it = std::find_if(classified_spikes.begin(), classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;});
+                        for (auto it = std::find_if(classified_spikes.begin(), classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].timestamp && a.first < labels[i].timestamp;});
                              it != classified_spikes.end();
-                             it = std::find_if(++it, classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].onset && a.first < labels[i].onset;}))
+                             it = std::find_if(++it, classified_spikes.end(), [&](std::pair<double, Neuron*> const& a){return a.first >= labels[i-1].timestamp && a.first < labels[i].timestamp;}))
                         {
                             if (it != classified_spikes.end()) {
                                 auto idx = std::distance(classified_spikes.begin(), it);
@@ -159,19 +151,19 @@ namespace hummus {
 
                         if (!labels_interval.empty()) {
                             // find the most occurring class
-                            std::unordered_map<std::string, int> freq_class;
+                            std::unordered_map<int, int> freq_class;
                             for (auto& label: labels_interval) {
                                 freq_class[label]++;
                             }
 
                             // return the element with the maximum number of spikes
-                            auto max_label = *std::max_element(freq_class.begin(), freq_class.end(), [](const std::pair<std::string, int> &p1,
-                                                                                                        const std::pair<std::string, int> &p2) {
+                            auto max_label = *std::max_element(freq_class.begin(), freq_class.end(), [](const std::pair<int, int> &p1,
+                                                                                                        const std::pair<int, int> &p2) {
                                                                                             return p1.second < p2.second;
                                                                                         });
-                            classified_labels.emplace_back(max_label.first);
+                            predicted_labels.emplace_back(max_label.first);
                         } else {
-                            classified_labels.emplace_back("NaN");
+                            predicted_labels.emplace_back(-1);
                         }
                     }
                 }
@@ -182,8 +174,8 @@ namespace hummus {
 		// ----- IMPLEMENTATION VARIABLES -----
         std::string                              filename;
 		std::vector<std::pair<double, Neuron*>>  classified_spikes;
-		std::deque<label>                        labels;
-		std::deque<std::string>                  actual_labels;
-		std::deque<std::string>                  classified_labels;
+        std::deque<label>&                       labels;
+		std::vector<int>                         actual_labels;
+		std::vector<int>                         predicted_labels;
 	};
 }

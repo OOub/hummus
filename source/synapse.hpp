@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include "../third_party/json.hpp"
-
 namespace hummus {
     // synapse models enum for readability
     enum class synapse_type {
@@ -33,8 +31,7 @@ namespace hummus {
                 synaptic_current(0),
                 synaptic_potential(0),
                 synapse_time_constant(_synapse_time_constant),
-                previous_input_time(0),
-                json_id(0) {}
+                previous_input_time(0) {}
 
         virtual ~Synapse(){}
 
@@ -46,16 +43,6 @@ namespace hummus {
         // pure virtual method that updates the synaptic current upon receiving a spike
         virtual void receive_spike(float potential=0) {};
 
-        // write synapse parameters in a JSON format
-        virtual void to_json(nlohmann::json& output) {
-            output.push_back({
-                {"json_id", json_id},
-                {"weight", weight},
-                {"delay", delay},
-                {"postsynaptic_neuron", postsynaptic_neuron},
-            });
-        }
-
         // resets the synapse
         virtual void reset() {
             previous_input_time = 0;
@@ -66,10 +53,6 @@ namespace hummus {
         // ----- SETTERS AND GETTERS -----
         synapse_type get_type() const {
             return type;
-        }
-
-        int get_json_id() const {
-            return json_id;
         }
 
         float get_synaptic_potential() const {
@@ -158,6 +141,5 @@ namespace hummus {
         float                      synapse_time_constant;
         double                     previous_input_time;
         synapse_type               type;
-        int                        json_id;
     };
 }

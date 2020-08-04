@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     //  ----- READING TRAINING DATA FROM FILE -----
 	hummus::DataParser dataParser;
 
-    auto trainingData = dataParser.read_txt_data("/Users/omaroubari/Documents/Education/UPMC - PhD/Datasets/hummus_data/1D_patterns/oneD_10neurons_4patterns_.txt", true, 0);
+    auto dataset = dataParser.load_data("/Users/omaroubari/Datasets/1D_patterns/oneD_10neurons_4patterns.npy", "");
 
     //  ----- INITIALISING THE NETWORK -----
     hummus::Network network;
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     network.verbosity(2);
 
     //  ----- RUNNING THE NETWORK -----
-    network.run_data(trainingData, 0.1);
+    network.run_data(dataset.spikes, 0.1);
 
     //  ----- EXITING APPLICATION -----
     return 0;

@@ -7,7 +7,6 @@
  * Last Version: 23/01/2019
  *
  * Information: a conductance-based synaptic kernel that reproduces the waveforms of the ULPEC memristor.
- * json_id 2
  */
 
 #pragma once
@@ -15,7 +14,6 @@
 #include <random>
 
 #include "../synapse.hpp"
-#include "../../third_party/json.hpp"
 
 namespace hummus {
 	class Neuron;
@@ -27,7 +25,6 @@ namespace hummus {
 		Memristor(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay, double _current_sign=-1) :
                 Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, _delay),
                 current_sign(_current_sign) {
-            json_id = 3;
             type = synapse_type::excitatory;
 		}
 
@@ -47,17 +44,7 @@ namespace hummus {
             synaptic_current = 0;
         }
         
-		virtual void to_json(nlohmann::json& output) override {
-			// general synapse parameters
-            output.push_back({
-                {"json_id", json_id},
-                {"weight", weight},
-                {"delay", delay},
-                {"postsynaptic_neuron", postsynaptic_neuron},
-            });
-		}
     protected:
-        
         double   current_sign;
 	};
 }
