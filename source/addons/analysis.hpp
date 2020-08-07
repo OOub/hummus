@@ -54,7 +54,7 @@ namespace hummus {
                     }
                 }
                 
-				float accuracy = (static_cast<float>(predicted_labels.size())/actual_labels.size())*100.;
+				float accuracy = (static_cast<float>(correctLabels.size())/actual_labels.size())*100.;
 				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
                 return accuracy;
 			} else {
