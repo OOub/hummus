@@ -52,13 +52,14 @@ namespace hummus {
 		// ----- PUBLIC METHODS -----
         virtual float update(double timestamp, float timestep=0) override {
             // decay the current
-            synaptic_current -= synaptic_current * timestep * inv_s_tau;
+//            synaptic_current -= synaptic_current * timestep * inv_s_tau;
+            synaptic_current *= std::exp( - timestep * inv_s_tau);
             return synaptic_current;
         }
 
 		virtual void receive_spike(float potential=0) override {
             // increase the synaptic current in response to an incoming spike
-            synaptic_current += weight * (external_current+normal_distribution(random_engine));
+            synaptic_current += efficacy * weight * (external_current+normal_distribution(random_engine));
 		}
 
 	protected:

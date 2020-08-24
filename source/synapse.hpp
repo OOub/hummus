@@ -50,6 +50,10 @@ namespace hummus {
             synaptic_potential = 0;
         }
 
+        virtual void soft_reset() {
+            synaptic_current = 0;
+        }
+        
         // ----- SETTERS AND GETTERS -----
         synapse_type get_type() const {
             return type;

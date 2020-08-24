@@ -63,7 +63,7 @@ namespace hummus {
                 refractory_counter = 0;
             }
             
-            if (type == spike_type::initial && active) {
+            if ((type == spike_type::initial && active) || (type == spike_type::generated && active)) {
                 
                 // compute the current
                 compute_current();
@@ -214,7 +214,7 @@ namespace hummus {
             }
             
             if (network->get_verbose() == 2 && potential < threshold) {
-                std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << std::endl;
+                std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << " layer id " << layer_id << std::endl;
             }
 
             for (auto& addon: relevant_addons) {
@@ -241,7 +241,7 @@ namespace hummus {
                 }
                 
                 if (network->get_verbose() == 2) {
-                    std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << " --> SPIKED" << std::endl;
+                    std::cout << "t " << timestamp << " " << s->get_presynaptic_neuron_id() << "->" << neuron_id << " i_z " << current << " v_mem " << potential << " layer id " << layer_id << " --> SPIKED" << std::endl;
                 }
                 
                 for (auto& addon: relevant_addons) {

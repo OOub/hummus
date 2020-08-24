@@ -28,7 +28,8 @@ namespace hummus {
         MP_1(int _time_constant=10, float _learning_rate=1, float _learning_window=20) :
                 time_constant(_time_constant),
                 learning_rate(_learning_rate),
-                learning_window(_learning_window) {
+                learning_window(_learning_window),
+                iterations(0) {
             do_not_automatically_include = true;
         }
 		
@@ -44,6 +45,8 @@ namespace hummus {
         }
         
         virtual void learn(double timestamp, Synapse* s, Neuron* postsynapticNeuron, Network* network) override {
+            ++iterations;
+            
             // error handling
             if (time_constant == postsynapticNeuron->get_membrane_time_constant()) {
                 throw std::logic_error("the myelin plasticity time constant cannot be equal to the neuron's membrane time constant");
@@ -77,10 +80,15 @@ namespace hummus {
                         time_differences.emplace_back(time_difference);
                         
                         // change delay according to the time difference
-                        float delta_delay = learning_rate * (1/(time_constant - postsynapticNeuron->get_membrane_time_constant())) * postsynapticNeuron->get_current() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->get_membrane_time_constant()));
+                        float delta_delay = (1/(time_constant - postsynapticNeuron->get_membrane_time_constant())) * postsynapticNeuron->get_current() * (std::exp(-time_difference/time_constant) - std::exp(-time_difference/postsynapticNeuron->get_membrane_time_constant()));
                         
-                        input->increment_delay(delta_delay);
+                        input->increment_delay(learning_rate * delta_delay);
 
+                        // decrease the learning rate every 100 iterations
+                        if (iterations % 100 == 0) {
+                            learning_rate -= learning_rate * 0.1;
+                        }
+                        
                         if (network->get_verbose() >= 1) {
                             std::cout << " inside learning window " << spike_arrival_time << " " << input->get_presynaptic_neuron_id() << " " << input->get_postsynaptic_neuron_id() << " time difference: " << time_difference << " delay change: " << delta_delay << " delay: " << input->get_delay() << " trace " << inputNeuron->get_trace() << " threshold " << postsynapticNeuron->get_threshold() << " current: " << postsynapticNeuron->get_current() << " previous input time: "<< postsynapticNeuron->get_previous_input_time() << std::endl;
                         }
@@ -102,5 +110,6 @@ namespace hummus {
         int              time_constant;
         float            learning_rate;
         float            learning_window;
+        int              iterations;
 	};
 }

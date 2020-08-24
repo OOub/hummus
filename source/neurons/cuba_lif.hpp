@@ -250,11 +250,11 @@ namespace hummus {
             }
                         
 			// potential decay
-            potential += (resting_potential - potential) * timestep * inv_membrane_tau;
+            potential = resting_potential + (potential - resting_potential) * std::exp( - timestep * inv_membrane_tau);
             
 			// threshold decay
 			if (homeostasis) {
-                threshold += (resting_threshold - threshold) * timestep * inv_homeostasis_tau;
+                threshold = resting_threshold + (threshold - resting_threshold) * std::exp( - timestep * inv_homeostasis_tau);
 			}
                 
 			// neuron inactive during refractory period
@@ -359,7 +359,6 @@ namespace hummus {
                 previous_spike_time = timestamp;
 				active = false;
                 current = 0;
-                
 			}
 		}
 		
@@ -423,11 +422,6 @@ namespace hummus {
             for (auto& n: network->get_layers()[layer_id].neurons) {
                 auto& neuron = network->get_neurons()[n];
                 neuron->set_potential(resting_potential);
-                neuron->set_current(0);
-                neuron->set_activity(false);
-                for (auto& dendrite: neuron->get_dendritic_tree()) {
-                    dendrite->reset();
-                }
             }
         }
         

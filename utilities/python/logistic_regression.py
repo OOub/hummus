@@ -61,28 +61,28 @@ class LogReg(object):
         _, predicted = torch.max(outputs.data, 1)
         return predicted
 
-task = 3
+task = 0
 
 if task == 0:
-    # 3-class N-MNIST (96%)
-    trd = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_tr_set.npy").astype(np.float32)
-    trl = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_tr_label.npy").astype(np.int64)
-    ted = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_te_set.npy").astype(np.float32)
-    tel = np.load("/Users/omaroubari/Desktop/report/3_classes_nmnist/nmnist_3_te_label.npy").astype(np.int64)
+    # 3-class N-MNIST
+    trd = np.load("/Users/omaroubari/Desktop/ulpec_complex/3_classes_nmnist/nmnist_3_tr_set.npy").astype(np.float32)
+    trl = np.load("/Users/omaroubari/Desktop/ulpec_complex/3_classes_nmnist/nmnist_3_tr_label.npy").astype(np.int64)
+    ted = np.load("/Users/omaroubari/Desktop/ulpec_complex/3_classes_nmnist/nmnist_3_te_set.npy").astype(np.float32)
+    tel = np.load("/Users/omaroubari/Desktop/ulpec_complex/3_classes_nmnist/nmnist_3_te_label.npy").astype(np.int64)
 elif task == 1:
-    # 10-class N-MNIST (76%)
-    trd = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_tr_set.npy").astype(np.float32)
-    trl = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_tr_label.npy").astype(np.int64)
-    ted = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_te_set.npy").astype(np.float32)
-    tel = np.load("/Users/omaroubari/Desktop/report/10_classes_nmnist/nmnist_10_te_label.npy").astype(np.int64)
+    # 10-class N-MNIST
+    trd = np.load("/Users/omaroubari/Desktop/ulpec_complex/10_classes_nmnist/nmnist_10_tr_set.npy").astype(np.float32)
+    trl = np.load("/Users/omaroubari/Desktop/ulpec_complex/10_classes_nmnist/nmnist_10_tr_label.npy").astype(np.int64)
+    ted = np.load("/Users/omaroubari/Desktop/ulpec_complex/10_classes_nmnist/nmnist_10_te_set.npy").astype(np.float32)
+    tel = np.load("/Users/omaroubari/Desktop/ulpec_complex/10_classes_nmnist/nmnist_10_te_label.npy").astype(np.int64)
 elif task == 2:
-    # 4-class POKER-DVS (100%)
+    # 4-class POKER-DVS
     trd = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_tr_set.npy").astype(np.float32)
     trl = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_tr_label.npy").astype(np.int64)
     ted = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_te_set.npy").astype(np.float32)
     tel = np.load("/Users/omaroubari/Desktop/report/pips_40e_84_6/poker_te_label.npy").astype(np.int64)
 elif task == 3:
-    # N-CARS - 28x28 from origin (54%)
+    # N-CARS - 28x28 from origin
     trd = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_tr_set.npy").astype(np.float32)
     trl = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_tr_label.npy").astype(np.int64)
     ted = np.load("/Users/omaroubari/Desktop/report/ncars_28x28_from0/ncars_scaled_te_set.npy").astype(np.float32)
@@ -101,8 +101,9 @@ best = 0
 bestn = 0
 acc = []
 points = []
+
 for k in dpts[1:]:
-    lreg = LogReg(n_in=100,n_out=np.unique(trl).shape[0], epochs=45)
+    lreg = LogReg(n_in=trd.shape[1],n_out=np.unique(trl).shape[0], epochs=70)
     lreg.fit(trd[-k:,:],trl[-k:])
 
     acc.append((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])

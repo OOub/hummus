@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
     // general parameters
     bool synthetic_data = false;
     bool use_gui = false;
+    bool random_connectivity = true;
     
     // network parameters
     float timestep = 1;
@@ -72,7 +73,11 @@ int main(int argc, char** argv) {
     auto direction = network.make_layer<hummus::CUBA_LIF>(50, {&mp}, 100, 250, 10, wta, homeostasis, false);
     
     // connecting layers
-    network.all_to_all<hummus::Square>(input, direction, 1, hummus::Normal(0.125, 0, 5, 3), 100, 3, 200);
+    if (random_connectivity) {
+        network.random_to_all<hummus::Exponential>(input, direction, 4, hummus::Normal(0, 0, 5, 3));
+    } else {
+        network.all_to_all<hummus::Exponential>(input, direction, 1, hummus::Normal(0.125, 0, 5, 3), 100, 3, 200);
+    }
     
     // running network
     network.verbosity(1);

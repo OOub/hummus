@@ -14,6 +14,7 @@
 #include "../source/core.hpp"
 #include "../source/GUI/display.hpp"
 #include "../source/addons/spike_logger.hpp"
+#include "../source/addons/potential_logger.hpp"
 #include "../source/learning_rules/myelin_plasticity_v1.hpp"
 #include "../source/neurons/parrot.hpp"
 #include "../source/neurons/cuba_lif.hpp"
@@ -31,6 +32,7 @@ int main(int argc, char** argv) {
     auto& display = network.make_gui<hummus::Display>();
     network.make_addon<hummus::SpikeLogger>("1D_spikeLog.bin");
     network.make_addon<hummus::MyelinPlasticityLogger>("1D_mpLog.bin");
+    auto& vlog = network.make_addon<hummus::PotentialLogger>("1D_vLog.bin");
 
     //  ----- NETWORK PARAMETERS -----
 	float conductance        = 250;
@@ -42,23 +44,24 @@ int main(int argc, char** argv) {
     bool wta                 = true;
     
 	//  ----- INITIALISING THE LEARNING RULE -----
-	auto& mp = network.make_addon<hummus::MP_1>(100, 1);
+    auto& mp = network.make_addon<hummus::MP_1>(100, 2);
 
     //  ----- CREATING THE NETWORK -----
     auto input = network.make_layer<hummus::Parrot>(inputNeurons, {}, 0 , 100);
-    auto output = network.make_layer<hummus::CUBA_LIF>(layer1Neurons, {&mp}, 10, conductance, leakageConductance, wta, homeostasis, burst);
+    auto output = network.make_layer<hummus::CUBA_LIF>(layer1Neurons, {&mp}, 3, conductance, leakageConductance, wta, homeostasis, burst);
 
 	//  ----- CONNECTING THE NETWORK -----
-    network.all_to_all<hummus::Square>(input, output, 1, hummus::Normal(0.1, 0, 10, 3), 100);
+    network.all_to_all<hummus::Exponential>(input, output, 1, hummus::Normal(0.1, 0, 10, 3), 100, 10, 100);
 
     //  ----- DISPLAY SETTINGS -----
     display.set_time_window(5000);
     display.track_neuron(12);
     display.plot_currents();
-
+    
     network.turn_off_learning(80000);
-    network.verbosity(2);
-
+    network.verbosity(0);
+    vlog.activate_for({10,11,12,13});
+    
     //  ----- RUNNING THE NETWORK -----
     network.run_data(dataset.spikes, 0.1);
 

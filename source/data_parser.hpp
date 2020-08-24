@@ -63,7 +63,7 @@ namespace hummus {
         //     * saves file paths into files string vector
         //     * saves labels into a vector of struct - label struct = (id, timestamp)
         //     * saves an unordered set that maps the class string labels to their corresponding ids
-        dataset load_data(const std::string path, int sample_percentage, const std::vector<std::string> classes) {
+        dataset load_data(const std::string path, int sample_percentage=100, const std::vector<std::string> classes={}) {
             if (sample_percentage > 100 || sample_percentage <= 0) {
                 throw std::logic_error("your sample is a percentage that needs to be between 1 and 100");
             }

@@ -63,13 +63,14 @@ namespace hummus {
         void on_pattern_end(Network* network) override {
             if (step_couter % step == 0) {
                 for (auto& n: neuron_mask) {
-                    const int16_t bitSize = 4+8*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
+                    const int16_t bitSize = 5+8*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
                     std::vector<char> bytes(bitSize);
 
                     copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
                     copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-
-                    int count = 4;
+                    copy_to(bytes.data() + 4, static_cast<int8_t>(network->get_classes_map()[network->get_current_label()]));
+                    
+                    int count = 5;
                     for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
                         copy_to(bytes.data() + count, static_cast<double>(dendrite->get_weight()));
                         count += 8;
@@ -84,13 +85,14 @@ namespace hummus {
         
         void on_completed(Network* network) override {
             for (auto& n: neuron_mask) {
-                const int16_t bitSize = 4+8*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
+                const int16_t bitSize = 5+8*static_cast<int16_t>(network->get_neurons()[n]->get_dendritic_tree().size());
                 std::vector<char> bytes(bitSize);
 
                 copy_to(bytes.data() + 0, static_cast<int16_t>(bitSize));
                 copy_to(bytes.data() + 2, static_cast<int16_t>(n));
-
-                int count = 4;
+                copy_to(bytes.data() + 4, static_cast<int8_t>(network->get_classes_map()[network->get_current_label()]));
+                
+                int count = 5;
                 for (auto& dendrite: network->get_neurons()[n]->get_dendritic_tree()) {
                     copy_to(bytes.data() + count, static_cast<double>(dendrite->get_weight()));
                     count += 8;

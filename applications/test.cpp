@@ -29,12 +29,12 @@ int main(int argc, char** argv) {
     auto& display = network.make_gui<hummus::Display>();
     
     //  ----- CREATING THE NETWORK -----
-    auto input = network.make_layer<hummus::Parrot>(1, {});
-    auto output = network.make_layer<hummus::CUBA_LIF>(2, {}, 3, 200, 10, false, false, false);
+    auto input = network.make_layer<hummus::Parrot>(1);
+    auto output = network.make_layer<hummus::CUBA_LIF>(2, 3, 200, 10, false, false, false);
 
     //  ----- CONNECTING THE NETWORK -----
-    network.all_to_all<hummus::Square>(input, output, 1, hummus::Normal(0.5, 0, 0, 1), 100);
-    network.lateral_inhibition<hummus::Square>(output, 1, hummus::Normal(-1, 0, 0, 0), 100);
+    network.all_to_all<hummus::Exponential>(input, output, hummus::Normal(0.5, 0, 0, 1));
+    network.lateral_inhibition<hummus::Exponential>(output, hummus::Normal(-1, 0, 0, 0));
 
     //  ----- INJECTING SPIKES -----
     network.inject_spike(0, 10);
