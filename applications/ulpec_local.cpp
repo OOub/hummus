@@ -22,17 +22,19 @@
 
 int main(int argc, char** argv) {
     // parameters
-    std::string training_path        = "/Users/omaroubari/Datasets/es_POKER-DVS/Train";
-    std::string test_path            = "/Users/omaroubari/Datasets/es_POKER-DVS/Test";
-    std::string tensor_base_name     = "pokerdvs";
+    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
+    std::string tensor_base_name     = "nmnist";
     std::vector<std::string> classes = {};
-    int percentage_data              = 5;
+    int percentage_data              = 10;
     int width                        = 28;
     int height                       = 28;
     int origin                       = 0;
-    int number_of_neurons            = 100;
+    int number_of_sublayers          = 6;
+    int kernel_size                  = 7;
+    int stride                       = 7;
     int regression_size              = 1000;
-    uint64_t t_max                   = 10000;
+    uint64_t t_max                   = 100000;
     int polarities                   = 1;
     bool multiple_epochs             = false;
     bool logistic_regression         = true;
@@ -53,8 +55,8 @@ int main(int argc, char** argv) {
     auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(0.01, -0.01, -1.6, 1.6, 1e-7, 1e-9);
 
     // creating layers
-    auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
-    auto output = network.make_layer<hummus::ULPEC_LIF>(number_of_neurons, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false); /// 100 ULPEC_LIF neurons
+    auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
+    auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, 1e-12, 1, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false);
 
     // creating classifier
     hummus::layer classifier;
@@ -65,10 +67,10 @@ int main(int argc, char** argv) {
     }
 
     // connecting the input and output layer with memristive synapses. conductances initialised with a uniform distribution between G_min and G_max
-    network.all_to_all<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(1e-9, 1e-7, 0, 0, false), 100, -1);
+    network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(1e-9, 1e-7, 0, 0, false), 100, -1);
 
     // verbose level
-    network.verbosity(1);
+    network.verbosity(2);
 
     if (multiple_epochs) {
         // disabling propagation to the regression layer

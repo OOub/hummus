@@ -814,7 +814,6 @@ namespace hummus {
         }
 
 		// ----- LAYER CONNECTION METHODS -----
-
         // connecting a layer that is a convolution of the previous layer, depending on the layer kernel size and the stride. Last set of paramaters are to characterize the synapses. lambdaFunction: Takes in either a lambda function (operating on x, y and the sublayer depth) or one of the classes inside the randomDistributions folder to define a distribution for the weights and delays. Furthermore, you can select the number of synapses per pair of presynaptic and postsynaptic neurons (the arborescence)
         template <typename T = Synapse, typename F, typename... Args>
         void convolution(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, int connection_ratio, Args&&... args) {
@@ -1134,7 +1133,7 @@ namespace hummus {
             std::uniform_int_distribution<> uniform(2, presynapticLayer.neurons.size());
             std::vector<int> sensors(presynapticLayer.neurons.size());
             std::iota(sensors.begin(), sensors.end(), 0);
-            
+
             // looping through postsynaptic neurons
             for (auto& postNeuron: postsynapticLayer.neurons) {
                 auto number_of_sensors = 0;
@@ -1144,20 +1143,20 @@ namespace hummus {
                     number_of_sensors = uniform(random_engine);
                 }
                 std::shuffle(sensors.begin(), sensors.end(), random_engine);
-                
+
                 // fixed weight depending on number of presynaptic neurons used
                 float weight = 1. / number_of_sensors;
-                
+
                 // looping through the presynaptic neurons
                 for (auto i=0; i<number_of_sensors; ++i) {
                     // preNeuron id
                     auto& preNeuron = sensors[i];
-                    
+
                     // delay randomisation
                     const std::pair weight_delay = lambdaFunction(0, 0, 0, random_engine);
-                    
+
                     neurons[preNeuron]->make_synapse<T>(neurons[postNeuron].get(), weight, weight_delay.second, std::forward<Args>(args)...);
-                    
+
                     max_delay = std::max(max_delay, weight_delay.second);
                 }
             }
@@ -1757,28 +1756,28 @@ namespace hummus {
                         sepia::join_observable<sepia::type::dvs>(
                                                                  sepia::filename_to_ifstream(filename),
                                                                  [&](sepia::dvs_event event) {
-//                                                                     // stopping the event collection beyond a certain temporal threshold
-//                                                                     if (event.t > skip_presentation || event.t > t_max || !running.load(std::memory_order_relaxed)) {
-//                                                                         if (skip_presentation != std::numeric_limits<double>::max()) {
-//                                                                             skip_presentation = std::numeric_limits<double>::max();
-//                                                                         }
-//                                                                         throw sepia::end_of_file();
-//                                                                     }
-//
-//                                                                     // temporal crop and spatial crop and polarity selection
-//                                                                     if (polarity == 2) {
-//                                                                         if (event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
-//                                                                             final_t = static_cast<double>(event.t);
-//                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
-//                                                                         }
-//                                                                     } else if (polarity == 0 || polarity == 1) {
-//                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
-//                                                                             final_t = static_cast<double>(event.t);
-//                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
-//                                                                         }
-//                                                                     } else {
-//                                                                         throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
-//                                                                     }
+                                                                     // stopping the event collection beyond a certain temporal threshold
+                                                                     if (event.t > skip_presentation || event.t > t_max || !running.load(std::memory_order_relaxed)) {
+                                                                         if (skip_presentation != std::numeric_limits<double>::max()) {
+                                                                             skip_presentation = std::numeric_limits<double>::max();
+                                                                         }
+                                                                         throw sepia::end_of_file();
+                                                                     }
+
+                                                                     // temporal crop and spatial crop and polarity selection
+                                                                     if (polarity == 2) {
+                                                                         if (event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                             final_t = static_cast<double>(event.t);
+                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
+                                                                         }
+                                                                     } else if (polarity == 0 || polarity == 1) {
+                                                                         if (static_cast<int>(event.is_increase) == polarity && event.t >= t_min && event.x >= x_min && event.x <= x_max && event.y >= y_min && event.y <= y_max) {
+                                                                             final_t = static_cast<double>(event.t);
+                                                                             es_run_helper(static_cast<double>(event.t), static_cast<int>(event.x), static_cast<int>(event.y), static_cast<int>(x_min), static_cast<int>(y_min));
+                                                                         }
+                                                                     } else {
+                                                                         throw std::logic_error("polarity is 0 for OFF events, 1 for ON events and 2 for both");
+                                                                     }
                                                                  });
 
                     } else if (header.event_stream_type == sepia::type::atis) {
@@ -2392,17 +2391,17 @@ namespace hummus {
             }
 
             std::unordered_map<int, int> tmp_classes_map = classes_map;
-            
+
             // loop through last layer before DM
             for (auto& pre_decision_n: layers[decision.layer_number-1].neurons) {
                 auto& neuron_to_label = neurons[pre_decision_n];
                 if (!neuron_to_label->get_decision_queue().empty()) {
-                    
+
                     // resetting the unordered map values to 0 for every neuron
                     for (auto& label: tmp_classes_map) {
                         label.second = 0;
                     }
-                    
+
                     // loop through the decision_queue of a neuron and find the number of spikes per label
                     for (auto label: neuron_to_label->get_decision_queue()) {
                         ++tmp_classes_map[label];
@@ -2418,7 +2417,7 @@ namespace hummus {
                     float inv_queue_size = 100. / neuron_to_label->get_decision_queue().size();
                     if (max_label.second * inv_queue_size >= decision.rejection_threshold && max_label.second >= decision.spike_history_size) {
                         neuron_to_label->set_class_label(max_label.first);
-                        
+
                         for (auto& decision_n: layers[decision.layer_number].neurons) {
                             // connect the neuron to its corresponding decision making neuron if they have the same label
                             if (max_label.first == neurons[decision_n]->get_class_label()) {

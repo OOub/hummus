@@ -86,7 +86,7 @@ namespace hummus {
 
                         // decrease the learning rate every 100 iterations
                         if (iterations % 100 == 0) {
-                            learning_rate -= learning_rate * 0.1;
+//                            learning_rate -= learning_rate * 1;
                         }
                         
                         if (network->get_verbose() >= 1) {
