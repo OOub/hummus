@@ -37,7 +37,7 @@ namespace hummus {
         virtual ~Analysis(){}
         
 		// ----- PUBLIC METHODS -----
-		float accuracy() {
+		float accuracy(int verbose=1) {
 			if (!predicted_labels.empty() && predicted_labels.size() == actual_labels.size()) {
 				std::vector<int> correctLabels;
 				for (int i=0; i<static_cast<int>(actual_labels.size()); i++) {
@@ -55,10 +55,15 @@ namespace hummus {
                 }
                 
 				float accuracy = (static_cast<float>(correctLabels.size())/actual_labels.size())*100.;
-				std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
+                
+                if (verbose > 0) {
+                    std::cout << "the classification accuracy is: " << accuracy << "%" << std::endl;
+                }
                 return accuracy;
 			} else {
-                std::cout << "there is a problem with the classified and actual labels" << std::endl;
+                if (verbose > 0) {
+                    std::cout << "there is a problem with the classified and actual labels" << std::endl;
+                }
                 return -1;
 			}
 		}

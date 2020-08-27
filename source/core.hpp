@@ -52,11 +52,6 @@
 #include "synapses/square.hpp"
 #include "synapses/memristor.hpp"
 
-// intel threading building block (TBB) for parallelisation
-#ifdef TBB
-#include "tbb/tbb.h"
-#endif
-
 namespace hummus {
 
     enum class optimiser {

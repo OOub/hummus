@@ -16,7 +16,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # setting options
-option(TBB "Compiles with Intel TBB" OFF)
+option(TBB "Compiles with Intel TBB" ON)
 option(TORCH "Compiles with Libtorch" ON)
 option(QT "Compiles with Qt5" ON)
 
