@@ -145,7 +145,7 @@ namespace hummus {
 
                 // parsing test data
                 torch::Tensor tmp_te_data = torch::stack(x_test, 0);
-                torch::Tensor tmp_te_labels = torch::tensor(labels_test);;
+                torch::Tensor tmp_te_labels = torch::tensor(labels_test);
 
                 // converting data to stl container
                 const int te_data_shape[2] = {static_cast<int>(tmp_te_data.size(0)),static_cast<int>(tmp_te_data.size(1))};

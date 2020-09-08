@@ -1125,7 +1125,7 @@ namespace hummus {
         
         template <typename T = Synapse, typename F, typename... Args>
         void random_to_all(layer presynapticLayer, layer postsynapticLayer, int number_of_synapses, F&& lambdaFunction, Args&&... args) {
-            std::uniform_int_distribution<> uniform(2, presynapticLayer.neurons.size());
+            std::uniform_int_distribution<> uniform(2, static_cast<int>(presynapticLayer.neurons.size()));
             std::vector<int> sensors(presynapticLayer.neurons.size());
             std::iota(sensors.begin(), sensors.end(), 0);
 

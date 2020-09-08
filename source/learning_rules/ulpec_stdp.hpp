@@ -20,13 +20,14 @@ namespace hummus {
         
 	public:
 		// ----- CONSTRUCTOR -----
-		ULPEC_STDP(float _A_pot=0.1, float _A_dep=-0.1, float _thres_pot=-1.2, float _thres_dep=1.2, float _G_max=1e-6, float _G_min=1e-8) :
+        ULPEC_STDP(float _A_pot=0.1, float _A_dep=-0.1, float _thres_pot=-1.2, float _thres_dep=1.2, float _G_max=1e-6, float _G_min=1e-8, float _lambda=1) :
                 A_pot(_A_pot),
                 A_dep(_A_dep),
                 thres_pot(_thres_pot),
                 thres_dep(_thres_dep),
                 G_max(_G_max),
-                G_min(_G_min) {
+                G_min(_G_min),
+                lambda(_lambda) {
             do_not_automatically_include = true;
         }
 		
@@ -49,7 +50,7 @@ namespace hummus {
                 if (network->get_verbose() > 1) {
                     std::cout << " LTP" << std::endl;
                 }
-                float delta_G = A_pot * (G_max - G_0);
+                float delta_G = A_pot * std::pow((G_max - G_0), lambda);
                 s->set_weight(G_0+delta_G);
                 
             // depression
@@ -57,7 +58,7 @@ namespace hummus {
                 if (network->get_verbose() > 1) {
                     std::cout << "LTD" << std::endl;
                 }
-                float delta_G = A_dep * (G_0 - G_min);
+                float delta_G = A_dep * std::pow((G_0 - G_min), lambda);
                 s->set_weight(G_0+delta_G);
             }
 		}
@@ -65,11 +66,12 @@ namespace hummus {
 	protected:
 	
 		// ----- LEARNING RULE PARAMETERS -----
-		float                A_pot;     // potentiation learning rate
-		float                A_dep;     // depression learning rate
-		float                thres_pot; // voltage threshold to start potentiation
-		float                thres_dep; // voltage threshold to start depression
-        float                G_max;     // maximum conductance value by the memristors (conductance = weight)
-        float                G_min;     // minimum conductance value by the memristors (conductance = weight)
+		float                A_pot;      // potentiation learning rate
+		float                A_dep;      // depression learning rate
+		float                thres_pot;  // voltage threshold to start potentiation
+		float                thres_dep;  // voltage threshold to start depression
+        float                G_max;      // maximum conductance value by the memristors (conductance = weight)
+        float                G_min;      // minimum conductance value by the memristors (conductance = weight)
+        float                lambda;     // determines the dependence on the previous weight
 	};
 }

@@ -267,11 +267,23 @@ namespace hummus {
                     if (network->get_learning_status()) {
                         // POF learning pulse
                         if (potentiation_flag) {
-                            // send postsynaptic pulse after 13us
-                            network->inject_spike(spike{timestamp + 13, dendrite, spike_type::trigger_down});
-                            network->inject_spike(spike{timestamp + 13 + tau_up, dendrite, spike_type::trigger_down_to_up});
-                            network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
-
+//                            // send postsynaptic pulse after 13us
+//                            network->inject_spike(spike{timestamp + 13, dendrite, spike_type::trigger_down});
+//                            network->inject_spike(spike{timestamp + 13 + tau_up, dendrite, spike_type::trigger_down_to_up});
+//                            network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
+//
+//                            // TESTING FOR EFFECT OF TIME
+//                            if (presynaptic_neuron->get_trace() == 1 && timestamp - presynaptic_neuron->get_previous_spike_time() <= 100) {
+//                                // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
+//                                network->inject_spike(spike{timestamp + 12, dendrite, spike_type::trigger_down});
+//                                network->inject_spike(spike{timestamp + 12 + tau_down_event, dendrite, spike_type::end_trigger_down});
+//
+//                            } else if (presynaptic_neuron->get_trace() == 0) {
+//                                // inject trigger_up spike to presynaptic_neuron for depression after 14us
+//                                network->inject_spike(spike{timestamp + 14, dendrite, spike_type::trigger_up});
+//                                network->inject_spike(spike{timestamp + 14 + tau_up, dendrite, spike_type::end_trigger_up});
+//                            }
+                            
                             // if presynaptic neuron was active at some point
                             if (presynaptic_neuron->get_trace() == 1) {
                                 // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
@@ -326,9 +338,29 @@ namespace hummus {
         }
         
         void winner_takes_all(double timestamp, Network* network) override {
-            for (auto& n: network->get_layers()[layer_id].neurons) {
-                auto& neuron = network->get_neurons()[n];
-                neuron->set_potential(resting_potential);
+            // if we have multiple sublayers then do WTA per receptive field
+            if (network->get_layers()[layer_id].sublayers.size() > 1) {
+                for (auto& sub: network->get_layers()[layer_id].sublayers) {
+                    if (sub.id != sublayer_id) {
+                        for (auto& n: sub.neurons) {
+                            auto& neuron = network->get_neurons()[n];
+                            if (neuron->get_rf_id() == rf_id) {
+                                neuron->set_potential(resting_potential);
+                            }
+                        }
+                    } else if (sub.id == sublayer_id) {
+                        for (auto& n: network->get_layers()[layer_id].neurons) {
+                            auto& neuron = network->get_neurons()[n];
+                            neuron->set_potential(resting_potential);
+                        }
+                    }
+                }
+            // if only one sublayer
+            } else {
+                for (auto& n: network->get_layers()[layer_id].neurons) {
+                    auto& neuron = network->get_neurons()[n];
+                    neuron->set_potential(resting_potential);
+                }
             }
         }
         
