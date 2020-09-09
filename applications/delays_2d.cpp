@@ -30,13 +30,13 @@ int main(int argc, char** argv) {
     std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
     std::string tensor_base_name     = "nmnist";
     std::vector<std::string> classes = {"5","6","9"};
-    int percentage_data              = 10;
+    int percentage_data              = 100;
     int width                        = 28;
     int height                       = 28;
     int origin                       = 0;
     int number_of_sublayers          = 4;
     int kernel_size                  = 7;
-    int stride                       = 1;
+    int stride                       = 5;
     int regression_size              = 1000;
     uint64_t t_max                   = 100000;
     int polarities                   = 1;
@@ -62,24 +62,21 @@ int main(int argc, char** argv) {
         auto test_dataset = parser.load_data(test_path, percentage_data, classes);
 
         // learning rule
-        auto& stdp = network.make_addon<hummus::STDP>(A_plus, A_minus, Tau_plus, Tau_minus);
+        auto& stdp1 = network.make_addon<hummus::STDP>(A_plus, A_minus, Tau_plus, Tau_minus);
+        auto& stdp2 = network.make_addon<hummus::STDP>(A_plus, A_minus, Tau_plus, Tau_minus);
         
         // creating layers
         auto pixel_grid = network.make_grid<hummus::Parrot>(width, height, 1, {}, 0, 20);
-        auto conv1 = network.make_grid<hummus::CUBA_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&stdp},
+        auto conv1 = network.make_grid<hummus::CUBA_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&stdp1},
                                                          3, // refractory period
                                                          200, // capacitance
                                                          10, // G leak
                                                          true, // WTA
                                                          false, // threshold homeostasis
-                                                         false, // burst
-                                                         20, // trace tau
+                                                         true, // burst
+                                                         10, // trace tau
                                                          20, // homeostasis tau
                                                          0.1); // homeostasis beta
-        
-//        auto pool1 = network.make_subsampled_grid<hummus::Parrot>(conv1, {}, 0);
-        
-//        std::cout << conv1.sublayers[0].neurons.size() << " " << pool1.sublayers[0].neurons.size() << std::endl;
         
         // creating classifier
         hummus::layer classifier;
@@ -90,11 +87,7 @@ int main(int argc, char** argv) {
         }
 
         // connecting the input and output layer with memristive synapses. conductances initialised with a uniform distribution between G_min and G_max
-        network.convolution<hummus::Square>(pixel_grid, conv1, 1, hummus::Uniform(0, 1, 0, 0, false), 100);
-//        network.pooling<hummus::Square>(conv1, pool1, 1, hummus::Normal(0.25), 100);
-        
-        std::cout << "number of neurons: " << conv1.neurons.size() << std::endl;
-        std::cout << "number of synapses per neuron: " << network.get_neurons()[conv1.neurons[0]]->get_dendritic_tree().size() << std::endl;
+        network.convolution<hummus::Square>(pixel_grid, conv1, 1, hummus::Uniform(0, 1, 1, 10, false), 100);
         
         // verbose level
         network.verbosity(0);

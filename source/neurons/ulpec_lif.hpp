@@ -338,29 +338,9 @@ namespace hummus {
         }
         
         void winner_takes_all(double timestamp, Network* network) override {
-            // if we have multiple sublayers then do WTA per receptive field
-            if (network->get_layers()[layer_id].sublayers.size() > 1) {
-                for (auto& sub: network->get_layers()[layer_id].sublayers) {
-                    if (sub.id != sublayer_id) {
-                        for (auto& n: sub.neurons) {
-                            auto& neuron = network->get_neurons()[n];
-                            if (neuron->get_rf_id() == rf_id) {
-                                neuron->set_potential(resting_potential);
-                            }
-                        }
-                    } else if (sub.id == sublayer_id) {
-                        for (auto& n: network->get_layers()[layer_id].neurons) {
-                            auto& neuron = network->get_neurons()[n];
-                            neuron->set_potential(resting_potential);
-                        }
-                    }
-                }
-            // if only one sublayer
-            } else {
-                for (auto& n: network->get_layers()[layer_id].neurons) {
-                    auto& neuron = network->get_neurons()[n];
-                    neuron->set_potential(resting_potential);
-                }
+            for (auto& n: network->get_layers()[layer_id].neurons) {
+                auto& neuron = network->get_neurons()[n];
+                neuron->set_potential(resting_potential);
             }
         }
         
