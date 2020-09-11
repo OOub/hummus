@@ -24,7 +24,7 @@
 
 int main(int argc, char** argv) {
     int trials = 1;
-    
+
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
 //    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
 //    std::string tensor_base_name     = "ncars";
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     int width                        = 28;
     int height                       = 28;
     int origin                       = 0;
-    int number_of_sublayers          = 12;
+    int number_of_sublayers          = 4;
     int kernel_size                  = 7;
     int stride                       = 5;
     int regression_size              = 1000;
@@ -62,11 +62,19 @@ int main(int argc, char** argv) {
     bool logistic_regression         = true;
     bool seed                        = false;
     
+    // neuron parameters
+    float scaling_factor = 12.5;
+    float capacitance = 1e-13;
+    float threshold = 0.8;
+    float i_discharge = 100e-13;
+    float delta_v = 1.4;
+    float skip = false;
+    
     // learning parameters
     float learning_rate = 0.001;
     float gmax = 1e-8;
     float gmin = 1e-6;
-    ;
+
     if (trials == 1) {
         // initialisation
         hummus::Network network(seed);
@@ -84,7 +92,7 @@ int main(int argc, char** argv) {
         
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
-        auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, 1e-13, 0.6, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false);
+        auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
         
         // creating classifier
         hummus::layer classifier;
@@ -158,7 +166,7 @@ int main(int argc, char** argv) {
 
             // creating layers
             auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
-            auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, 1e-13, 0.6, 0, 100e-12, 0, 12.5, true, 0.5, 10, 1.5, 1.4, false);
+            auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
 
             // creating classifier
             hummus::layer classifier;

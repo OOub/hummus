@@ -267,22 +267,10 @@ namespace hummus {
                     if (network->get_learning_status()) {
                         // POF learning pulse
                         if (potentiation_flag) {
-//                            // send postsynaptic pulse after 13us
-//                            network->inject_spike(spike{timestamp + 13, dendrite, spike_type::trigger_down});
-//                            network->inject_spike(spike{timestamp + 13 + tau_up, dendrite, spike_type::trigger_down_to_up});
-//                            network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
-//
-//                            // TESTING FOR EFFECT OF TIME
-//                            if (presynaptic_neuron->get_trace() == 1 && timestamp - presynaptic_neuron->get_previous_spike_time() <= 100) {
-//                                // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
-//                                network->inject_spike(spike{timestamp + 12, dendrite, spike_type::trigger_down});
-//                                network->inject_spike(spike{timestamp + 12 + tau_down_event, dendrite, spike_type::end_trigger_down});
-//
-//                            } else if (presynaptic_neuron->get_trace() == 0) {
-//                                // inject trigger_up spike to presynaptic_neuron for depression after 14us
-//                                network->inject_spike(spike{timestamp + 14, dendrite, spike_type::trigger_up});
-//                                network->inject_spike(spike{timestamp + 14 + tau_up, dendrite, spike_type::end_trigger_up});
-//                            }
+                            // send postsynaptic pulse after 13us
+                            network->inject_spike(spike{timestamp + 13, dendrite, spike_type::trigger_down});
+                            network->inject_spike(spike{timestamp + 13 + tau_up, dendrite, spike_type::trigger_down_to_up});
+                            network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
                             
                             // if presynaptic neuron was active at some point
                             if (presynaptic_neuron->get_trace() == 1) {
