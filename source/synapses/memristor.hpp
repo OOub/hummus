@@ -25,7 +25,13 @@ namespace hummus {
 		Memristor(int _postsynaptic_neuron, int _presynaptic_neuron, double _weight, double _delay, double _current_sign=-1) :
                 Synapse(_postsynaptic_neuron, _presynaptic_neuron, _weight, _delay),
                 current_sign(_current_sign) {
+            
             type = synapse_type::excitatory;
+                    
+            // initialising a normal distribution
+            std::random_device device;
+            random_engine = std::mt19937(device());
+            normal_distribution = std::normal_distribution<float>(0, 0.1);
 		}
 
 		virtual ~Memristor(){}
@@ -34,7 +40,6 @@ namespace hummus {
 		virtual void receive_spike(float potential=0) override {
             // updating synaptic_potential
             synaptic_potential += potential;
-            
             // calculating synaptic current
             synaptic_current = current_sign * weight * synaptic_potential;
 		}
@@ -45,6 +50,8 @@ namespace hummus {
         }
         
     protected:
-        double   current_sign;
+        std::mt19937                     random_engine;
+        std::normal_distribution<float>  normal_distribution;
+        double                           current_sign;
 	};
 }
