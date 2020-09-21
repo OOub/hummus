@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     int stride                       = 5;
     int regression_size              = 5000;
     uint64_t t_max                   = 100000;//UINT64_MAX;
-    int polarities                   = 1;//2;
+    int polarities                   = 2;//2;
     bool multiple_epochs             = false;
     bool logistic_regression         = true;
     bool seed                        = false;
@@ -71,9 +71,9 @@ int main(int argc, char** argv) {
     float skip = false;
     
     // learning parameters
-    float learning_rate = 0.001;
-    float gmax = 1e-8;
-    float gmin = 1e-6;
+    float learning_rate = 0.0001;
+    float gmax = 1e-9;
+    float gmin = 1e-7;
 
     if (trials == 1) {
         // initialisation
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
         auto training_dataset = parser.load_data(training_path, percentage_data, classes);
         int logistic_start = static_cast<int>(training_dataset.files.size()) - regression_size;
         if (regression_size == 0) {
-            logistic_start = static_cast<int>(training_dataset.files.size());
+            logistic_start = 0;
         }
         
         // generating test database
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
             auto training_dataset = parser.load_data(training_path, percentage_data, classes);
             int logistic_start = static_cast<int>(training_dataset.files.size()) - regression_size;
             if (regression_size == 0) {
-                logistic_start = static_cast<int>(training_dataset.files.size());
+                logistic_start = 0;
             }
             
             // generating test database
@@ -215,7 +215,7 @@ int main(int argc, char** argv) {
                 network.run_es_database(training_dataset.files, test_dataset.files, t_max, 0, polarities, width-1+origin, origin, height-1+origin, origin);
 
                 // measuring classification accuracy
-                results.accuracy(0);
+                mean_accuracy[i] = results.accuracy(0);
 
             } else {
                 // initialise add-ons
