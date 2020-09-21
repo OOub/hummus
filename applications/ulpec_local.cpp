@@ -23,7 +23,7 @@
 #include "../source/learning_rules/ulpec_stdp.hpp"
 
 int main(int argc, char** argv) {
-    int trials = 1;
+    int trials = 5;
 
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
 //    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     int number_of_sublayers          = 4;
     int kernel_size                  = 7;
     int stride                       = 5;
-    int regression_size              = 1000;
+    int regression_size              = 5000;
     uint64_t t_max                   = 100000;//UINT64_MAX;
     int polarities                   = 1;//2;
     bool multiple_epochs             = false;
@@ -64,9 +64,9 @@ int main(int argc, char** argv) {
     
     // neuron parameters
     float scaling_factor = 12.5;
-    float capacitance = 1e-13;
+    float capacitance = 1e-12;
     float threshold = 0.8;
-    float i_discharge = 100e-13;
+    float i_discharge = 100e-12;
     float delta_v = 1.4;
     float skip = false;
     
@@ -81,12 +81,15 @@ int main(int argc, char** argv) {
         hummus::DataParser parser(seed);
         
         // verbose level
-        network.verbosity(1);
+        network.verbosity(0);
         
         // generating training database
         auto training_dataset = parser.load_data(training_path, percentage_data, classes);
         int logistic_start = static_cast<int>(training_dataset.files.size()) - regression_size;
-
+        if (regression_size == 0) {
+            logistic_start = static_cast<int>(training_dataset.files.size());
+        }
+        
         // generating test database
         auto test_dataset = parser.load_data(test_path, percentage_data, classes);
 
@@ -160,7 +163,10 @@ int main(int argc, char** argv) {
             // generating training database
             auto training_dataset = parser.load_data(training_path, percentage_data, classes);
             int logistic_start = static_cast<int>(training_dataset.files.size()) - regression_size;
-
+            if (regression_size == 0) {
+                logistic_start = static_cast<int>(training_dataset.files.size());
+            }
+            
             // generating test database
             auto test_dataset = parser.load_data(test_path, percentage_data, classes);
 
