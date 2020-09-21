@@ -22,3 +22,5 @@ utilities/python/rcNetwork\.json
 xbuild/basic_test_autogen/
 
 xbuild/
+
+*.mat

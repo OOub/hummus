@@ -720,20 +720,17 @@ namespace hummus {
         layer make_grid(layer presynapticLayer, int _sublayerNumber, int _kernelSize, int _stride, std::vector<Addon*> _addons, Args&&... args) {
             // finding the number of receptive fields
             float inv_stride = 1./static_cast<float>(_stride);
-            int newWidth = std::ceil((presynapticLayer.width - _kernelSize + 1) * inv_stride);
-            int newHeight = std::ceil((presynapticLayer.height - _kernelSize + 1) * inv_stride);
-
-            int trimmedColumns = std::abs(newWidth - std::ceil((presynapticLayer.width - _stride + 1) * inv_stride));
-            int trimmedRows = std::abs(newHeight - std::ceil((presynapticLayer.height - _stride + 1) * inv_stride));
+            
+            int newWidth = std::floor(((presynapticLayer.width - _kernelSize) * inv_stride) + 1);
+            int newHeight = std::floor(((presynapticLayer.height - _kernelSize) * inv_stride) + 1);
+            
+            int trimmedColumns = presynapticLayer.width - (_stride * (newWidth - 1) + _kernelSize);
+            int trimmedRows = presynapticLayer.height - (_stride * (newHeight - 1) + _kernelSize);
 
             // warning message that some rows and columns of neurons might be ignored and left unconnected depending on the stride value
             if (verbose != 0) {
-                if (trimmedColumns > 0 && trimmedRows == 0) {
-                    std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
-                } else if (trimmedRows > 0 && trimmedColumns == 0) {
-                    std::cout << "The new layer did not take into consideration the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
-                } else if (trimmedRows > 0 && trimmedColumns > 0){
-                    std::cout << "The new layer did not take into consideration the last " << trimmedColumns << " column(s) and the last " << trimmedRows << " row(s) of presynaptic neurons because the stride brings the sliding window outside the presynaptic layer dimensions" << std::endl;
+                if (trimmedColumns > 0 || trimmedRows > 0) {
+                    std::cout << trimmedColumns << " column(s) and " << trimmedRows << " row(s) trimmed" << std::endl;
                 }
             }
 
@@ -824,9 +821,9 @@ namespace hummus {
                     layershift += layers[i].neurons.size();
                 }
             }
-
-            int trimmedColumns = std::abs(postsynapticLayer.width - std::ceil((presynapticLayer.width - postsynapticLayer.stride + 1) / static_cast<float>(postsynapticLayer.stride)));
-
+            
+            int trimmedColumns = presynapticLayer.width - (postsynapticLayer.stride * (postsynapticLayer.width - 1) + postsynapticLayer.kernel_size);
+            
             // finding range to calculate a moore neighborhood
             float range;
             if (postsynapticLayer.kernel_size % 2 == 0) {

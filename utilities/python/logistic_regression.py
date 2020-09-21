@@ -95,6 +95,7 @@ elif task == 4:
     tel = np.load("/Users/omaroubari/Documents/Education/UPMC - PhD/ULPEC/report/10classes_2epochs/nmnist_10_2e_te_label.npy").astype(np.int64)
 
 # ACCURACY VS SAVED DATAPOINTS PLOT
+# dpts = list(range(0,trd.shape[0],10))
 dpts = list(range(0,5000,10))
 
 n = 0

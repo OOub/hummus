@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
     std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
     std::string tensor_base_name     = "nmnist";
-    std::vector<std::string> classes = {};
+    std::vector<std:: string> classes = {};
     int percentage_data              = 100;
     int width                        = 28;
     int height                       = 28;
@@ -79,7 +79,10 @@ int main(int argc, char** argv) {
         // initialisation
         hummus::Network network(seed);
         hummus::DataParser parser(seed);
-
+        
+        // verbose level
+        network.verbosity(1);
+        
         // generating training database
         auto training_dataset = parser.load_data(training_path, percentage_data, classes);
         int logistic_start = static_cast<int>(training_dataset.files.size()) - regression_size;
@@ -107,9 +110,6 @@ int main(int argc, char** argv) {
 
         std::cout << "number of neurons: " << output.neurons.size() << std::endl;
         std::cout << "number of synapses per neuron: " << network.get_neurons()[output.neurons[0]]->get_dendritic_tree().size() << std::endl;
-        
-        // verbose level
-        network.verbosity(0);
 
         if (multiple_epochs) {
             // disabling propagation to the regression layer
@@ -153,7 +153,10 @@ int main(int argc, char** argv) {
             // initialisation
             hummus::Network network(seed);
             hummus::DataParser parser(seed);
-
+            
+            // verbose level
+            network.verbosity(0);
+            
             // generating training database
             auto training_dataset = parser.load_data(training_path, percentage_data, classes);
             int logistic_start = static_cast<int>(training_dataset.files.size()) - regression_size;
@@ -183,9 +186,6 @@ int main(int argc, char** argv) {
                 std::cout << "number of neurons: " << output.neurons.size() << std::endl;
                 std::cout << "number of synapses per neuron: " << network.get_neurons()[output.neurons[0]]->get_dendritic_tree().size() << std::endl;
             }
-            
-            // verbose level
-            network.verbosity(0);
 
             if (multiple_epochs) {
                 // disabling propagation to the regression layer
