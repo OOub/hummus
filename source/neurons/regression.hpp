@@ -75,6 +75,10 @@ namespace hummus {
             if (_classLabel == -1) {
                 computation_layer = true;
             }
+                    
+            std::random_device device;
+            std::seed_seq seed{device(), device(), device(), device(), device(), device(), device(), device()};
+            random_engine = std::mt19937(seed);
         }
 
 		virtual ~Regression(){}
@@ -260,6 +264,11 @@ namespace hummus {
                 throw std::runtime_error("the training data vector is empty");
             }
             
+            // shuffle the training data and labels
+            auto random_engine2 = random_engine;
+            std::shuffle(x_training.begin(), x_training.end(), random_engine);
+            std::shuffle(labels_train.begin(), labels_train.end(), random_engine2);
+            
             // generate data set. we can add transforms to the data set, e.g. stack batches into a single tensor.
             auto data_set = CustomDataset(x_training, labels_train, number_of_output_neurons).map(torch::data::transforms::Stack<>());
             
@@ -398,5 +407,6 @@ namespace hummus {
         torch::nn::Linear                   model;
         std::string                         debug_mode;
         optimiser                           opt;
+        std::mt19937                        random_engine;
 	};
 }
