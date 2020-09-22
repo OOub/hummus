@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     int stride                       = 5;
     int regression_size              = 5000;
     uint64_t t_max                   = 100000;//UINT64_MAX;
-    int polarities                   = 2;//2;
+    int polarities                   = 1;//2;
     bool multiple_epochs             = false;
     bool logistic_regression         = true;
     bool seed                        = false;
@@ -71,9 +71,9 @@ int main(int argc, char** argv) {
     float skip = false;
     
     // learning parameters
-    float learning_rate = 0.0001;
-    float gmax = 1e-9;
-    float gmin = 1e-7;
+    float learning_rate = 0.001;
+    float gmax = 1e-8;
+    float gmin = 1e-6;
 
     if (trials == 1) {
         // initialisation
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         // creating classifier
         hummus::layer classifier;
         if (logistic_regression) {
-            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
+            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0.01, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
         }
@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
             // creating classifier
             hummus::layer classifier;
             if (logistic_regression) {
-                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+std::to_string(i), 0, {});
+                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0.01, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+std::to_string(i), 0, {});
             } else {
                 classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
             }
