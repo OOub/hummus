@@ -74,7 +74,18 @@ int main(int argc, char** argv) {
     float learning_rate = 0.001;
     float gmax = 1e-8;
     float gmin = 1e-6;
-
+    
+    // changing save name with parameters
+    tensor_base_name += "_sub" + std::to_string(number_of_sublayers)
+                      + "_K" + std::to_string(kernel_size)
+                      + "_S" + std::to_string(stride)
+                      + "_dp" + std::to_string(regression_size)
+                      + "_p" + std::to_string(polarities)
+                      + "_epo" + std::to_string(multiple_epochs)
+                      + "_lr" + std::to_string(learning_rate)
+                      + "_dv" + std::to_string(delta_v)
+                      + "_thr" + std::to_string(threshold);
+    
     if (trials == 1) {
         // initialisation
         hummus::Network network(seed);
@@ -99,6 +110,8 @@ int main(int argc, char** argv) {
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
         auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
+        
+        // changing save name with parameters
         
         // creating classifier
         hummus::layer classifier;
@@ -176,11 +189,11 @@ int main(int argc, char** argv) {
             // creating layers
             auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
             auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
-
+            
             // creating classifier
             hummus::layer classifier;
             if (logistic_regression) {
-                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0.01, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+std::to_string(i), 0, {});
+                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0.01, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+"_trial" + std::to_string(i), 0, {});
             } else {
                 classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
             }
@@ -207,8 +220,8 @@ int main(int argc, char** argv) {
                 network.activate_layer(classifier.id);
 
                 // initialise add-ons
-                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name+std::to_string(i)+"labels.txt");
-                auto& gmaps = network.make_addon<hummus::WeightMaps>(tensor_base_name+std::to_string(i)+"gmaps.bin", 5000);
+                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name+"_trial" + std::to_string(i)+"labels.txt");
+                auto& gmaps = network.make_addon<hummus::WeightMaps>(tensor_base_name+"_trial" + std::to_string(i)+"gmaps.bin", 5000);
                 gmaps.activate_for(output.neurons);
 
                 // separate epoch to train the Logistic regression
@@ -219,8 +232,8 @@ int main(int argc, char** argv) {
 
             } else {
                 // initialise add-ons
-                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name+std::to_string(i)+"labels.txt");
-                auto& g_maps = network.make_addon<hummus::WeightMaps>(tensor_base_name+std::to_string(i)+"gmaps.bin", 5000);
+                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name+"_trial" + std::to_string(i)+"labels.txt");
+                auto& g_maps = network.make_addon<hummus::WeightMaps>(tensor_base_name+"_trial" + std::to_string(i)+"gmaps.bin", 5000);
                 g_maps.activate_for(output.neurons);
 
                 // run the network
