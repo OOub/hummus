@@ -2,9 +2,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils import data
-import matplotlib.pyplot as plt
-import scikitplot as skplt
-import scipy.io as sio
 
 class LogisticRegression(torch.nn.Module):
     def __init__(self, input_dim, output_dim):
