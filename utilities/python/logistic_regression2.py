@@ -19,7 +19,7 @@ class LogisticRegression(torch.nn.Module):
 
 class LogReg(object):
 
-    def __init__(self, n_in, n_out, learning_rate = 0.1, weight_decay=0.0, batch_size=128, epochs=70):
+    def __init__(self, n_in, n_out, learning_rate = 0.1, weight_decay=0.01, batch_size=128, epochs=70):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.model = LogisticRegression(n_in, n_out)
@@ -66,43 +66,32 @@ dpts = [1000,5000]
 base_path = "/home/omaroubari/repositories/hummus/"
 base_name = "conductance_nmnist_75_5000dp"
 
-for k in dpts:
-    acc = []
-    for i in range(trials):
-        trd = np.load(base_path+base_name+str(i)+"_tr_set.npy").astype(np.float32)
-        trl = np.load(base_path+base_name+str(i)+"_tr_label.npy").astype(np.int64)
-        ted = np.load(base_path+base_name+str(i)+"_te_set.npy").astype(np.float32)
-        tel = np.load(base_path+base_name+str(i)+"_te_label.npy").astype(np.int64)
+if trials == 1:
+    for k in dpts:
+        acc = []
+        trd = np.load(base_path+base_name+"_tr_set.npy").astype(np.float32)
+        trl = np.load(base_path+base_name+"_tr_label.npy").astype(np.int64)
+        ted = np.load(base_path+base_name+"_te_set.npy").astype(np.float32)
+        tel = np.load(base_path+base_name+"_te_label.npy").astype(np.int64)
 
         lreg = LogReg(n_in=trd.shape[1],n_out=np.unique(trl).shape[0])
         lreg.fit(trd[-k:,:],trl[-k:])
-        acc.append((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])
+        acc.append(((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])*100)
+        print(acc,"for %s datapoints" % k)
+elif trials > 1: 
+    for k in dpts:
+        acc = []
+        for i in range(trials):
+            trd = np.load(base_path+base_name+str(i)+"_tr_set.npy").astype(np.float32)
+            trl = np.load(base_path+base_name+str(i)+"_tr_label.npy").astype(np.int64)
+            ted = np.load(base_path+base_name+str(i)+"_te_set.npy").astype(np.float32)
+            tel = np.load(base_path+base_name+str(i)+"_te_label.npy").astype(np.int64)
 
-    acc = np.array(acc)
-    print(np.mean(acc),'\u00B1',np.std(acc),"for %s datapoints" % k)
+            lreg = LogReg(n_in=trd.shape[1],n_out=np.unique(trl).shape[0])
+            lreg.fit(trd[-k:,:],trl[-k:])
+            acc.append(((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])*100)
 
-# dpts = list(range(0,1000,1000))
-
-# n = 0
-# acc = []
-# points = []
-
-# for k in dpts[1:]:
-#     lreg = LogReg(n_in=trd.shape[1],n_out=np.unique(trl).shape[0], epochs=70)
-#     lreg.fit(trd[-k:,:],trl[-k:])
-
-#     acc.append((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])
-#     points.append(k)
-#     n=k
-#     print("test accuracy at {:.05} using {} datapoints  ".format(acc[-1],n))
-#     p_tel = lreg.predict(ted).numpy()
-#     if task == 0:
-#         sio.savemat('3nmnist.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
-#     elif task == 1:
-#         sio.savemat('10nmnist.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
-#     elif task == 2:
-#         sio.savemat('poker.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
-#     elif task == 3:
-#         sio.savemat('ncar28x28.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
-#     elif task == 4:
-#         sio.savemat('10nmnist_2e.mat', {"predicted_labels":p_tel, "true_labels":tel, "accuracy":acc, "points":points})
+        acc = np.array(acc)
+        print(np.mean(acc),'\u00B1',np.std(acc),"for %s datapoints" % k)
+else:
+    print("wrong number of trials")
