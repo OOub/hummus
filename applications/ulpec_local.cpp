@@ -23,7 +23,7 @@
 #include "../source/learning_rules/ulpec_stdp.hpp"
 
 int main(int argc, char** argv) {
-    int trials = 5;
+    int trials = 1;
 
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
 //    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     // nmnist parameters
     std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
     std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
-    std::string tensor_base_name     = "nmnist";
+    std::string tensor_base_name     = "1000n_nmnist";
     std::vector<std:: string> classes = {};
     int percentage_data              = 100;
     int width                        = 28;
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     int number_of_sublayers          = 4;
     int kernel_size                  = 7;
     int stride                       = 5;
-    int regression_size              = 5000;
+    int regression_size              = 1000;
     uint64_t t_max                   = 100000;//UINT64_MAX;
     int polarities                   = 1;//2;
     bool multiple_epochs             = false;
@@ -71,9 +71,16 @@ int main(int argc, char** argv) {
     float skip = false;
     
     // learning parameters
-    float learning_rate = 0.001;
+    float learning_rate = 0.01;
     float gmax = 1e-8;
     float gmin = 1e-6;
+    
+    // logistic regression parameters
+    int epochs = 100;
+    int batch_size = 128;
+    float lr = 0.1;
+    float momentum = 0;
+    float weight_Decay = 0.01;
     
     // changing save name with parameters
     tensor_base_name += "_sub" + std::to_string(number_of_sublayers)
@@ -105,7 +112,7 @@ int main(int argc, char** argv) {
         auto test_dataset = parser.load_data(test_path, percentage_data, classes);
 
         // learning rule
-        auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(learning_rate, -learning_rate, -1.6, 1.6, gmin, gmax, 1);
+        auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(learning_rate, -learning_rate, -1.4, 1.4, gmin, gmax, 1);
         
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
@@ -116,7 +123,7 @@ int main(int argc, char** argv) {
         // creating classifier
         hummus::layer classifier;
         if (logistic_regression) {
-            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0.01, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
+            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, lr, momentum, weight_Decay, epochs, batch_size, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
         }
@@ -193,7 +200,7 @@ int main(int argc, char** argv) {
             // creating classifier
             hummus::layer classifier;
             if (logistic_regression) {
-                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0.01, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+"_trial" + std::to_string(i), 0, {});
+                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, lr, momentum, weight_Decay, epochs, batch_size, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+std::to_string(i), 0, {});
             } else {
                 classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
             }
@@ -220,8 +227,8 @@ int main(int argc, char** argv) {
                 network.activate_layer(classifier.id);
 
                 // initialise add-ons
-                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name+"_trial" + std::to_string(i)+"labels.txt");
-                auto& gmaps = network.make_addon<hummus::WeightMaps>(tensor_base_name+"_trial" + std::to_string(i)+"gmaps.bin", 5000);
+                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name + std::to_string(i)+"labels.txt");
+                auto& gmaps = network.make_addon<hummus::WeightMaps>(tensor_base_name+std::to_string(i)+"gmaps.bin", 5000);
                 gmaps.activate_for(output.neurons);
 
                 // separate epoch to train the Logistic regression
@@ -232,8 +239,8 @@ int main(int argc, char** argv) {
 
             } else {
                 // initialise add-ons
-                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name+"_trial" + std::to_string(i)+"labels.txt");
-                auto& g_maps = network.make_addon<hummus::WeightMaps>(tensor_base_name+"_trial" + std::to_string(i)+"gmaps.bin", 5000);
+                auto& results = network.make_addon<hummus::Analysis>(test_dataset.labels, tensor_base_name+ std::to_string(i)+"labels.txt");
+                auto& g_maps = network.make_addon<hummus::WeightMaps>(tensor_base_name+std::to_string(i)+"gmaps.bin", 5000);
                 g_maps.activate_for(output.neurons);
 
                 // run the network

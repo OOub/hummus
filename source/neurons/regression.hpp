@@ -286,8 +286,15 @@ namespace hummus {
             if (opt == optimiser::Adam) {
                 torch::optim::Adam optimizer(model->parameters(),torch::optim::AdamOptions(learning_rate).weight_decay(weight_decay));
             
+                auto options = static_cast<torch::optim::AdamOptions&>(optimizer.defaults());
+                
                 // loop through epochs to train logistic regression on the training batches
                 for (auto epoch=1; epoch <= epochs; ++epoch) {
+                    
+                    // decay learning rate
+                    if (epoch == 30 || epoch == 60 || epoch == 90) {
+//                        options.lr(options.lr() / 10);
+                    }
                     
                     // Track loss.
                     int batch_idx = 0;
@@ -327,9 +334,15 @@ namespace hummus {
                 }
             } else if (opt == optimiser::SGD) {
                 torch::optim::SGD optimizer(model->parameters(),torch::optim::SGDOptions(learning_rate).momentum(momentum).weight_decay(weight_decay));
+                auto options = static_cast<torch::optim::SGDOptions&>(optimizer.defaults());
                 
                 // loop through epochs to train logistic regression on the training batches
                 for (auto epoch=1; epoch <= epochs; ++epoch) {
+                    
+                    // decay learning rate
+                    if (epoch == 30 || epoch == 60 || epoch == 90) {
+//                        options.lr(options.lr() / 10);
+                    }
                     
                     // Track loss.
                     int batch_idx = 0;
