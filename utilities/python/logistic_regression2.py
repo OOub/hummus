@@ -59,13 +59,13 @@ class LogReg(object):
         return predicted
 
 trials = 5
-dpts = [1000,5000]
+dpts = np.arange(100, 5000, 100)
 base_path = "/home/omaroubari/repositories/hummus/"
-base_name = "conductance_nmnist_75_5000dp"
-
+base_name = "100_nmnist_sub4_K7_S5_dp5000_p1_epo0_lr0.010000_dv1.400000_thr0.800000_trial"
+accuracies = []
+datapoints = []
 if trials == 1:
     for k in dpts:
-        acc = []
         trd = np.load(base_path+base_name+"_tr_set.npy").astype(np.float32)
         trl = np.load(base_path+base_name+"_tr_label.npy").astype(np.int64)
         ted = np.load(base_path+base_name+"_te_set.npy").astype(np.float32)
@@ -73,7 +73,9 @@ if trials == 1:
 
         lreg = LogReg(n_in=trd.shape[1],n_out=np.unique(trl).shape[0])
         lreg.fit(trd[-k:,:],trl[-k:])
-        acc.append(((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])*100)
+        acc = ((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])*100
+        accuracies.append(acc)
+        datapoints.append(k)
         print(acc,"for %s datapoints" % k)
 elif trials > 1: 
     for k in dpts:
@@ -89,6 +91,14 @@ elif trials > 1:
             acc.append(((lreg.predict(ted).numpy()==tel).sum()/tel.shape[0])*100)
 
         acc = np.array(acc)
+        accuracies.append(acc)
+        datapoints.append(k)
         print(np.mean(acc),'\u00B1',np.std(acc),"for %s datapoints" % k)
 else:
     print("wrong number of trials")
+
+accuracies = np.array(accuracies)
+datapoints = np.array(datapoints)
+
+np.save("accuracies.npy", accuracies)
+np.save("datapoints.npy", datapoints)
