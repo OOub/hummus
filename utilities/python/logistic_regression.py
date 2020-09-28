@@ -19,8 +19,9 @@ class LogisticRegression(torch.nn.Module):
 
 class LogReg(object):
 
-    def __init__(self, n_in, n_out, learning_rate = 0.1, batch_size=128, epochs=70):
+    def __init__(self, n_in, n_out, learning_rate = 0.1, weight_decay=0.01, batch_size=128, epochs=70):
         self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
         self.model = LogisticRegression(n_in, n_out)
         self.batch_size = batch_size
         self.epochs = epochs
@@ -33,11 +34,10 @@ class LogReg(object):
         my_dataloader = data.DataLoader(my_dataset, batch_size=self.batch_size) # create your dataloader
 
         criterion = nn.NLLLoss()
-        # optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
 
         for epoch in range(self.epochs):
-            for i, (features, labels) in enumerate(my_dataloader):
+            for features, labels in my_dataloader:
 
                 # Clear gradients w.r.t. parameters
                 optimizer.zero_grad()
@@ -60,6 +60,7 @@ class LogReg(object):
         outputs = self.model(tensor_x)
         _, predicted = torch.max(outputs.data, 1)
         return predicted
+
 
 task = 1
 
@@ -96,7 +97,7 @@ elif task == 4:
 
 # ACCURACY VS SAVED DATAPOINTS PLOT
 # dpts = list(range(0,trd.shape[0],10))
-dpts = list(range(0,5000,10))
+dpts = list(range(0,1000,10))
 
 n = 0
 acc = []
