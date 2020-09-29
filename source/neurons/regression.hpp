@@ -54,7 +54,7 @@ namespace hummus {
 	class Regression : public Neuron {
 	public:
 		// ----- CONSTRUCTOR AND DESTRUCTOR -----
-        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _classLabel=-1, float _learning_rate=0, float _momentum=0, float _weight_decay=0, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, optimiser _opt=optimiser::Adam, std::string save_tensor="", float _threshold=-50, float _restingPotential=-70) :
+        Regression(int _neuronID, int _layerID, int _sublayerID, int _rf_id,  std::pair<int, int> _xyCoordinates, int _classLabel=-1, float _learning_rate=0, float _momentum=0, float _weight_decay=0, float lr_decay=false, int _epochs=10, int _batch_size=32, int _log_interval=10, int _presentations_before_training=0, optimiser _opt=optimiser::Adam, std::string save_tensor="", float _threshold=-50, float _restingPotential=-70) :
                 Neuron(_neuronID, _layerID, _sublayerID, _rf_id, _xyCoordinates, 0, 200, 10, 20, _threshold, _restingPotential, _classLabel),
                 learning_rate(_learning_rate),
                 momentum(_momentum),
@@ -69,7 +69,8 @@ namespace hummus {
                 log_interval(_log_interval),
                 model(100,3),
                 debug_mode(save_tensor),
-                opt(_opt) {
+                opt(_opt),
+                decay(lr_decay) {
                     
             // computation or decision layer of regression
             if (_classLabel == -1) {
@@ -292,8 +293,10 @@ namespace hummus {
                 for (auto epoch=1; epoch <= epochs; ++epoch) {
                     
                     // decay learning rate
-                    if (epoch == 30 || epoch == 60 || epoch == 90) {
-//                        options.lr(options.lr() / 10);
+                    if (decay) {
+                        if (epoch == 30 || epoch == 60 || epoch == 90) {
+                            options.lr(options.lr() / 10);
+                        }
                     }
                     
                     // Track loss.
@@ -340,8 +343,10 @@ namespace hummus {
                 for (auto epoch=1; epoch <= epochs; ++epoch) {
                     
                     // decay learning rate
-                    if (epoch == 30 || epoch == 60 || epoch == 90) {
-//                        options.lr(options.lr() / 10);
+                    if (decay) {
+                        if (epoch == 30 || epoch == 60 || epoch == 90) {
+                            options.lr(options.lr() / 10);
+                        }
                     }
                     
                     // Track loss.
@@ -421,5 +426,6 @@ namespace hummus {
         std::string                         debug_mode;
         optimiser                           opt;
         std::mt19937                        random_engine;
+        bool                                decay;
 	};
 }

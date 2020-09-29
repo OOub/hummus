@@ -482,7 +482,7 @@ namespace hummus {
         
         // layer of one logistic regression neuron that makes the relevant decision-making neuron spike for classification.
         template <typename T, typename... Args>
-        layer make_logistic_regression(dataset& training_dataset, dataset& test_dataset, float learning_rate, float momentum, float weight_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, optimiser opt, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
+        layer make_logistic_regression(dataset& training_dataset, dataset& test_dataset, float learning_rate, float momentum, float weight_decay, bool lr_decay, int epochs, int batch_size, int log_interval, int presentations_before_training, optimiser opt, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
             if (decision_making) {
                 throw std::logic_error("you cannot have two different classification layers. the decision-making classifier is already initialised");
             }
@@ -509,7 +509,7 @@ namespace hummus {
             }
             
             // create the computation layer of regression neuron
-            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), -1, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, opt, save_tensor, std::forward<Args>(args)...));
+            neurons.emplace_back(std::make_unique<T>(shift, layer_id, 0, 0, std::pair(-1, -1), -1, learning_rate, momentum, weight_decay, lr_decay, epochs, batch_size, log_interval, presentations_before_training, opt, save_tensor, std::forward<Args>(args)...));
             
             // looping through addons and adding the layer to the neuron mask
             for (auto& addon: _addons) {
@@ -524,7 +524,7 @@ namespace hummus {
 
             int i=1;
             for (const auto& label: training_dataset.class_map) {
-                neurons.emplace_back(std::make_unique<T>(i+shift, layer_id+1, 0, 0, std::pair(-1, -1), label.second, learning_rate, momentum, weight_decay, epochs, batch_size, log_interval, presentations_before_training, opt, save_tensor, std::forward<Args>(args)...));
+                neurons.emplace_back(std::make_unique<T>(i+shift, layer_id+1, 0, 0, std::pair(-1, -1), label.second, learning_rate, momentum, weight_decay, lr_decay, epochs, batch_size, log_interval, presentations_before_training, opt, save_tensor, std::forward<Args>(args)...));
                 neuronsInLayer.emplace_back(neurons.size()-1);
                 ++i;
             }
@@ -553,7 +553,7 @@ namespace hummus {
         // overload with cleaner output (demo purposes)
         template <typename T, typename... Args>
         layer make_logistic_regression(dataset& training_dataset, dataset& test_dataset, optimiser opt, std::string save_tensor, float _timer, std::vector<Addon*> _addons, Args&&... args) {
-            return make_logistic_regression<T>(training_dataset, test_dataset, 1, 0, 0, 70, 32, 10, 100, optimiser::Adam, "regression", 0, {}, std::forward<Args>(args)...);
+            return make_logistic_regression<T>(training_dataset, test_dataset, 1, 0, 0, false, 70, 32, 10, 100, optimiser::Adam, "regression", 0, {}, std::forward<Args>(args)...);
         }
         
         // takes in training labels and creates DecisionMaking neurons according to the number of classes present - Decision layer should be the last layer

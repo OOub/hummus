@@ -23,20 +23,20 @@
 #include "../source/learning_rules/ulpec_stdp.hpp"
 
 int main(int argc, char** argv) {
-    int trials = 1;
+    int trials = 5;
 
 //    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
 //    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
 //    std::string tensor_base_name     = "ncars";
 //    std::vector<std::string> classes = {};
 //    int percentage_data              = 100;
-//    int width                        = 64;
-//    int height                       = 56;
+//    int width                        = 28;
+//    int height                       = 28;
 //    int origin                       = 0;
-//    int number_of_sublayers          = 5;
-//    int kernel_size                  = 13;
-//    int stride                       = 11;
-//    int regression_size              = 1000;
+//    int number_of_sublayers          = 2;
+//    int kernel_size                  = 5;
+//    int stride                       = 3;
+//    int regression_size              = 5000;
 //    uint64_t t_max                   = UINT64_MAX;
 //    int polarities                   = 1;
 //    bool multiple_epochs             = false;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     // nmnist parameters
     std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
     std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
-    std::string tensor_base_name     = "1000n_nmnist";
+    std::string tensor_base_name     = "spikerate_nmnist";
     std::vector<std:: string> classes = {};
     int percentage_data              = 100;
     int width                        = 28;
@@ -72,15 +72,17 @@ int main(int argc, char** argv) {
     
     // learning parameters
     float learning_rate = 0.01;
-    float gmax = 1e-8;
-    float gmin = 1e-6;
+    float gmin = 1e-9;
+    float gmax = 1e-7;
     
     // logistic regression parameters
+    int ref_period = 0;
     int epochs = 100;
-    int batch_size = 128;
-    float lr = 0.1;
-    float momentum = 0;
+    int batch_size = 32;
+    float lr = 0.01;
+    float momentum = 0.9;
     float weight_Decay = 0.01;
+    bool lr_decay = true;
     
     // changing save name with parameters
     tensor_base_name += "_sub" + std::to_string(number_of_sublayers)
@@ -112,24 +114,24 @@ int main(int argc, char** argv) {
         auto test_dataset = parser.load_data(test_path, percentage_data, classes);
 
         // learning rule
-        auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(learning_rate, -learning_rate, -1.4, 1.4, gmin, gmax, 1);
+        auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(learning_rate, -learning_rate, -1.6, 1.6, gmax, gmin, 1);
         
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
-        auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
+        auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, ref_period, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
         
         // changing save name with parameters
         
         // creating classifier
         hummus::layer classifier;
         if (logistic_regression) {
-            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, lr, momentum, weight_Decay, epochs, batch_size, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
+            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, lr, momentum, weight_Decay, lr_decay, epochs, batch_size, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
         }
 
         // connecting the input and output layer with memristive synapses. conductances initialised with a uniform distribution between G_min and G_max
-        network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmax, gmin, 0, 0, false), 100, -1);
+        network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmax/2, gmax, 0, 0, false), 100, -1);
 
         std::cout << "number of neurons: " << output.neurons.size() << std::endl;
         std::cout << "number of synapses per neuron: " << network.get_neurons()[output.neurons[0]]->get_dendritic_tree().size() << std::endl;
@@ -191,23 +193,23 @@ int main(int argc, char** argv) {
             auto test_dataset = parser.load_data(test_path, percentage_data, classes);
 
             // learning rule
-            auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(learning_rate, -learning_rate, -1.6, 1.6, gmin, gmax, 1);
+            auto& ulpec_stdp = network.make_addon<hummus::ULPEC_STDP>(learning_rate, -learning_rate, -1.6, 1.6, gmax, gmin, 1);
 
             // creating layers
             auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1);
-            auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
+            auto output = network.make_grid<hummus::ULPEC_LIF>(pixel_grid, number_of_sublayers, kernel_size, stride, {&ulpec_stdp}, ref_period, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip);
             
             // creating classifier
             hummus::layer classifier;
             if (logistic_regression) {
-                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, lr, momentum, weight_Decay, epochs, batch_size, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+std::to_string(i), 0, {});
+                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, lr, momentum, weight_Decay, lr_decay, epochs, batch_size, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name+std::to_string(i), 0, {});
             } else {
                 classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
             }
 
             // connecting the input and output layer with memristive synapses. conductances initialised with a uniform distribution between G_min and G_max
-            network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmax, gmin, 0, 0, false), 100, -1);
-
+            network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmax/2, gmax, 0, 0, false), 100, -1);
+            
             if (i == 0) {
                 std::cout << "number of neurons: " << output.neurons.size() << std::endl;
                 std::cout << "number of synapses per neuron: " << network.get_neurons()[output.neurons[0]]->get_dendritic_tree().size() << std::endl;
