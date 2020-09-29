@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
         // creating classifier
         hummus::layer classifier;
         if (logistic_regression) {
-            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
+            classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0, true, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
         } else {
             classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
         }
@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
             // creating classifier
             hummus::layer classifier;
             if (logistic_regression) {
-                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
+                classifier = network.make_logistic_regression<hummus::Regression>(training_dataset, test_dataset, 0.1, 0, 0, true, 70, 128, 10, logistic_start, hummus::optimiser::SGD, tensor_base_name, 0, {});
             } else {
                 classifier = network.make_decision<hummus::Decision_Making>(training_dataset, test_dataset, 10, 60, 0, {});
             }
