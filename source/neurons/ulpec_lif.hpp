@@ -273,7 +273,7 @@ namespace hummus {
                             network->inject_spike(spike{timestamp + 13 + tau_up + tau_down_spike, dendrite, spike_type::end_trigger_up});
                             
                             // if presynaptic neuron was active at some point
-                            if (presynaptic_neuron->get_trace() == 1) {
+                            if (presynaptic_neuron->get_trace() > 0) {
                                 // inject trigger_down spike to presynaptic_neuron to restart inference after 12us
                                 network->inject_spike(spike{timestamp + 12, dendrite, spike_type::trigger_down});
                                 network->inject_spike(spike{timestamp + 12 + tau_down_event, dendrite, spike_type::end_trigger_down});
@@ -306,11 +306,15 @@ namespace hummus {
                 check_refractory(network);
 
                 // winner-takes-all to reset potential on all neurons in the same layer
-                winner_takes_all(timestamp, network);
+                if (network->get_learning_status()) {
+                    winner_takes_all(timestamp, network);
 
-                // disable neuron for refractory period
-                active = false;
-
+                    // disable neuron for refractory period
+                    active = false;
+                } else {
+                    potential = resting_potential;
+                }
+                
                 // save time when neuron fired
                 previous_spike_time = timestamp;
                 
@@ -325,37 +329,16 @@ namespace hummus {
             }
         }
         
-//        void winner_takes_all(double timestamp, Network* network) override {
-//            // if we have multiple sublayers then do WTA per receptive field
-//            if (network->get_layers()[layer_id].sublayers.size() > 1) {
-//                for (auto& sub: network->get_layers()[layer_id].sublayers) {
-//                    if (sub.id != sublayer_id) {
-//                        for (auto& n: sub.neurons) {
-//                            auto& neuron = network->get_neurons()[n];
-//                            if (neuron->get_rf_id() == rf_id) {
-//                                neuron->set_potential(resting_potential);
-//                            }
-//                        }
-//                    } else if (sub.id == sublayer_id) {
-//                        for (auto& n: network->get_layers()[layer_id].neurons) {
-//                            auto& neuron = network->get_neurons()[n];
-//                            neuron->set_potential(resting_potential);
-//                        }
-//                    }
-//                }
-//            // if only one sublayer
-//            } else {
-//                for (auto& n: network->get_layers()[layer_id].neurons) {
-//                    auto& neuron = network->get_neurons()[n];
-//                    neuron->set_potential(resting_potential);
-//                }
-//            }
-//        }
-        
         void winner_takes_all(double timestamp, Network* network) override {
             for (auto& n: network->get_layers()[layer_id].neurons) {
                 auto& neuron = network->get_neurons()[n];
-                neuron->set_potential(resting_potential);
+//                neuron->set_potential(resting_potential);
+                if (neuron->get_rf_id() == rf_id) {
+                    neuron->set_potential(resting_potential); // hard wta
+                } else {
+//                    neuron->set_potential(resting_potential); // hard wta
+                    neuron->set_potential(neuron->get_potential() * 0.8); // soft wta
+                }
             }
         }
         

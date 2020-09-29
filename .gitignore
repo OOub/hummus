@@ -24,3 +24,9 @@ xbuild/basic_test_autogen/
 xbuild/
 
 *.mat
+
+ulpec-report.ipynb
+
+.ipynb_checkpoints/
+
+*.npy
