@@ -25,29 +25,10 @@
 int main(int argc, char** argv) {
     int trials = 5;
 
-//    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
-//    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
-//    std::string tensor_base_name     = "ncars";
-//    std::vector<std::string> classes = {};
-//    int percentage_data              = 100;
-//    int width                        = 28;
-//    int height                       = 28;
-//    int origin                       = 0;
-//    int number_of_sublayers          = 2;
-//    int kernel_size                  = 5;
-//    int stride                       = 3;
-//    int regression_size              = 5000;
-//    uint64_t t_max                   = UINT64_MAX;
-//    int polarities                   = 1;
-//    bool multiple_epochs             = false;
-//    bool logistic_regression         = true;
-//    bool seed                        = false;
-
-    // nmnist parameters
-    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
-    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
-    std::string tensor_base_name     = "test_decrease_spikes";
-    std::vector<std:: string> classes = {};
+    std::string training_path        = "/Users/omaroubari/Datasets/es_N-CARS/Train";
+    std::string test_path            = "/Users/omaroubari/Datasets/es_N-CARS/Test";
+    std::string tensor_base_name     = "ncars";
+    std::vector<std::string> classes = {};
     int percentage_data              = 100;
     int width                        = 28;
     int height                       = 28;
@@ -56,35 +37,54 @@ int main(int argc, char** argv) {
     int kernel_size                  = 5;
     int stride                       = 5;
     int regression_size              = 1000;
-    uint64_t t_max                   = 100000;//UINT64_MAX;
-    int polarities                   = 1;//2;
+    uint64_t t_max                   = UINT64_MAX;
+    int polarities                   = 1;
     bool multiple_epochs             = false;
     bool logistic_regression         = true;
     bool seed                        = false;
+
+    // nmnist parameters
+//    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+//    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
+//    std::string tensor_base_name     = "gmaps_plotting_full_7_bla";
+//    std::vector<std:: string> classes = {};
+//    int percentage_data              = 100;
+//    int width                        = 28;
+//    int height                       = 28;
+//    int origin                       = 0;
+//    int number_of_sublayers          = 4;
+//    int kernel_size                  = 7;
+//    int stride                       = 5;
+//    int regression_size              = 1000;
+//    uint64_t t_max                   = 100000;//UINT64_MAX;
+//    int polarities                   = 1;//2;
+//    bool multiple_epochs             = false;
+//    bool logistic_regression         = true;
+//    bool seed                        = false;
     
     // neuron parameters
     float scaling_factor = 12.5;
     float capacitance = 1e-12;
-    float threshold = 1;
+    float threshold = 0.8;
     float i_discharge = 100e-12;
     float delta_v = 1.4;
     float skip = false;
     
     // learning parameters
-    float learning_rate = 0.01;
-    float gmin = 1e-9;
-    float gmax = 1e-7;
+    float learning_rate = 0.001;
+    float gmin = 1e-8;
+    float gmax = 1e-6;
     
     // logistic regression parameters
-    int ref_period = 3;
-    int epochs = 100;
-    int batch_size = 32;
+    int ref_period = 5;
+    int epochs = 70;
+    int batch_size = 128;
     float lr = 0.01;
-    float momentum = 0.9;
+    float momentum = 0;
     float weight_Decay = 0.01;
-    bool lr_decay = true;
+    bool lr_decay = false;
     
-    // changing save name with parameters
+//    // changing save name with parameters
 //    tensor_base_name += "_sub" + std::to_string(number_of_sublayers)
 //                      + "_K" + std::to_string(kernel_size)
 //                      + "_S" + std::to_string(stride)
@@ -129,8 +129,9 @@ int main(int argc, char** argv) {
         }
 
         // connecting the input and output layer with memristive synapses. conductances initialised with a uniform distribution between G_min and G_max
-        network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmin*10, gmax, 0, 0, false), 100, -1);
-
+//        network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmax/2, gmax, 0, 0, false), 100, -1);
+        network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmin, gmax, 0, 0, false), 100, -1);
+        
         std::cout << "number of neurons: " << output.neurons.size() << std::endl;
         std::cout << "number of synapses per neuron: " << network.get_neurons()[output.neurons[0]]->get_dendritic_tree().size() << std::endl;
 
@@ -206,7 +207,8 @@ int main(int argc, char** argv) {
             }
 
             // connecting the input and output layer with memristive synapses. conductances initialised with a uniform distribution between G_min and G_max
-            network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmin*10, gmax, 0, 0, false), 100, -1);
+            network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmin, gmax, 0, 0, false), 100, -1);
+//            network.convolution<hummus::Memristor>(pixel_grid, output, 1, hummus::Uniform(gmin, gmax, 0, 0, false), 100, -1);
             
             if (i == 0) {
                 std::cout << "number of neurons: " << output.neurons.size() << std::endl;

@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
     int trials = 2;
 
     // parameters
-    std::string training_path        = "/home/omaroubari/datasets/es_N-MNIST/Train";
-    std::string test_path            = "/home/omaroubari/datasets/es_N-MNIST/Test";
+    std::string training_path        = "/Users/omaroubari/Datasets/es_N-MNIST/Train";
+    std::string test_path            = "/Users/omaroubari/Datasets/es_N-MNIST/Test";
     std::string tensor_base_name     = "nmnist";
     std::vector<std::string> classes = {};
     int percentage_data              = 100;
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 
         // creating layers
         auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
-        auto output = network.make_layer<hummus::ULPEC_LIF>(number_of_neurons, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, 12.5, true, 0.5, 10, 1.5, delta_v, skip); /// 100 ULPEC_LIF neurons
+        auto output = network.make_layer<hummus::ULPEC_LIF>(number_of_neurons, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip); /// 100 ULPEC_LIF neurons
 
         // creating classifier
         hummus::layer classifier;
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 
             // creating layers
             auto pixel_grid = network.make_grid<hummus::ULPEC_Input>(width, height, 1, {}, 25, 1.2, 1.1, 10, -1); /// 28 x 28 grid of ULPEC_Input neurons
-            auto output = network.make_layer<hummus::ULPEC_LIF>(number_of_neurons, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, 12.5, true, 0.5, 10, 1.5, delta_v, skip); /// 100 ULPEC_LIF neurons
+            auto output = network.make_layer<hummus::ULPEC_LIF>(number_of_neurons, {&ulpec_stdp}, 10, capacitance, threshold, 0, i_discharge, 0, scaling_factor, true, 0.5, 10, 1.5, delta_v, skip); /// 100 ULPEC_LIF neurons
 
             // creating classifier
             hummus::layer classifier;

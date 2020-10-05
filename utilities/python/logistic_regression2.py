@@ -16,9 +16,10 @@ class LogisticRegression(torch.nn.Module):
 
 class LogReg(object):
 
-    def __init__(self, n_in, n_out, learning_rate = 0.1, weight_decay=0.01, batch_size=128, epochs=70):
+    def __init__(self, n_in, n_out, learning_rate = 0.01, weight_decay=0.01, momentum=0.9, batch_size=32, epochs=100):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
+        self.momentum = momentum
         self.model = LogisticRegression(n_in, n_out)
         self.batch_size = batch_size
         self.epochs = epochs
@@ -31,7 +32,7 @@ class LogReg(object):
         my_dataloader = data.DataLoader(my_dataset, batch_size=self.batch_size) # create your dataloader
 
         criterion = nn.NLLLoss()
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
 
         for epoch in range(self.epochs):
             for features, labels in my_dataloader:
@@ -59,9 +60,11 @@ class LogReg(object):
         return predicted
 
 trials = 5
-dpts = np.arange(100, 5000, 100)
-base_path = "/home/omaroubari/repositories/hummus/"
-base_name = "100_nmnist_sub4_K7_S5_dp5000_p1_epo0_lr0.010000_dv1.400000_thr0.800000_trial"
+# dpts = np.arange(100, 5000, 100)
+dpts = [5000]
+base_path = "/Users/omaroubari/Repositories/bitbucket/hummus/build/Release/results/"
+# base_name = "100_nmnist_sub4_K7_S5_dp5000_p1_epo0_lr0.010000_dv1.400000_thr0.800000_trial"
+base_name = "1000n_nmnist_sub40_K7_S5_dp5000_p1_epo0_lr0.010000_dv1.400000_thr0.800000"
 accuracies = []
 datapoints = []
 if trials == 1:
@@ -77,7 +80,7 @@ if trials == 1:
         accuracies.append(acc)
         datapoints.append(k)
         print(acc,"for %s datapoints" % k)
-elif trials > 1: 
+elif trials > 1:
     for k in dpts:
         acc = []
         for i in range(trials):
